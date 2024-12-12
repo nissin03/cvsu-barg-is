@@ -1077,7 +1077,7 @@ class AdminController extends Controller
         $reply = new ContactReplies();
         $reply->contact_id = $contact->id;
         $reply->admin_reply = $request->input('replyMessage');
-        $reply->admin_id = auth()->id(); // Assuming the admin is logged in
+        $reply->admin_id = Auth::id(); // Assuming the admin is logged in
         $reply->save();
 
         // Optionally, send an email to the user
@@ -1799,7 +1799,11 @@ class AdminController extends Controller
             'orders' => $orders,
             'startDate' => $startDate,
             'endDate' => $endDate
-        ]);
+        ])
+        ->setPaper('A4', 'portrait'); 
+
+        
+       
 
         // Return the generated PDF for download
         return $pdf->download('billing_statements.pdf');
@@ -1807,24 +1811,31 @@ class AdminController extends Controller
 
     public function downloadPdf(Request $request)
     {
-        // Retrieve base64 image data from the request
-        $monthlySalesImg = $request->input('monthly_sales_img');
-        $weeklySalesImg = $request->input('weekly_sales_img');
-        $dailySalesImg = $request->input('daily_sales_img');
+        // Fetch values from the form submission
+        $data = [
+            'total_amount' => $request->input('total_amount'),
+            'total_reserved_amount' => $request->input('total_reserved_amount'),
+            'total_picked_up_amount' => $request->input('total_picked_up_amount'),
+            'total_canceled_amount' => $request->input('total_canceled_amount'),
+            'total_amount_w' => $request->input('total_amount_w'),
+            'total_reserved_amount_w' => $request->input('total_reserved_amount_w'),
+            'total_picked_up_amount_w' => $request->input('total_picked_up_amount_w'),
+            'total_canceled_amount_w' => $request->input('total_canceled_amount_w'),
+            'total_amount_d' => $request->input('total_amount_d'),
+            'total_reserved_amount_d' => $request->input('total_reserved_amount_d'),
+            'total_picked_up_amount_d' => $request->input('total_picked_up_amount_d'),
+            'total_canceled_amount_d' => $request->input('total_canceled_amount_d'),
+        ];
 
-        // Fetch other report data as necessary
-        $orders = Order::orderBy('created_at', 'DESC')->take(10)->get();
+        // Generate the PDF using the data only (no graph images)
+        $pdf = PDF::loadView('admin.pdf-reports', $data)
+            ->setPaper('A4', 'portrait'); // Set paper size to A4, portrait orientation
 
-        $pdf = PDF::loadView('admin.pdf-reports', [
-            'monthlySalesImg' => $monthlySalesImg,
-            'weeklySalesImg' => $weeklySalesImg,
-            'dailySalesImg' => $dailySalesImg,
-            'orders' => $orders,
-
-        ])->setPaper('A4', 'portrait');
-
+        // Download the PDF
         return $pdf->download('sales_report.pdf');
     }
+
+
 
     public function downloadProduct(Request $request)
     {
@@ -1885,34 +1896,88 @@ class AdminController extends Controller
         return $dompdf->stream('product-report.pdf');
     }
 
+
+    public function getMonthlyRegisteredUsers($month, $year)
+    {
+        // Fetch the number of users registered in the specified month and year
+        return User::whereMonth('created_at', $month)
+                ->whereYear('created_at', $year)
+                ->count() ?: 0;
+    }
+
+    public function getWeeklyRegisteredUsers($month, $year)
+    {
+        // Fetch the number of users registered weekly in the specified month and year
+        // Modify as per your requirements
+        return User::whereMonth('created_at', $month)
+                ->whereYear('created_at', $year)
+                ->count() ?: 0;
+    }
+
+    public function getDailyRegisteredUsers($month, $year)
+    {
+        // Fetch the number of users registered daily in the specified month and year
+        // Modify as per your requirements
+        return User::whereMonth('created_at', $month)
+                ->whereYear('created_at', $year)
+                ->groupBy(DB::raw('DAY(created_at)'))
+                ->select(DB::raw('DAY(created_at) as day'), DB::raw('count(*) as count'))
+                ->get() ?: [];
+    }
+
+    public function getRecentUsers()
+    {
+        // Fetch the most recent users
+        return User::latest()->take(5)->get() ?: [];// Adjust as necessary
+    }
+
+
+
+
+
+
     public function downloadUserReportPdf(Request $request)
     {
-        // Get the base64 images
+        // Fetch form data for selected month and year
+        $selectedMonth = $request->input('month');
+        $selectedYear = $request->input('year');
+        
+        // Fetch the chart images (base64) from the form data
         $monthlyChartImage = $request->input('monthlyChartImage');
         $weeklyChartImage = $request->input('weeklyChartImage');
         $dailyChartImage = $request->input('dailyChartImage');
 
-        // Prepare data for the PDF view
-        $pdfData = [
-            'recentUsers' => User::orderBy('created_at', 'DESC')->take(10)->get(),
-            'userRegistrationsByMonth' => $request->input('userRegistrationsByMonth'),
-            'weeklyChartData' => $request->input('weeklyChartData'),
-            'dailyChartData' => $request->input('dailyChartData'),
+        // Fetch the necessary data for the selected month and year
+        $monthlyRegisteredUsers = $this->getMonthlyRegisteredUsers($selectedMonth, $selectedYear);
+        $weeklyRegisteredUsers = $this->getWeeklyRegisteredUsers($selectedMonth, $selectedYear);
+        $dailyRegisteredUsers = $this->getDailyRegisteredUsers($selectedMonth, $selectedYear);
+        $recentUsers = $this->getRecentUsers();
+
+        // Prepare data for the PDF
+        $data = [
+            'selectedMonth' => $selectedMonth,
+            'selectedYear' => $selectedYear,
+            'monthlyRegisteredUsers' => $monthlyRegisteredUsers,
+            'weeklyRegisteredUsers' => $weeklyRegisteredUsers,
+            'dailyRegisteredUsers' => $dailyRegisteredUsers,
+            'recentUsers' => $recentUsers,
             'monthlyChartImage' => $monthlyChartImage,
             'weeklyChartImage' => $weeklyChartImage,
-            'dailyChartImage' => $dailyChartImage,
-            'selectedMonth' => $request->input('selectedMonth'),
-            'selectedYear' => $request->input('selectedYear'),
+            'dailyChartImage' => $dailyChartImage
         ];
 
-        // Generate PDF
-        $pdf = PDF::loadView('admin.pdf-user', $pdfData)
-            ->setPaper('a4', 'portrait');
+        // Generate the PDF
+        $pdf = PDF::loadView('admin.report-user', $data)
+            ->setPaper('A4', 'portrait'); // Set paper size to A4, portrait orientation
 
-
-        // Return the PDF download
-        return $pdf->download('user_report_' . $request->input('selectedYear') . '_' . $request->input('selectedMonth') . '.pdf');
+        // Return the PDF file
+        return $pdf->download('user_report.pdf');
     }
+
+
+
+
+
 
     public function downloadInventoryReportPdf(Request $request)
     {
@@ -3573,6 +3638,14 @@ class AdminController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
 
+        // Generate available months (same logic as above)
+        $availableMonths = collect(range(1, 12))->map(function ($month) {
+            return (object)[
+                'id' => $month,
+                'name' => Carbon::create()->month($month)->format('F')
+            ];
+        });
+
         // Retrieve input and parse dates
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
         $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
@@ -3602,8 +3675,9 @@ class AdminController extends Controller
         $newUsers = User::whereBetween('created_at', [$startDate, $endDate])->get();
 
         // Return the results to the view
-        return view('admin.user-reports', compact('newUsersCount', 'newUsers', 'startDate', 'endDate', 'chartData'));
+        return view('admin.user-reports', compact('availableMonths', 'newUsersCount', 'newUsers', 'startDate', 'endDate', 'chartData'));
     }
+
 
     // Controller method to generate the sales report
     public function generateInputSales(Request $request)

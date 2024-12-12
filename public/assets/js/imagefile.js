@@ -1,40 +1,43 @@
 
+$(function() {
 
-
-$("#myFile").on("change", function(e) {
-  const [file] = this.files;
-  if (file) {
-      $("#imgpreview img").attr('src', URL.createObjectURL(file));
-      $("#imgpreview").show();
-      $("#imgpreview .remove-upload").show();
-      $("#upload-file").hide();
-  }
-});
-
-$("#gFile").on("change", function(e) {
-  const gphotos = this.files;
-  $("#galUpload").removeClass('up-load');
-  let imgCount = 0;
-
-  // Clear existing gallery images
-  $('#gallery-container .gitems').remove();
-
-  $.each(gphotos, function(key, val) {
-      imgCount++;
-      const fileName = val.name; // Get file name
-      $('#galUpload').before('<div class="item gitems"><img src="' + URL
-          .createObjectURL(val) +
-          '" style="width: 100px; height: 100px; object-fit: cover;" /><p class="file-name-overlay">' +
-          fileName +
-          '</p><button type="button" class="remove-upload" onclick="removeGalleryImage(this, \'gFile\')">Remove</button></div>'
-          );
+  $("#myFile").on("change", function(e) {
+      const [file] = this.files;
+      if (file) {
+          $("#imgpreview img").attr('src', URL.createObjectURL(file));
+          $("#imgpreview").show();
+          $("#imgpreview .remove-upload").show();
+          $("#upload-file").hide();
+      }
   });
 
-  if (imgCount > 2) {
-      $('#galUpload').css('flex-basis', '100%');
-  } else {
-      $('#galUpload').css('flex-basis', 'auto');
-  }
+  $("#gFile").on("change", function(e) {
+      const gphotos = this.files;
+      $("#galUpload").removeClass('up-load');
+      let imgCount = 0;
+
+      // Clear existing gallery images
+      $('#gallery-container .gitems').remove();
+
+      $.each(gphotos, function(key, val) {
+          imgCount++;
+          const fileName = val.name; // Get file name
+          $('#galUpload').before('<div class="item gitems"><img src="' + URL
+              .createObjectURL(val) +
+              '" style="width: 100px; height: 100px; object-fit: cover;" /><p class="file-name-overlay">' +
+              fileName +
+              '</p><button type="button" class="remove-upload" onclick="removeGalleryImage(this, \'gFile\')">Remove</button></div>'
+          );
+      });
+
+      if (imgCount > 2) {
+          $('#galUpload').css('flex-basis', '100%');
+      } else {
+          $('#galUpload').css('flex-basis', 'auto');
+      }
+  });
+
+
 });
 
 // Requirements preview with file name inside the picture area

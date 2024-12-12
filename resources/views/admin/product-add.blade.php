@@ -178,7 +178,7 @@
 
                 <div class="wg-box">
                     <fieldset>
-                        <div class="body-title">Upload Images <span class="tf-color-1">*</span></div>
+                        <div class="body-title">Upload Main Image <span class="tf-color-1">*</span></div>
                         <div class="upload-image flex-grow">
                             <div class="item" id="imgpreview" style="display:none">
                                 <img src="../../../localhost_8000/images/upload/upload-1.png" id="preview-img" class="effect8" alt="">

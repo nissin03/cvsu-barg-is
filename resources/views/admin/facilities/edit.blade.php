@@ -283,8 +283,8 @@
                             <div class="body-title mb-10">Status</div>
                             <div class="select mb-10">
                                 <select name="featured">
-                                    <option value="0" {{ $facility->featured == '0' ? 'selected' : '' }}>No</option>
-                                    <option value="1" {{ $facility->featured == '1' ? 'selected' : '' }}>Yes</option>
+                                    <option value="0" {{ $facility->status == '0' ? 'selected' : '' }}>No</option>
+                                    <option value="1" {{ $facility->status == '1' ? 'selected' : '' }}>Yes</option>
                                 </select>
                             </div>
                         </fieldset>
@@ -296,8 +296,8 @@
                             <div class="body-title mb-10">Featured</div>
                             <div class="select mb-10">
                                 <select name="featured">
-                                    <option value="0" {{ old('featured') == '0' ? 'selected' : '' }}>No</option>
-                                    <option value="1" {{ old('featured') == '1' ? 'selected' : '' }}>Yes</option>
+                                    <option value="0" {{ $facility->featured == '0' ? 'selected' : '' }}>No</option>
+                                    <option value="1" {{ $facility->featured == '1' ? 'selected' : '' }}>Yes</option>
                                 </select>
                             </div>
                         </fieldset>
@@ -305,6 +305,15 @@
                             <span class="alert alert-danger text-center">{{ $message }} </span>
                         @enderror
                     </div>
+                    @foreach ($facility->facilityAttributes as $facilityAttribute)
+                        <fieldset class="name" id="hideRoomBox">
+                            <div class="body-title mb-10">Capacity <span class="tf-color-1"
+                                    id="option">(optional)</span>
+                            </div>
+                            <input type="number" min="0" id="roomCapacityWhole" name="whole_capacity"
+                                placeholder="Enter capacity" value="{{ $facilityAttribute->whole_capacity }}">
+                        </fieldset>
+                    @endforeach
 
 
 
@@ -312,48 +321,47 @@
                 </div>
 
                 <div class="wg-box" id="roomBox">
-                    <div id="dormitoryRooms" class="d-flex justify-content-between align-items-center border-bottom pb-3"
-                        style="display: none;">
+                    <div id="dormitoryRooms" class="d-flex justify-content-between align-items-center border-bottom pb-3">
                         <h4>Details</h4>
                         <button type="button" data-bs-toggle="modal" data-bs-target="#addRoom">Add Room</button>
                     </div>
-                    <p>No rooms yet :(</p>
+                    <p class="d-flex justify-content-center align-items-center">No rooms yet :(</p>
                     <div id="roomContainer" class="mt-4">
-                        <h4>Rooms</h4>
+
                         <ul class="list-group" id="roomList">
-                            @foreach ($facilityAttributes as $attribute)
-                                <fieldset class="name">
-                                    <div class="body-title mb-10">Room Name <span class="tf-color-1">*</span>
+                            @forelse ($facility->facilityAttributes as $facilityAttribute)
+                                <!-- Check if room data is valid before rendering -->
+                                @if ($facilityAttribute->room_name && $facilityAttribute->capacity > 0)
+                                    <div class="card p-3 mb-3">
+                                        <div class="card-body d-flex justify-content-between align-items-center">
+                                            <div class="text-start">
+                                                <div class="d-flex justify-content-center align-items-center">
+                                                    <h4 class="pe-2">{{ $facilityAttribute->room_name ?? null }}</h4>
+                                                    @if ($facilityAttribute->sex_restriction)
+                                                        <span class="badge bg-info">
+                                                            {{ ucfirst($facilityAttribute->sex_restriction ?? null) }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                <p class="fw-bold">Capacity: <span
+                                                        class="badge bg-warning">{{ $facilityAttribute->capacity ?? null }}</span>
+                                                </p>
+                                            </div>
+                                            <button class="btn btn-lg btn-outline-danger delete-btn"
+                                                onclick="deletePrice(${index})">
+                                                <i class="icon-trash"></i>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <input type="text" id="roomName"
-                                        name="facility_attributes[{{ $loop->index }}][room_name]"
-                                        placeholder="Enter room name"
-                                        value="{{ old('facility_attributes.' . $loop->index . '.room_name', $attribute->room_name) }}">
-                                </fieldset>
+                                @endif
 
-                                <fieldset class="name">
-                                    <div class="body-title mb-10">Capacity <span class="tf-color-1">*</span></div>
-                                    <input type="number" min="0" id="roomCapacity"
-                                        name="facility_attributes[{{ $loop->index }}][capacity]"
-                                        placeholder="Enter room capacity"
-                                        value="{{ old('facility_attributes.' . $loop->index . '.capacity', $attribute->capacity) }}">
-                                </fieldset>
-
-                                <fieldset class="sex-restriction">
-                                    <div class="body-title mb-10">Sex Restriction</div>
-                                    <select id="roomSexRestriction"
-                                        name="facility_attributes[{{ $loop->index }}][sex_restriction]">
-                                        <option value="">Choose Sex Restriction... </option>
-                                        <option value="male"
-                                            {{ old('facility_attributes.' . $loop->index . '.sex_restriction', $attribute->sex_restriction) === 'male' ? 'selected' : '' }}>
-                                            Male</option>
-                                        <option value="female"
-                                            {{ old('facility_attributes.' . $loop->index . '.sex_restriction', $attribute->sex_restriction) === 'female' ? 'selected' : '' }}>
-                                            Female</option>
-                                    </select>
-                                </fieldset>
-                            @endforeach
+                            @empty
+                                <li class="list-group-item">
+                                    No facility attributes available.
+                                </li>
+                            @endforelse
                         </ul>
+
                     </div>
                     <div class="modal fade" id="addRoom" tabindex="-1" aria-labelledby="addRoomLabel"
                         aria-hidden="true">
@@ -380,7 +388,7 @@
                                     <fieldset class="sex-restriction">
                                         <div class="body-title mb-10">Sex Restriction</div>
                                         <select id="roomSexRestriction" name="sex_restriction">
-                                            <option value="">Choose Sex Restriction... </option>
+                                            <option value="" selected>Choose Sex Restriction... </option>
                                             <option value="male">Male</option>
                                             <option value="female">Female</option>
                                         </select>
@@ -390,13 +398,14 @@
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary"
                                         data-bs-dismiss="modal">Close</button>
-                                    <button type="button" class="btn btn-primary" id="saveRoomChanges">Save
+                                    <button type="button" class="btn btn-primary" id="saveRoomChanges"> Save
                                         changes</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
 
 
 
@@ -411,29 +420,43 @@
                         <button type="button" data-bs-toggle="modal" data-bs-target="#addPrice">Add Price</button>
                     </div>
 
-                    <p>No prices yet :(</p>
-
                     <div id="priceContainer" class="mt-4">
-                        <h4>Price List</h4>
                         <ul class="list-group container-sm" id="priceList">
                             @foreach ($prices as $price)
-                                <li class="list-group-item">
+                                {{-- <li class="list-group-item">
                                     Name: {{ $price->name }} | Price: {{ $price->value }} | Type:
                                     {{ ucfirst($price->price_type) }} | Based on Days:
                                     {{ $price->is_based_on_days ? 'Yes' : 'No' }}
-                                </li>
+                                </li> --}}
+                                <div class="card p-3 mb-3">
+                                    <div class="card-body d-flex justify-content-between align-items-center">
+                                        <div class="text-start">
+                                            <h4>{{ $price->name }}</h4>
+                                            <p>Type: <span class="badge bg-success">{{ $price->price_type }}</span></p>
+                                            <p>Price: PHP {{ $price->value }}</p>
+                                            <p>
+                                                Is based on days?:
+                                                <span
+                                                    class="badge {{ $price->is_based_on_days ? 'bg-success' : 'bg-danger' }}">
+                                                    {{ $price->is_based_on_days ?: 'N/A' }}
+                                                </span>
+                                            </p>
+                                        </div>
+                                        <button type="button" class="btn btn-lg btn-outline-danger delete-btn"
+                                            onclick="deletePrice(${index})">
+                                            <i class="icon-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             @endforeach
                         </ul>
                     </div>
 
 
                     <div class="cols gap10">
-                        <button class="tf-button w-full" type="submit">Create facility</button>
+                        <button class="tf-button w-full" type="submit">Update facility</button>
                     </div>
                 </div>
-
-
-
                 <div class="modal fade" id="addPrice" tabindex="-1" aria-labelledby="addPriceLabel"
                     aria-hidden="true">
                     <div class="modal-dialog">
@@ -501,7 +524,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="savePriceChanges">Save</button>
+                                <button type="button" class="btn btn-primary" id="savePriceChanges">Save</button>
                             </div>
                         </div>
                     </div>
@@ -522,120 +545,199 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
+    {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
     <script>
         $(document).ready(function() {
-
             let prices = [];
-            let rooms = [];
+            // let rooms = [];
 
-            $('#rentalType').on('change', function() {
-        const rentalType = $(this).val(); // Get the selected type
-        console.log('Facility Type:', rentalType); // Log the selected type
+            let rooms = @json($facility->facilityAttributes);
 
-        // Show or hide the room section based on the selected facility type
-        if (rentalType === 'individual' || rentalType === 'both') {
-            $('#dormitoryRooms').show(); // Show the "Add Room" button
-            $('#roomBox').show(); // Show the room list section
-        } else {
-            $('#dormitoryRooms').hide(); // Hide the "Add Room" button
-            $('#roomBox').hide(); // Hide the room list section
-        }
-    });
+            $("#rentalType").on("change", function() {
+                const rentalType = $(this).val();
+                console.log("Facility Type:", rentalType);
 
-    // Trigger the change event after the DOM is ready
-    $('#rentalType').trigger('change');
-    
-            // Handle Save Room Changes
-            $('#saveRoomChanges').on('click', function(event) {
+                $("#roomBox, #hideRoomBox, #priceBox, #option").hide();
+
+                switch (rentalType) {
+                    case "individual":
+                        $("#roomBox").show();
+                        $("#priceBox").show();
+                        break;
+                    case "whole_place":
+                        $("#roomCapacityWhole").show();
+                        $("#hideRoomBox").show();
+                        $("#priceBox").show();
+                        break;
+                    case "both":
+                        $("#roomBox").show();
+                        $("#hideRoomBox").show();
+                        $("#priceBox").show();
+                        $("#option").show();
+                        break;
+                    default:
+                        break;
+                }
+            });
+
+            $("#rentalType").trigger("change");
+
+            // renderRoomList();
+
+            $("#saveRoomChanges").on("click", function(event) {
                 event.preventDefault();
 
-                const roomName = $('#roomName').val();
-                const roomCapacity = $('#roomCapacity').val();
-                const roomSexRestriction = $('#roomSexRestriction').val();
+                const roomName = $("#roomName").val();
+                const roomCapacity = $("#roomCapacity").val();
+                const roomSexRestriction = $("#roomSexRestriction").val();
 
                 // Validate room data
                 if (!roomName || !roomCapacity) {
                     alert("Please fill in all fields");
                     return;
                 }
-
-                // Validate capacity as a number
                 if (isNaN(roomCapacity) || roomCapacity <= 0) {
                     alert("Capacity must be a positive number.");
                     return;
                 }
 
-                // Create new room object
+                const validSexRestrictions = ["male", "female"];
+                if (roomSexRestriction && !validSexRestrictions.includes(roomSexRestriction)) {
+                    roomSexRestriction = null;
+                }
+
                 const newRoom = {
                     room_name: roomName,
-                    capacity: parseInt(roomCapacity),
-                    sex_restriction: roomSexRestriction // Ensure integer capacity
+                    capacity: parseInt(roomCapacity) || null,
+                    sex_restriction: roomSexRestriction || null,
                 };
-
-                // Add new room to rooms array
                 rooms.push(newRoom);
-                console.log('New Room:', newRoom);
-
-                // Render the updated room list and update hidden form fields
                 renderRoomList();
                 updateHiddenRooms();
 
-                // Close the room modal
-                $('#addRoom').modal('hide');
+                // Close the modal
+                $("#addRoom").modal("hide");
+
+                $("#roomName").val("");
+                $("#roomCapacity").val("");
+                $("#roomSexRestriction").val("");
             });
 
-            // Render the room list dynamically
             function renderRoomList() {
-                $('#roomList').empty(); // Clear existing room list
+                $("#roomList").empty();
+                console.log(rooms);
                 rooms.forEach((room, index) => {
+                    const sex_container = room.sex_restriction ?
+                        `<span class="badge bg-info">${room.sex_restriction}</span>` : "";
+                    const capacity_container = room.capacity ? 
+                    ` <span class="badge bg-warning">${room.capacity}</span>` : "";
+
                     const listItem = `
-            <div class="card p-3 mb-3">
+             <div class="card p-3 mb-3">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div class="text-start">
-                        <h4>${room.room_name}</h4>
-                        <h4>${room.sex_restriction}</h4>
-                        <p>Capacity: <span class="badge bg-success">${room.capacity}</span></p>
+                        <div class="d-flex justify-content-center align-items-center">
+                            <h4 class="pe-2">${room.room_name ?? ""}</h4>
+                            ${sex_container}
+                        </div>
+                        <p class="fw-bold">Capacity: <span class="badge bg-warning">${room.capacity ?? ""}</span></p>
+                        ${capacity_container}
                     </div>
-                    <button class="btn btn-lg btn-outline-danger delete-btn" onclick="deleteRoom(${index})">
-                        <i class="icon-trash"></i>
-                    </button>
+                    <div class="d-flex">
+                <button type="button" class="btn btn-lg btn-outline-warning me-2" onclick="editRoom(${index})"><i class="icon-pen">Edit</i></button>
+                <button type="button" class="btn btn-lg btn-outline-danger delete-btn" onclick="deleteRoom(${index})">
+                <i class="icon-trash"></i>
+            </button>
+            </div>
                 </div>
             </div>
         `;
-                    $('#roomList').append(listItem);
+                    $("#roomList").append(listItem);
                 });
             }
 
-            // Delete room by index
-            window.deleteRoom = function(index) {
-                rooms.splice(index, 1); // Remove room from array
-                renderRoomList(); // Re-render the room list
+
+
+            window.editRoom = function(index) {
+                const room = rooms[index];
+                $("#roomName").val(room.room_name || "");
+                $("#roomCapacity").val(room.capacity || "");
+                $("#roomSexRestriction").val(room.sex_restriction || "");
+
+                $("#saveRoomChanges")
+                    .off("click")
+                    .on("click", function() {
+                        rooms[index].room_name = $("#roomName").val();
+                        const newCapacity = $("#roomCapacity").val();
+                        rooms[index].capacity = newCapacity && !isNaN(newCapacity) && newCapacity > 0 ? parseInt(newCapacity) : null; // Validate capacity
+        
+                        rooms[index].sex_restriction = $("#roomSexRestriction").val();
+                        renderRoomList();
+                        updateHiddenRooms();
+                        $("#addRoom").modal("hide");
+                    });
+
+                $("#addRoom").modal("show");
             };
 
-            // Update hidden inputs for rooms (to be submitted with form)
-            function updateHiddenRooms() {
-                const roomInput = $('#hiddenRooms');
-                roomInput.empty(); // Clear existing hidden inputs
-                console.log('Rooms:', rooms); // Log the rooms array
+            window.deleteRoom = function(index) {
+                rooms.splice(index, 1);
+                renderRoomList();
+                updateHiddenRooms();
+                clearRoomFields();
+            };
 
-                // Create hidden input fields for each room
+            function updateHiddenRooms() {
+                const roomInput = $("#hiddenRooms");
+                roomInput.empty();
+
                 rooms.forEach((room, index) => {
-                    roomInput.append(createHiddenInputRooms(`facility_attributes[${index}][room_name]`, room.room_name));
-                    roomInput.append(createHiddenInputRooms(`facility_attributes[${index}][sex_restriction]`,
-                        room.sex_restriction));
-                    roomInput.append(createHiddenInputRooms(`facility_attributes[${index}][capacity]`, room
-                        .capacity));
+
+
+                    function updateHiddenRooms() {
+                        const roomInput = $("#hiddenRooms");
+                        roomInput.empty();
+
+                        rooms.forEach((room, index) => {
+                            const sexRestrictionValue =
+                                room.sex_restriction && ['male', 'female'].includes(room
+                                    .sex_restriction) ?
+                                room.sex_restriction :
+                                null;
+
+                            if (room.room_name && room.capacity > 0) {
+                                roomInput.append(createHiddenInputRooms(
+                                    `facility_attributes[${index}][room_name]`, room
+                                    .room_name));
+                                roomInput.append(createHiddenInputRooms(
+                                    `facility_attributes[${index}][capacity]`, room.capacity, null
+                                ));
+                                roomInput.append(createHiddenInputRooms(
+                                    `facility_attributes[${index}][sex_restriction]`,
+                                    sexRestrictionValue));
+                            }
+                        });
+                    }
+
+                    if (room.room_name && room.capacity > 0) {
+                        roomInput.append(createHiddenInputRooms(`facility_attributes[${index}][room_name]`,
+                            room.room_name));
+                        roomInput.append(createHiddenInputRooms(`facility_attributes[${index}][capacity]`,
+                            room.capacity));
+                        roomInput.append(createHiddenInputRooms(
+                            `facility_attributes[${index}][sex_restriction]`, sexRestrictionValue));
+                    }
                 });
             }
 
-            // Handle Save Price Changes
-            $('#savePriceChanges').on('click', function(event) {
+            // Handle Save Price Changes (Add Price)
+            $("#savePriceChanges").on("click", function(event) {
                 event.preventDefault();
 
-                const name = $('#priceName').val();
-                const price_type = $('#priceTypeSelect').val();
-                const value = $('#value').val();
-                const isBasedOnDays = $('#isBasedOnDays').prop('checked') ? 1 : 0;
+                const name = $("#priceName").val();
+                const price_type = $("#priceTypeSelect").val();
+                const value = $("#value").val();
+                const isBasedOnDays = $("#isBasedOnDays").prop("checked") ? 1 : 0;
 
                 // Check for required fields
                 if (!name || !price_type || !value) {
@@ -643,7 +745,7 @@
                     return;
                 }
 
-                // Validate price value as a number
+                // Validate price value
                 if (isNaN(value) || parseFloat(value) <= 0) {
                     alert("Price must be a valid positive number.");
                     return;
@@ -654,122 +756,200 @@
                     name,
                     price_type,
                     value: parseFloat(value),
-                    is_based_on_days: isBasedOnDays
+                    is_based_on_days: isBasedOnDays,
                 };
                 prices.push(newPrice);
-                console.log('New Price:', newPrice);
+                console.log("New Price:", newPrice);
 
-                // Render the price list and update hidden fields
                 renderPriceList();
                 updateHiddenPrices();
 
-                $('#addPrice').modal('hide');
+                // Close the price modal
+                $("#addPrice").modal("hide");
             });
+
+            // Render the price list dynamically
+            function renderPriceList() {
+                $("#priceList").empty(); // Clear the price list
+                prices.forEach((price, index) => {
+                    const listItem = `
+              <div class="card p-3 mb-3">
+                  <div class="card-body d-flex justify-content-between align-items-center">
+                      <div class="text-start">
+                          <h4>${price.name}</h4>
+                          <p>Type: <span class="badge bg-success">${
+                              price.price_type
+                          }</span></p>
+                          <p>Price: PHP ${price.value}</p>
+                          <p>Is Based on Days?: 
+                              <span class="badge ${
+                                  price.is_based_on_days
+                                      ? "bg-success"
+                                      : "bg-danger"
+                              }">
+                                  ${price.is_based_on_days ? "Yes" : "No"}
+                              </span>
+                          </p>
+                      </div>
+                      <button type="button" class="btn btn-lg btn-outline-danger delete-btn" onclick="deletePrice(${index})">
+                          <i class="icon-trash"></i>
+                      </button>
+                  </div>
+              </div>
+            `;
+                    $("#priceList").append(listItem);
+                });
+            }
 
 
             window.deletePrice = function(index) {
                 prices.splice(index, 1);
-                renderPriceList(); // Re-render after deletion
+                renderPriceList();
+                updateHiddenPrices();
+                clearPriceFields();
             };
-            // Render the price list to the UI
-            function renderPriceList() {
-                $('#priceList').empty();
-                prices.forEach((price, index) => {
-                    const listItem = `
-            <div class="card p-3 mb-3">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div class="text-start">
-                        <h4>${price.name}</h4>
-                        <p>Type: <span class="badge bg-success">${price.price_type}</span></p>
-                        <p>Price: PHP ${price.value}</p>
-                        <p>
-                            Is based on days?: 
-                            <span class="badge ${price.is_based_on_days ? 'bg-success' : 'bg-danger'}">
-                                ${price.is_based_on_days ? 'Yes' : 'No'}
-                            </span>
-                        </p>
-                    </div>
-                    <button class="btn btn-lg btn-outline-danger delete-btn" onclick="deletePrice(${index})">
-                        <i class="icon-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-                    $('#priceList').append(listItem);
-                });
+
+            function clearRoomFields() {
+                $("#roomName").val("");
+                $("#roomCapacity").val("");
+                $("#roomSexRestriction").val("");
             }
 
-            // Update hidden input fields for form submission
+            function clearPriceFields() {
+                $("#priceName").val("");
+                $("#priceTypeSelect").val("");
+                $("#value").val("");
+                $("#isBasedOnDays").prop("checked", false);
+            }
+
+            // Update hidden inputs for prices (to be submitted with the form)
             function updateHiddenPrices() {
-                const priceInput = $('#hiddenPrices');
-                priceInput.empty();
-                console.log('Prices:', prices);
+                const priceInput = $("#hiddenPrices");
+                priceInput.empty(); // Clear existing hidden inputs
 
                 prices.forEach((price, index) => {
-                    priceInput.append(createHiddenInput(`prices[${index}][name]`, price.name));
-                    priceInput.append(createHiddenInput(`prices[${index}][price_type]`, price.price_type));
-                    priceInput.append(createHiddenInput(`prices[${index}][value]`, price.value));
-                    priceInput.append(createHiddenInput(`prices[${index}][is_based_on_days]`, price
-                        .is_based_on_days));
+                    priceInput.append(
+                        createHiddenInput(`prices[${index}][name]`, price.name)
+                    );
+                    priceInput.append(
+                        createHiddenInput(
+                            `prices[${index}][price_type]`,
+                            price.price_type
+                        )
+                    );
+                    priceInput.append(
+                        createHiddenInput(`prices[${index}][value]`, price.value)
+                    );
+                    priceInput.append(
+                        createHiddenInput(
+                            `prices[${index}][is_based_on_days]`,
+                            price.is_based_on_days
+                        )
+                    );
                 });
             }
 
-            // Create a hidden input field
+            // Helper function to create hidden input for prices
             function createHiddenInput(name, value) {
                 return `<input type="hidden" name="${name}" value="${value}">`;
             }
 
+            // Helper function to create hidden input for rooms
             function createHiddenInputRooms(name, value) {
                 return `<input type="hidden" name="${name}" value="${value}">`;
             }
 
-            // Handle form submission via AJAX
-            $('#facilityForm').on('submit', function(event) {
+            $("#facilityForm").on("submit", function(event) {
                 event.preventDefault();
 
                 var formData = new FormData(this);
-                console.log(formData);
+
+                const facilityType = $("#rentalType").val();
 
                 prices.forEach((price, index) => {
                     formData.append(`prices[${index}][name]`, price.name);
                     formData.append(`prices[${index}][price_type]`, price.price_type);
                     formData.append(`prices[${index}][value]`, price.value);
-                    formData.append(`prices[${index}][is_based_on_days]`, price.is_based_on_days);
+                    formData.append(
+                        `prices[${index}][is_based_on_days]`,
+                        price.is_based_on_days
+                    );
                 });
 
-                rooms.forEach((room, index) => {
-                    formData.append(`facility_attributes[${index}][name]`, room.room_name);
-                    formData.append(`facility_attributes[${index}][capacity]`, room.capacity);
-                });
+                if (rooms.length > 0) {
+                    rooms.forEach((room, index) => {
+                        if (room.room_name && room.capacity > 0) { // Only add valid room data
+                            formData.append(`facility_attributes[${index}][room_name]`, room
+                                .room_name);
+                            formData.append(`facility_attributes[${index}][capacity]`, room
+                                .capacity);
+                            formData.append(`facility_attributes[${index}][sex_restriction]`, room
+                                .sex_restriction === "null" ? null : room.sex_restriction);
 
+                        }
+                    });
+                }
+
+                if (facilityType === "whole_place") {
+                    // Only append whole_capacity
+                    const wholeCapacity = $("#roomCapacityWhole").val();
+                    formData.append("whole_capacity", wholeCapacity);
+                } else {
+                    // Append facility attributes for individual or both
+                    rooms.forEach((room, index) => {
+                        formData.append(
+                            `facility_attributes[${index}][room_name]`,
+                            room.room_name
+                        );
+                        formData.append(
+                            `facility_attributes[${index}][capacity]`,
+                            room.capacity
+                        );
+                        formData.append(
+                            `facility_attributes[${index}][sex_restriction]`,
+                            room.sex_restriction
+                        );
+                    });
+                }
+
+                console.log("Form Data Before Submission:");
+                for (var pair of formData.entries()) {
+                    console.log(pair[0] + ": " + pair[1]);
+                }
                 $.ajax({
-                    url: $(this).attr('action'),
-                    method: 'POST',
+                    url: $(this).attr("action"),
+                    method: "POST",
                     data: formData,
                     processData: false,
                     contentType: false,
                     headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },  
+                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                    },
                     success: function(response) {
-                        console.log('Success response:', response);
-                        showAlert('Facility updated successfully!', 'success');
+                        console.log("Success response:", response);
+                        if (response.action === "create") {
+                            showAlert("Facility created successfully!", "success");
+                        } else if (response.action === "update") {
+                            showAlert("Facility updated successfully!", "success");
+                        }
                         setTimeout(function() {
-                            window.location.href = '/admin/facilities';
+                            window.location.href = "/admin/facilities";
                         }, 2000);
                     },
                     error: function(xhr) {
-                        console.log('Error:', xhr);
+                        console.log("Error:", xhr);
                         if (xhr.status === 422) {
                             displayValidationErrors(xhr.responseJSON.errors);
                         } else {
-                            showAlert('An unexpected error occurred. Please try again.',
-                                'danger');
+                            showAlert(
+                                "An unexpected error occurred. Please try again.",
+                                "danger"
+                            );
                         }
-                    }
+                    },
                 });
 
-                console.log("Hidden form data", $('#hiddenRooms').html()); // Log hidden input fields
+                console.log("Hidden form data", $("#hiddenRooms").html()); // Log hidden input fields
             });
 
             // Display validation errors in form
@@ -784,31 +964,23 @@
 
             // Show custom alert
             function showAlert(message, type) {
-                const alertBox = $('<div>', {
+                const alertBox = $("<div>", {
                     class: `alert alert-${type} alert-dismissible fade show`,
-                    role: 'alert',
-                    text: message
+                    role: "alert",
+                    text: message,
                 }).append(
-                    $('<button>', {
-                        type: 'button',
-                        class: 'btn-close',
-                        'data-bs-dismiss': 'alert',
-                        'aria-label': 'Close'
+                    $("<button>", {
+                        type: "button",
+                        class: "btn-close",
+                        "data-bs-dismiss": "alert",
+                        "aria-label": "Close",
                     })
                 );
 
-                $('#alertContainer').html(alertBox);
+                $("#alertContainer").html(alertBox);
                 alertBox.alert();
             }
-
-            console.log(rooms); // Ensure that rooms array is populated correctly
-            console.log(prices); // Ensure that prices array is populated correctly
-
         });
-
-
-
-
 
         function removeUpload(previewId, inputId) {
             $('#' + previewId).hide(); // Hide the preview
@@ -828,4 +1000,3 @@
         }
     </script>
 @endpush
-

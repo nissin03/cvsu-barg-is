@@ -167,9 +167,21 @@
                 passwordContainer.style.display = 'block';
                 continueBtn.style.display = 'none';
             } else {
-                alert('Please use your cvsu or Gmail email address.');
+                Swal.fire({
+                    title: 'Invalid Email',
+                    text: 'Please use your CVSU or Gmail email address.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Go to Register',
+                    cancelButtonText: 'Login',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/register';  // Redirect to register page
+                    }
+                });
             }
         });
+    });
 
         // Handle form submission
         document.getElementById('login-form').addEventListener('submit', function(event) {
@@ -179,5 +191,5 @@
                 alert('Please enter your password.');
             }
         });
-    });
+
 </script>

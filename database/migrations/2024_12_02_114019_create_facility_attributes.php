@@ -15,8 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('facility_id')->constrained('facilities')->onDelete('cascade');
             $table->string('room_name')->nullable();
-            $table->integer('capacity')->nullable();;
-            $table->enum('sex_restriction', ['male', 'female'])->nullable();
+            $table->unsignedInteger('capacity')->nullable();
+            $table->unsignedInteger('whole_capacity')->nullable();
+            $table->enum('sex_restriction', ['male','female'])->nullable();
             $table->timestamps();
         });
     }

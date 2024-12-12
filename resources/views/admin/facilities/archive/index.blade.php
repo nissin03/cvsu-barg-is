@@ -100,7 +100,53 @@
             color: var(--primary-color);
         }
 
+         /* Bulk Actions */
+         .bulk-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md) 0;
+        }
 
+        .bulk-actions label {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin: 0;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .btn-success {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background-color: #218838;
+        }
+
+        /* Pagination */
+        .pagination-wrapper {
+            display: flex;
+            justify-content: center;
+            padding-top: var(--spacing-lg);
+        }
 
 
         
@@ -117,30 +163,46 @@
                 </ul>
             </div>
 
+            
           
 
             <div class="table-responsive">
             <table class="table table-striped table-bordered">
+            <div class="bulk-actions">
+                <button class="btn btn-success" id="restore-btn" disabled>
+                    <i class="icon-restore"></i>
+                    <span>Restore</span>
+                </button>
+            </div>
+
+            @if (Session::has('status'))
+                <div class="alert alert-success mb-4" role="alert">
+                    {{ Session::get('status') }}
+                </div>
+            @endif
                 <thead>
                     <tr>
-                        <th><input type="checkbox" class="select-all-checkbox"></th> <!-- Select All -->
+                        <th></th> <!-- Select All -->
                         <th>#</th>
                         <th>Facility</th>
                         <th>Archived On</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($facilities as $facility)
-                    <tr>
-                        <td><input type="checkbox" class="select-item" data-id="{{ $facility->id }}"></td> <!-- Individual checkbox -->
-                        <td>{{ $facility->id }}</td>
-                        <td>{{ $facility->name }}</td>
-                        <td>{{ $facility->archived_on }}</td>
-                    </tr>
-                    @endforeach
+                    @forelse ($archivedFacilities as $facility)
+                        <tr>
+                            <td><input type="checkbox" class="select-item" data-id="{{ $facility->id }}"></td>
+                            <td>{{ $facility->id }}</td>
+                            <td>{{ $facility->name }}</td>
+                            <td>{{ $facility->archived_at }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="text-center">No archived facilities available.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
-            <button id="restore-btn" class="btn btn-success">Restore Selected</button>
         </div>
     </div>
 </div>
@@ -152,89 +214,85 @@
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
    $(function() {
-    // Select All checkbox functionality
-    $('.select-all-checkbox').on('change', function() {
-        var isChecked = $(this).prop('checked');
-        $('.select-item').prop('checked', isChecked);
-    });
+            const updateButtons = () => {
+                const selected = $('.select-item:checked').length;
+                $('#selected-count').text(`${selected} selected`);
+                $('#restore-btn').prop('disabled', selected === 0);
+            };
 
-    // Individual checkbox click behavior
-    $('.select-item').on('change', function() {
-        var allChecked = $('.select-item:checked').length === $('.select-item').length;
-        $('.select-all-checkbox').prop('checked', allChecked);
-    });
-
-    // Restore Button Click
-    $('#restore-btn').on('click', function() {
-        const ids = $('.select-item:checked').map(function() {
-            return $(this).data('id');
-        }).get();
-
-        if (ids.length > 0) {
-            Swal.fire({
-                title: 'Restore Facility',
-                text: `Do you want to restore ${ids.length} facility(s)?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, restore them!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/admin/facility/restore',
-                        method: 'POST',
-                        data: {
-                            ids: ids,
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            Swal.fire({
-                                title: 'Success!',
-                                text: response.status,
-                                icon: 'success'
-                            }).then(() => {
-                                // Remove ALL selected facilities from the archived table
-                                ids.forEach(function(id) {
-                                    $(`tr[data-id="${id}"]`).remove(); // Remove from archived table
-                                });
-
-                                // Add the restored facilities to the active facilities table
-                                response.facilities.forEach(function(facility) {
-                                    const restoredRow = `<tr data-id="${facility.id}">
-                                        <td><input type="checkbox" class="select-item" data-id="${facility.id}"></td>
-                                        <td>${facility.id}</td>
-                                        <td>${facility.name}</td>
-                                        <td>${facility.archived_at ? facility.archived_at : 'Not archived'}</td>
-                                    </tr>`;
-
-                                    $('#active-facilities-table tbody').prepend(restoredRow);
-                                });
-
-                                // Uncheck the select all checkbox
-                                $('.select-all-checkbox').prop('checked', false);
-                            });
-                        },
-                        error: function() {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: 'An error occurred while restoring the facility.',
-                                icon: 'error'
-                            });
-                        }
-                    });
-                }
+            // Select All functionality
+            $('#select-all').on('change', function() {
+                $('.select-item').prop('checked', $(this).prop('checked'));
+                updateButtons();
             });
-        } else {
-            Swal.fire({
-                title: 'No items selected!',
-                text: 'Please select at least one item to restore.',
-                icon: 'warning'
+
+            // Individual checkbox change
+            $('.select-item').on('change', function() {
+                const allChecked = $('.select-item:checked').length === $('.select-item').length;
+                $('#select-all').prop('checked', allChecked);
+                updateButtons();
             });
-        }
-    });
-});
+
+                // Restore Button Click
+                $('#restore-btn').on('click', function() {
+                    const ids = $('.select-item:checked').map(function() {
+                        return $(this).data('id');
+                    }).get();
+
+                    if (ids.length > 0) {
+                        Swal.fire({
+                            title: 'Restore Facility',
+                            text: `Do you want to restore ${ids.length} facility/ies?`,
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#28a745',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Yes, restore them!',
+                            cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.ajax({
+                                    url: '/admin/facility/restore',
+                                    method: 'POST',
+                                    data: {
+                                        ids: ids,
+                                        _token: '{{ csrf_token() }}'
+                                    },
+                                    success: function(response) {
+                                        Swal.fire({
+                                            title: 'Success!',
+                                            text: response.status,
+                                            icon: 'success'
+                                        }).then(() => {
+                                            // Remove restored rows dynamically
+                                            response.restoredIds.forEach(function(id) {
+                                                $(`tr input.select-item[data-id="${id}"]`).closest('tr').remove();
+                                            });
+
+                                            // Update the select-all checkbox and restore button state
+                                            $('#select-all').prop('checked', false);
+                                            updateButtons();
+
+                                            // If table is empty, display "no data" message
+                                            if ($('.table-responsive tbody tr').length === 0) {
+                                                $('.table-responsive tbody').append('<tr><td colspan="4" class="text-center">No archived facilities available.</td></tr>');
+                                            }
+                                        });
+                                    },
+                                    error: function() {
+                                        Swal.fire({
+                                            title: 'Error!',
+                                            text: 'An error occurred while restoring the products.',
+                                            icon: 'error'
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
 
 
 
