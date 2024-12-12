@@ -34,9 +34,20 @@
                         </button>
                         <form action="{{ route('admin.downloadPdf') }}" method="POST">
                             @csrf
-                            <input type="hidden" name="monthly_sales_img" id="monthly-sales-img">
-                            <input type="hidden" name="weekly_sales_img" id="weekly-sales-img">
-                            <input type="hidden" name="daily_sales_img" id="daily-sales-img">
+                            <!-- Include only the report data values (without graph images) -->
+                            <input type="hidden" name="total_amount" value="{{ $TotalAmount }}">
+                            <input type="hidden" name="total_reserved_amount" value="{{ $TotalReservedAmount }}">
+                            <input type="hidden" name="total_picked_up_amount" value="{{ $TotalPickedUpAmount }}">
+                            <input type="hidden" name="total_canceled_amount" value="{{ $TotalCanceledAmount }}">
+                            <input type="hidden" name="total_amount_w" value="{{ $TotalAmountW }}">
+                            <input type="hidden" name="total_reserved_amount_w" value="{{ $TotalReservedAmountW }}">
+                            <input type="hidden" name="total_picked_up_amount_w" value="{{ $TotalPickedUpAmountW }}">
+                            <input type="hidden" name="total_canceled_amount_w" value="{{ $TotalCanceledAmountW }}">
+                            <input type="hidden" name="total_amount_d" value="{{ $TotalAmountD }}">
+                            <input type="hidden" name="total_reserved_amount_d" value="{{ $TotalReservedAmountD }}">
+                            <input type="hidden" name="total_picked_up_amount_d" value="{{ $TotalPickedUpAmountD }}">
+                            <input type="hidden" name="total_canceled_amount_d" value="{{ $TotalCanceledAmountD }}">
+                            
                             <button type="submit" class="btn btn-danger">Download PDF</button>
                         </form>
                     </div>

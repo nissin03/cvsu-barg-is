@@ -140,7 +140,7 @@
                             <div class="body-title mb-10">Facility Type<span class="tf-color-1">*</span></div>
                             <div class="select">
                                 <select id="rentalType" name="facility_type" required>
-                                    <option value="" selected disabled>Choose rental facility_type...</option>
+                                    <option value="" selected disabled>Choose Facility Type...</option>
                                     <option value="individual"
                                         {{ old('facility_type') === 'individual' ? 'selected' : '' }}>
                                         Individual
@@ -181,37 +181,36 @@
                         <span class="alert alert-danger text-center">{{ $message }} </span>
                     @enderror
 
-                    <!-- Requirements formatted like upload image -->
-
                 </div>
 
                 <div class="wg-box">
 
-                    <fieldset>
-                        <div class="body-title mb-10">Requirements <span class="tf-color-1">*</span></div>
-                        <div class="upload-image flex-grow">
-                            <div class="item" id="requirementsPreview" style="display:none">
-                                <img src="{{ asset('images/upload/upload-1.png') }}" id="requirements-preview-img"
-                                    class="effect8" alt="">
-                                <button type="button" class="remove-upload"
-                                    onclick="removeUpload('requirementsPreview', 'requirementsFile')">Remove</button>
-                            </div>
-                            <div id="upload-requirements" class="item up-load">
-                                <label class="uploadfile" for="requirementsFile">
-                                    <span class="icon">
-                                        <i class="icon-upload-cloud"></i>
-                                    </span>
-                                    <span class="body-text">Select your Requirements file here or click to browse</span>
-                                    <input type="file" id="requirementsFile" name="requirements"
-                                        accept=".pdf,.doc,.docx,.jpg,.png">
+                        <fieldset>
+                            <div class="body-title mb-10">Requirements <span class="tf-color-1">*</span></div>
+                            <div class="upload-image flex-grow">
+                                <div class="item" id="requirementsPreview" style="display:none">
+                                    <img src="{{ asset('images/upload/upload-1.png') }}" id="requirements-preview-img"
+                                        class="effect8" alt="">
+                                    <button type="button" class="remove-upload"
+                                        onclick="removeUpload('requirementsPreview', 'requirementsFile')">Remove</button>
+                                </div>
+                                <div id="upload-requirements" class="item up-load">
+                                    <label class="uploadfile" for="requirementsFile">
+                                        <span class="icon">
+                                            <i class="icon-upload-cloud"></i>
+                                        </span>
+                                        <span class="body-text">Select your Requirements file here or click to browse</span>
+                                        <input type="file" id="requirementsFile" name="requirements"
+                                            accept=".pdf,.doc,.docx,.jpg,.png">
 
-                                </label>
+                                    </label>
+                                </div>
                             </div>
-                        </div>
-                    </fieldset>
-                    @error('requirements')
-                        <span class="alert alert-danger text-center">{{ $message }} </span>
-                    @enderror
+                        </fieldset>
+                        @error('requirements')
+                            <span class="alert alert-danger text-center">{{ $message }} </span>
+                        @enderror
+                    
                     <!-- Image upload -->
                     <fieldset>
                         <div class="body-title">Upload main image <span class="tf-color-1">*</span></div>
@@ -287,72 +286,72 @@
                             <span class="alert alert-danger text-center">{{ $message }} </span>
                         @enderror
                     </div>
+                    <fieldset class="name" id="hideRoomBox">
+                        <div class="body-title mb-10">Capacity <span class="tf-color-1" id="option">(optional)</span></div>
+                        <input type="number" min="0" id="roomCapacityWhole" name="whole_capacity"
+                            placeholder="Enter capacity">
+                    </fieldset> 
+              </div>
 
-
-
-
+              
+              <div class="wg-box" id="roomBox">
+                <div id="dormitoryRooms" class="d-flex justify-content-between align-items-center border-bottom pb-3">
+                    <h4>Details</h4>
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#addRoom">Add Room</button>
                 </div>
+                <p>No rooms yet :(</p>
+                <div id="roomContainer" class="mt-4">
+                    <h4>Rooms</h4>
+                    <ul class="list-group" id="roomList"></ul>
+                </div>
+                <div class="modal fade" id="addRoom" tabindex="-1" aria-labelledby="addRoomLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="addRoomLabel">Add Room</h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <fieldset class="name">
+                                    <div class="body-title mb-10">Room Name <span class="tf-color-1">*</span></div>
+                                    <input type="text" id="roomName" name="room_name"
+                                        placeholder="Enter room name">
+                                </fieldset>
 
-                <div class="wg-box" id="roomBox">
-                    <div id="dormitoryRooms" class="d-flex justify-content-between align-items-center border-bottom pb-3"
-                        style="display: none;">
-                        <h4>Details</h4>
-                        <button type="button" data-bs-toggle="modal" data-bs-target="#addRoom">Add Room</button>
-                    </div>
-                    <p>No rooms yet :(</p>
-                    <div id="roomContainer" class="mt-4">
-                        <h4>Rooms</h4>
-                        <ul class="list-group" id="roomList"></ul>
-                    </div>
-                    <div class="modal fade" id="addRoom" tabindex="-1" aria-labelledby="addRoomLabel"
-                        aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h1 class="modal-title fs-5" id="addRoomLabel">Add Room</h1>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <fieldset class="name">
-                                        <div class="body-title mb-10">Room Name <span class="tf-color-1">*</span></div>
-                                        <input type="text" id="roomName" name="room_name"
-                                            placeholder="Enter room name">
-                                    </fieldset>
+                                <fieldset class="name">
+                                    <div class="body-title mb-10">Capacity <span class="tf-color-1">*</span></div>
+                                    <input type="number" min="0" id="roomCapacity" name="capacity"
+                                        placeholder="Enter room capacity">
+                                </fieldset>
 
-                                    <fieldset class="name">
-                                        <div class="body-title mb-10">Capacity <span class="tf-color-1">*</span></div>
-                                        <input type="number" min="0" id="roomCapacity" name="capacity"
-                                            placeholder="Enter room capacity">
-                                    </fieldset>
+                                <fieldset class="sex-restriction">
+                                    <div class="body-title mb-10">Sex Restriction</div>
+                                    <select id="roomSexRestriction" name="sex_restriction">
+                                        <option value="">Choose Sex Restriction... </option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+                                </fieldset>
 
-                                    <fieldset class="sex-restriction">
-                                        <div class="body-title mb-10">Sex Restriction</div>
-                                        <select id="roomSexRestriction" name="sex_restriction">
-                                            <option value="">Choose Sex Restriction... </option>
-                                            <option value="male">Male</option>
-                                            <option value="female">Female</option>
-                                        </select>
-                                    </fieldset>
-
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary"
-                                        data-bs-dismiss="modal">Close</button>
-                                    <button type="button" class="btn btn-primary" id="saveRoomChanges">Save
-                                        changes</button>
-                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary"
+                                    data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="saveRoomChanges"> Save Changes</button>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
 
 
                 {{-- prices fields  --}}
 
 
-                <div class="wg-box">
+                <div class="wg-box" id="priceBox">
 
                     <div id="dormitoryFields"
                         class="d-flex justify-content-between align-items-center border-bottom pb-3">
@@ -429,20 +428,35 @@
                                     <span class="alert alert-danger text-center">{{ $message }} </span>
                                 @enderror
 
-                                <div class="form-check d-flex justify-content-center align-items-center my-4">
-                                    <input type="checkbox" class="form-check-input" id="isBasedOnDays"
-                                        name="is_based_on_days">
-                                    <label class="form-check-label ms-2 pt-2" for="isBasedOnDays">Is based on
-                                        days?</label>
+                                <div class="form-check d-flex justify-content-between align-items-center my-4">
+                                    <div class="d-flex align-items-center">
+                                        <input type="checkbox" class="form-check-input" id="isBasedOnDays" name="is_based_on_days" value="1">
+                                        <label class="form-check-label ms-2 pt-2" for="isBasedOnDays">Is based on days?</label>
+                                    </div>
+
+                                    <div class="d-flex align-items-center">
+                                        <input type="checkbox" class="form-check-input" id="isQuantity" name="is_quantity_fields" value="1">
+                                        <label class="form-check-label ms-2 pt-2" for="isQuantity">Is there a quantity?</label>
+                                    </div>
                                 </div>
-                                @error('is_based_on_days')
-                                    <span class="alert alert-danger text-center">{{ $message }} </span>
-                                @enderror
+
+
+                                <div id="dateFields" style="display: none;">
+                                    <div class="input-group">
+                                        <label for="date_from">Date From</label>
+                                        <input type="date" id="date_from" name="prices[0][date_from]">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="date_to">Date To</label>
+                                        <input type="date" id="date_to" name="prices[0][date_to]">
+                                    </div>
+                                </div>
+
 
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="savePriceChanges">Save</button>
+                                <button type="button" class="btn btn-primary" id="savePriceChanges">Save</button>
                             </div>
                         </div>
                     </div>
@@ -461,306 +475,10 @@
 @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
+    <script src="{{ asset('assets/js/roomandprices.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
     <script>
-        $(document).ready(function() {
-
-            let prices = [];
-            let rooms = [];
-
-            // Handle rental type change (show/hide room section)
-            $('#rentalType').on('change', function() {
-                const rentalType = $(this).val();
-                console.log('Facility Type:', rentalType);
-
-                if (rentalType === 'individual' || rentalType === 'both') {
-                    $('#dormitoryRooms').show();
-                    $('#roomBox').show();
-                } else {
-                    $('#dormitoryRooms').hide();
-                    $('#roomBox').hide();
-                }
-            });
-
-            // Trigger rental type change event on page load
-            $('#rentalType').trigger('change');
-
-            // Handle Save Room Changes (Add Room)
-            $('#saveRoomChanges').on('click', function(event) {
-                event.preventDefault();
-
-                const roomName = $('#roomName').val();
-                const roomCapacity = $('#roomCapacity').val();
-                const roomSexRestriction = $('#roomSexRestriction').val();
-
-                // Validate room data
-                if (!roomName || !roomCapacity) {
-                    alert("Please fill in all fields");
-                    return;
-                }
-                if (isNaN(roomCapacity) || roomCapacity <= 0) {
-                    alert("Capacity must be a positive number.");
-                    return;
-                }
-
-                // Create new room object
-                const newRoom = {
-                    room_name: roomName,
-                    capacity: parseInt(roomCapacity),
-                    sex_restriction: roomSexRestriction
-                };
-
-                // Add room to rooms array
-                rooms.push(newRoom);
-                console.log('New Room:', newRoom);
-
-                // Render the updated room list and update hidden form fields
-                renderRoomList();
-                updateHiddenRooms();
-
-                // Close the modal
-                $('#addRoom').modal('hide');
-            });
-
-            // Render the room list dynamically
-            function renderRoomList() {
-                $('#roomList').empty(); // Clear the room list
-                rooms.forEach((room, index) => {
-                    const listItem = `
-            <div class="card p-3 mb-3">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div class="text-start">
-                        <h4>${room.room_name}</h4>
-                        <p>Capacity: <span class="badge bg-success">${room.capacity}</span></p>
-                        <p>Sex Restriction: <span class="badge bg-info">${room.sex_restriction}</span></p>
-                    </div>
-                    <div class="d-flex">
-                        <button class="btn btn-warning btn-sm me-2" onclick="editRoom(${index})"><i class="icon-pen"></i></button>
-                        <button class="btn btn-outline-danger btn-sm" onclick="deleteRoom(${index})">
-                            <i class="icon-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-                    $('#roomList').append(listItem);
-                });
-            }
-
-            window.editRoom = function(index) {
-                const room = rooms[index];
-                $('#roomName').val(room.room_name);
-                $('#roomCapacity').val(room.capacity);
-                $('#roomSexRestriction').val(room.sex_restriction);
-
-                // Change the modal button to "Save Changes"
-                $('#saveRoomChanges').off('click').on('click', function() {
-                    rooms[index].room_name = $('#roomName').val();
-                    rooms[index].capacity = $('#roomCapacity').val();
-                    rooms[index].sex_restriction = $('#roomSexRestriction').val();
-
-                    // Re-render the room list and close the modal
-                    renderRoomList();
-                    updateHiddenRooms();
-                    $('#addRoom').modal('hide');
-                });
-
-                // Open the modal for editing
-                $('#addRoom').modal('show');
-            };
-            // Delete room
-            window.deleteRoom = function(index) {
-                rooms.splice(index, 1); // Remove room from array
-                renderRoomList(); // Re-render the room list
-            };
-
-            // Update hidden inputs for rooms (to be submitted with the form)
-            function updateHiddenRooms() {
-                const roomInput = $('#hiddenRooms');
-                roomInput.empty(); // Clear existing hidden inputs
-
-                rooms.forEach((room, index) => {
-                    roomInput.append(createHiddenInputRooms(`facility_attributes[${index}][room_name]`, room
-                        .room_name));
-                    roomInput.append(createHiddenInputRooms(
-                        `facility_attributes[${index}][sex_restriction]`, room.sex_restriction));
-                    roomInput.append(createHiddenInputRooms(`facility_attributes[${index}][capacity]`, room
-                        .capacity));
-                });
-            }
-
-            // Handle Save Price Changes (Add Price)
-            $('#savePriceChanges').on('click', function(event) {
-                event.preventDefault();
-
-                const name = $('#priceName').val();
-                const price_type = $('#priceTypeSelect').val();
-                const value = $('#value').val();
-                const isBasedOnDays = $('#isBasedOnDays').prop('checked') ? 1 : 0;
-
-                // Check for required fields
-                if (!name || !price_type || !value) {
-                    alert("Please fill in all fields");
-                    return;
-                }
-
-                // Validate price value
-                if (isNaN(value) || parseFloat(value) <= 0) {
-                    alert("Price must be a valid positive number.");
-                    return;
-                }
-
-                // Add new price
-                const newPrice = {
-                    name,
-                    price_type,
-                    value: parseFloat(value),
-                    is_based_on_days: isBasedOnDays
-                };
-                prices.push(newPrice);
-                console.log('New Price:', newPrice);
-
-                // Render the price list and update hidden fields
-                renderPriceList();
-                updateHiddenPrices();
-
-                // Close the price modal
-                $('#addPrice').modal('hide');
-            });
-
-            // Render the price list dynamically
-            function renderPriceList() {
-                $('#priceList').empty(); // Clear the price list
-                prices.forEach((price, index) => {
-                    const listItem = `
-            <div class="card p-3 mb-3">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div class="text-start">
-                        <h4>${price.name}</h4>
-                        <p>Type: <span class="badge bg-success">${price.price_type}</span></p>
-                        <p>Price: PHP ${price.value}</p>
-                        <p>Is Based on Days?: 
-                            <span class="badge ${price.is_based_on_days ? 'bg-success' : 'bg-danger'}">
-                                ${price.is_based_on_days ? 'Yes' : 'No'}
-                            </span>
-                        </p>
-                    </div>
-                    <button class="btn btn-lg btn-outline-danger delete-btn" onclick="deletePrice(${index})">
-                        <i class="icon-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-                    $('#priceList').append(listItem);
-                });
-            }
-
-            // Delete price
-            window.deletePrice = function(index) {
-                prices.splice(index, 1); // Remove price from array
-                renderPriceList(); // Re-render the price list
-            };
-
-            // Update hidden inputs for prices (to be submitted with the form)
-            function updateHiddenPrices() {
-                const priceInput = $('#hiddenPrices');
-                priceInput.empty(); // Clear existing hidden inputs
-
-                prices.forEach((price, index) => {
-                    priceInput.append(createHiddenInput(`prices[${index}][name]`, price.name));
-                    priceInput.append(createHiddenInput(`prices[${index}][price_type]`, price.price_type));
-                    priceInput.append(createHiddenInput(`prices[${index}][value]`, price.value));
-                    priceInput.append(createHiddenInput(`prices[${index}][is_based_on_days]`, price
-                        .is_based_on_days));
-                });
-            }
-
-            // Helper function to create hidden input for prices
-            function createHiddenInput(name, value) {
-                return `<input type="hidden" name="${name}" value="${value}">`;
-            }
-
-            // Helper function to create hidden input for rooms
-            function createHiddenInputRooms(name, value) {
-                return `<input type="hidden" name="${name}" value="${value}">`;
-            }
-
-            // Handle form submission via AJAX
-            $('#facilityForm').on('submit', function(event) {
-                event.preventDefault();
-
-                var formData = new FormData(this);
-
-                prices.forEach((price, index) => {
-                    formData.append(`prices[${index}][name]`, price.name);
-                    formData.append(`prices[${index}][price_type]`, price.price_type);
-                    formData.append(`prices[${index}][value]`, price.value);
-                    formData.append(`prices[${index}][is_based_on_days]`, price.is_based_on_days);
-                });
-
-                rooms.forEach((room, index) => {
-                    formData.append(`facility_attributes[${index}][name]`, room.room_name);
-                    formData.append(`facility_attributes[${index}][capacity]`, room.capacity);
-                });
-                $.ajax({
-                    url: $(this).attr('action'),
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        console.log('Success response:', response);
-                        showAlert('Facility created successfully!', 'success');
-                        setTimeout(function() {
-                            window.location.href = '/admin/facilities';
-                        }, 2000);
-                    },
-                    error: function(xhr) {
-                        console.log('Error:', xhr);
-                        if (xhr.status === 422) {
-                            displayValidationErrors(xhr.responseJSON.errors);
-                        } else {
-                            showAlert('An unexpected error occurred. Please try again.',
-                                'danger');
-                        }
-                    }
-                });
-
-                console.log("Hidden form data", $('#hiddenRooms').html()); // Log hidden input fields
-            });
-
-
-            // Show custom alert
-            function showAlert(message, type) {
-                const alertBox = $('<div>', {
-                    class: `alert alert-${type} alert-dismissible fade show`,
-                    role: 'alert',
-                    text: message
-                }).append(
-                    $('<button>', {
-                        type: 'button',
-                        class: 'btn-close',
-                        'data-bs-dismiss': 'alert',
-                        'aria-label': 'Close'
-                    })
-                );
-
-                $('#alertContainer').html(alertBox);
-                alertBox.alert();
-            }
-
-            console.log(rooms); // Ensure that rooms array is populated correctly
-            console.log(prices); // Ensure that prices array is populated correctly
-
-        });
-
-
-
-
-
+    
         function removeUpload(previewId, inputId) {
             $('#' + previewId).hide(); // Hide the preview
             $('#' + previewId + ' img').attr('src', '{{ asset('images/upload/upload-1.png') }}');
@@ -777,5 +495,32 @@
                 $('#galUpload').addClass('up-load');
             }
         }
+
+
+        document.getElementById('isBasedOnDays').addEventListener('change', function () {
+
+            const dateFields = document.getElementById('dateFields');
+            if (this.checked) {
+                dateFields.style.display = 'block';
+        
+                document.getElementById('isBasedOnDays').value = '1';
+            } else {
+                dateFields.style.display = 'none';
+        
+                document.getElementById('isBasedOnDays').value = '0'; 
+            }
+        });
+
+
+        document.getElementById('isQuantity').addEventListener('change', function() {
+           
+            if (this.checked) {
+                this.value = '1';
+            } else {
+       
+                this.value = '0';
+            }
+        });
+
     </script>
 @endpush

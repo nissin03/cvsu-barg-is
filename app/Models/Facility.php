@@ -28,6 +28,18 @@ class Facility extends Model
         return $this->hasMany(Price::class);
     }
 
+    public function availabilities()
+    {
+        return $this->hasMany(Availability::class);
+    }
+
+    public function individualPrice()
+    {
+        $price = $this->prices()->where('price_type', 'individual')->first();
+
+        return $price ? $price->value : 0;
+    }
+
 
 }
 

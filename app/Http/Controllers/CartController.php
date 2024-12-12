@@ -437,16 +437,10 @@ class CartController extends Controller
     {
         if ($user->role === 'student') {
             return !$user->name || !$user->email || !$user->phone_number || !$user->year_level || !$user->department || !$user->course;
-        } elseif ($user->role === 'professor') {
-            return !$user->name || !$user->email || !$user->phone_number || !$user->department;
         } else {
-            // For other roles, only name, email, and phone number are required
             return !$user->name || !$user->email || !$user->phone_number;
         }
     }
-
-
-
 
     public function setTotalAmount()
     {

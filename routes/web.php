@@ -26,31 +26,6 @@ use App\Http\Controllers\UserFacilityController;
 
 Auth::routes(['reset' => true]);
 
-Route::get('/test', function () {
-    $product = Product::with('attributeValues')->find(4); // Adjust the product ID as necessary
-
-    if (!$product) {
-        Log::error('Product with ID 4 not found!');
-        return response()->json(['error' => 'Product not found'], 404);
-    }
-
-    // Log the attribute values for debugging
-    Log::info('Attribute Values for product: ', $product->attributeValues->toArray());
-
-    // Determine quantity
-    $quantity = $product->attributeValues->isNotEmpty()
-        ? $product->attributeValues->sum('quantity') // Aggregate quantities
-        : $product->quantity; // Use main quantity if no variants
-
-    Log::info('Low stock alert for product: ' . $product->name . ', Quantity: ' . $quantity);
-
-    // Dispatch the event with product and determined quantity
-    event(new LowStockEvent($product, $quantity));
-
-    return response()->json(['success' => 'Event fired']); // This will just return a simple success message
-});
-
-
 Auth::routes();
 
 Route::get('/', [HomeController::class, 'index'])->name('home.index');
@@ -61,15 +36,18 @@ Route::get('/shop/{product_slug}', [ShopController::class, 'product_details'])->
 
 Route::get('/user/facilities', [UserFacilityController::class, 'index'])->name('user.facilities.index');
 Route::get('/user/facilities/{slug}', [UserFacilityController::class, 'show'])->name('user.facilities.details');
+Route::get('/user/checkout', [UserFacilityController::class, 'checkout'])->name('facility.checkout');
+Route::post('/reserve', [UserFacilityController::class, 'reserve'])->name('facility.reserve');
+// Route::post('/checkout', [UserFacilityController::class, 'post_checkout'])->name('user.post_checkout');
 
 
 
 Route::get('/rentals', [RentalController::class, 'index'])->name('rentals.index');
 Route::get('/rentals/{rental_slug}', [RentalController::class, 'show'])->name('rentals.details');
 Route::post('/rentals/reserve', [RentalController::class, 'add_to_reserved'])->name('rentals.reserve');
-Route::post('/rentals/{rental_id}/checkout', [RentalController::class, 'checkout_details'])->name('rentals.checkout.details');
+// Route::post('/rentals/{facility_id}/checkout', [RentalController::class, 'checkout_details'])->name('rentals.checkout.details');
 // Route::get('/rentals/checkout', [RentalController::class, 'checkout'])->name('rentals.checkout');
-Route::get('/rentals/{rental_id}/checkout', [RentalController::class, 'checkout'])->name('rentals.checkout');
+// Route::get('/rentals/{facility_id}/checkout', [RentalController::class, 'checkout'])->name('rentals.checkout');
 
 
 Route::post('/reserve/{rentalId}', [RentalController::class, 'placeReservation'])->name('rentals.reserve.events');

@@ -18,7 +18,11 @@ return new class extends Migration
             $table->decimal('value', 8, 2);
             $table->enum('price_type', ['individual', 'whole']);
             $table->boolean('is_based_on_days')->default(false);
+            $table->boolean('is_quantity_fields')->default(false);
+            $table->date('date_from')->nullable();
+            $table->date('date_to')->nullable();
             $table->timestamps();
+
         });
     }
 

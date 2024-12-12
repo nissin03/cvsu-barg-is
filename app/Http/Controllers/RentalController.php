@@ -13,6 +13,8 @@ use App\Models\Reservation;
 use App\Models\DormitoryRoom;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Models\Facility;
+
 
 
 class RentalController extends Controller
@@ -20,20 +22,37 @@ class RentalController extends Controller
 {
     public function index()
     {
-        $rentals = Rental::orderBy('created_at', 'DESC')->paginate(5);
-        return view('rental', compact('rentals'));
+        // Fetch all facilities, assuming you want to display all
+        $facilities = Facility::where('status', true)->orderBy('created_at', 'DESC')->paginate(10);
+    
+        return view('rental', compact('facilities'));
     }
+    
+    
 
     public function show($rental_slug)
     {
-        $rental = Rental::where('slug', $rental_slug)->firstOrFail();
-        $dormitoryRoom = DormitoryRoom::where('rental_id', $rental->id)->first();
-        return view('rentals_details', compact('rental', 'dormitoryRoom'));
+       
+        $facility = Facility::with('facilityAttributes.prices')->where('slug', $rental_slug)->firstOrFail();
+        $individualAttributes = $facility->facilityAttributes->where('price_type', 'individual');
+        $wholeAttributes = $facility->facilityAttributes->where('price_type', 'whole');
+
+        $individualPrice = $individualAttributes->isNotEmpty() && $individualAttributes->first()->prices->isNotEmpty()
+            ? $individualAttributes->first()->prices->first()->value
+            : 0;  
+        
+        $wholePrice = $wholeAttributes->isNotEmpty() && $wholeAttributes->first()->prices->isNotEmpty()
+            ? $wholeAttributes->first()->prices->first()->value
+            : 0;  
+    
+   
+        return view('rentals_details', compact('facility', 'individualAttributes', 'wholeAttributes', 'individualPrice', 'wholePrice'));
     }
+    
 
     public function checkout(Request $request, $rental_id)
     {
-        dd($request->all());
+       
         // Check if user is authenticated
         if (!Auth::check()) {
             \Log::warning('User is not authenticated. Redirecting to login.');

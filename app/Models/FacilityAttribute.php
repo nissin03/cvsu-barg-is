@@ -10,10 +10,14 @@ class FacilityAttribute extends Model
     use HasFactory;
 
     protected $table = 'facility_attributes';
+    protected $attributes = [
+        'sex_restriction' => null,
+    ];
     protected $fillable = [
         'facility_id',
-        'name',
+        'room_name',
         'capacity',
+        'whole_capacity',
         'sex_restriction'
     ];
 
@@ -22,10 +26,5 @@ class FacilityAttribute extends Model
         return $this->belongsTo(Facility::class);
     }
 
-    // FacilityAttribute has many Prices
-    public function prices()
-    {
-        return $this->hasMany(Price::class);
-    }
     
 }

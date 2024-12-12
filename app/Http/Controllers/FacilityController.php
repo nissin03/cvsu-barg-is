@@ -23,15 +23,12 @@ class FacilityController extends Controller
 
     public function index(Request $request)
     {
-        // Get the 'archived' value from the query string, defaulting to 0
         $archived = $request->query('archived', 0);
-        
-        // Apply the 'archived' filter before pagination
-        $facilities = Facility::where('archived', $archived)
-                              ->orderBy('created_at', 'DESC')
-                              ->paginate(5);
-        
-        // Return the view with facilities and the archived filter status
+
+        $facilities = Facility::with('facilityAttributes', 'prices')
+            ->where('archived', $archived)
+            ->orderBy('created_at', 'DESC')
+            ->paginate(5);
         return view('admin.facilities.index', compact('facilities', 'archived'));
     }
 
@@ -40,7 +37,6 @@ class FacilityController extends Controller
     {
         return view('admin.facilities.create');
     }
-
 
     public function store(Request $request)
     {
@@ -59,47 +55,252 @@ class FacilityController extends Controller
             'prices.*.value' => 'required|numeric',
             'prices.*.price_type' => 'required|string|in:individual,whole',
             'prices.*.is_based_on_days' => 'required|boolean',
+            'prices.*.date_from' => 'nullable|date|required_if:prices.*.is_based_on_days,true',
+            'prices.*.date_to' => 'nullable|date|required_if:prices.*.is_based_on_days,true|after_or_equal:prices.*.date_from',
 
+            // 'whole_capacity' => $request->facility_type === 'whole_place' ? 'required|numeric|min:1' : 'nullable',
+            'whole_capacity' => $request->facility_type === 'whole_place' ||
+                ($request->facility_type === 'both' && empty($request->input('facility_attributes', [])))
+                ? 'required|numeric|min:1'
+                : 'nullable',
             'facility_attributes' => 'nullable|array',
             'facility_attributes.*.room_name' => 'nullable|string|max:255',
             'facility_attributes.*.capacity' => 'nullable|integer|min:1',
             'facility_attributes.*.sex_restriction' => 'nullable|in:male,female',
         ]);
 
-
-        \Log::info('Facility Creation Request:', $request->all());
-        $facilityAttributes = $request->input('facility_attributes', []);
-
-        // Ensure facility_attributes is an array
-        if (is_string($facilityAttributes)) {
-            try {
-                $facilityAttributes = json_decode($facilityAttributes, true);
-            } catch (\Exception $e) {
-                $facilityAttributes = [];
-            }
-        }
-
-        if (!is_array($facilityAttributes)) {
-            $facilityAttributes = [];
-        }
-
-        $prices = $request->input('prices');
-
-        // More robust price processing
-        if (is_string($prices)) {
-            try {
-                $prices = json_decode($prices, true);
-            } catch (\Exception $e) {
-                $prices = [];
-            }
-        }
-
-        // Ensure prices is an array
-        if (!is_array($prices)) {
-            $prices = [];
-        }
-
         $facility = new Facility();
+        $this->save($facility, $request);
+        $this->handleImage($facility, $request);
+        $facility->save();
+
+        if ($request->facility_type === 'whole_place') {
+            // Only use whole_capacity
+            FacilityAttribute::create([
+                'facility_id' => $facility->id,
+                'room_name' => null,
+                'capacity' => null,
+                'whole_capacity' => $request->whole_capacity,
+                'sex_restriction' => null,
+            ]);
+        } elseif ($request->facility_type === 'individual') {
+            $facilityAttributes = $request->input('facility_attributes', []);
+            if (!empty($facilityAttributes)) {
+                foreach ($facilityAttributes as $attribute) {
+                    FacilityAttribute::create([
+                        'facility_id' => $facility->id,
+                        'room_name' => $attribute['room_name'] ?? null,
+                        'capacity' => $attribute['capacity'] ?? null,
+                        'whole_capacity' => null,
+                        'sex_restriction' => $attribute['sex_restriction'] ?? null,
+                    ]);
+                }
+            }
+        } elseif ($request->facility_type === 'both') {
+            $facilityAttributes = $request->input('facility_attributes', []);
+
+            if (!empty($facilityAttributes)) {
+
+                foreach ($facilityAttributes as $attribute) {
+                    FacilityAttribute::create([
+                        'facility_id' => $facility->id,
+                        'room_name' => $attribute['room_name'] ?? null,
+                        'capacity' => $attribute['capacity'] ?? null,
+                        'whole_capacity' =>  $request->whole_capacity ?? null,
+                        'sex_restriction' => $attribute['sex_restriction'] ?? null,
+                    ]);
+                }
+            } else {
+
+                FacilityAttribute::create([
+                    'facility_id' => $facility->id,
+                    'room_name' => null,
+                    'capacity' => null,
+                    'whole_capacity' => $request->whole_capacity,
+                    'sex_restriction' => null,
+                ]);
+            }
+        }
+
+        if (is_array($request->prices)) {
+            $pricesData = [];
+            foreach ($request->prices as $price) {
+                $pricesData[] = [
+                    'facility_id' => $facility->id,
+                    'name' => $price['name'],
+                    'value' => $price['value'],
+                    'price_type' => $price['price_type'],
+                    'is_based_on_days' => $price['is_based_on_days'] ?? false,
+                    'is_quantity_fields' => $price['is_quantity_fields'] ?? false,
+                    'date_from' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_from'] : null,
+                    'date_to' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_to'] : null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+            Price::insert($pricesData);
+        }
+        return response()->json(['message' => 'Facility created successfully!', 'action' => 'create']);
+    }
+
+    public function edit($id)
+    {
+        $facility =  Facility::find($id);
+        $facilityAttributes = FacilityAttribute::where('facility_id', $facility->id)->get();
+        $prices = Price::where('facility_id', $facility->id)->get();
+        return view('admin.facilities.edit', compact('facility',  'facilityAttributes', 'prices'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $facility = Facility::findOrFail($id);
+        if ($request->has('sex_restriction') && is_null($request->sex_restriction)) {
+            $request->merge(['sex_restriction' => '']);
+        }
+        $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('facilities')->ignore($id),
+            ],
+            'facility_type' => 'required|string|in:individual,whole_place,both',
+            'description' => 'required|string',
+            'image' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
+            'images.*' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
+            'requirements' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:5120',
+            // 'sex_restriction' => 'nullable|in:male,female',
+            'prices' => 'nullable|array',
+            'prices.*.name' => 'nullable|string',
+            'prices.*.value' => 'nullable|numeric',
+            'prices.*.price_type' => 'nullable|string|in:individual,whole',
+            'prices.*.is_based_on_days' => 'required|boolean',
+            'prices.*.date_from' => 'nullable|date|required_if:prices.*.is_based_on_days,true',
+            'prices.*.date_to' => 'nullable|date|required_if:prices.*.is_based_on_days,true|after_or_equal:prices.*.date_from',
+
+            'whole_capacity' => $request->facility_type === 'whole_place' ||
+                ($request->facility_type === 'both' && empty($request->input('facility_attributes', [])))
+                ? 'required|numeric|min:1'
+                : 'nullable',
+            'facility_attributes' => 'nullable|array',
+            'facility_attributes.*.room_name' => 'nullable|string|max:255',
+            'facility_attributes.*.capacity' => 'nullable|integer|min:1',
+            'facility_attributes.*.sex_restriction' => 'nullable|in:male,female,null',
+
+        ]);
+
+        $this->save($facility, $request);
+        $this->handleImage($facility, $request);
+
+        $facility->save();
+        FacilityAttribute::where('facility_id', $facility->id)->delete();
+        if ($request->facility_type === 'whole_place') {
+            FacilityAttribute::create([
+                'facility_id' => $facility->id,
+                'room_name' => null,
+                'capacity' => null,
+                'whole_capacity' => $request->whole_capacity,
+                'sex_restriction' => null,
+            ]);
+        } elseif ($request->facility_type === 'individual') {
+            $facilityAttributes = $request->input('facility_attributes', []);
+            if (!empty($facilityAttributes)) {
+                $validAttributes = array_filter($facilityAttributes, function($attr) {
+                    return $attr['sex_restriction'] !== null;
+                });
+                $this->createFacilityAttributes($facility, $facilityAttributes,  $validAttributes);
+            }
+        } elseif ($request->facility_type === 'both') {
+            $facilityAttributes = $request->input('facility_attributes', []);
+
+            if (!empty($facilityAttributes)) {
+                $validAttributes = array_filter($facilityAttributes, function($attr) {
+                    return $attr['room_name'] !== null && $attr['capacity'] !== null;
+                });
+                $this->createFacilityAttributes($facility, $facilityAttributes);
+            }
+        } else {
+
+            FacilityAttribute::create([
+                'facility_id' => $facility->id,
+                'room_name' => null,
+                'capacity' => null,
+                'whole_capacity' => $request->whole_capacity,
+                'sex_restriction' => null,
+            ]);
+        }
+
+
+        
+        if (is_array($request->prices)) {
+            $pricesData = [];
+            foreach ($request->prices as $price) {
+                $pricesData[] = [
+                    'facility_id' => $facility->id,
+                    'name' => $price['name'],
+                    'value' => $price['value'],
+                    'price_type' => $price['price_type'],
+                    'is_based_on_days' => $price['is_based_on_days'],
+                    'is_quantity_fields' => $price['is_quantity_fields'] ?? false,
+                    'date_from' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_from'] : null,
+                    'date_to' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_to'] : null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+            Price::where('facility_id', $facility->id)->delete();
+            Price::insert($pricesData);
+        }
+        return response()->json(['message' => 'Facility updated successfully!', 'action' => 'update']);
+    }
+
+
+    private function createFacilityAttributes($facility, $facilityAttributes)
+{
+    foreach ($facilityAttributes as $attribute) {
+        if (isset($attribute['room_name']) && isset($attribute['capacity'])) {
+            // Explicitly handle sex_restriction
+            $sexRestriction = isset($attribute['sex_restriction']) && 
+                              in_array($attribute['sex_restriction'], ['male', 'female']) 
+                              ? $attribute['sex_restriction'] 
+                              : null;
+
+            // FacilityAttribute::create([
+            //     'facility_id' => $facility->id,
+            //     'room_name' => $attribute['room_name'],
+            //     'capacity' => $attribute['capacity'],
+            //     'sex_restriction' => $sexRestriction,
+            // ]);
+             if (isset($attribute['room_name'], $attribute['capacity'])) {
+            FacilityAttribute::create([
+                'facility_id' => $facility->id,
+                'room_name' => $attribute['room_name'],
+                'capacity' => $attribute['capacity'],
+                'sex_restriction' => $sexRestriction,
+            ]);
+        }
+        }
+    }
+}
+
+
+    // private function createFacilityAttributes($facility, $facilityAttributes)
+    // {
+    //     foreach ($facilityAttributes as $attribute) {
+    //         if (isset($attribute['room_name']) && isset($attribute['capacity'])) {
+    //             FacilityAttribute::create([
+    //                 'facility_id' => $facility->id,
+    //                 'room_name' => $attribute['room_name'],
+    //                 'capacity' => $attribute['capacity'],
+    //                 'sex_restriction' => $attribute['sex_restriction'] ?? null,
+    //             ]);
+    //         }
+    //     }
+    // }
+
+
+    private function save(Facility $facility, Request $request)
+    {
         $facility->name = $request->name;
         $facility->facility_type = $request->facility_type;
         $facility->description = $request->description;
@@ -108,8 +309,11 @@ class FacilityController extends Controller
         $facility->status = $request->status ?? 1;
         $facility->featured = $request->featured ?? 0;
         $facility->rules_and_regulations = $request->rules_and_regulations;
-        $current_timestamp = Carbon::now()->timestamp;
+    }
 
+    private function handleImage(Facility $facility, Request $request)
+    {
+        $current_timestamp = Carbon::now()->timestamp;
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -117,14 +321,9 @@ class FacilityController extends Controller
             $this->GenerateFacilityThumbnailsImage($image, $imageName);
             $facility->image = 'facilities/' . $imageName;
         }
-
         $gallery_arr = [];
         $gallery_images = "";
         $counter = 1;
-
-
-
-        
 
         if ($request->hasFile('images')) {
             $allowedFileExtension = ['jpg', 'png', 'jpeg'];
@@ -158,58 +357,52 @@ class FacilityController extends Controller
             $requirementsFile->move($destinationPath, $requirementsFileName);
             $facility->requirements = $requirementsFileName;
         }
-
-        $facility->save();
-
-        if (!empty($facilityAttributes)) {
-            $facilityAttributesData = [];
-            foreach ($facilityAttributes as $attribute) {
-                // Add more defensive checks
-                $roomName = $attribute['room_name'] ?? null;
-                $capacity = $attribute['capacity'] ?? null;
-                $sexRestriction = $attribute['sex_restriction'] ?? null;
-
-                // Only add if at least one meaningful attribute is present
-                if ($roomName || $capacity) {
-                    $facilityAttributesData[] = [
-                        'facility_id' => $facility->id,
-                        'room_name' => $roomName,
-                        'capacity' => $capacity,
-                        'sex_restriction' => $sexRestriction,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-            }
-
-            if (!empty($facilityAttributesData)) {
-                FacilityAttribute::insert($facilityAttributesData);
-            }
-        }
-
-
-        if (is_array($request->prices)) {
-            $pricesData = [];
-            foreach ($request->prices as $price) {
-                $pricesData[] = [
-                    'facility_id' => $facility->id,
-                    'name' => $price['name'],
-                    'value' => $price['value'],
-                    'price_type' => $price['price_type'],
-                    'is_based_on_days' => $price['is_based_on_days'] ?? false,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            }
-            Price::insert($pricesData);
-        }
-
-
-
-
-        return response()->json(['message' => 'Facility created successfully!']);
     }
 
+    // archive codes  
+
+    public function archivedFacilities($id)
+    {
+        try {
+            $facility = Facility::findOrFail($id);
+            $facility->archived = 1;
+            $facility->archived_at = \Carbon\Carbon::now();
+            $facility->save();
+
+            // Return a JSON response for AJAX
+            return response()->json(['success' => true, 'message' => 'Facility archived successfully!', 'facility_id' => $id]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to archive the facility.']);
+        }
+    }
+
+    public function restoreFacilities(Request $request)
+    {
+        $facilityIds = $request->input('ids');
+        $facilities = Facility::whereIn('id', $facilityIds)
+            ->update(['archived' => 0, 'archived_at' => null]);
+
+        return response()->json([
+            'status' => 'Facilities restored successfully',
+            'restoredIds' => $facilityIds
+        ]);
+    }
+
+
+
+    public function showFacilities()
+    {
+        // Fetch only facilities that are archived
+        $archivedFacilities = Facility::where('archived', 1)
+            ->orderBy('created_at', 'DESC')
+            ->paginate(10);
+
+        // Fetch all facilities to avoid the undefined variable error
+        $facilities = Facility::all();
+
+        // Pass both variables to the view
+        return view('admin.facilities.archive.index', compact('archivedFacilities', 'facilities'));
+    }
 
 
 
@@ -237,198 +430,5 @@ class FacilityController extends Controller
         } catch (\Exception $e) {
             \Log::error('Image processing failed: ' . $e->getMessage());
         }
-    }
-
-    public function edit($id)
-    {
-        $facility =  Facility::find($id);
-        $facilityAttributes = FacilityAttribute::where('facility_id', $facility->id)->get();
-        $prices = Price::where('facility_id', $facility->id)->get();
-        return view('admin.facilities.edit', compact('facility',  'facilityAttributes', 'prices'));
-    }
-
-
-   
-public function update(Request $request, $id)
-{
-    // Find the existing facility by ID
-    $facility = Facility::findOrFail($id);
-
-    // Validate the incoming request
-    $request->validate([
-        'name' => [
-            'required',
-            'string',
-            'max:255',
-            Rule::unique('facilities')->ignore($id), // Ignore unique check for unchanged name
-        ],
-        'facility_type' => 'required|string|in:individual,whole_place,both',
-        'description' => 'required|string',
-        'image' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
-        'images.*' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
-        'requirements' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:5120',
-        'sex_restriction' => 'nullable|in:male,female',
-        'prices' => 'nullable|array',
-        'prices.*.name' => 'nullable|string',
-        'prices.*.value' => 'nullable|numeric',
-        'prices.*.price_type' => 'nullable|string|in:individual,whole',
-        'prices.*.is_based_on_days' => 'nullable|boolean',
-        'facility_attributes' => 'nullable|array',
-        'facility_attributes.*.room_name' => 'nullable|string|max:255',
-        'facility_attributes.*.capacity' => 'nullable|integer|min:1',
-        'facility_attributes.*.sex_restriction' => 'nullable|in:male,female',
-    ]);
-
-    // Log incoming request for debugging
-    \Log::info('Facility Update Request:', $request->all());
-
-    // Retrieve input data
-    $facilityAttributes = $request->input('facility_attributes', []);
-    $prices = $request->input('prices', []);
-
-    // Ensure attributes and prices are arrays
-    $facilityAttributes = is_string($facilityAttributes) ? json_decode($facilityAttributes, true) : $facilityAttributes;
-    $prices = is_string($prices) ? json_decode($prices, true) : $prices;
-
-    // Only update the fields that have been changed
-    if ($request->has('name') && $facility->name !== $request->name) {
-        $facility->name = $request->name;
-    }
-
-    if ($request->has('facility_type') && $facility->facility_type !== $request->facility_type) {
-        $facility->facility_type = $request->facility_type;
-    }
-
-    if ($request->has('description') && $facility->description !== $request->description) {
-        $facility->description = $request->description;
-    }
-
-    if ($request->has('slug') && $facility->slug !== $request->slug) {
-        $facility->slug = Str::slug($request->slug);
-    }
-
-    // Handle file uploads only if a new file is uploaded
-    if ($request->hasFile('image')) {
-        $image = $request->file('image');
-        $imageName = Carbon::now()->timestamp . '.' . $image->extension();
-        $this->GenerateFacilityThumbnailsImage($image, $imageName);
-        $facility->image = 'facilities/' . $imageName;
-    }
-
-    if ($request->hasFile('images')) {
-        $gallery_arr = [];
-        $current_timestamp = Carbon::now()->timestamp;
-        $gallery_images = '';
-        $files = $request->file('images');
-        foreach ($files as $index => $file) {
-            $fileExtension = $file->getClientOriginalExtension();
-            if (in_array($fileExtension, ['jpg', 'png', 'jpeg'])) {
-                $fileName = $current_timestamp . "_" . ($index + 1) . '.' . $fileExtension;
-                $this->GenerateFacilityThumbnailsImage($file, $fileName);
-                $gallery_arr[] = 'facilities/' . $fileName;
-            }
-        }
-        $gallery_images = implode(',', $gallery_arr);
-        $facility->images = $gallery_images;
-    }
-
-    if ($request->hasFile('requirements')) {
-        $requirementsFile = $request->file('requirements');
-        $requirementsFileName = Carbon::now()->timestamp . '-requirements.' . $requirementsFile->getClientOriginalExtension();
-        $destinationPath = storage_path('app/public/facilities/');
-        if (!File::exists($destinationPath)) {
-            File::makeDirectory($destinationPath, 0755, true);
-        }
-        $requirementsFile->move($destinationPath, $requirementsFileName);
-        $facility->requirements = $requirementsFileName;
-    }
-
-    // Save the updated facility
-    $facility->save();
-
-    // Handle facility attributes and prices updates
-    if (!empty($facilityAttributes)) {
-        // Update or insert facility attributes
-        $facilityAttributesData = [];
-        foreach ($facilityAttributes as $attribute) {
-            $facilityAttributesData[] = [
-                'facility_id' => $facility->id,
-                'room_name' => $attribute['room_name'],
-                'capacity' => $attribute['capacity'],
-                'sex_restriction' => $attribute['sex_restriction'],
-                'updated_at' => now(),
-            ];
-        }
-
-        FacilityAttribute::where('facility_id', $facility->id)->delete(); // Remove old attributes
-        if (!empty($facilityAttributesData)) {
-            FacilityAttribute::insert($facilityAttributesData); // Insert new attributes
-        }
-    }
-
-    if (is_array($request->prices)) {
-        $pricesData = [];
-        foreach ($request->prices as $price) {
-            $pricesData[] = [
-                'facility_id' => $facility->id,
-                'name' => $price['name'],
-                'value' => $price['value'],
-                'price_type' => $price['price_type'],
-                'is_based_on_days' => $price['is_based_on_days'],  // Ensure it's included
-                'updated_at' => now(),
-            ];
-        }
-        Price::where('facility_id', $facility->id)->delete(); // Delete old prices
-        Price::insert($pricesData); // Insert new prices
-    }
-    
-
-    // Return success message
-    return response()->json(['message' => 'Facility updated successfully!']);
-}
-
-public function archivedFacilities($id)
-{
-    try {
-        $facility = Facility::findOrFail($id);
-        $facility->archived = 1;
-        $facility->archived_at = \Carbon\Carbon::now();
-        $facility->save();
-
-        // Return a JSON response for AJAX
-        return response()->json(['success' => true, 'message' => 'Facility archived successfully!', 'facility_id' => $id]);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'message' => 'Failed to archive the facility.']);
-    }
-}
-
-
-    public function restoreFacilities(Request $request)
-    {
-        $facilityIds = $request->input('ids');
-
-        // Fetch the facilities being restored
-        $facilities = Facility::whereIn('id', $facilityIds)->get();
-
-        // Restore facilities by setting `archived` to 0
-        Facility::whereIn('id', $facilityIds)->update(['archived' => 0]);
-
-        return response()->json([
-            'status' => 'Facilities restored successfully!',
-            'facilities' => $facilities, // Pass back the restored facilities
-        ]);
-    }
-
-
-
-    public function showFacilities()
-    {
-        $facilities = Facility::all();
-        $archivedFacilities = Facility::where('archived', 1)
-                                    ->orderBy('created_at', 'DESC')
-                                    ->paginate(10); // Paginate archived facilities
-
-        // Pass only archived facilities to the view
-        return view('admin.facilities.archive.index', compact('archivedFacilities', 'facilities'));
     }
 }
