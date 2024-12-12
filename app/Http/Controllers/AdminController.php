@@ -1941,8 +1941,8 @@ class AdminController extends Controller
         // Fetch form data for selected month and year
         $selectedMonth = $request->input('month');
         $selectedYear = $request->input('year');
-        
-        // Fetch the chart images (base64) from the form data
+
+        // Fetch the chart images (base64)
         $monthlyChartImage = $request->input('monthlyChartImage');
         $weeklyChartImage = $request->input('weeklyChartImage');
         $dailyChartImage = $request->input('dailyChartImage');
@@ -1963,7 +1963,7 @@ class AdminController extends Controller
             'recentUsers' => $recentUsers,
             'monthlyChartImage' => $monthlyChartImage,
             'weeklyChartImage' => $weeklyChartImage,
-            'dailyChartImage' => $dailyChartImage
+            'dailyChartImage' => $dailyChartImage,
         ];
 
         // Generate the PDF
@@ -1973,6 +1973,7 @@ class AdminController extends Controller
         // Return the PDF file
         return $pdf->download('user_report.pdf');
     }
+
 
 
 
@@ -3638,14 +3639,6 @@ class AdminController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
 
-        // Generate available months (same logic as above)
-        $availableMonths = collect(range(1, 12))->map(function ($month) {
-            return (object)[
-                'id' => $month,
-                'name' => Carbon::create()->month($month)->format('F')
-            ];
-        });
-
         // Retrieve input and parse dates
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
         $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
@@ -3675,8 +3668,10 @@ class AdminController extends Controller
         $newUsers = User::whereBetween('created_at', [$startDate, $endDate])->get();
 
         // Return the results to the view
-        return view('admin.user-reports', compact('availableMonths', 'newUsersCount', 'newUsers', 'startDate', 'endDate', 'chartData'));
+        return view('admin.user-reports', compact('newUsersCount', 'newUsers', 'startDate', 'endDate', 'chartData'));
     }
+
+
 
 
     // Controller method to generate the sales report

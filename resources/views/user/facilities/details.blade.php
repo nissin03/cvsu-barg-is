@@ -352,7 +352,7 @@
                             @endif
 
                             <div class="alert alert-danger " role="alert" style="margin-top: ">
-                                <p><strong>Note: </strong>Room Selection is not available in this facility.</p>
+                                <p><strong>Note: </strong>Rooms selection is not available in this facility.</p>
                             </div>
                             
                     

@@ -357,10 +357,10 @@ class FacilityController extends Controller
             $requirementsFile->move($destinationPath, $requirementsFileName);
             $facility->requirements = $requirementsFileName;
         }
+        $facility->save();
     }
 
     // archive codes  
-
     public function archivedFacilities($id)
     {
         try {

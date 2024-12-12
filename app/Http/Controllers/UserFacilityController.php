@@ -37,23 +37,6 @@ class UserFacilityController extends Controller
         return view('user.facilities.details', compact('facility', 'individualPrice'));
     }
 
-    // public function updateTotalPrice(Request $request)
-    // {
-  
-    //     $priceId = $request->input('price_id');
-    //     $totalPrice = $request->input('total_price');
-
- 
-    //     $price = Price::find($priceId);
-
-    //     if (!$price) {
-    //         return response()->json(['error' => 'Invalid price selection'], 400);
-    //     }
-
-    //     return response()->json([
-    //         'total_price' => $totalPrice
-    //     ]);
-    // }
 
     public function reserve(Request $request)
     {
@@ -85,14 +68,19 @@ class UserFacilityController extends Controller
         }
 
         $user = Auth::user();
-        
         $reservationData = session('reservation_data');
-        
+
         if (!$reservationData) {
             return redirect()->route('user.facilities.index')->with('error', 'No reservation data found.');
         }
+
+        // Retrieve the facility using the slug
         $facility = Facility::where('slug', $reservationData['facility_name'])->first();
-    
+
+        // If the facility has requirements, prefix the path
+        if ($facility && $facility->requirements) {
+            $facility->requirements = 'facilities/' . $facility->requirements;
+        }
 
         return view('user.facilities.checkout', compact('user', 'reservationData', 'facility'));
     }
