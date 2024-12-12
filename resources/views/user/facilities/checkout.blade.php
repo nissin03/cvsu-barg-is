@@ -30,7 +30,7 @@
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
 
-    <div class="container py-5" style="min-height: 100vh;">
+    <div class="container py-5 d-flex justify-content-center align-items-center" style="min-height: 100vh;">
         <div class="col-md-8 col-lg-6">
             <form name="checkout-form" action="#" method="POST">
                 @csrf
@@ -48,22 +48,23 @@
                     </div>
                 </div>
 
-                <div class="mb-3"></div>
+                <div class="mb-3">
                     <h5>Requirements</h5>
-                    @if($facility && $facility->requirements)  <!-- Check if $facility exists and has requirements -->
+                    @if($facility && $facility->requirements) 
                         @php
-                            $isImageReq = in_array(strtolower(pathinfo($facility->requirements, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png']);
+                            $fileExtension = strtolower(pathinfo($facility->requirements, PATHINFO_EXTENSION));
+                            $isImageReq = in_array($fileExtension, ['jpg', 'jpeg', 'png']);
                         @endphp
                 
-                        @if(!$isImageReq)
+                        @if(!$isImageReq) 
                             <p>
-                                <a href="{{ asset('storage/faciltiies' . $facility->requirements) }}" download>
-                                    Download Requirements
+                                <a href="{{ asset('/app/pulic/storage/facilities/' . $facility->requirements) }}" download>
+                                    Download Requirements Document
                                 </a>
                             </p>
-                        @else
+                        @else 
                             <p>
-                                <a href="{{ asset('storage/' . $facility->requirements) }}" download>
+                                <a href="{{ asset('/app/public/storage/facilities/' . $facility->requirements) }}" download>
                                     Download Requirements Image
                                 </a>
                             </p>
@@ -75,6 +76,7 @@
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
                 </div>
+                
                 
     
                 <div class="mb-3">

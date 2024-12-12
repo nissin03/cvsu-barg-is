@@ -1,8 +1,6 @@
 @extends('layouts.admin')
 
 @section('content')
-
-
 <div class="main-content-inner">
     <div class="main-content-wrap">
         <div class="flex items-center flex-wrap justify-between gap20 mb-27">
@@ -42,7 +40,7 @@
                     </form>
 
                     <!-- Form for downloading PDF -->
-                    <form id="pdfForm" action="{{ route('admin.report-user.pdf') }}" method="GET" class="d-flex align-items-center gap-2">
+                    <form id="pdfForm" action="{{ route('admin.user-reports.generate') }}" method="GET" class="d-flex align-items-center gap-2">
                         <input type="hidden" name="month" value="{{ $selectedMonth }}">
                         <input type="hidden" name="year" value="{{ $selectedYear }}">
                         <input type="hidden" name="monthlyChartImage">
