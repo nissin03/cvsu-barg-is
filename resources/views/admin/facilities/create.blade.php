@@ -121,7 +121,6 @@
             <form action="{{ route('admin.facilities.store') }}" class="tf-section-2 form-add-rental" method="POST"
                 enctype="multipart/form-data" id="facilityForm">
                 @csrf
-
                 <div class="wg-box">
                     <div id="alertContainer"></div>
 
@@ -156,7 +155,7 @@
                             </div>
                         </fieldset>
                     </div>
-                    @error('type')
+                    @error('facility_type')
                         <span class="alert alert-danger text-center">{{ $message }} </span>
                     @enderror
 
@@ -185,32 +184,32 @@
 
                 <div class="wg-box">
 
-                        <fieldset>
-                            <div class="body-title mb-10">Requirements <span class="tf-color-1">*</span></div>
-                            <div class="upload-image flex-grow">
-                                <div class="item" id="requirementsPreview" style="display:none">
-                                    <img src="{{ asset('images/upload/upload-1.png') }}" id="requirements-preview-img"
-                                        class="effect8" alt="">
-                                    <button type="button" class="remove-upload"
-                                        onclick="removeUpload('requirementsPreview', 'requirementsFile')">Remove</button>
-                                </div>
-                                <div id="upload-requirements" class="item up-load">
-                                    <label class="uploadfile" for="requirementsFile">
-                                        <span class="icon">
-                                            <i class="icon-upload-cloud"></i>
-                                        </span>
-                                        <span class="body-text">Select your Requirements file here or click to browse</span>
-                                        <input type="file" id="requirementsFile" name="requirements"
-                                            accept=".pdf,.doc,.docx,.jpg,.png">
-
-                                    </label>
-                                </div>
+                    <fieldset>
+                        <div class="body-title mb-10">Requirements <span class="tf-color-1">*</span></div>
+                        <div class="upload-image flex-grow">
+                            <div class="item" id="requirementsPreview" style="display:none">
+                                <img src="{{ asset('images/upload/upload-1.png') }}" id="requirements-preview-img"
+                                    class="effect8" alt="">
+                                <button type="button" class="remove-upload"
+                                    onclick="removeUpload('requirementsPreview', 'requirementsFile')">Remove</button>
                             </div>
-                        </fieldset>
-                        @error('requirements')
-                            <span class="alert alert-danger text-center">{{ $message }} </span>
-                        @enderror
-                    
+                            <div id="upload-requirements" class="item up-load">
+                                <label class="uploadfile" for="requirementsFile">
+                                    <span class="icon">
+                                        <i class="icon-upload-cloud"></i>
+                                    </span>
+                                    <span class="body-text">Select your Requirements file here or click to browse</span>
+                                    <input type="file" id="requirementsFile" name="requirements"
+                                        accept=".pdf,.doc,.docx,.jpg,.png">
+
+                                </label>
+                            </div>
+                        </div>
+                    </fieldset>
+                    @error('requirements')
+                        <span class="alert alert-danger text-center">{{ $message }} </span>
+                    @enderror
+
                     <!-- Image upload -->
                     <fieldset>
                         <div class="body-title">Upload main image <span class="tf-color-1">*</span></div>
@@ -286,65 +285,71 @@
                             <span class="alert alert-danger text-center">{{ $message }} </span>
                         @enderror
                     </div>
+
+                </div>
+
+
+                <div class="wg-box" id="roomBox">
                     <fieldset class="name" id="hideRoomBox">
-                        <div class="body-title mb-10">Capacity <span class="tf-color-1" id="option">(optional)</span></div>
+                        <div class="body-title mb-10">Capacity</div>
                         <input type="number" min="0" id="roomCapacityWhole" name="whole_capacity"
                             placeholder="Enter capacity">
-                    </fieldset> 
-              </div>
+                    </fieldset>
 
-              
-              <div class="wg-box" id="roomBox">
-                <div id="dormitoryRooms" class="d-flex justify-content-between align-items-center border-bottom pb-3">
-                    <h4>Details</h4>
-                    <button type="button" data-bs-toggle="modal" data-bs-target="#addRoom">Add Room</button>
-                </div>
-                <p>No rooms yet :(</p>
-                <div id="roomContainer" class="mt-4">
-                    <h4>Rooms</h4>
-                    <ul class="list-group" id="roomList"></ul>
-                </div>
-                <div class="modal fade" id="addRoom" tabindex="-1" aria-labelledby="addRoomLabel"
-                    aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h1 class="modal-title fs-5" id="addRoomLabel">Add Room</h1>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <fieldset class="name">
-                                    <div class="body-title mb-10">Room Name <span class="tf-color-1">*</span></div>
-                                    <input type="text" id="roomName" name="room_name"
-                                        placeholder="Enter room name">
-                                </fieldset>
+                    <div id="dormitoryRooms">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
+                            <h4>Details</h4>
+                            <button type="button" data-bs-toggle="modal" data-bs-target="#addRoom">Add Room</button>
+                        </div>
+                        <p>No rooms yet :(</p>
+                        <div id="roomContainer" class="mt-4">
+                            <h4>Rooms</h4>
+                            <ul class="list-group" id="roomList"></ul>
+                        </div>
+                        <div class="modal fade" id="addRoom" tabindex="-1" aria-labelledby="addRoomLabel"
+                            aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="addRoomLabel">Add Room</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <fieldset class="name">
+                                            <div class="body-title mb-10">Room Name <span class="tf-color-1">*</span>
+                                            </div>
+                                            <input type="text" id="roomName" name="room_name"
+                                                placeholder="Enter room name">
+                                        </fieldset>
 
-                                <fieldset class="name">
-                                    <div class="body-title mb-10">Capacity <span class="tf-color-1">*</span></div>
-                                    <input type="number" min="0" id="roomCapacity" name="capacity"
-                                        placeholder="Enter room capacity">
-                                </fieldset>
+                                        <fieldset class="name">
+                                            <div class="body-title mb-10">Capacity <span class="tf-color-1">*</span></div>
+                                            <input type="number" min="0" id="roomCapacity" name="capacity"
+                                                placeholder="Enter room capacity">
+                                        </fieldset>
 
-                                <fieldset class="sex-restriction">
-                                    <div class="body-title mb-10">Sex Restriction</div>
-                                    <select id="roomSexRestriction" name="sex_restriction">
-                                        <option value="">Choose Sex Restriction... </option>
-                                        <option value="male">Male</option>
-                                        <option value="female">Female</option>
-                                    </select>
-                                </fieldset>
+                                        <fieldset class="sex-restriction">
+                                            <div class="body-title mb-10">Sex Restriction</div>
+                                            <select id="roomSexRestriction" name="sex_restriction">
+                                                <option value="">Choose Sex Restriction... </option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                            </select>
+                                        </fieldset>
 
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary"
-                                    data-bs-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-primary" id="saveRoomChanges"> Save Changes</button>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" id="saveRoomChanges"> Save
+                                            Changes</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
 
 
@@ -428,19 +433,13 @@
                                     <span class="alert alert-danger text-center">{{ $message }} </span>
                                 @enderror
 
-                                <div class="form-check d-flex justify-content-between align-items-center my-4">
+                                <div class="form-check d-flex justify-content-center align-items-center my-4">
                                     <div class="d-flex align-items-center">
                                         <input type="checkbox" class="form-check-input" id="isBasedOnDays" name="is_based_on_days" value="1">
                                         <label class="form-check-label ms-2 pt-2" for="isBasedOnDays">Is based on days?</label>
                                     </div>
-
-                                    <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input" id="isQuantity" name="is_quantity_fields" value="1">
-                                        <label class="form-check-label ms-2 pt-2" for="isQuantity">Is there a quantity?</label>
-                                    </div>
                                 </div>
-
-
+                                
                                 <div id="dateFields" style="display: none;">
                                     <div class="input-group">
                                         <label for="date_from">Date From</label>
@@ -478,7 +477,6 @@
     <script src="{{ asset('assets/js/roomandprices.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
     <script>
-    
         function removeUpload(previewId, inputId) {
             $('#' + previewId).hide(); // Hide the preview
             $('#' + previewId + ' img').attr('src', '{{ asset('images/upload/upload-1.png') }}');
@@ -497,30 +495,53 @@
         }
 
 
-        document.getElementById('isBasedOnDays').addEventListener('change', function () {
+        document.addEventListener("DOMContentLoaded", function() {
+        const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
+        const dateFieldsDiv = document.getElementById('dateFields');
+        const dateFromInput = document.getElementById('date_from');
+        const dateToInput = document.getElementById('date_to');
 
-            const dateFields = document.getElementById('dateFields');
-            if (this.checked) {
-                dateFields.style.display = 'block';
-        
-                document.getElementById('isBasedOnDays').value = '1';
-            } else {
-                dateFields.style.display = 'none';
-        
-                document.getElementById('isBasedOnDays').value = '0'; 
+   
+        function disablePastDates() {
+            const today = new Date().toISOString().split('T')[0]; 
+            dateFromInput.setAttribute('min', today);
+            dateToInput.setAttribute('min', today);
+        }
+
+     
+        dateFromInput.addEventListener('change', function() {
+            if (dateFromInput.value) {
+                dateToInput.value = dateFromInput.value;  
             }
         });
 
-
-        document.getElementById('isQuantity').addEventListener('change', function() {
-           
-            if (this.checked) {
-                this.value = '1';
+        // Handle the checkbox state to show/hide the date fields
+        isBasedOnDaysCheckbox.addEventListener('change', function() {
+            if (isBasedOnDaysCheckbox.checked) {
+                dateFieldsDiv.style.display = 'block';  
             } else {
-       
-                this.value = '0';
+                dateFieldsDiv.style.display = 'none'; 
             }
         });
+
+        // Disable past dates initially
+        disablePastDates();
+    });
+
+
+        // document.getElementById('isBasedOnDays').addEventListener('change', function() {
+
+        //     const dateFields = document.getElementById('dateFields');
+        //     if (this.checked) {
+        //         dateFields.style.display = 'block';
+
+        //         document.getElementById('isBasedOnDays').value = '1';
+        //     } else {
+        //         dateFields.style.display = 'none';
+
+        //         document.getElementById('isBasedOnDays').value = '0';
+        //     }
+        // });
 
     </script>
 @endpush

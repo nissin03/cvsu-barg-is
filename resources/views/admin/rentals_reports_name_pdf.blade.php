@@ -1,5 +1,3 @@
-{{-- resources/views/admin/rentals_reports_name_pdf.blade.php --}}
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,97 +5,120 @@
     <style>
         body { 
             font-family: Arial, sans-serif; 
-            padding: 20px; 
+            padding: 10px; 
+            margin: 0;
         }
         h2 { 
             text-align: center; 
-            margin-bottom: 20px; 
-            font-size: 24px;
+            margin-bottom: 10px; 
+            font-size: 20px;
+            font-weight: bold;
         }
-        .summary {
-            font-size: 1.1rem;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        .summary p {
-            margin: 5px 0;
-        }
-        .chart {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        .chart-title {
-            font-size: 1.3rem;
-            margin-bottom: 15px;
-        }
-        img {
-            width: 100%;
-            height: auto;
-            max-width: none;
-        }
-        .rental-summary {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .table-title {
+            font-size: 1.2rem;
             margin-bottom: 10px;
+            font-weight: bold;
+            text-align: center;
         }
-        .rental-summary .dot {
-            height: 15px;
-            width: 15px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 10px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px; /* Reduce font size */
+            table-layout: fixed; /* Ensures fixed table layout */
         }
-        /* Increase image sizes specifically for the PDF */
-        @media print {
-            .chart img {
-                width: 100%;
-                height: auto;
-            }
+        th, td {
+            padding: 6px 8px; /* Reduce padding */
+            border: 1px solid #ddd;
+            text-align: center;
+            word-wrap: break-word; /* Break long content */
         }
-        /* Additional styling to make images bigger */
-        .chart img {
-            max-height: 800px; /* Increase max-height as needed */
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .number-cell {
+            text-align: right;
         }
     </style>
 </head>
 <body>
     <h2>Rentals Reports by Name</h2>
 
-    {{-- <div class="summary">
-        @foreach($reservationsPerRental as $rentalName => $count)
-            <div class="rental-summary">
-                <div class="dot" style="background-color: {{ $rentalColors[$rentalName] ?? '#000' }};"></div>
-                <p><strong>{{ $rentalName }}:</strong> {{ number_format($count, 0) }} Reservations</p>
-            </div>
-        @endforeach
-    </div> --}}
+    <!-- Monthly Rentals Report Table -->
+    <div class="table-title">Monthly Reservations by Rental Name for </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Rental Name</th>
+                <th>Jan</th><th>Feb</th><th>Mar</th>
+                <th>Apr</th><th>May</th><th>Jun</th>
+                <th>Jul</th><th>Aug</th><th>Sep</th>
+                <th>Oct</th><th>Nov</th><th>Dec</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($rentalNames as $rental)
+                <tr>
+                    <td><strong>{{ $rental->name }}</strong></td>
+                    @foreach(range(1, 12) as $month)
+                        <td class="number-cell">
+                            {{ number_format($monthlyData[$rental->name][$month] ?? 0) }}
+                        </td>
+                    @endforeach
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
-    <div class="chart">
-        <div class="chart-title">Monthly Reservations by Rental Name</div>
-        @if($monthlyImage)
-            <img src="{{ $monthlyImage }}" alt="Monthly Reservations Chart">
-        @else
-            <p>No data available for Monthly Reservations.</p>
-        @endif
-    </div>
-    
-    <div class="chart">
-        <div class="chart-title">Weekly Reservations by Rental Name</div>
-        @if($weeklyImage)
-            <img src="{{ $weeklyImage }}" alt="Weekly Reservations Chart">
-        @else
-            <p>No data available for Weekly Reservations.</p>
-        @endif
-    </div>
-    
-    <div class="chart">
-        <div class="chart-title">Daily Reservations by Rental Name</div>
-        @if($dailyImage)
-            <img src="{{ $dailyImage }}" alt="Daily Reservations Chart">
-        @else
-            <p>No data available for Daily Reservations.</p>
-        @endif
-    </div>
+    <!-- Weekly Rentals Report Table -->
+    <div class="table-title">Weekly Reservations by Rental Name for {{ $selectedYear }}</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Rental Name</th>
+                <th>W1</th><th>W2</th><th>W3</th>
+                <th>W4</th><th>W5</th><th>W6</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($rentalNames as $rental)
+                <tr>
+                    <td><strong>{{ $rental->name }}</strong></td>
+                    @foreach(range(1, 6) as $week)
+                        <td class="number-cell">
+                            {{ number_format($weeklyData[$rental->name][$week] ?? 0) }}
+                        </td>
+                    @endforeach
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    <!-- Daily Rentals Report Table -->
+    <div class="table-title">Daily Reservations by Rental Name for {{ $selectedYear }}</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Rental Name</th>
+                <th>Mon</th><th>Tue</th><th>Wed</th>
+                <th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($rentalNames as $rental)
+                <tr>
+                    <td><strong>{{ $rental->name }}</strong></td>
+                    @foreach($daysOfWeek as $day)
+                        <td class="number-cell">
+                            {{ number_format($dailyData[$rental->name][$day] ?? 0) }}
+                        </td>
+                    @endforeach
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 </body>
 </html>

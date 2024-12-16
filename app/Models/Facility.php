@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+
 class Facility extends Model
 {
     use HasFactory;
@@ -12,9 +13,9 @@ class Facility extends Model
 
     protected $table = 'facilities';
     protected $fillable = [
-        'name', 'description', 'type', 'image', 'images', 'slug', 
+        'name', 'description', 'facility_type', 'image', 'images', 'slug', 
         'featured', 'status', 'created_by', 'rules_and_regulations', 
-        'requirements', 'archived_at'
+        'requirements', 'archived_at', 'archived', 'created_by'
     ];
 
 
@@ -33,6 +34,11 @@ class Facility extends Model
         return $this->hasMany(Availability::class);
     }
 
+
+    public function user()  
+    {  
+        return $this->belongsTo(User::class); 
+    }  
     public function individualPrice()
     {
         $price = $this->prices()->where('price_type', 'individual')->first();
@@ -40,6 +46,12 @@ class Facility extends Model
         return $price ? $price->value : 0;
     }
 
+    public function wholePlace()
+    {
+        $price = $this->prices()->where('price_type', 'whole')->first();
+
+        return $price ? $price->value : 0;
+    }
 
 }
 

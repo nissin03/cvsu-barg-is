@@ -6,22 +6,23 @@ $(document).ready(function () {
         const rentalType = $(this).val();
         console.log("Facility Type:", rentalType);
 
-        $("#roomBox, #hideRoomBox, #priceBox, #option").hide();
+        $("#roomBox, #hideRoomBox, #dormitoryRooms").hide();
 
         switch (rentalType) {
             case "individual":
+                $('hideRoomBox').hide();
                 $("#roomBox").show();
-                $("#priceBox").show();
+                $("#dormitoryRooms").show();
                 break;
             case "whole_place":
-                $("#roomCapacityWhole").show();
+                $("#dormitoryRooms").hide();
+                $("#roomBox").show();
                 $("#hideRoomBox").show();
-                $("#priceBox").show();
                 break;
             case "both":
                 $("#roomBox").show();
                 $("#hideRoomBox").show();
-                $("#priceBox").show();
+                $("#dormitoryRooms").show();
                 $("#option").show();
                 break;
             default:

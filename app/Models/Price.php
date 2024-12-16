@@ -16,11 +16,11 @@ class Price extends Model
     {
         return $this->belongsTo(Facility::class);
     }
+    
+    public function facilityAttributes()
+    {
+        return $this->belongsToMany(FacilityAttribute::class);
+    }
+   
 
-    // public function facilityAttribute()
-    // {
-    //     return $this->belongsTo(FacilityAttribute::class);
-    // }
-
-    // Price belongs to Facility
 }

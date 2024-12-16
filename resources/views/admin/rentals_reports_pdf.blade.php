@@ -20,56 +20,121 @@
         .summary p {
             margin: 5px 0;
         }
-        .chart {
-            text-align: center;
+        table {
+            width: 100%;
+            border-collapse: collapse;
             margin-bottom: 40px;
         }
-        .chart-title {
-            font-size: 1.3rem;
-            margin-bottom: 15px;
+        th, td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
         }
-        img {
-            width: 100%;
-            height: 200px;
-            max-width: none;
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .report-title {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+        .no-data {
+            text-align: center;
+            color: red;
         }
     </style>
 </head>
 <body>
     <h2>Rentals Reports</h2>
 
-    {{-- <div class="summary">
+    <!-- Summary Section -->
+    <div class="summary">
         <p><strong>Total Payment Amount:</strong> ${{ number_format($totalAmounts['total_payment'], 2) }}</p>
         <p><strong>Payment Pending Amount:</strong> ${{ number_format($totalAmounts['pending_amount'], 2) }}</p>
         <p><strong>Payment Completed Amount:</strong> ${{ number_format($totalAmounts['completed_amount'], 2) }}</p>
         <p><strong>Payment Canceled Amount:</strong> ${{ number_format($totalAmounts['canceled_amount'], 2) }}</p>
-    </div> --}}
+    </div>
 
-    <div class="chart">
-        <div class="chart-title">Monthly Rentals Reports</div>
-        @if($monthlyImage)
-            <img src="{{ $monthlyImage }}" alt="Monthly Rentals Chart">
+    <!-- Monthly Rentals Table -->
+    <div class="report-section">
+        <div class="report-title">Monthly Rentals Report</div>
+        @if($monthlyData && count($monthlyData) > 0)
+            <table>
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Rental Count</th>
+                        <th>Total Rental Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($monthlyData as $month => $data)
+                        <tr>
+                            <td>{{ $month }}</td>
+                            <td>{{ $data['rental_count'] }}</td>
+                            <td>${{ number_format($data['total_amount'], 2) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         @else
-            <p>No data available for Monthly Rentals.</p>
+            <p class="no-data">No data available for Monthly Rentals.</p>
         @endif
     </div>
-    
-    <div class="chart">
-        <div class="chart-title">Weekly Rentals Reports</div>
-        @if($weeklyImage)
-            <img src="{{ $weeklyImage }}" alt="Weekly Rentals Chart">
+
+    <!-- Weekly Rentals Table -->
+    <div class="report-section">
+        <div class="report-title">Weekly Rentals Report</div>
+        @if($weeklyData && count($weeklyData) > 0)
+            <table>
+                <thead>
+                    <tr>
+                        <th>Week</th>
+                        <th>Rental Count</th>
+                        <th>Total Rental Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($weeklyData as $week => $data)
+                        <tr>
+                            <td>{{ $week }}</td>
+                            <td>{{ $data['rental_count'] }}</td>
+                            <td>${{ number_format($data['total_amount'], 2) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         @else
-            <p>No data available for Weekly Rentals.</p>
+            <p class="no-data">No data available for Weekly Rentals.</p>
         @endif
     </div>
-    
-    <div class="chart">
-        <div class="chart-title">Daily Rentals Reports</div>
-        @if($dailyImage)
-            <img src="{{ $dailyImage }}" alt="Daily Rentals Chart">
+
+    <!-- Daily Rentals Table -->
+    <div class="report-section">
+        <div class="report-title">Daily Rentals Report</div>
+        @if($dailyData && count($dailyData) > 0)
+            <table>
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Rental Count</th>
+                        <th>Total Rental Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($dailyData as $day => $data)
+                        <tr>
+                            <td>{{ $day }}</td>
+                            <td>{{ $data['rental_count'] }}</td>
+                            <td>${{ number_format($data['total_amount'], 2) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         @else
-            <p>No data available for Daily Rentals.</p>
+            <p class="no-data">No data available for Daily Rentals.</p>
         @endif
     </div>
 </body>
 </html>
+
