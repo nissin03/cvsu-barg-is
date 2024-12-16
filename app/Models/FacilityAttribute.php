@@ -26,5 +26,10 @@ class FacilityAttribute extends Model
         return $this->belongsTo(Facility::class);
     }
 
+    public function availabilities()
+    {
+        return $this->hasMany(Availability::class);
+    }
+
     
 }

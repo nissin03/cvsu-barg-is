@@ -241,6 +241,14 @@
                                             </li>
                                         </ul>
                                     </li>
+
+                                    <li class="menu-item">
+                                        <a href="{{ route('admin.facilities.reservations') }}">
+                                            <div class="icon"><i class="icon-calendar"></i></div>
+                                            <div class="text">Reservations</div>
+                                        </a>
+                                    </li>
+
                                     <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
                                             <div class="icon"><i class="icon-layers"></i></div>

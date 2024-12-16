@@ -35,7 +35,8 @@
         :breadcrumbs="$breadcrumbs" />
 
         <main class="container my-5">
-    @foreach ($facilities as $facility)
+        
+     @foreach ($facilities as $facility)
         <div class="product-item d-flex justify-content-between" style="align-items: center; flex-direction: row; padding: 15px; margin-bottom: 20px;" onclick="window.location.href='{{ route('user.facilities.details', ['slug' => $facility->slug]) }}'">
             <div class="image" style="width: 30%;">
                 <img src="{{ asset('storage/' . $facility->image) }}" alt="" style="border-radius: 5px; width: 100%; height: 250px;">
@@ -113,13 +114,13 @@
 
                 @if ($facility->facility_type == 'both' )
                     @php
-                        // Extract room numbers for the overall range
+                     
                         $roomNumbers = $facility->facilityAttributes->pluck('room_name')->filter()->map(function ($name) {
-                            return preg_replace('/[^0-9]/', '', $name); // Extract numeric part
+                            return preg_replace('/[^0-9]/', '', $name); 
                         })->sort()->values();
 
-                        // Extract sex restriction
-                        $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first(); // Get the first non-null value
+                      
+                        $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first(); 
                     @endphp
 
                     @if ($roomNumbers->isNotEmpty())
@@ -183,8 +184,21 @@
     <link rel="stylesheet" href="{{asset('css/style.css')}}">
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' rel='stylesheet'>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-              
-       
+        @if(session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Reservation in Progress',
+                text: "{{ session('success') }}",
+            });
+        @endif
+        @if (session('error'))
+            Swal.fire([
+                icon: 'error',
+                title: 'Oops...'
+                text: "{{session('error')}}",
+            ]);
+        @endif
     </script>
 @endpush

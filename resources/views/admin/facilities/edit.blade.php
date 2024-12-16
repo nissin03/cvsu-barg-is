@@ -305,6 +305,9 @@
                             <span class="alert alert-danger text-center">{{ $message }} </span>
                         @enderror
                     </div>
+                </div>
+
+                <div class="wg-box" id="roomBox">
                     @foreach ($facility->facilityAttributes as $facilityAttribute)
                         <fieldset class="name" id="hideRoomBox">
                             <div class="body-title mb-10">Capacity <span class="tf-color-1"
@@ -316,90 +319,95 @@
                     @endforeach
 
 
+                    <div id="dormitoryRooms">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
+                            <h4>Details</h4>
+                            <button type="button" data-bs-toggle="modal" data-bs-target="#addRoom">Add Room</button>
+                        </div>
+                        {{-- <p class="d-flex justify-content-center align-items-center">No rooms yet :(</p> --}}
+                        <div id="roomContainer" class="mt-4">
 
-
-                </div>
-
-                <div class="wg-box" id="roomBox">
-                    <div id="dormitoryRooms" class="d-flex justify-content-between align-items-center border-bottom pb-3">
-                        <h4>Details</h4>
-                        <button type="button" data-bs-toggle="modal" data-bs-target="#addRoom">Add Room</button>
-                    </div>
-                    <p class="d-flex justify-content-center align-items-center">No rooms yet :(</p>
-                    <div id="roomContainer" class="mt-4">
-
-                        <ul class="list-group" id="roomList">
-                            @forelse ($facility->facilityAttributes as $facilityAttribute)
-                                <!-- Check if room data is valid before rendering -->
-                                @if ($facilityAttribute->room_name && $facilityAttribute->capacity > 0)
-                                    <div class="card p-3 mb-3">
-                                        <div class="card-body d-flex justify-content-between align-items-center">
-                                            <div class="text-start">
-                                                <div class="d-flex justify-content-center align-items-center">
-                                                    <h4 class="pe-2">{{ $facilityAttribute->room_name ?? null }}</h4>
-                                                    @if ($facilityAttribute->sex_restriction)
-                                                        <span class="badge bg-info">
-                                                            {{ ucfirst($facilityAttribute->sex_restriction ?? null) }}
-                                                        </span>
-                                                    @endif
+                            <ul class="list-group" id="roomList">
+                                <ul class="list-group" id="roomList">
+                                    @forelse ($facility->facilityAttributes->filter(fn($attr) => $attr->facility_id == $facility->id)->values() as $index => $facilityAttribute)
+                                        @if ($facilityAttribute->room_name && $facilityAttribute->capacity > 0)
+                                            <div class="card p-3 mb-3">
+                                                <div class="card-body d-flex justify-content-between align-items-center">
+                                                    <div class="text-start">
+                                                        <div class="d-flex justify-content-center align-items-center">
+                                                            <h4 class="pe-2">{{ $facilityAttribute->room_name }}</h4>
+                                                            @if ($facilityAttribute->sex_restriction)
+                                                                <span class="badge bg-info">
+                                                                    {{ ucfirst($facilityAttribute->sex_restriction) }}
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                        <p class="fw-bold">Capacity: <span
+                                                                class="badge bg-warning">{{ $facilityAttribute->capacity }}</span>
+                                                        </p>
+                                                    </div>
+                                                    <div class="d-flex">
+                                                        <button type="button" class="btn btn-lg btn-outline-warning me-2"
+                                                            onclick="editRoom({{ $index }})"><i
+                                                                class="icon-pen">Edit</i></button>
+                                                        <button type="button"
+                                                            class="btn btn-lg btn-outline-danger delete-btn"
+                                                            onclick="deleteRoom({{ $index }})">
+                                                            <i class="icon-trash"></i>
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <p class="fw-bold">Capacity: <span
-                                                        class="badge bg-warning">{{ $facilityAttribute->capacity ?? null }}</span>
-                                                </p>
                                             </div>
-                                            <button class="btn btn-lg btn-outline-danger delete-btn"
-                                                onclick="deletePrice(${index})">
-                                                <i class="icon-trash"></i>
-                                            </button>
-                                        </div>
+                                        @endif
+                                    @empty
+                                        <li class="list-group-item">
+                                            No facility attributes available.
+                                        </li>
+                                    @endforelse
+                                </ul>
+
+                            </ul>
+
+                        </div>
+                        <div class="modal fade" id="addRoom" tabindex="-1" aria-labelledby="addRoomLabel"
+                            aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="addRoomLabel">Add Room</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
                                     </div>
-                                @endif
+                                    <div class="modal-body">
+                                        <fieldset class="name">
+                                            <div class="body-title mb-10">Room Name <span class="tf-color-1">*</span>
+                                            </div>
+                                            <input type="text" id="roomName" name="room_name"
+                                                placeholder="Enter room name">
+                                        </fieldset>
 
-                            @empty
-                                <li class="list-group-item">
-                                    No facility attributes available.
-                                </li>
-                            @endforelse
-                        </ul>
+                                        <fieldset class="name">
+                                            <div class="body-title mb-10">Capacity <span class="tf-color-1">*</span></div>
+                                            <input type="number" min="0" id="roomCapacity" name="capacity"
+                                                placeholder="Enter room capacity">
+                                        </fieldset>
 
-                    </div>
-                    <div class="modal fade" id="addRoom" tabindex="-1" aria-labelledby="addRoomLabel"
-                        aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h1 class="modal-title fs-5" id="addRoomLabel">Add Room</h1>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <fieldset class="name">
-                                        <div class="body-title mb-10">Room Name <span class="tf-color-1">*</span></div>
-                                        <input type="text" id="roomName" name="room_name"
-                                            placeholder="Enter room name">
-                                    </fieldset>
+                                        <fieldset class="sex-restriction">
+                                            <div class="body-title mb-10">Sex Restriction</div>
+                                            <select id="roomSexRestriction" name="sex_restriction">
+                                                <option value="" selected>Choose Sex Restriction... </option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                            </select>
+                                        </fieldset>
 
-                                    <fieldset class="name">
-                                        <div class="body-title mb-10">Capacity <span class="tf-color-1">*</span></div>
-                                        <input type="number" min="0" id="roomCapacity" name="capacity"
-                                            placeholder="Enter room capacity">
-                                    </fieldset>
-
-                                    <fieldset class="sex-restriction">
-                                        <div class="body-title mb-10">Sex Restriction</div>
-                                        <select id="roomSexRestriction" name="sex_restriction">
-                                            <option value="" selected>Choose Sex Restriction... </option>
-                                            <option value="male">Male</option>
-                                            <option value="female">Female</option>
-                                        </select>
-                                    </fieldset>
-
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary"
-                                        data-bs-dismiss="modal">Close</button>
-                                    <button type="button" class="btn btn-primary" id="saveRoomChanges"> Save
-                                        changes</button>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" id="saveRoomChanges"> Save
+                                            changes</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -423,11 +431,7 @@
                     <div id="priceContainer" class="mt-4">
                         <ul class="list-group container-sm" id="priceList">
                             @foreach ($prices as $price)
-                                {{-- <li class="list-group-item">
-                                    Name: {{ $price->name }} | Price: {{ $price->value }} | Type:
-                                    {{ ucfirst($price->price_type) }} | Based on Days:
-                                    {{ $price->is_based_on_days ? 'Yes' : 'No' }}
-                                </li> --}}
+                    
                                 <div class="card p-3 mb-3">
                                     <div class="card-body d-flex justify-content-between align-items-center">
                                         <div class="text-start">
@@ -521,6 +525,18 @@
                                     <span class="alert alert-danger text-center">{{ $message }} </span>
                                 @enderror
 
+                                <div id="dateFields" style="display: none;">
+                                    <div class="input-group">
+                                        <label for="date_from">Date From</label>
+                                        <input type="date" id="date_from" name="prices[0][date_from]">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="date_to">Date To</label>
+                                        <input type="date" id="date_to" name="prices[0][date_to]">
+                                    </div>
+                                </div>
+
+
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -529,6 +545,42 @@
                         </div>
                     </div>
                 </div>
+
+
+                @php
+                    $rooms = $facility->facilityAttributes
+                        ->filter(function ($attr) use ($facility) {
+                            return $attr->facility_id == $facility->id;
+                        })
+                        ->map(function ($attribute) {
+                            return [
+                                'id' => $attribute->id,
+                                'facility_id' => $attribute->facility_id,
+                                'room_name' => $attribute->room_name,
+                                'capacity' => $attribute->capacity,
+                                'sex_restriction' => $attribute->sex_restriction,
+                            ];
+                        })
+                        ->values(); 
+                @endphp
+
+                @php
+                    $price = $facility->prices
+                        ->filter(function ($attr) use ($facility) {
+                            return $attr->facility_id == $facility->id;
+                        })
+                        ->map(function ($price) {
+                            return [
+                                'id' => $price->id,
+                                'facility_id' => $price->facility_id,
+                                'name' => $price->name,
+                                'priceTypeSelect' => $price->price_type,
+                                'value' => $price->value,
+                                'isBasedOnDays' => $price->is_based_on_days,
+                            ];
+                        })
+                        ->values(); 
+                @endphp
 
 
 
@@ -548,37 +600,40 @@
     {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
     <script>
         $(document).ready(function() {
-            let prices = [];
+            let prices = @json($prices);
             // let rooms = [];
+            let rooms = @json($rooms);
+            console.log("Initial Rooms Data:", rooms);
 
-            let rooms = @json($facility->facilityAttributes);
 
             $("#rentalType").on("change", function() {
                 const rentalType = $(this).val();
                 console.log("Facility Type:", rentalType);
 
-                $("#roomBox, #hideRoomBox, #priceBox, #option").hide();
+                $("#roomBox, #hideRoomBox, #dormitoryRooms").hide();
 
                 switch (rentalType) {
                     case "individual":
+                        $('hideRoomBox').hide();
                         $("#roomBox").show();
-                        $("#priceBox").show();
+                        $("#dormitoryRooms").show();
                         break;
                     case "whole_place":
-                        $("#roomCapacityWhole").show();
+                        $("#dormitoryRooms").hide();
+                        $("#roomBox").show();
                         $("#hideRoomBox").show();
-                        $("#priceBox").show();
                         break;
                     case "both":
                         $("#roomBox").show();
                         $("#hideRoomBox").show();
-                        $("#priceBox").show();
+                        $("#dormitoryRooms").show();
                         $("#option").show();
                         break;
                     default:
                         break;
                 }
             });
+
 
             $("#rentalType").trigger("change");
 
@@ -615,25 +670,31 @@
                 renderRoomList();
                 updateHiddenRooms();
 
-                // Close the modal
                 $("#addRoom").modal("hide");
 
+                // Clear the input fields
                 $("#roomName").val("");
                 $("#roomCapacity").val("");
                 $("#roomSexRestriction").val("");
+
+                // Reset modal title if it was changed during edit
+                $("#addRoomLabel").text("Add Room");
             });
 
             function renderRoomList() {
                 $("#roomList").empty();
-                console.log(rooms);
+                if (rooms.length === 0) {
+                    $("#roomList").append('<li class="list-group-item">No rooms yet :(</li>');
+                    return;
+                }
                 rooms.forEach((room, index) => {
                     const sex_container = room.sex_restriction ?
                         `<span class="badge bg-info">${room.sex_restriction}</span>` : "";
-                    const capacity_container = room.capacity ? 
-                    ` <span class="badge bg-warning">${room.capacity}</span>` : "";
+                    const capacity_container = room.capacity ?
+                        `<span class="badge bg-warning">${room.capacity}</span>` : "";
 
                     const listItem = `
-             <div class="card p-3 mb-3">
+            <div class="card p-3 mb-3">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div class="text-start">
                         <div class="d-flex justify-content-center align-items-center">
@@ -641,20 +702,24 @@
                             ${sex_container}
                         </div>
                         <p class="fw-bold">Capacity: <span class="badge bg-warning">${room.capacity ?? ""}</span></p>
-                        ${capacity_container}
                     </div>
                     <div class="d-flex">
-                <button type="button" class="btn btn-lg btn-outline-warning me-2" onclick="editRoom(${index})"><i class="icon-pen">Edit</i></button>
-                <button type="button" class="btn btn-lg btn-outline-danger delete-btn" onclick="deleteRoom(${index})">
-                <i class="icon-trash"></i>
-            </button>
-            </div>
+                        <button type="button" class="btn btn-lg btn-outline-warning me-2" onclick="editRoom(${index})"><i class="icon-pen">Edit</i></button>
+                        <button type="button" class="btn btn-lg btn-outline-danger delete-btn" onclick="deleteRoom(${index})">
+                            <i class="icon-trash"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
                     $("#roomList").append(listItem);
                 });
             }
+
+            $(document).ready(function() {
+                renderRoomList();
+            });
+
 
 
 
@@ -667,24 +732,60 @@
                 $("#saveRoomChanges")
                     .off("click")
                     .on("click", function() {
-                        rooms[index].room_name = $("#roomName").val();
-                        const newCapacity = $("#roomCapacity").val();
-                        rooms[index].capacity = newCapacity && !isNaN(newCapacity) && newCapacity > 0 ? parseInt(newCapacity) : null; // Validate capacity
-        
-                        rooms[index].sex_restriction = $("#roomSexRestriction").val();
+                        const updatedRoomName = $("#roomName").val();
+                        const updatedCapacity = $("#roomCapacity").val();
+                        let updatedSexRestriction = $("#roomSexRestriction").val();
+
+                        // Validate room data
+                        if (!updatedRoomName || !updatedCapacity) {
+                            alert("Please fill in all fields");
+                            return;
+                        }
+                        if (isNaN(updatedCapacity) || updatedCapacity <= 0) {
+                            alert("Capacity must be a positive number.");
+                            return;
+                        }
+
+                        const validSexRestrictions = ["male", "female"];
+                        if (!validSexRestrictions.includes(updatedSexRestriction)) {
+                            updatedSexRestriction = null;
+                        }
+
+                        rooms[index] = {
+                            ...rooms[index],
+                            room_name: updatedRoomName,
+                            capacity: parseInt(updatedCapacity),
+                            sex_restriction: updatedSexRestriction,
+                        };
                         renderRoomList();
                         updateHiddenRooms();
+
+                        // Close the modal
                         $("#addRoom").modal("hide");
+
+                        // Clear fields
+                        $("#roomName").val("");
+                        $("#roomCapacity").val("");
+                        $("#roomSexRestriction").val("");
+
+                        // Reset modal title
+                        $("#addRoomLabel").text("Add Room");
                     });
 
+                // Change modal title to 'Edit Room'
+                $("#addRoomLabel").text("Edit Room");
+
+                // Show the modal
                 $("#addRoom").modal("show");
             };
 
+
             window.deleteRoom = function(index) {
-                rooms.splice(index, 1);
-                renderRoomList();
-                updateHiddenRooms();
-                clearRoomFields();
+                if (confirm("Are you sure you want to delete this room?")) {
+                    rooms.splice(index, 1);
+                    renderRoomList();
+                    updateHiddenRooms();
+                }
             };
 
             function updateHiddenRooms() {
@@ -692,32 +793,10 @@
                 roomInput.empty();
 
                 rooms.forEach((room, index) => {
-
-
-                    function updateHiddenRooms() {
-                        const roomInput = $("#hiddenRooms");
-                        roomInput.empty();
-
-                        rooms.forEach((room, index) => {
-                            const sexRestrictionValue =
-                                room.sex_restriction && ['male', 'female'].includes(room
-                                    .sex_restriction) ?
-                                room.sex_restriction :
-                                null;
-
-                            if (room.room_name && room.capacity > 0) {
-                                roomInput.append(createHiddenInputRooms(
-                                    `facility_attributes[${index}][room_name]`, room
-                                    .room_name));
-                                roomInput.append(createHiddenInputRooms(
-                                    `facility_attributes[${index}][capacity]`, room.capacity, null
-                                ));
-                                roomInput.append(createHiddenInputRooms(
-                                    `facility_attributes[${index}][sex_restriction]`,
-                                    sexRestrictionValue));
-                            }
-                        });
-                    }
+                    const sexRestrictionValue =
+                        room.sex_restriction && ['male', 'female'].includes(room.sex_restriction) ?
+                        room.sex_restriction :
+                        '';
 
                     if (room.room_name && room.capacity > 0) {
                         roomInput.append(createHiddenInputRooms(`facility_attributes[${index}][room_name]`,
@@ -729,8 +808,11 @@
                     }
                 });
             }
-
-            // Handle Save Price Changes (Add Price)
+            // Helper function to create hidden input for rooms
+            function createHiddenInputRooms(name, value) {
+                return `<input type="hidden" name="${name}" value="${value}">`;
+            }
+  // Handle Save Price Changes (Add Price)
             $("#savePriceChanges").on("click", function(event) {
                 event.preventDefault();
 
@@ -758,22 +840,28 @@
                     value: parseFloat(value),
                     is_based_on_days: isBasedOnDays,
                 };
+            
+                
                 prices.push(newPrice);
                 console.log("New Price:", newPrice);
-
                 renderPriceList();
                 updateHiddenPrices();
 
                 // Close the price modal
                 $("#addPrice").modal("hide");
+
+                $("#priceName").val("");
+                $("#priceTypeSelect").val("");
+                $("#value").val("");
+                $("#isBasedOnDays").val("");
             });
 
             // Render the price list dynamically
             function renderPriceList() {
-                $("#priceList").empty(); // Clear the price list
+                $("#priceList").empty();
                 prices.forEach((price, index) => {
                     const listItem = `
-              <div class="card p-3 mb-3">
+                 <div class="card p-3 mb-3">
                   <div class="card-body d-flex justify-content-between align-items-center">
                       <div class="text-start">
                           <h4>${price.name}</h4>
@@ -791,9 +879,13 @@
                               </span>
                           </p>
                       </div>
-                      <button type="button" class="btn btn-lg btn-outline-danger delete-btn" onclick="deletePrice(${index})">
-                          <i class="icon-trash"></i>
-                      </button>
+                      <div class="d-flex">
+                        <button type="button" class="btn btn-lg btn-outline-warning me-2" onclick="editPrice(${index})"><i class="icon-pen">Edit</i></button>
+                        <button type="button" class="btn btn-lg btn-outline-danger delete-btn" onclick="deletePrice(${index})">
+                            <i class="icon-trash"></i>
+                        </button>
+                    </div>
+                   
                   </div>
               </div>
             `;
@@ -801,19 +893,75 @@
                 });
             }
 
-
-            window.deletePrice = function(index) {
-                prices.splice(index, 1);
+            $(document).ready(function() {
                 renderPriceList();
-                updateHiddenPrices();
-                clearPriceFields();
+            });
+
+        
+
+            window.editPrice = function(index) {
+                const price = prices[index];
+                $("#priceName").val(price.name || "");
+                $("#priceTypeSelect").val(price.price_type || "");
+                $("#value").val(price.value || "");
+                $("#isBasedOnDays").val(price.is_based_on_days || "");
+
+                $("#savePriceChanges")
+                    .off("click")
+                    .on("click", function() {
+                        const updatedPriceName = $("#priceName").val();
+                        const updatedPriceTypeSelect = $("#priceTypeSelect").val();
+                        const updatedValue = $("#value").val();
+                        let updatedBasedOnDays = $("#isBasedOnDays").val();
+
+                        // Validate room data
+                        if (!updatedPriceName || !updatedValue) {
+                            alert("Please fill in all fields");
+                            return;
+                        }
+                       
+                  
+                        prices[index] = {
+                            ...prices[index],
+                            name: updatedPriceName,
+                            price_type: updatedPriceTypeSelect,
+                            value: parseFloat(updatedValue),
+                            is_based_on_days: updatedBasedOnDays,
+                        };
+                        renderPriceList();
+                        updateHiddenPrices();
+
+                        // Close the modal
+                        $("#addPrice").modal("hide");
+
+                        // Clear fields
+                        $("#priceName").val("");
+                        $("#priceTypeSelect").val("");
+                        $("#value").val("");
+                        $("#isBasedOnDays").val("");
+
+                        // Reset modal title
+                        $("#addPriceLabel").text("Add Price");
+                    });
+
+                // Change modal title to 'Edit Price'
+                $("#addPriceLabel").text("Edit Price");
+
+                // Show the modal
+                $("#addPrice").modal("show");
             };
 
-            function clearRoomFields() {
-                $("#roomName").val("");
-                $("#roomCapacity").val("");
-                $("#roomSexRestriction").val("");
-            }
+
+
+            window.deletePrice = function(index) {
+                if (confirm("Are you sure you want to delete this room?")) {
+                    prices.splice(index, 1);
+                    renderPriceList();
+                    updateHiddenPrices();
+                }
+            };
+
+
 
             function clearPriceFields() {
                 $("#priceName").val("");
@@ -854,10 +1002,8 @@
                 return `<input type="hidden" name="${name}" value="${value}">`;
             }
 
-            // Helper function to create hidden input for rooms
-            function createHiddenInputRooms(name, value) {
-                return `<input type="hidden" name="${name}" value="${value}">`;
-            }
+            
+
 
             $("#facilityForm").on("submit", function(event) {
                 event.preventDefault();
@@ -884,8 +1030,7 @@
                             formData.append(`facility_attributes[${index}][capacity]`, room
                                 .capacity);
                             formData.append(`facility_attributes[${index}][sex_restriction]`, room
-                                .sex_restriction === "null" ? null : room.sex_restriction);
-
+                                .sex_restriction || '');
                         }
                     });
                 }
@@ -907,7 +1052,7 @@
                         );
                         formData.append(
                             `facility_attributes[${index}][sex_restriction]`,
-                            room.sex_restriction
+                            room.sex_restriction || ''
                         );
                     });
                 }
@@ -981,6 +1126,39 @@
                 alertBox.alert();
             }
         });
+
+        document.addEventListener("DOMContentLoaded", function() {
+        const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
+        const dateFieldsDiv = document.getElementById('dateFields');
+        const dateFromInput = document.getElementById('date_from');
+        const dateToInput = document.getElementById('date_to');
+
+   
+        function disablePastDates() {
+            const today = new Date().toISOString().split('T')[0]; 
+            dateFromInput.setAttribute('min', today);
+            dateToInput.setAttribute('min', today);
+        }
+
+     
+        dateFromInput.addEventListener('change', function() {
+            if (dateFromInput.value) {
+                dateToInput.value = dateFromInput.value;  
+            }
+        });
+
+        // Handle the checkbox state to show/hide the date fields
+        isBasedOnDaysCheckbox.addEventListener('change', function() {
+            if (isBasedOnDaysCheckbox.checked) {
+                dateFieldsDiv.style.display = 'block';  
+            } else {
+                dateFieldsDiv.style.display = 'none'; 
+            }
+        });
+
+        // Disable past dates initially
+        disablePastDates();
+    });
 
         function removeUpload(previewId, inputId) {
             $('#' + previewId).hide(); // Hide the preview

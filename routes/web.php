@@ -38,6 +38,12 @@ Route::get('/user/facilities', [UserFacilityController::class, 'index'])->name('
 Route::get('/user/facilities/{slug}', [UserFacilityController::class, 'show'])->name('user.facilities.details');
 Route::get('/user/checkout', [UserFacilityController::class, 'checkout'])->name('facility.checkout');
 Route::post('/reserve', [UserFacilityController::class, 'reserve'])->name('facility.reserve');
+Route::post('user/facilities/place-reservation', [UserFacilityController::class, 'place_reservation'])->name('user.facilities.placeReservation');
+Route::get('/user/reservations', [UserFacilityController::class, 'account_reservation'])->name('user.reservations');
+Route::get('/user/reservation-history', [UserFacilityController::class, 'reservation_history'])->name('user.reservations_history');
+Route::get('/user/reservation_details/{availability_id}', [UserFacilityController::class, 'account_reservation_details'])->name('user.reservation_details');
+
+
 // Route::post('/checkout', [UserFacilityController::class, 'post_checkout'])->name('user.post_checkout');
 
 
@@ -153,6 +159,11 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::get('/admin/facility/edit/{id}', [FacilityController::class, 'edit'])->name('admin.facilities.edit');
     // Route::put('/admin/facility/update', [FacilityController::class, 'update'])->name('admin.facilities.update');
     Route::put('/admin/facility/update/{id}', [FacilityController::class, 'update'])->name('admin.facilities.update');
+    Route::get('/admin/facility/reservation', [FacilityController::class, 'reservations'])->name('admin.facilities.reservations');
+    Route::get('/admin/reservation/events', [FacilityController::class, 'events'])->name('admin.facilities.reservations-events');
+    Route::get('/admin/reservation-history', [FacilityController::class, 'reservationHistory'])->name('admin.facilities.reservations-history');
+    
+
 
 
     

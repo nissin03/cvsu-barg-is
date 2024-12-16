@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use Carbon\Month;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use App\Models\User;
@@ -27,7 +28,6 @@ use Illuminate\Support\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProductAttribute;
 use App\Mail\LowStockNotification;
-use Illuminate\Support\Facades\Validator;
 use App\Notifications\StockUpdate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Models\ProductAttributeValue;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Notification;
 use Intervention\Image\Laravel\Facades\Image;
 use App\Notifications\PreOrderBackInStockNotification;
@@ -3360,7 +3361,7 @@ class AdminController extends Controller
     // Rental Reports PDF 
     public function downloadPdfRentals(Request $request)
     {
-        // Validate incoming request data (already in place)
+        // Validate incoming request data
         $request->validate([
             'monthly_rentals_img' => 'nullable|string',
             'weekly_rentals_img'  => 'nullable|string',
@@ -3371,7 +3372,7 @@ class AdminController extends Controller
             'canceled_amount'     => 'nullable|numeric',
         ]);
 
-        // Retrieve the images from the request
+        // Retrieve the images from the request (if any)
         $monthlyImage = $request->input('monthly_rentals_img');
         $weeklyImage  = $request->input('weekly_rentals_img');
         $dailyImage   = $request->input('daily_rentals_img');
@@ -3384,16 +3385,36 @@ class AdminController extends Controller
             'canceled_amount' => $request->input('canceled_amount'),
         ];
 
+        // Retrieve all rentals (or filter based on criteria)
+        $rentals = Rental::all(); // Assuming you have a Rental model with 'name' attribute
+
+        // Generate monthly, weekly, and daily data for each rental
+        $monthlyData = [];  // Example: Get monthly counts
+        $weeklyData = [];   // Example: Get weekly counts
+        $dailyData = [];    // Example: Get daily counts
+
+        foreach ($rentals as $rental) {
+            // Example queries to get monthly, weekly, and daily data for each rental
+            // Replace these with your actual logic to fetch the data.
+            $monthlyData[$rental->name] = $rental->reservations()->monthly()->count();
+            $weeklyData[$rental->name]  = $rental->reservations()->weekly()->count();
+            $dailyData[$rental->name]   = $rental->reservations()->daily()->count();
+        }
+
         // Pass all data to the view
         $data = [
-            'monthlyImage' => $monthlyImage, // Ensure this is included
-            'weeklyImage'  => $weeklyImage,
-            'dailyImage'   => $dailyImage,
-            'totalAmounts' => $totalAmounts,
+            'monthlyImage'  => $monthlyImage,
+            'weeklyImage'   => $weeklyImage,
+            'dailyImage'    => $dailyImage,
+            'totalAmounts'  => $totalAmounts,
+            'rentals'       => $rentals,  // Pass rentals to the view
+            'monthlyData'   => $monthlyData,
+            'weeklyData'    => $weeklyData,
+            'dailyData'     => $dailyData,
         ];
 
         // Generate PDF with fixed paper size (A4) and portrait orientation
-        $pdf = PDF::loadView('admin.rentals_reports_name_pdf', $data)
+        $pdf = PDF::loadView('admin.rentals_reports_pdf', $data)
             ->setPaper('A4', 'portrait');
 
         // Generate a unique filename
@@ -3402,6 +3423,8 @@ class AdminController extends Controller
         // Return the PDF download
         return $pdf->download($filename);
     }
+
+
 
 
 
@@ -3623,11 +3646,56 @@ class AdminController extends Controller
 
     // try code 
 
-    public function showUserReports()
+    public function showUserReports(Request $request)
     {
-        return view('admin.user-reports');
+        // Get the current year and set the selected year from the request or default to the current year
+        $selectedYear = $request->year ?? Carbon::now()->year;
+    
+        // Get the current month and set the selected month from the request or default to the current month
+        $selectedMonth = $request->month ?? Carbon::now()->month;
+    
+        // Manually define the months if no Month model exists
+        $availableMonths = collect([
+            (object) ['id' => 1, 'name' => 'January'],
+            (object) ['id' => 2, 'name' => 'February'],
+            (object) ['id' => 3, 'name' => 'March'],
+            (object) ['id' => 4, 'name' => 'April'],
+            (object) ['id' => 5, 'name' => 'May'],
+            (object) ['id' => 6, 'name' => 'June'],
+            (object) ['id' => 7, 'name' => 'July'],
+            (object) ['id' => 8, 'name' => 'August'],
+            (object) ['id' => 9, 'name' => 'September'],
+            (object) ['id' => 10, 'name' => 'October'],
+            (object) ['id' => 11, 'name' => 'November'],
+            (object) ['id' => 12, 'name' => 'December']
+        ]);
+    
+        // Generate year range (e.g., last 5 years for the dropdown)
+        $yearRange = range(Carbon::now()->year - 5, Carbon::now()->year);
+    
+        // Fetch user registration data (implement your logic here)
+        $userRegistrationsByMonth = $this->getUserRegistrationsByMonth($selectedYear);
+        $weeklyChartData = $this->getUserRegistrationsWeekly($selectedMonth, $selectedYear);
+        $dailyChartData = $this->getUserRegistrationsDaily($selectedMonth, $selectedYear);
+    
+        // Get recent users (you can adjust this query to fetch actual recent users)
+        $recentUsers = User::orderBy('created_at', 'desc')->take(5)->get();
+    
+        // Return the view and use 'with()' to pass the variable
+        return view('admin.report-user')
+            ->with('availableMonths', $availableMonths)
+            ->with('selectedYear', $selectedYear)
+            ->with('selectedMonth', $selectedMonth)
+            ->with('yearRange', $yearRange)
+            ->with('userRegistrationsByMonth', $userRegistrationsByMonth)
+            ->with('weeklyChartData', $weeklyChartData)
+            ->with('dailyChartData', $dailyChartData)
+            ->with('recentUsers', $recentUsers);
     }
 
+
+
+    
     /**
      * Generate the user report based on the selected date range.
      */
@@ -3638,6 +3706,11 @@ class AdminController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
+
+        $availableMonths = collect(range(1, 12))->map(function ($month) {
+            return Carbon::createFromDate(null, $month, 1)->format('F');
+        });
+        
 
         // Retrieve input and parse dates
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();

@@ -1,6 +1,33 @@
 @extends('layouts.admin')
 
 @section('content')
+
+@php
+    $availableMonths = collect([
+        (object) ['id' => 1, 'name' => 'January'],
+        (object) ['id' => 2, 'name' => 'February'],
+        (object) ['id' => 3, 'name' => 'March'],
+        (object) ['id' => 4, 'name' => 'April'],
+        (object) ['id' => 5, 'name' => 'May'],
+        (object) ['id' => 6, 'name' => 'June'],
+        (object) ['id' => 7, 'name' => 'July'],
+        (object) ['id' => 8, 'name' => 'August'],
+        (object) ['id' => 9, 'name' => 'September'],
+        (object) ['id' => 10, 'name' => 'October'],
+        (object) ['id' => 11, 'name' => 'November'],
+        (object) ['id' => 12, 'name' => 'December']
+    ]);
+
+
+
+    $currentYear = \Carbon\Carbon::now()->year;
+    $startYear = $currentYear - 5; // Example: Last 5 years
+    $yearRange = range($startYear, $currentYear);
+
+
+    
+                            
+@endphp
 <div class="main-content-inner">
     <div class="main-content-wrap">
         <div class="flex items-center flex-wrap justify-between gap20 mb-27">
@@ -20,6 +47,7 @@
                 <div class="d-flex gap-2">
                     <!-- Form for selecting month and year -->
                     <form action="{{ route('admin.report-user') }}" method="GET" class="d-flex align-items-center gap-2">
+                        <!-- Month Dropdown -->
                         <select name="month" class="form-select" style="width: 140px;">
                             @foreach($availableMonths as $month)
                                 <option value="{{ $month->id }}" {{ $month->id == $selectedMonth ? 'selected' : '' }}>
@@ -27,7 +55,9 @@
                                 </option>
                             @endforeach
                         </select>
+                        
 
+                        <!-- Year Dropdown -->
                         <select name="year" class="form-select" style="width: 100px;">
                             @foreach($yearRange as $year)
                                 <option value="{{ $year }}" {{ $year == $selectedYear ? 'selected' : '' }}>
@@ -36,11 +66,12 @@
                             @endforeach
                         </select>
 
+                        <!-- Submit Button -->
                         <button type="submit" class="btn btn-primary" style="width: 60px;">Go</button>
                     </form>
 
                     <!-- Form for downloading PDF -->
-                    <form id="pdfForm" action="{{ route('admin.user-reports.generate') }}" method="GET" class="d-flex align-items-center gap-2">
+                    <form id="pdfForm" action="{{ route('admin.report-user.pdf') }}" method="GET" class="d-flex align-items-center gap-2">
                         <input type="hidden" name="month" value="{{ $selectedMonth }}">
                         <input type="hidden" name="year" value="{{ $selectedYear }}">
                         <input type="hidden" name="monthlyChartImage">

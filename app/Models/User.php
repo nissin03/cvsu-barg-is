@@ -33,7 +33,7 @@ class User extends Authenticatable
         if ($this->profile_image) {
             return Storage::disk('public')->url($this->profile_image);
         }
-        return asset('images/profile.jpg'); // Default image
+        return asset('images/profile.jpg'); 
     }
     
     protected $hidden = [
@@ -55,15 +55,10 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
-    public function reservations()
-    {
-        return $this->hasMany(Reservation::class);
-    }
-    public function events()
-    {
-        return $this->hasMany(Event::class);
-    }
-    
+    public function facilities()  
+    {  
+        return $this->hasMany(Facility::class);
+    }  
 
 
   
