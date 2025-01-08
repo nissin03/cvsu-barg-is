@@ -9,9 +9,8 @@ class Price extends Model
 {
     use HasFactory;
 
-    protected $table = 'prices';
 
-    protected $fillable = ['facility_id', 'name', 'price_type', 'value', 'is_based_on_days'];
+    protected $fillable = ['name', 'price_type',  'value', 'facility_id','facility_attribute_id',  'is_based_on_days', 'is_there_a_quantity'];
     public function facility()
     {
         return $this->belongsTo(Facility::class);

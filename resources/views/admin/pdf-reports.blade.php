@@ -23,9 +23,69 @@
         h1, h3, h2 {
             text-align: center;
         }
+        .header {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .header-table td {
+            vertical-align: middle;
+            border: none;
+            padding: 0 10px;
+            width: auto;
+        }
+        .header-table img {
+            height: 60px;
+            max-width: 80px;
+        }
+        .center-text {
+            text-align: center;
+            padding: 0;
+            margin: 0;
+        }
+        .university-name {
+            font-size: 13px;
+            font-weight: bold;
+            margin: 0;
+            line-height: 1.1;
+        }
+        .subtext {
+            font-size: 12px;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
+<div class="header">
+        <table class="header-table">
+            <tr>
+                <td style="text-align: right; width: 35%;">
+                    <img src="{{ public_path('images/logo/cvsu-logo.png') }}" alt="">
+                </td>
+                
+                <td class="center-text" style="width: 30%;">
+                    <div class="university-name">
+                        Republic of the Philippines<br>
+                        CAVITE STATE UNIVERSITY<br>
+                        Don Severino delas Alas Campus
+                    </div>
+                    <div class="subtext">
+                        Indang, Cavite<br>
+                        <a href="http://www.cvsu.edu.ph" target="_blank">www.cvsu.edu.ph</a>
+                    </div>
+                </td>
+                
+                <td style="text-align: left; width: 35%;">
+                    <img src="{{ public_path('images/logo/BaRG-logo.jpg') }}" alt="">
+                </td>
+            </tr>
+        </table>
+    </div>
+
+
 
     <h1>Sales Report</h1>
 

@@ -55,14 +55,12 @@
                 @if ($facility->facility_type === 'individual')
                     <input type="hidden" name="facility_attribute_id"
                         value="{{ $facilityAttribute->id ?? $reservationData['facility_attribute_id'] }}">
-                    <input type="hidden" name="facility_attribute_id"
-                        value="{{ $facilityAttribute->id ?? $reservationData['facility_attribute_id'] }}">
                     <input type="hidden" name="date_from" value="{{ $reservationData['date_from'] }}">
                     <input type="hidden" name="date_to" value="{{ $reservationData['date_to'] }}">
                 @elseif($facility->facility_type === 'whole_place')
                     <div class="my-2">
-                        <label for="calendar"><strong>Select Reservation Date:</strong></label>
-                        <div id="calendar"></div>
+                        {{-- <label for="calendar"><strong>Select Reservation Date:</strong></label>
+                        <div id="calendar"></div> --}}
                         {{-- <input type="hidden" id="date_from" name="date_from" value="{{ old('date_from') }}">
                         <input type="hidden" id="date_to" name="date_to" value="{{ old('date_to') }}"> --}}
                         <input type="hidden" id="date_from" name="date_from" value="{{ old('date_from', $reservationData['date_from'] ?? '') }}">
@@ -157,7 +155,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Date To</strong></td>
-                                    <td class="text-end"><strong>{{ $date_from }}</strong></td>
+                                    <td class="text-end"><strong>{{ $date_to }}</strong></td>
                                 </tr>
                             @endif
                             <tr>

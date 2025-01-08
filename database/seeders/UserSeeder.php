@@ -49,21 +49,23 @@ class UserSeeder extends Seeder
             'password_set' => true,
         ]);
 
-        // for ($i = 1; $i <= 19; $i++) {
-        //     User::create([
-        //         'name' => $faker->name,
-        //         'email' => "user{$i}@cvsu.edu.ph",
-        //         'email_verified_at' => now(),
-        //         'password' => Hash::make('password123'),
-        //         'utype' => 'USR',
-        //         'password_set' => false,
-        //         'phone_number' => '9' . $faker->numerify('#########'),
-        //         'year_level' => $faker->randomElement($yearLevels),
-        //         'department' => $faker->randomElement($departments),
-        //         'course' => $faker->sentence(3),
-        //         'profile_image' => null, 
-        //     ]);
-        // }
+        for ($i = 1; $i <= 100; $i++) {
+            User::create([
+                'name' => $faker->name,
+                'email' => "user{$i}@cvsu.edu.ph",
+                'email_verified_at' => now(),
+                'password' => Hash::make('password123'),
+                'utype' => 'USR',
+                'password_set' => false,
+                'phone_number' => '9' . $faker->numerify('#########'),
+                'year_level' => $faker->randomElement($yearLevels),
+                'department' => $faker->randomElement($departments),
+                'course' => $faker->words(3, true),
+                'profile_image' => null,
+                'role' => 'student',
+                'sex' => $faker->randomElement(['male', 'female']),
+            ]);
+        }
 
     }
 }

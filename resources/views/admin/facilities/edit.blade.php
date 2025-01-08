@@ -431,7 +431,6 @@
                     <div id="priceContainer" class="mt-4">
                         <ul class="list-group container-sm" id="priceList">
                             @foreach ($prices as $price)
-                    
                                 <div class="card p-3 mb-3">
                                     <div class="card-body d-flex justify-content-between align-items-center">
                                         <div class="text-start">
@@ -445,6 +444,14 @@
                                                     {{ $price->is_based_on_days ?: 'N/A' }}
                                                 </span>
                                             </p>
+                                            <p>
+                                                Is there a quantity?:
+                                                <span
+                                                    class="badge {{ $price->is_there_a_quantity ? 'bg-success' : 'bg-danger' }}">
+                                                    {{ $price->is_there_a_quantity ?: 'N/A' }}
+                                                </span>
+                                            </p>
+
                                         </div>
                                         <button type="button" class="btn btn-lg btn-outline-danger delete-btn"
                                             onclick="deletePrice(${index})">
@@ -473,7 +480,7 @@
                             <div class="modal-body">
                                 <div class="input-group">
                                     <label for="user-type">Name<span class="tf-color-1">*</span></label>
-                                    <input type="text" id="priceName" name="{{ old('name') }}">
+                                    <input type="text" id="priceName" name="name" value="{{ old('name') }}">
                                 </div>
                                 @error('name')
                                     <span class="alert alert-danger text-center">{{ $message }} </span>
@@ -485,15 +492,15 @@
                                         </div>
                                         <div class="select">
                                             <select id="priceTypeSelect" name="price_type">
-                                                <option value="" selected disabled>Choose Price Type...
-                                                </option>
+                                                <option value="" selected disabled>Choose Price Type...</option>
                                                 <option value="individual"
-                                                    {{ old('price_type') === 'individual' ? 'selected' : '' }}>
-                                                    Individual</option>
+                                                    {{ old('price_type', $price->price_type ?? '') === 'individual' ? 'selected' : '' }}>
+                                                    Individual
+                                                </option>
                                                 <option value="whole"
-                                                    {{ old('price_type') === 'whole' ? 'selected' : '' }}>
-                                                    Whole
-                                                    Place</option>
+                                                    {{ old('price_type', $price->price_type ?? '') === 'whole' ? 'selected' : '' }}>
+                                                    Whole Place
+                                                </option>
                                             </select>
                                         </div>
                                     </fieldset>
@@ -507,23 +514,30 @@
                                     <fieldset class="name">
                                         <div class="body-title mb-10">Price <span class="tf-color-1">*</span>
                                         </div>
-                                        <input type="number" min="1" id="value" name="{{ old('value') }}"
-                                            placeholder="Enter price">
+                                        <input type="number" min="1" id="value" name="value"
+                                            value="{{ old('value') }}" placeholder="Enter price">
                                     </fieldset>
                                 </div>
                                 @error('value')
                                     <span class="alert alert-danger text-center">{{ $message }} </span>
                                 @enderror
 
+                                <!-- Change these checkbox inputs -->
                                 <div class="form-check d-flex justify-content-center align-items-center my-4">
                                     <input type="checkbox" class="form-check-input" id="isBasedOnDays"
-                                        name="is_based_on_days">
+                                        name="is_based_on_days" value="1" <!-- Add this -->
+                                    {{ old('is_based_on_days') ? 'checked' : '' }}> <!-- Add this -->
                                     <label class="form-check-label ms-2 pt-2" for="isBasedOnDays">Is based on
                                         days?</label>
                                 </div>
-                                @error('is_based_on_days')
-                                    <span class="alert alert-danger text-center">{{ $message }} </span>
-                                @enderror
+
+                                <div class="form-check d-flex justify-content-center align-items-center my-4">
+                                    <input type="checkbox" class="form-check-input" id="isThereAQuantity"
+                                        name="is_there_a_quantity" value="1" <!-- Add this -->
+                                    {{ old('is_there_a_quantity') ? 'checked' : '' }}> <!-- Add this -->
+                                    <label class="form-check-label ms-2 pt-2" for="isThereAQuantity">Is there a
+                                        quantity?</label>
+                                </div>
 
                                 <div id="dateFields" style="display: none;">
                                     <div class="input-group">
@@ -535,6 +549,19 @@
                                         <input type="date" id="date_to" name="prices[0][date_to]">
                                     </div>
                                 </div>
+
+                                {{-- <div id="dateFields" style="display: none;">
+                                    <div class="input-group">
+                                        <label for="date_from">Date From</label>
+                                        <input type="date" id="date_from" name="date_from"
+                                            value="{{ old('date_from') }}">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="date_to">Date To</label>
+                                        <input type="date" id="date_to" name="date_to"
+                                            value="{{ old('date_to') }}">
+                                    </div>
+                                </div> --}}
 
 
                             </div>
@@ -561,7 +588,7 @@
                                 'sex_restriction' => $attribute->sex_restriction,
                             ];
                         })
-                        ->values(); 
+                        ->values();
                 @endphp
 
                 @php
@@ -577,9 +604,10 @@
                                 'priceTypeSelect' => $price->price_type,
                                 'value' => $price->value,
                                 'isBasedOnDays' => $price->is_based_on_days,
+                                'isThereAQuantity' => $price->is_there_a_quantity,
                             ];
                         })
-                        ->values(); 
+                        ->values();
                 @endphp
 
 
@@ -610,24 +638,36 @@
                 const rentalType = $(this).val();
                 console.log("Facility Type:", rentalType);
 
-                $("#roomBox, #hideRoomBox, #dormitoryRooms").hide();
+                $("#pIndividual, #pWhole").attr("hidden", true).prop("disabled", true);
+
+                $("#roomBox, #hideRoomBox, #dormitoryRooms, #QuantityChecked").hide();
 
                 switch (rentalType) {
                     case "individual":
-                        $('hideRoomBox').hide();
+                        $("hideRoomBox").hide();
                         $("#roomBox").show();
                         $("#dormitoryRooms").show();
+                        $("#QuantityChecked").show();
+
+                        $("#pIndividual").removeAttr("hidden").prop("disabled", false);
                         break;
                     case "whole_place":
                         $("#dormitoryRooms").hide();
                         $("#roomBox").show();
                         $("#hideRoomBox").show();
+                        $("#QuantityChecked").hide();
+
+                        $("#pWhole").removeAttr("hidden").prop("disabled", false);
                         break;
+
                     case "both":
                         $("#roomBox").show();
                         $("#hideRoomBox").show();
                         $("#dormitoryRooms").show();
                         $("#option").show();
+                        $("#QuantityChecked").show();
+                        $("#pIndividual").show();
+                        $("#pIndividual, #pWhole").removeAttr("hidden").prop("disabled", false);
                         break;
                     default:
                         break;
@@ -656,15 +696,15 @@
                     return;
                 }
 
-                const validSexRestrictions = ["male", "female"];
-                if (roomSexRestriction && !validSexRestrictions.includes(roomSexRestriction)) {
-                    roomSexRestriction = null;
-                }
 
+
+                const validSexRestrictions = ["male", "female"];
                 const newRoom = {
                     room_name: roomName,
                     capacity: parseInt(roomCapacity) || null,
-                    sex_restriction: roomSexRestriction || null,
+                    sex_restriction: validSexRestrictions.includes(roomSexRestriction) ?
+                        roomSexRestriction :
+                        null,
                 };
                 rooms.push(newRoom);
                 renderRoomList();
@@ -672,10 +712,7 @@
 
                 $("#addRoom").modal("hide");
 
-                // Clear the input fields
-                $("#roomName").val("");
-                $("#roomCapacity").val("");
-                $("#roomSexRestriction").val("");
+                $("#roomName, #roomCapacity, #roomSexRestriction").val("");
 
                 // Reset modal title if it was changed during edit
                 $("#addRoomLabel").text("Add Room");
@@ -688,30 +725,20 @@
                     return;
                 }
                 rooms.forEach((room, index) => {
-                    const sex_container = room.sex_restriction ?
-                        `<span class="badge bg-info">${room.sex_restriction}</span>` : "";
-                    const capacity_container = room.capacity ?
-                        `<span class="badge bg-warning">${room.capacity}</span>` : "";
-
                     const listItem = `
-            <div class="card p-3 mb-3">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div class="text-start">
-                        <div class="d-flex justify-content-center align-items-center">
-                            <h4 class="pe-2">${room.room_name ?? ""}</h4>
-                            ${sex_container}
+                    <div class="card p-3 mb-3">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4>${room.room_name}</h4>
+                                <p>Capacity: <span class="badge bg-warning">${room.capacity}</span></p>
+                                ${room.sex_restriction ? `<span class="badge bg-info">${room.sex_restriction}</span>` : ""}
+                            </div>
+                            <div class="d-flex">
+                                <button class="btn btn-warning me-2" onclick="editRoom(${index})">Edit</button>
+                                <button class="btn btn-danger" onclick="deleteRoom(${index})">Delete</button>
+                            </div>
                         </div>
-                        <p class="fw-bold">Capacity: <span class="badge bg-warning">${room.capacity ?? ""}</span></p>
-                    </div>
-                    <div class="d-flex">
-                        <button type="button" class="btn btn-lg btn-outline-warning me-2" onclick="editRoom(${index})"><i class="icon-pen">Edit</i></button>
-                        <button type="button" class="btn btn-lg btn-outline-danger delete-btn" onclick="deleteRoom(${index})">
-                            <i class="icon-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
+                    </div>`;
                     $("#roomList").append(listItem);
                 });
             }
@@ -736,40 +763,23 @@
                         const updatedCapacity = $("#roomCapacity").val();
                         let updatedSexRestriction = $("#roomSexRestriction").val();
 
-                        // Validate room data
-                        if (!updatedRoomName || !updatedCapacity) {
-                            alert("Please fill in all fields");
-                            return;
-                        }
-                        if (isNaN(updatedCapacity) || updatedCapacity <= 0) {
-                            alert("Capacity must be a positive number.");
+                        if (!updatedRoomName || !updatedCapacity || isNaN(updatedCapacity) ||
+                            updatedCapacity <= 0) {
+                            alert("Please provide valid room details.");
                             return;
                         }
 
-                        const validSexRestrictions = ["male", "female"];
-                        if (!validSexRestrictions.includes(updatedSexRestriction)) {
-                            updatedSexRestriction = null;
-                        }
 
                         rooms[index] = {
-                            ...rooms[index],
                             room_name: updatedRoomName,
                             capacity: parseInt(updatedCapacity),
-                            sex_restriction: updatedSexRestriction,
+                            sex_restriction: updatedSexRestriction || null,
                         };
                         renderRoomList();
                         updateHiddenRooms();
 
                         // Close the modal
                         $("#addRoom").modal("hide");
-
-                        // Clear fields
-                        $("#roomName").val("");
-                        $("#roomCapacity").val("");
-                        $("#roomSexRestriction").val("");
-
-                        // Reset modal title
-                        $("#addRoomLabel").text("Add Room");
                     });
 
                 // Change modal title to 'Edit Room'
@@ -812,14 +822,17 @@
             function createHiddenInputRooms(name, value) {
                 return `<input type="hidden" name="${name}" value="${value}">`;
             }
-  // Handle Save Price Changes (Add Price)
+            // Handle Save Price Changes (Add Price)
             $("#savePriceChanges").on("click", function(event) {
                 event.preventDefault();
 
                 const name = $("#priceName").val();
                 const price_type = $("#priceTypeSelect").val();
                 const value = $("#value").val();
-                const isBasedOnDays = $("#isBasedOnDays").prop("checked") ? 1 : 0;
+                const isBasedOnDays = $("#isBasedOnDays").prop("checked");
+                const isThereAQuantity = $("#isThereAQuantity").prop("checked");
+
+
 
                 // Check for required fields
                 if (!name || !price_type || !value) {
@@ -839,9 +852,10 @@
                     price_type,
                     value: parseFloat(value),
                     is_based_on_days: isBasedOnDays,
+                    is_there_a_quantity: isThereAQuantity,
                 };
-            
-                
+
+
                 prices.push(newPrice);
                 console.log("New Price:", newPrice);
                 renderPriceList();
@@ -854,57 +868,60 @@
                 $("#priceTypeSelect").val("");
                 $("#value").val("");
                 $("#isBasedOnDays").val("");
+                $("#isThereAQuantity").val("");
             });
 
             // Render the price list dynamically
             function renderPriceList() {
                 $("#priceList").empty();
-                prices.forEach((price, index) => {
-                    const listItem = `
-                 <div class="card p-3 mb-3">
-                  <div class="card-body d-flex justify-content-between align-items-center">
-                      <div class="text-start">
-                          <h4>${price.name}</h4>
-                          <p>Type: <span class="badge bg-success">${
-                              price.price_type
-                          }</span></p>
-                          <p>Price: PHP ${price.value}</p>
-                          <p>Is Based on Days?: 
-                              <span class="badge ${
-                                  price.is_based_on_days
-                                      ? "bg-success"
-                                      : "bg-danger"
-                              }">
-                                  ${price.is_based_on_days ? "Yes" : "No"}
-                              </span>
-                          </p>
-                      </div>
-                      <div class="d-flex">
-                        <button type="button" class="btn btn-lg btn-outline-warning me-2" onclick="editPrice(${index})"><i class="icon-pen">Edit</i></button>
-                        <button type="button" class="btn btn-lg btn-outline-danger delete-btn" onclick="deletePrice(${index})">
-                            <i class="icon-trash"></i>
-                        </button>
+                if (prices && prices.length > 0) {
+                    prices.forEach((price, index) => {
+                        const listItem = `
+                <div class="card p-3 mb-3">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div class="text-start">
+                            <h4>${price.name || ''}</h4>
+                            <p>Type: <span class="badge bg-success">${price.price_type || ''}</span></p>
+                            <p>Price: PHP ${price.value || '0'}</p>
+                            <p>Is Based on Days?: 
+                                <span class="badge ${price.is_based_on_days ? 'bg-success' : 'bg-danger'}">
+                                    ${price.is_based_on_days ? 'Yes' : 'No'}
+                                </span>
+                            </p>
+                            <p>Is there a quantity?: 
+                                <span class="badge ${price.is_there_a_quantity ? 'bg-success' : 'bg-danger'}">
+                                    ${price.is_there_a_quantity ? 'Yes' : 'No'}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="d-flex">
+                            <button type="button" class="btn btn-lg btn-outline-warning me-2" onclick="editPrice(${index})">
+                                <i class="icon-pen">Edit</i>
+                            </button>
+                            <button type="button" class="btn btn-lg btn-outline-danger delete-btn" onclick="deletePrice(${index})">
+                                <i class="icon-trash"></i>
+                            </button>
+                        </div>
                     </div>
-                   
-                  </div>
-              </div>
+                </div>
             `;
-                    $("#priceList").append(listItem);
-                });
+                        $("#priceList").append(listItem);
+                    });
+                }
             }
-
             $(document).ready(function() {
                 renderPriceList();
             });
 
-        
+
 
             window.editPrice = function(index) {
                 const price = prices[index];
                 $("#priceName").val(price.name || "");
                 $("#priceTypeSelect").val(price.price_type || "");
                 $("#value").val(price.value || "");
-                $("#isBasedOnDays").val(price.is_based_on_days || "");
+                $("#isBasedOnDays").prop("checked", price.is_based_on_days);
+                $("#isThereAQuantity").prop("checked", price.is_there_a_quantity);
 
                 $("#savePriceChanges")
                     .off("click")
@@ -912,21 +929,23 @@
                         const updatedPriceName = $("#priceName").val();
                         const updatedPriceTypeSelect = $("#priceTypeSelect").val();
                         const updatedValue = $("#value").val();
-                        let updatedBasedOnDays = $("#isBasedOnDays").val();
+                        const updatedBasedOnDays = $("#isBasedOnDays").prop("checked");
+                        const updatedAQuantity = $("#isThereAQuantity").prop("checked");
 
                         // Validate room data
                         if (!updatedPriceName || !updatedValue) {
                             alert("Please fill in all fields");
                             return;
                         }
-                       
-                  
+
+
                         prices[index] = {
                             ...prices[index],
                             name: updatedPriceName,
                             price_type: updatedPriceTypeSelect,
                             value: parseFloat(updatedValue),
                             is_based_on_days: updatedBasedOnDays,
+                            is_there_a_quantity: updatedAQuantity,
                         };
                         renderPriceList();
                         updateHiddenPrices();
@@ -939,6 +958,7 @@
                         $("#priceTypeSelect").val("");
                         $("#value").val("");
                         $("#isBasedOnDays").val("");
+                        $("#isThereAQuantity").val("");
 
                         // Reset modal title
                         $("#addPriceLabel").text("Add Price");
@@ -968,60 +988,67 @@
                 $("#priceTypeSelect").val("");
                 $("#value").val("");
                 $("#isBasedOnDays").prop("checked", false);
+                $("#isThereAQuantity").prop("checked", false);
             }
 
-            // Update hidden inputs for prices (to be submitted with the form)
+
             function updateHiddenPrices() {
                 const priceInput = $("#hiddenPrices");
-                priceInput.empty(); // Clear existing hidden inputs
+                priceInput.empty();
 
                 prices.forEach((price, index) => {
-                    priceInput.append(
-                        createHiddenInput(`prices[${index}][name]`, price.name)
-                    );
-                    priceInput.append(
-                        createHiddenInput(
-                            `prices[${index}][price_type]`,
-                            price.price_type
-                        )
-                    );
-                    priceInput.append(
-                        createHiddenInput(`prices[${index}][value]`, price.value)
-                    );
-                    priceInput.append(
-                        createHiddenInput(
-                            `prices[${index}][is_based_on_days]`,
-                            price.is_based_on_days
-                        )
-                    );
+                    if (price.name && price.price_type && !isNaN(price.value)) {
+                        priceInput.append(createHiddenInput(`prices[${index}][name]`, price.name));
+                        priceInput.append(createHiddenInput(`prices[${index}][price_type]`, price
+                            .price_type));
+                        priceInput.append(createHiddenInput(`prices[${index}][value]`, price.value));
+                        priceInput.append(
+                            createHiddenInput(`prices[${index}][is_based_on_days]`, price
+                                .is_based_on_days ? "1" : "0")
+                        );
+                        priceInput.append(
+                            createHiddenInput(`prices[${index}][is_there_a_quantity]`, price
+                                .is_there_a_quantity ? "1" : "0")
+                        );
+                    }
                 });
+
             }
 
-            // Helper function to create hidden input for prices
             function createHiddenInput(name, value) {
+                if (typeof value === "boolean") {
+                    value = value ? "1" : "0"; // Convert boolean to string for compatibility
+                }
                 return `<input type="hidden" name="${name}" value="${value}">`;
             }
 
-            
+
 
 
             $("#facilityForm").on("submit", function(event) {
                 event.preventDefault();
 
-                var formData = new FormData(this);
+                const formData = new FormData(this);
 
                 const facilityType = $("#rentalType").val();
 
-                prices.forEach((price, index) => {
-                    formData.append(`prices[${index}][name]`, price.name);
-                    formData.append(`prices[${index}][price_type]`, price.price_type);
-                    formData.append(`prices[${index}][value]`, price.value);
-                    formData.append(
-                        `prices[${index}][is_based_on_days]`,
-                        price.is_based_on_days
-                    );
-                });
+                if (prices && prices.length > 0) {
+                    prices.forEach((price, index) => {
+                        // Only append if values exist
+                        if (price.name) formData.append(`prices[${index}][name]`, price.name);
+                        if (price.price_type) formData.append(`prices[${index}][price_type]`, price
+                            .price_type);
+                        if (price.value) formData.append(`prices[${index}][value]`, price.value);
+                        formData.append(`prices[${index}][is_based_on_days]`, price
+                            .is_based_on_days ? '1' : '0');
+                        formData.append(`prices[${index}][is_there_a_quantity]`, price
+                            .is_there_a_quantity ? '1' : '0');
+                    });
+                }
 
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
                 if (rooms.length > 0) {
                     rooms.forEach((room, index) => {
                         if (room.room_name && room.capacity > 0) { // Only add valid room data
@@ -1057,10 +1084,7 @@
                     });
                 }
 
-                console.log("Form Data Before Submission:");
-                for (var pair of formData.entries()) {
-                    console.log(pair[0] + ": " + pair[1]);
-                }
+
                 $.ajax({
                     url: $(this).attr("action"),
                     method: "POST",
@@ -1128,37 +1152,37 @@
         });
 
         document.addEventListener("DOMContentLoaded", function() {
-        const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
-        const dateFieldsDiv = document.getElementById('dateFields');
-        const dateFromInput = document.getElementById('date_from');
-        const dateToInput = document.getElementById('date_to');
+            const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
+            const dateFieldsDiv = document.getElementById('dateFields');
+            const dateFromInput = document.getElementById('date_from');
+            const dateToInput = document.getElementById('date_to');
 
-   
-        function disablePastDates() {
-            const today = new Date().toISOString().split('T')[0]; 
-            dateFromInput.setAttribute('min', today);
-            dateToInput.setAttribute('min', today);
-        }
 
-     
-        dateFromInput.addEventListener('change', function() {
-            if (dateFromInput.value) {
-                dateToInput.value = dateFromInput.value;  
+            function disablePastDates() {
+                const today = new Date().toISOString().split('T')[0];
+                dateFromInput.setAttribute('min', today);
+                dateToInput.setAttribute('min', today);
             }
-        });
 
-        // Handle the checkbox state to show/hide the date fields
-        isBasedOnDaysCheckbox.addEventListener('change', function() {
-            if (isBasedOnDaysCheckbox.checked) {
-                dateFieldsDiv.style.display = 'block';  
-            } else {
-                dateFieldsDiv.style.display = 'none'; 
-            }
-        });
 
-        // Disable past dates initially
-        disablePastDates();
-    });
+            dateFromInput.addEventListener('change', function() {
+                if (dateFromInput.value) {
+                    dateToInput.value = dateFromInput.value;
+                }
+            });
+
+            // Handle the checkbox state to show/hide the date fields
+            isBasedOnDaysCheckbox.addEventListener('change', function() {
+                if (isBasedOnDaysCheckbox.checked) {
+                    dateFieldsDiv.style.display = 'block';
+                } else {
+                    dateFieldsDiv.style.display = 'none';
+                }
+            });
+
+            // Disable past dates initially
+            disablePastDates();
+        });
 
         function removeUpload(previewId, inputId) {
             $('#' + previewId).hide(); // Hide the preview

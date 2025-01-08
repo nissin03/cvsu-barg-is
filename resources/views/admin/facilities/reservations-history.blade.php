@@ -7,7 +7,7 @@
             <h3>Reservation History</h3>
             <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
                 <li>
-                    <a href="">
+                    <a href="{{ route('admin.facilities.index') }}">
                         <div class="text-tiny">Dashboard</div>
                     </a>
                 </li>
@@ -16,7 +16,7 @@
                 </li>
 
                 <li>
-                    <a href="">
+                    <a href="{{ route('admin.facilities.reservations') }}">
                         <div class="text-tiny">Reservation</div>
                     </a>
                 </li>
@@ -31,27 +31,27 @@
         </div>
 
         <div class="wg-box">
-            <h5>Reservation ID: </h5>
+            <h5>Reservation ID: {{ $availability->id }}</h5>
             <div class="table-responsive">
                 <table class="table table-striped table-bordered">
                     <thead>
                         <tr>
-                            <th>User Name</th>
-                            <th class="user-email-column">User Email</th> <!-- Custom class for wider user email -->
+                            <th>Name</th>
+                            <th class="user-email-column">Email</th> <!-- Custom class for wider user email -->
                             <th class="admin-email-column">Admin Email</th> <!-- Custom class for wider admin email -->
                             <th>Payment Status</th>
-                            <th>Rent Status</th>
+                            <th>Status</th>
                             <th>Updated At</th>
                         </tr>
                     </thead>
                     <tbody>
                         
                         <tr>
-                            <td></td>
-                            <td class="user-email-column"></td>
-                            <td class="admin-email-column"></td>
-                            <td></td>
-                            <td></td>
+                            <td>{{$availability->user->name }}</td>
+                            <td>{{$availability->user->email }}</td>
+                            <td>#</td>
+                            <td>#</td>
+                            <td>{{$availability->status }}</td>
                             <td></td>
                         </tr>
                     </tbody>

@@ -70,11 +70,11 @@
     <div class="header">
         <table class="header-table">
             <tr>
-                <td style="text-align: right; width: 15%;">
-                    <img src="{{ public_path('assets/images/logo/cvsu-logo.png') }}" alt="">
+                <td style="text-align: right; width: 35%;">
+                    <img src="{{ public_path('images/logo/cvsu-logo.png') }}" alt="">
                 </td>
                 
-                <td class="center-text" style="width: 70%;">
+                <td class="center-text" style="width: 30%;">
                     <div class="university-name">
                         Republic of the Philippines<br>
                         CAVITE STATE UNIVERSITY<br>
@@ -86,8 +86,8 @@
                     </div>
                 </td>
                 
-                <td style="text-align: left; width: 15%;">
-                    <img src="{{ public_path('assets/images/logo/BaRG-logo.jpg') }}" alt="">
+                <td style="text-align: left; width: 35%;">
+                    <img src="{{ public_path('images/logo/BaRG-logo.jpg') }}" alt="">
                 </td>
             </tr>
         </table>

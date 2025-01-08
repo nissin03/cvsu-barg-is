@@ -11,7 +11,6 @@ class Facility extends Model
     use HasFactory;
 
 
-    protected $table = 'facilities';
     protected $fillable = [
         'name', 'description', 'facility_type', 'image', 'images', 'slug', 
         'featured', 'status', 'created_by', 'rules_and_regulations', 
@@ -19,6 +18,7 @@ class Facility extends Model
     ];
 
 
+    
     public function facilityAttributes()
     {
         return $this->hasMany(FacilityAttribute::class);
@@ -46,12 +46,12 @@ class Facility extends Model
         return $price ? $price->value : 0;
     }
 
-    public function wholePlace()
-    {
-        $price = $this->prices()->where('price_type', 'whole')->first();
+    // public function wholePlace()
+    // {
+    //     $price = $this->prices()->where('price_type', 'whole')->first();
 
-        return $price ? $price->value : 0;
-    }
+    //     return $price ? $price->value : 0;
+    // }
 
 }
 

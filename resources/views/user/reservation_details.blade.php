@@ -44,50 +44,53 @@
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
 
-        @isset($availability)
         <div class="wg-box">
-            <div class="reservation-summary">
-                <!-- Left Section -->
-                <div class="left-section">
-                    <div class="reservation-status">
-                        <!-- Reservation Status Badge -->
-                        <span class="badge badge-{{ $availability->status === 'completed' ? 'success' : ($availability->status === 'canceled' ? 'danger' : ($availability->status === 'reserved' ? 'warning' : 'secondary')) }}">
-                            {{ ucfirst($availability->status) }}
-                        </span>
-                        @if($availability->status === 'completed')
-                            <span class="badge badge-success">{{ __('Payment Completed') }}</span>
-                        @elseif($availability->status === 'canceled')
-                            <span class="badge badge-danger">{{ __('Payment Canceled') }}</span>
-                        @endif
-                        
-                    </div>
-                </div>
-
-                <!-- Right Section -->
-                <div class="right-section">
-                    <div class="reservation-info">
-                        <p><strong>Name:</strong> {{ ($availability->user?->name) }}</p>
-                        <p><strong>Phone:</strong> {{ ($availability->user?->phone_number ?? __('N/A')) }}</p>
-                        <p><strong>Email:</strong> {{ ($availability->user?->email ?? __('N/A')) }}</p>
-
-                        <p><strong>{{ __('Total Price') }}:</strong> 
-                            &#8369; {{ number_format($availability->total_price, 2) }}
-                        </p>
-                        <p><strong>{{ __('Payment Status') }}:</strong> {{ ucfirst($availability->payment_status) }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="text-end">
-                <a class="btn btn-custom btn-danger" href="{{ $user?->utype === 'USR' ? route('user.reservations') : route('home.index') }}">
-                    {{ __('Back to Rentals') }}
-                </a>
-            </div>         
-        </div>
+    @if ($availabilities->isEmpty())
+        <!-- Alert if no reservations are found -->
         <div class="alert alert-danger">
             {{ __('No reservation data available.') }}
         </div>
-        @endisset
+    @else
+        @foreach ($availabilities as $availability)
+        <div class="reservation-summary">
+            <!-- Left Section -->
+            <div class="left-section">
+                <div class="reservation-status">
+                    <!-- Reservation Status Badge -->
+                    <span class="badge badge-{{ $availability->status === 'completed' ? 'success' : ($availability->status === 'canceled' ? 'danger' : ($availability->status === 'reserved' ? 'warning' : 'secondary')) }}">
+                        {{ ucfirst($availability->status) }}
+                    </span>
+                    @if($availability->status === 'completed')
+                        <span class="badge badge-success">{{ __('Payment Completed') }}</span>
+                    @elseif($availability->status === 'canceled')
+                        <span class="badge badge-danger">{{ __('Payment Canceled') }}</span>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Right Section -->
+            <div class="right-section">
+                <div class="reservation-info">
+                    <p><strong>Name:</strong> {{ ($availability->user?->name) }}</p>
+                    <p><strong>Phone:</strong> {{ ($availability->user?->phone_number ?? __('N/A')) }}</p>
+                    <p><strong>Email:</strong> {{ ($availability->user?->email ?? __('N/A')) }}</p>
+
+                    <p><strong>{{ __('Total Price') }}:</strong> 
+                        &#8369; {{ number_format($availability->total_price, 2) }}
+                    </p>
+                    <p><strong>{{ __('Payment Status') }}:</strong> {{ ucfirst($availability->payment_status) }}</p>
+                </div>
+            </div>
+        </div>
+        @endforeach
+    @endif
+
+    <div class="text-end">
+        <a class="btn btn-custom btn-danger" href="{{ $user?->utype === 'USR' ? route('user.reservations') : route('home.index') }}">
+            {{ __('Back to Rentals') }}
+        </a>
+    </div>
+</div>
        
     </section>
 </main>

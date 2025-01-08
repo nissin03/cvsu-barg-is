@@ -36,11 +36,15 @@ Route::get('/shop/{product_slug}', [ShopController::class, 'product_details'])->
 
 Route::get('/user/facilities', [UserFacilityController::class, 'index'])->name('user.facilities.index');
 Route::get('/user/facilities/{slug}', [UserFacilityController::class, 'show'])->name('user.facilities.details');
-Route::get('/user/checkout', [UserFacilityController::class, 'checkout'])->name('facility.checkout');
+
+Route::post('/facilities/calculate-price', [UserFacilityController::class, 'calculatePrice'])->name('facilities.calculatePrice');
+
+
 Route::post('/reserve', [UserFacilityController::class, 'reserve'])->name('facility.reserve');
+Route::get('/user/checkout', [UserFacilityController::class, 'checkout'])->name('facility.checkout');
 Route::post('user/facilities/place-reservation', [UserFacilityController::class, 'place_reservation'])->name('user.facilities.placeReservation');
 Route::get('/user/reservations', [UserFacilityController::class, 'account_reservation'])->name('user.reservations');
-Route::get('/user/reservation-history', [UserFacilityController::class, 'reservation_history'])->name('user.reservations_history');
+Route::get('/user/reservatio_history', [UserFacilityController::class, 'reservation_history'])->name('user.reservations_history');
 Route::get('/user/reservation_details/{availability_id}', [UserFacilityController::class, 'account_reservation_details'])->name('user.reservation_details');
 
 
@@ -160,8 +164,8 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     // Route::put('/admin/facility/update', [FacilityController::class, 'update'])->name('admin.facilities.update');
     Route::put('/admin/facility/update/{id}', [FacilityController::class, 'update'])->name('admin.facilities.update');
     Route::get('/admin/facility/reservation', [FacilityController::class, 'reservations'])->name('admin.facilities.reservations');
-    Route::get('/admin/reservation/events', [FacilityController::class, 'events'])->name('admin.facilities.reservations-events');
-    Route::get('/admin/reservation-history', [FacilityController::class, 'reservationHistory'])->name('admin.facilities.reservations-history');
+    Route::get('/admin/reservation/events/{availability_id}', [FacilityController::class, 'events'])->name('admin.facilities.reservations-events');
+    Route::get('/admin/{availability_id}/reservation-history', [FacilityController::class, 'reservationHistory'])->name('admin.facilities.reservations-history');
     
 
 
@@ -178,6 +182,13 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     // Route::post('/admin/facility/room/store', [FacilityController::class, 'room_store'])->name('admin.facilities.room.store');
     // Route::post('/admin/facility/rooms-range/store', [FacilityController::class, 'room_store_range'])->name('admin.facilities.store.range');
 
+    
+
+
+   
+    //update status
+    Route::put('/admin/facilities/reservation/{id}/update-status', [FacilityController::class, 'updateStatus'])
+    ->name('admin.facilities.reservation.updateStatus');
     // Route for saving rooms
     Route::post('/facility/{facilityId}/rooms', [FacilityController::class, 'storeRooms'])
         ->name('facility.rooms.store');

@@ -18,13 +18,10 @@ class DatabaseSeeder extends Seeder
             WeekSeeder::class,
             DailySeeder::class,
             UserSeeder::class,
-            // CategorySeeder::class,   
+            ContactSeeder::class,
+            CategorySeeder:: class,
+            ProductSeeder::class,
         ]);
-        // User::factory(10)->create();
 
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
     }
 }
