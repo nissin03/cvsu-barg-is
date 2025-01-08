@@ -19,10 +19,10 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->integer('remaining_capacity')->default(0);
             $table->string('qualification')->nullable();
+            $table->unsignedInteger('quantity')->default(0);
             $table->enum('status', ['reserved', 'canceled', 'completed', 'pending'])->default('pending');
             $table->date('date_from');
             $table->date('date_to');
-            // $table->string('time_slot');
             $table->decimal('total_price', 10, 2)->nullable();
             $table->foreignId('transaction_id')->nullable()->constrained('transactions')->onDelete('cascade');
             $table->timestamps();

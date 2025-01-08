@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Price;
 use App\Models\Facility;
+use App\Models\Availability;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -58,15 +59,18 @@ public function create()
 }
 public function reservations()
 {
-    return view('admin.facilities.reservations');
+    $availabilities = Availability::all();
+    return view('admin.facilities.reservations', compact('availabilities'));
 }
-public function events()
+public function events($availability_id)
 {
-    return view('admin.facilities.reservations-events');
+    $availability = Availability::findorFail($availability_id);
+    return view('admin.facilities.reservations-events', compact('availability'));
 }
-public function reservationHistory()
+public function reservationHistory($availability_id)
 {
-    return view('admin.facilities.reservations-history');
+    $availability = Availability::findorFail($availability_id);
+    return view('admin.facilities.reservations-history', compact('availability'));
 }
 
 
@@ -88,10 +92,9 @@ public function store(Request $request)
         'prices.*.value' => 'required|numeric',
         'prices.*.price_type' => 'required|string|in:individual,whole',
         'prices.*.is_based_on_days' => 'nullable|boolean',
+        'prices.*.is_there_a_quantity' => 'nullable|boolean',
         'prices.*.date_from' => 'nullable|date|required_if:prices.*.is_based_on_days,true',
         'prices.*.date_to' => 'nullable|date|required_if:prices.*.is_based_on_days,true|after_or_equal:prices.*.date_from',
-
-        // 'whole_capacity' => $request->facility_type === 'whole_place' ? 'required|numeric|min:1' : 'nullable',
         'whole_capacity' => $request->facility_type === 'whole_place' ||
             ($request->facility_type === 'both' && empty($request->input('facility_attributes', [])))
             ? 'required|numeric|min:1'
@@ -107,25 +110,29 @@ public function store(Request $request)
     $this->handleImage($facility, $request);
     $facility->save();
 
+    $tempIdToRealId = [];
+
     if ($request->facility_type === 'whole_place') {
-        FacilityAttribute::create([
+       FacilityAttribute::create([
             'facility_id' => $facility->id,
             'room_name' => null,
             'capacity' => null,
             'whole_capacity' => $request->whole_capacity,
             'sex_restriction' => null,
         ]);
+       
     } elseif ($request->facility_type === 'individual') {
         $facilityAttributes = $request->input('facility_attributes', []);
         if (!empty($facilityAttributes)) {
             foreach ($facilityAttributes as $attribute) {
-                FacilityAttribute::create([
+               FacilityAttribute::create([
                     'facility_id' => $facility->id,
                     'room_name' => $attribute['room_name'] ?? null,
                     'capacity' => $attribute['capacity'] ?? null,
                     'whole_capacity' => null,
                     'sex_restriction' => $attribute['sex_restriction'] ?? null,
                 ]);
+              
             }
         }
     } elseif ($request->facility_type === 'both') {
@@ -134,13 +141,14 @@ public function store(Request $request)
         if (!empty($facilityAttributes)) {
 
             foreach ($facilityAttributes as $attribute) {
-                FacilityAttribute::create([
+               FacilityAttribute::create([
                     'facility_id' => $facility->id,
                     'room_name' => $attribute['room_name'] ?? null,
                     'capacity' => $attribute['capacity'] ?? null,
                     'whole_capacity' =>  $request->whole_capacity ?? null,
                     'sex_restriction' => $attribute['sex_restriction'] ?? null,
                 ]);
+              
             }
         } else {
 
@@ -151,19 +159,22 @@ public function store(Request $request)
                 'whole_capacity' => $request->whole_capacity,
                 'sex_restriction' => null,
             ]);
+           
         }
     }
 
     if (is_array($request->prices)) {
         $pricesData = [];
         foreach ($request->prices as $price) {
+           
+
             $pricesData[] = [
                 'facility_id' => $facility->id,
                 'name' => $price['name'],
                 'value' => $price['value'],
                 'price_type' => $price['price_type'],
                 'is_based_on_days' => $price['is_based_on_days'] ?? false,
-                'is_quantity_fields' => $price['is_quantity_fields'] ?? false,
+                'is_there_a_quantity' => $price['is_there_a_quantity'] ?? false,
                 'date_from' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_from'] : null,
                 'date_to' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_to'] : null,
                 'created_at' => now(),
@@ -189,6 +200,9 @@ public function update(Request $request, $id)
     if ($request->has('sex_restriction') && is_null($request->sex_restriction)) {
         $request->merge(['sex_restriction' => '']);
     }
+    if (!$request->has('name') || empty($request->name)) {
+        $request->merge(['name' => $facility->name]);
+    }
     $request->validate([
         'name' => [
             'required',
@@ -201,23 +215,25 @@ public function update(Request $request, $id)
         'image' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
         'images.*' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
         'requirements' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:5120',
-        // 'sex_restriction' => 'nullable|in:male,female',
         'prices' => 'nullable|array',
         'prices.*.name' => 'nullable|string',
         'prices.*.value' => 'nullable|numeric',
         'prices.*.price_type' => 'nullable|string|in:individual,whole',
         'prices.*.is_based_on_days' => 'nullable|boolean',
-        'prices.*.date_from' => 'nullable|date|required_if:prices.*.is_based_on_days,true',
-        'prices.*.date_to' => 'nullable|date|required_if:prices.*.is_based_on_days,true|after_or_equal:prices.*.date_from',
+        'prices.*.is_there_a_quantity' => 'nullable|boolean',
+            'prices.*.date_from' => 'nullable|date|nullable_if:prices.*.is_based_on_days,1',
+            'prices.*.date_to' => 'nullable|date|nullable_if:prices.*.is_based_on_days,1|after_or_equal:prices.*.date_from',
 
         'whole_capacity' => $request->facility_type === 'whole_place' ||
             ($request->facility_type === 'both' && empty($request->input('facility_attributes', [])))
-            ? 'required|numeric|min:1'
+            ? 'nullable|numeric|min:1'
             : 'nullable',
         'facility_attributes' => 'nullable|array',
         'facility_attributes.*.room_name' => 'nullable|string|max:255',
         'facility_attributes.*.capacity' => 'nullable|integer|min:1',
-        'facility_attributes.*.sex_restriction' => 'nullable|in:male,female,null',
+        'facility_attributes.*.sex_restriction' => 'nullable|in:male,female',
+
+        
 
     ]);
 
@@ -267,13 +283,26 @@ public function update(Request $request, $id)
     if (is_array($request->prices)) {
         $pricesData = [];
         foreach ($request->prices as $price) {
+            // $pricesData[] = [
+            //     'facility_id' => $facility->id,
+            //     'name' => $price['name'],
+            //     'value' => $price['value'],
+            //     'price_type' => $price['price_type'],
+            //     'is_based_on_days' => $price['is_based_on_days'],
+            //     'date_from' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_from'] : null,
+            //     'date_to' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_to'] : null,
+            //     'created_at' => now(),
+            //     'updated_at' => now(),
+            // ];
+
+            
             $pricesData[] = [
                 'facility_id' => $facility->id,
                 'name' => $price['name'],
                 'value' => $price['value'],
                 'price_type' => $price['price_type'],
-                'is_based_on_days' => $price['is_based_on_days'],
-                'is_quantity_fields' => $price['is_quantity_fields'] ?? false,
+                'is_based_on_days' => filter_var($price['is_based_on_days'], FILTER_VALIDATE_BOOLEAN),
+                'is_there_a_quantity' => filter_var($price['is_there_a_quantity'], FILTER_VALIDATE_BOOLEAN),
                 'date_from' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_from'] : null,
                 'date_to' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_to'] : null,
                 'created_at' => now(),
@@ -301,7 +330,7 @@ private function createFacilityAttributes($facility, $facilityAttributes)
                 FacilityAttribute::create([
                     'facility_id' => $facility->id,
                     'room_name' => $attribute['room_name'],
-                    'capacity' => $attribute['capacity'],
+                    'capacity' => $attribute['capacity'],       
                     'sex_restriction' => $sexRestriction,
                 ]);
             }
@@ -441,4 +470,95 @@ public function GenerateFacilityThumbnailsImage($image, $imageName)
         \Log::error('Image processing failed: ' . $e->getMessage());
     }
 }
+
+// public function updateStatus(Request $request, $id)
+// {
+//     // Validate the incoming data
+//     $request->validate([
+//         'payment_status' => 'required|string',
+//         'rent_status' => 'required|string',
+//     ]);
+
+//     // Find the reservation by ID
+//     $availability = availability::findOrFail($id);
+
+//     // Update the payment status and rent status
+//     $availability->payment_status = $request->input('payment_status');
+//     $availability->status = $request->input('rent_status');
+
+//     // Save the updated reservation to the database
+//     $availability->save();
+
+//     // Redirect back with a success message
+//     return redirect()->route('admin.facilities.reservations')->with('success', 'Reservation status and payment status updated successfully.');
+// }
+
+// public function updateStatus(Request $request, $availabilityId)
+// {
+//     // Validate the incoming request
+//     $validated = $request->validate([
+//         'rent_status' => 'required|in:pending,reserved,completed,canceled',
+//     ]);
+
+//     // Find the availability record by ID
+//     $availability = Availability::findOrFail($availabilityId);
+
+//     // Update the status field
+//     $availability->status = $validated['rent_status'];
+
+//     // Save the record
+//     $availability->save();
+
+//     // Redirect back with a success message
+//     return redirect()->route('admin.facilities.reservations') // adjust this route if needed
+//                      ->with('success', 'Reservation status updated successfully!');
+// }
+
+public function updateStatus(Request $request, $id)
+{
+    // Fetch the availability record
+    $availability = Availability::findOrFail($id);
+
+    // Capture the old values for history
+    $oldPaymentStatus = $availability->payment_status;
+    $oldStatus = $availability->status;
+
+    // Update the payment and rent status
+    $availability->update([
+        'payment_status' => $request->payment_status,
+        'status' => $request->rent_status,
+    ]);
+
+    // Record the history of changes in the ReservationHistory table
+    Facility::create([
+        'availability_id' => $availability->id,
+        'old_payment_status' => $oldPaymentStatus,
+        'new_payment_status' => $request->payment_status,
+        'old_rent_status' => $oldStatus,
+        'new_rent_status' => $request->rent_status,
+        'updated_at' => now(),
+        'user_email' => $availability->user->email,
+        // 'admin_email' => auth()->admin()->email,
+    ]);
+
+    // Redirect back with a success message
+    return redirect()->route('admin.facilities.reservations')
+                     ->with('success', 'Reservation status updated and history saved.');
+}
+
+public function showHistory($id)
+{
+    // Fetch the availability object based on the reservation ID
+    $availability = Availability::findOrFail($id);
+
+    // Fetch the reservation history for this availability
+    $history = ReseHistory::where('availability_id', $id)->get();
+
+    // Pass both availability and history data to the view
+    return view('admin.reservation-history', compact('availability', 'history'));
+}
+
+
+
+
 }

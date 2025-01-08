@@ -425,11 +425,6 @@ class AdminController extends Controller
         return redirect()->route('admin.categories')->with('status', 'Category has been added successfully!');
     }
 
-
-
-
-
-
     public function category_edit($id)
     {
         $category =  Category::find($id);

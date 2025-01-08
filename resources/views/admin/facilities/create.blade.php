@@ -399,27 +399,30 @@
 
                                 <div class="gap22 cols">
                                     <fieldset class="price_type">
-                                        <div class="body-title mb-10">Price Type<span class="tf-color-1">*</span>
-                                        </div>
+                                        <div class="body-title mb-10">Price Type<span class="tf-color-1">*</span></div>
                                         <div class="select">
                                             <select id="priceTypeSelect" name="price_type">
-                                                <option value="" selected disabled>Choose Price Type...
-                                                </option>
+                                                <option value="" selected disabled>Choose Price Type...</option>
                                                 <option value="individual"
-                                                    {{ old('price_type') === 'individual' ? 'selected' : '' }}>
-                                                    Individual</option>
+                                                    {{ old('price_type') === 'individual' ? 'selected' : '' }} hidden
+                                                    disabled id="pIndividual">
+                                                    Individual
+                                                </option>
                                                 <option value="whole"
-                                                    {{ old('price_type') === 'whole' ? 'selected' : '' }}>
-                                                    Whole
-                                                    Place</option>
+                                                    {{ old('price_type') === 'whole' ? 'selected' : '' }} hidden disabled
+                                                    id="pWhole">
+                                                    Whole Place
+                                                </option>
                                             </select>
                                         </div>
                                     </fieldset>
                                 </div>
 
                                 @error('price_type')
-                                    <span class="alert alert-danger text-center">{{ $message }} </span>
+                                    <span class="alert alert-danger text-center">{{ $message }}</span>
                                 @enderror
+
+
 
                                 <div id="individualPriceFields">
                                     <fieldset class="name">
@@ -435,11 +438,21 @@
 
                                 <div class="form-check d-flex justify-content-center align-items-center my-4">
                                     <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input" id="isBasedOnDays" name="is_based_on_days" value="1">
-                                        <label class="form-check-label ms-2 pt-2" for="isBasedOnDays">Is based on days?</label>
+                                        <input type="checkbox" class="form-check-input" id="isBasedOnDays"
+                                            name="is_based_on_days" value="1">
+                                        <label class="form-check-label ms-2 pt-2" for="isBasedOnDays">Is based on
+                                            days?</label>
+                                    </div>
+
+                                    <div id="QuantityChecked" style="padding-left: 10px; display: none;">
+                                        <input class="form-check-input"
+                                            style="height: 1.5rem; width: 1.5rem; padding-left: 5px;" type="checkbox"
+                                            id="isThereAQuantity" name="is_there_a_quantity" value="1">
+                                        <label class="form-check-label pt-1" for="isThereAQuantity">Is there a
+                                            quantity?</label>
                                     </div>
                                 </div>
-                                
+
                                 <div id="dateFields" style="display: none;">
                                     <div class="input-group">
                                         <label for="date_from">Date From</label>
@@ -460,8 +473,6 @@
                         </div>
                     </div>
                 </div>
-
-
             </form>
 
             <!-- /form-add-rental -->
@@ -496,37 +507,37 @@
 
 
         document.addEventListener("DOMContentLoaded", function() {
-        const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
-        const dateFieldsDiv = document.getElementById('dateFields');
-        const dateFromInput = document.getElementById('date_from');
-        const dateToInput = document.getElementById('date_to');
+            const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
+            const dateFieldsDiv = document.getElementById('dateFields');
+            const dateFromInput = document.getElementById('date_from');
+            const dateToInput = document.getElementById('date_to');
 
-   
-        function disablePastDates() {
-            const today = new Date().toISOString().split('T')[0]; 
-            dateFromInput.setAttribute('min', today);
-            dateToInput.setAttribute('min', today);
-        }
 
-     
-        dateFromInput.addEventListener('change', function() {
-            if (dateFromInput.value) {
-                dateToInput.value = dateFromInput.value;  
+            function disablePastDates() {
+                const today = new Date().toISOString().split('T')[0];
+                dateFromInput.setAttribute('min', today);
+                dateToInput.setAttribute('min', today);
             }
-        });
 
-        // Handle the checkbox state to show/hide the date fields
-        isBasedOnDaysCheckbox.addEventListener('change', function() {
-            if (isBasedOnDaysCheckbox.checked) {
-                dateFieldsDiv.style.display = 'block';  
-            } else {
-                dateFieldsDiv.style.display = 'none'; 
-            }
-        });
 
-        // Disable past dates initially
-        disablePastDates();
-    });
+            dateFromInput.addEventListener('change', function() {
+                if (dateFromInput.value) {
+                    dateToInput.value = dateFromInput.value;
+                }
+            });
+
+            // Handle the checkbox state to show/hide the date fields
+            isBasedOnDaysCheckbox.addEventListener('change', function() {
+                if (isBasedOnDaysCheckbox.checked) {
+                    dateFieldsDiv.style.display = 'block';
+                } else {
+                    dateFieldsDiv.style.display = 'none';
+                }
+            });
+
+            // Disable past dates initially
+            disablePastDates();
+        });
 
 
         // document.getElementById('isBasedOnDays').addEventListener('change', function() {
@@ -542,6 +553,5 @@
         //         document.getElementById('isBasedOnDays').value = '0';
         //     }
         // });
-
     </script>
 @endpush

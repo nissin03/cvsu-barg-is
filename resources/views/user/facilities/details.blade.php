@@ -160,8 +160,162 @@
             /* Optional: Rounded corners for the main image */
         }
 
+
+        /* Style the date input field */
+        .styled-date-input {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            padding: 10px;
+            font-size: 16px;
+            color: #333;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.2s;
+        }
+
+        .styled-date-input:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        /* Selected date display */
+        #selected-date-display {
+            font-weight: bold;
+            color: #0769d2;
+        }
+
+
         p {
             margin: 0;
+        }
+
+        #calendar {
+            width: 100%;
+            max-width: 370px;
+
+        }
+
+
+        .fc .fc-toolbar {
+            font-size: 12px;
+
+        }
+
+        .fc .fc-button {
+            font-size: 12px;
+
+            padding: 4px 8px;
+
+        }
+
+        .fc .fc-daygrid-day-number {
+            font-size: 14px;
+
+        }
+
+        .fc .fc-daygrid-day {
+            padding: 5px;
+
+        }
+
+        .fc .fc-daygrid {
+            height: auto;
+
+        }
+
+        .fc-view-dayGridWeek-button {
+            display: none;
+        }
+
+        .fc .fc-toolbar-title {
+            font-size: 1em;
+        }
+
+        /* Responsive behavior */
+        @media (max-width: 768px) {
+            #calendar {
+                max-width: 100%;
+                /* Make it responsive on smaller screens */
+                padding: 0;
+            }
+
+            .fc .fc-button {
+                font-size: 10px;
+                /* Smaller buttons for mobile */
+                padding: 2px 4px;
+                /* Reduce button size */
+            }
+
+            .fc .fc-daygrid-day-number {
+                font-size: 12px;
+            }
+        }
+
+        /* Ensure the rest of the form remains readable */
+        .reservation-section label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .reservation-section #selected-date {
+            font-size: 14px;
+            /* Adjust selected date font size */
+        }
+
+
+        #total-price {
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        /* Basic styling for the reservation section */
+        .reservation-section {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .my-2 {
+            margin-bottom: 10px;
+        }
+
+        .select-date {
+            font-size: 14px;
+            color: #333;
+        }
+
+        #selected-date {
+            margin-top: 10px;
+        }
+
+        #reset-button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #ff6f61;
+            /* Red background for reset button */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        #reset-button:hover {
+            background-color: #ff3b2d;
+            /* Darker red on hover */
+        }
+
+        .text-danger {
+            color: red;
+        }
+
+        /* Styling for the calendar */
+        #calendar {
+            margin-bottom: 20px;
         }
     </style>
 
@@ -279,12 +433,62 @@
                     @endif
                     <h1 class="facilities-single__name">{{ $facility->name }}</h1>
 
+                    <form action="{{ route('facility.reserve') }}" method="POST" style="margin: 0">
+                        @csrf
+                        <input type="hidden" name="facility_id" value="{{ $facility->id }}">
+                        <input type="hidden" name="total_price" id="total-price-field" value="0">
+                        <input type="hidden" name="facility_type" value="{{ $facility->facility_type }}">
 
-                    @if ($facility->facility_type == 'whole_place')
-                        <div class="mb-3">
-                            @if ($facility->prices->isNotEmpty())
-                                @foreach ($facility->prices as $price)
-                                    <!-- Display price options -->
+                        @if ($facility->facility_type == 'whole_place')
+                            @include('components.facility_whole_place')
+                        @endif
+
+                        @if ($facility->facility_type === 'individual')
+                            @include('components.facility_individual')
+                        @endif
+
+                        @if ($facility->facility_type == 'both')
+                            <input type="hidden" name="price_type" id="price_type" value="">
+                            <input type="hidden" name="price_id" id="price_id" value="">
+                            <input type="hidden" name="room_id" id="room_id" value="">
+                            {{-- <input type="hidden" name="total_price" id="total_price" value=""> --}}
+                            <div id="dynamic_prices_container">
+                                <div id="prices_display">
+                                    <div data-price-type="individual">
+                                        @foreach ($pricesWithAttributes->where('price_type', 'individual') as $price)
+                                            <h4><strong>{{ $price->name }}: </strong>
+                                                <span class="product-type text-primary">&#8369;
+                                                    {{ number_format($price->value, 2) }}
+                                                </span>
+                                            </h4>
+                                            <p>
+                                                @if ($price->is_based_on_days)
+                                                    <span class="badge">Per Day</span>
+                                                @endif
+                                            </p>
+                                        @endforeach
+                                    </div>
+
+                                    <div data-price-type="whole">
+                                        @foreach ($pricesWithAttributes->where('price_type', 'whole') as $price)
+                                            <h4><strong>{{ $price->name }}: </strong>
+                                                <span class="product-type text-primary">&#8369;
+                                                    {{ number_format($price->value, 2) }}
+                                                </span>
+                                            </h4>
+                                            <p>
+                                                @if ($price->is_based_on_days)
+                                                    <span class="badge">Per Day</span>
+                                                @endif
+                                            </p>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+
+                                @foreach ($pricesWithoutAttributes as $price)
                                     <h4><strong>{{ $price->name }}: </strong>
                                         <span class="product-type text-primary">&#8369;
                                             {{ number_format($price->value, 2) }}</span>
@@ -295,435 +499,247 @@
                                         @endif
                                     </p>
                                 @endforeach
-                            @else
-                                <p>No prices available for this facility.</p>
-                            @endif
-
-                            <div class="form-group">
-                                <label for="client_type" style="margin-bottom: 7px;"><strong>Client Type: </strong></label>
-                                <select id="client_type" class="form-control">
-                                    <option value="" disabled selected>Select a client type</option>
-                                    @foreach ($facility->prices as $price)
-                                        <option value="{{ $price->value }}" data-name="{{ $price->name }}">
-                                            {{ $price->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
                             </div>
 
-                            <div id="total-price" style="margin-top: 20px;">
-                                <strong>Total Price: </strong><span>&#8369; 0.00</span>
-                            </div>
-                        </div>
-                    @endif
-
-                    @if ($facility->facility_type == 'individual')
-                        <div class="mb-3">
-                            @if ($facility->prices->isNotEmpty())
-                                @foreach ($facility->prices as $price)
-                                    <h4><strong>{{ $price->name }}: </strong> <span
-                                            class="product-type text-primary">&#8369;
-                                            {{ number_format($price->value, 2) }}</span> </h4>
-                                @endforeach
-                            @else
-                                <p>No prices available for this facility.</p>
-                            @endif
-                            @php
-                                // Extract room numbers for the overall range
-                                $roomNumbers = $facility->facilityAttributes
-                                    ->pluck('room_name')
-                                    ->filter()
-                                    ->map(function ($name) {
-                                        return preg_replace('/[^0-9]/', '', $name);
-                                    })
-                                    ->sort()
-                                    ->values();
-
-                                // Extract sex restriction
-                                $sexRestriction = $facility->facilityAttributes
-                                    ->pluck('sex_restriction')
-                                    ->filter()
-                                    ->first(); // Get the first non-null value
-                            @endphp
-
-                            @if ($roomNumbers->isNotEmpty())
-                                @php
-                                    $firstRoom = $roomNumbers->first();
-                                    $lastRoom = $roomNumbers->last();
-                                @endphp
-                            @endif
-                            @php
-                                // Extract and process room details
-                                $roomDetails = $facility->facilityAttributes
-                                    ->filter(fn($attribute) => $attribute->room_name && $attribute->capacity)
-                                    ->map(
-                                        fn($attribute) => [
-                                            'room_number' => preg_replace('/[^0-9]/', '', $attribute->room_name),
-                                            'capacity' => $attribute->capacity,
-                                        ],
-                                    )
-                                    ->sortBy('room_number')
-                                    ->values();
-
-                                $groupedRooms = $roomDetails->groupBy('capacity');
-                            @endphp
-
-                            @if ($groupedRooms->isNotEmpty())
-                                <p><strong>Room Capacities:</strong></p>
-                                <ul style="padding: 0">
-                                    @foreach ($groupedRooms as $capacity => $rooms)
-                                        @php
-                                            // Generate room range for the group
-                                            $roomNumbers = $rooms->pluck('room_number')->map(fn($num) => "R{$num}");
-                                            $range =
-                                                $roomNumbers->count() > 1
-                                                    ? $roomNumbers->first() . '-' . $roomNumbers->last()
-                                                    : $roomNumbers->first();
-                                        @endphp
-                                        <li>{{ $range }} - {{ $capacity }} People</li>
-                                    @endforeach
-                                </ul>
-                            @endif
-
-                            <div class="alert alert-warning " role="alert" style="margin-top: ">
-                                <p><strong>Note: </strong>Rooms selection is not available in this facility.</p>
-                            </div>
-
-
-                            <div id="total-price" style="margin-top: 20px;">
-                                <strong>Total Price: </strong><span>&#8369;
-                                    {{ number_format($facility->prices->first()->value, 2) }}</span>
-                            </div>
-                        </div>
-                    @endif
-
-                    @if ($facility->facility_type == 'both')
-                        <div>
-                            @foreach ($pricesWithAttributes as $price)
-                                <h4><strong>{{ $price->name }}: </strong>
-                                    <span class="product-type text-primary">&#8369;
-                                        {{ number_format($price->value, 2) }}</span>
-                                </h4>
-                                <p>
-                                    @if ($price->is_based_on_days)
-                                        <span class="badge">Per Day</span>
-                                    @endif
-                                </p>
-                            @endforeach
-                        </div>
-
-                        <div>
-
-                            @foreach ($pricesWithoutAttributes as $price)
-                                <h4><strong>{{ $price->name }}: </strong>
-                                    <span class="product-type text-primary">&#8369;
-                                        {{ number_format($price->value, 2) }}</span>
-                                </h4>
-                                <p>
-                                    @if ($price->is_based_on_days)
-                                        <span class="badge">Per Day</span>
-                                    @endif
-                                </p>
-                            @endforeach
-                        </div>
-
-                        @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->capacity)
-                        <div style="margin-bottom: 15px;">
-                            <label><strong>Select Type:</strong></label>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <div class="form-check form-check-inline">
-                                        <input type="radio" id="solo" name="reservation_type" value="solo"
-                                            class="form-check-input">
-                                        <label for="solo" class="form-check-label">Solo</label>
+                            <div>
+                                <!-- Rooms Display Based on Selection -->
+                                <div id="rooms_display" class="mt-4">
+                                    <!-- Shared Rooms -->
+                                    <div id="shared_rooms" style="display: none;">
+                                        <h4>Shared Rooms</h4>
+                                        <ul class="list-group">
+                                            @foreach ($facility->facilityAttributes as $room)
+                                                @if ($room->remaining_capacity > 0)
+                                                    <li class="list-group-item">
+                                                        {{ $room->room_name }} - Capacity: {{ $room->remaining_capacity }}
+                                                        out
+                                                        of {{ $room->capacity }}
+                                                    </li>
+                                                @endif
+                                            @endforeach
+                                        </ul>
                                     </div>
-                                    <div class="form-check form-check-inline">
-                                        <input type="radio" id="shared" name="reservation_type" value="shared"
-                                            class="form-check-input">
-                                        <label for="shared" class="form-check-label">Shared</label>
+
+                                    <!-- Solo Rooms -->
+                                    <div id="solo_rooms" style="display: none;">
+                                        <h4>Solo Rooms</h4>
+                                        <ul class="list-group">
+                                            @foreach ($facility->facilityAttributes as $room)
+                                                @if ($room->remaining_capacity == $room->capacity)
+                                                    <li class="list-group-item">
+                                                        {{ $room->room_name }} - Capacity: {{ $room->capacity }} out of
+                                                        {{ $room->capacity }}
+                                                    </li>
+                                                @endif
+                                            @endforeach
+                                        </ul>
                                     </div>
                                 </div>
-                                <div>
-                                    <button type="button" id="reset_button"
-                                        class="btn btn-secondary btn-sm">Reset</button>
-                                </div>
-                            </div>
-                        </div>
-                
-                        <!-- Shared Rooms Selection -->
-                        <div id="shared_inputs" style="display: none;">
-                            <div class="form-floating mb-3">
-                                <select id="shared_type" name="shared_type"
-                                    class="form-select @error('shared_type') is-invalid @enderror">
-                                    <option value="" disabled selected>Select Shared Room</option>
-                                    @foreach ($facility->facilityAttributes as $room)
-                                        @if ($room->remaining_capacity > 0)
-                                            <option value="{{ $room->id }}">
-                                                {{ $room->room_name }} - Capacity: {{ $room->remaining_capacity }}
-                                                out of {{ $room->capacity }}
-                                            </option>
-                                        @endif
-                                    @endforeach
-                                </select>
-                                <label for="shared_type">Shared Rooms:</label>
-                                @error('shared_type')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-                
-                        <!-- Solo Rooms Selection -->
-                        <div id="solo_dropdown" style="display: none;">
-                            <div class="form-floating mb-3">
-                                <select id="solo_type" name="solo_type"
-                                    class="form-select @error('solo_type') is-invalid @enderror">
-                                    <option value="" disabled selected>Select Solo Room</option>
-                                    @foreach ($facility->facilityAttributes as $room)
-                                        @if ($room->remaining_capacity == $room->capacity)
-                                            <option value="{{ $room->id }}">
-                                                {{ $room->room_name }} - Capacity: {{ $room->capacity }}
-                                                out of {{ $room->capacity }}
-                                            </option>
-                                        @endif
-                                    @endforeach
-                                </select>
-                                <label for="solo_type">Solo Rooms:</label>
-                                @error('solo_type')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-                
-                        <!-- Rooms Display Based on Selection -->
-                        <div id="rooms_display" class="mt-4">
-                            <!-- Shared Rooms -->
-                            <div id="shared_rooms" style="display: none;">
-                                <h4>Shared Rooms</h4>
-                                <ul class="list-group">
-                                    @foreach ($facility->facilityAttributes as $room)
-                                        @if ($room->remaining_capacity > 0)
-                                            <li class="list-group-item">
-                                                {{ $room->room_name }} - Capacity: {{ $room->remaining_capacity }} out
-                                                of {{ $room->capacity }}
-                                            </li>
-                                        @endif
-                                    @endforeach
-                                </ul>
-                            </div>
-                
-                            <!-- Solo Rooms -->
-                            <div id="solo_rooms" style="display: none;">
-                                <h4>Solo Rooms</h4>
-                                <ul class="list-group">
-                                    @foreach ($facility->facilityAttributes as $room)
-                                        @if ($room->remaining_capacity == $room->capacity)
-                                            <li class="list-group-item">
-                                                {{ $room->room_name }} - Capacity: {{ $room->capacity }} out of
-                                                {{ $room->capacity }}
-                                            </li>
-                                        @endif
-                                    @endforeach
-                                </ul>
-                            </div>
-                        </div>
-                    @endif                
-
-                    @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
-                        <div style="margin-bottom: 15px;">
-                            <label><strong>Select Type:</strong></label>
-                            <div style="display: flex; justify-content: space-between;">
-                                <div>
-                                    <div>
-                                        <input type="radio" id="individual" name="reservation_type" value="individual">
-                                        <label for="individual">Individual</label>
-                                    </div>
-                                    <div>
-                                        <input type="radio" id="exclusive" name="reservation_type" value="exclusive">
-                                        <label for="exclusive">Exclusive</label>
-                                    </div>
-                                </div>
-                                <div>
-                                    <button type="button" id="reset_button" class="btn btn-shop btn-addtocart"
-                                        style="font-size: 10px;">Reset</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="individual_inputs" style="display: none;">
-                            <div class="form-floating mb-3">
-                                <input id="internal_quantity" type="number"
-                                    class="form-control form-control_gray @error('internal_quantity') is-invalid @enderror"
-                                    name="internal_quantity" value="{{ old('internal_quantity') }}">
-                                <label for="internal_quantity">Internal Quantity:</label>
-                                @error('internal_quantity')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
                             </div>
 
-                            <div class="form-floating mb-3">
-                                <input id="external_fee" type="number"
-                                    class="form-control form-control_gray @error('external_fee') is-invalid @enderror"
-                                    name="external_fee" value="{{ old('internal_fee') }}">
-                                <label for="external_fee">External Quantity</label>
-                                @error('external_fee')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div id="exclusive_dropdown" style="display: none;">
-                            <div class="form-floating mb-3">
-                                <select id="exclusive_type" name="exclusive_type"
-                                    class="form-select @error('exclusive_type') is-invalid @enderror">
-                                    <option value="" disabled selected>Select Exclusive Type</option>
-                                    <option value="internal_exclusive">Internal Exclusive</option>
-                                    <option value="external_exclusive">External Exclusive</option>
-                                </select>
-                                <label for="exclusive_type">Exclusive Type:</label>
-                                @error('exclusive_type')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-                    @endif
-                @endif
 
 
-                {{-- @if ($facility->facility_type == 'both')
-                            @foreach ($facility->prices as $price)
-                                        <h4><strong>{{ $price->name }}: </strong> 
-                                            <span class="product-type text-primary">&#8369; {{ number_format($price->value, 2) }}</span>
-                                        </h4>
-                                        <p>
-                                            @if ($price->is_based_on_days)
-                                                <span class="badge">Per Day</span>
+                            @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->capacity)
+                                <div class="reservation-section">
+                                    <div class="my-2">
+                                        <label for="calendar"><strong>Select Reservation Date:</strong></label>
+                                        <div id="calendar"></div>
+
+                                        <!-- Hidden input fields to store selected dates -->
+                                        <input type="hidden" id="date_from" name="date_from"
+                                            value="{{ old('date_from', $reservationData['date_from'] ?? '') }}">
+                                        <input type="hidden" id="date_to" name="date_to"
+                                            value="{{ old('date_to', $reservationData['date_to'] ?? '') }}">
+
+                                        <div id="selected-date" class="my-3">
+                                            @if (isset($reservationData['date_from']))
+                                                <p class="select-date"><strong>Selected Date From:</strong>
+                                                    {{ $reservationData['date_from'] }}</p>
                                             @endif
-                                        </p>
-                            @endforeach
-                            @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->capacity)                                    
-                                    <div style="margin-bottom: 15px;">
+                                            @if (isset($reservationData['date_to']))
+                                                <p class="select-date"><strong>Selected Date To:</strong>
+                                                    {{ $reservationData['date_to'] }}</p>
+                                            @endif
+                                        </div>
+
+
+                                        @error('date_from')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                        @error('date_to')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                                <div style="margin-bottom: 15px;">
                                     <label><strong>Select Type:</strong></label>
-                                    <div style="display: flex; justify-content: space-between;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
                                         <div>
-                                            <div>
-                                                <input type="radio" id="solo" name="reservation_type" value="solo">
-                                                <label for="solo">Solo</label>
+                                            <div class="form-check form-check-inline">
+                                                <input type="radio" id="solo" name="reservation_type"
+                                                    value="solo" class="form-check-input">
+                                                <label for="solo" class="form-check-label">Solo</label>
                                             </div>
-                                            <div>
-                                                <input type="radio" id="shared" name="reservation_type" value="shared">
-                                                <label for="shared">Shared</label>
+                                            <div class="form-check form-check-inline">
+                                                <input type="radio" id="shared" name="reservation_type"
+                                                    value="shared" class="form-check-input">
+                                                <label for="shared" class="form-check-label">Shared</label>
                                             </div>
                                         </div>
                                         <div>
-                                            <!-- Reset Button -->
-                                        <button type="button" id="reset_button" class="btn btn-shop btn-addtocart" style="font-size: 10px;">Reset</button>
-                                        </div> 
-                                    </div>             
+                                            <button type="button" id="reset_button"
+                                                class="btn btn-secondary btn-sm">Reset</button>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <!-- Inputs for Individual -->
-                                <div id="shared_inputs" style="display: none;">
-                                    <div class="form-floating mb-3">
-                                            <select id="shared_type" name="shared_type"
-                                                class="form-select @error('shared_type') is-invalid @enderror">
-                                                <option value="" disabled selected>Select Type</option>
-                                                <option value="internal_shared">Empty rooms 101 </option>
-
-                                            </select>
-                                            <label for="shared_type">Empty Rooms: </label>
-                                            @error('exclusive_type')
+                                @if ($facility->prices->where('is_there_a_quantity', true)->count() > 0)
+                                    <div id="individual_inputs" style="display:none;">
+                                        <label><strong>Set Quantity:</strong></label>
+                                        <div class="form-floating mb-3">
+                                            <input id="internal_quantity" type="number"
+                                                class="form-control form-control_gray @error('internal_quantity') is-invali10.d @enderror"
+                                                name="internal_quantity" value="{{ old('internal_quantity') }}">
+                                            <label for="internal_quantity">
+                                                Enter Internal Quantity
+                                            </label>
+                                            @error('internal_quantity')
                                                 <span class="invalid-feedback" role="alert">
                                                     <strong>{{ $message }}</strong>
                                                 </span>
                                             @enderror
                                         </div>
-                                </div>
 
-                                <!-- Dropdown for Exclusive -->
-                                <div id="solo_dropdown" style="display: none;">
+                                        <div class="form-floating mb-3">
+                                            <input id="external_quantity" type="number"
+                                                class="form-control form-control_gray @error('external_quantity') is-invalid @enderror"
+                                                name="external_quantity" value="{{ old('external_quantity') }}">
+                                            <label for="external_quantity">
+                                                Enter External Quantity
+                                            </label>
+                                            @error('external_quantity')
+                                                <span class="invalid-feedback" role="alert">
+                                                    <strong>{{ $message }}</strong>
+                                                </span>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div id="shared_inputs" style="display: none;">
                                     <div class="form-floating mb-3">
-                                        <select id="solo_type" name="solo_type"
-                                            class="form-select @error('solo_type') is-invalid @enderror">
-                                            <option value="" disabled selected>Select Type</option>
-                                            <option value="internal_solo">Solo (Internal) </option>
-                                            <option value="external_solo">Solo (External) </option>
+                                        <select id="shared_room_select" name="shared_room_select" class="form-select">
+                                            <option value="" disabled selected>Select Shared Room</option>
+                                            @foreach ($facility->facilityAttributes as $room)
+                                                @if ($room->remaining_capacity > 0)
+                                                    <option value="{{ $room->id }}">
+                                                        {{ $room->room_name }} - Capacity: {{ $room->remaining_capacity }}
+                                                        out of {{ $room->capacity }}
+                                                    </option>
+                                                @endif
+                                            @endforeach
                                         </select>
-                                        <label for="solo_type">Solo Type:</label>
-                                        @error('exclusive_type')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
+                                        <label for="shared_room_select">Shared Rooms:</label>
                                     </div>
                                 </div>
-                                @endif
-                                           
-                                @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
+
+                                <div id="shared_type_dropdown" style="display: none;">
+                                    <div class="form-floating mb-3">
+                                        <select id="shared_price_select" name="shared_price_select" class="form-select">
+                                            <option value="" disabled selected>Select Shared Type</option>
+                                            @foreach ($facility->prices->where('price_type', 'individual') as $price)
+                                                <option value="{{ $price->id }}">{{ $price->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <label for="shared_price_select">Shared Type:</label>
+                                    </div>
+                                </div>
+
+                                <!-- Solo Room Select -->
+                                <div id="solo_dropdown" style="display: none;">
+                                    <div class="form-floating mb-3">
+                                        <select id="solo_room_select" name="solo_room_select" class="form-select">
+                                            <option value="" disabled selected>Select Solo Room</option>
+                                            @foreach ($facility->facilityAttributes as $room)
+                                                @if ($room->remaining_capacity == $room->capacity)
+                                                    <option value="{{ $room->id }}">
+                                                        {{ $room->room_name }} - Capacity: {{ $room->capacity }}
+                                                        out of {{ $room->capacity }}
+                                                    </option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                        <label for="solo_room_select">Solo Rooms:</label>
+                                    </div>
+                                </div>
+
+                                <!-- Solo Price Select -->
+                                <div id="solo_type_dropdown" style="display: none;">
+                                    <div class="form-floating mb-3">
+                                        <select id="solo_price_select" name="solo_price_select" class="form-select">
+                                            <option value="" disabled selected>Select Solo Type</option>
+                                            @foreach ($facility->prices->where('price_type', 'whole') as $price)
+                                                <option value="{{ $price->id }}">{{ $price->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <label for="solo_price_select">Solo Type:</label>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
+
                                 <div style="margin-bottom: 15px;">
                                     <label><strong>Select Type:</strong></label>
                                     <div style="display: flex; justify-content: space-between;">
                                         <div>
                                             <div>
-                                                <input type="radio" id="individual" name="reservation_type" value="individual">
+                                                <input type="radio" id="individual" name="reservation_type"
+                                                    value="individual">
                                                 <label for="individual">Individual</label>
                                             </div>
                                             <div>
-                                                <input type="radio" id="exclusive" name="reservation_type" value="exclusive">
+                                                <input type="radio" id="exclusive" name="reservation_type"
+                                                    value="exclusive">
                                                 <label for="exclusive">Exclusive</label>
                                             </div>
                                         </div>
                                         <div>
-                                            <!-- Reset Button -->
-                                        <button type="button" id="reset_button" class="btn btn-shop btn-addtocart" style="font-size: 10px;">Reset</button>
-                                        </div> 
-                                    </div>             
-                                </div>
-
-                                <!-- Inputs for Individual -->
-                                <div id="individual_inputs" style="display: none;">
-                                    <div class="form-floating mb-3">
-                                        <input id="internal_quantity" type="number"
-                                            class="form-control form-control_gray @error('internal_quantity') is-invalid @enderror"
-                                            name="internal_quantity" value="{{ old('internal_quantity') }}">
-                                        <label for="internal_quantity">Internal Quantity:</label>
-                                        @error('internal_quantity')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
-                                    </div>
-
-                                    <div class="form-floating mb-3">
-                                        <input id="external_fee" type="number"
-                                            class="form-control form-control_gray @error('external_fee') is-invalid @enderror"
-                                            name="external_fee" value="{{ old('internal_fee') }}">
-                                        <label for="external_fee">Extenrnal Quantity</label>
-                                        @error('external_fee')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror   
+                                            <button type="button" id="reset_button" class="btn btn-shop btn-addtocart"
+                                                style="font-size: 10px;">Reset</button>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Dropdown for Exclusive -->
+                                @if ($facility->prices->where('is_there_a_quantity', true)->where('price_type', 'individual')->count() > 0)
+                                    <div id="individual_inputs" style="display: none;">
+                                        <label><strong>Set Quantity:</strong></label>
+                                        @foreach ($facility->prices->where('is_there_a_quantity', true)->where('price_type', 'individual') as $price)
+                                            <div class="form-floating mb-3">
+                                                <input id="quantity_{{ $price->id }}" type="number"
+                                                    class="form-control quantity-input"
+                                                    name="quantity[{{ $price->id }}]"
+                                                    value="{{ old('quantity.' . $price->id) }}" min="0"
+                                                    data-price="{{ $price->value }}">
+                                                <label for="quantity_{{ $price->id }}">Enter Quantity for
+                                                    {{ $price->name }}</label>
+                                            </div>
+                                        @endforeach
+                                        {{-- <p><strong>Total Price:</strong> ₱<span id="grand_total">0.00</span></p> --}}
+                                    </div>
+                                @endif
+
+
                                 <div id="exclusive_dropdown" style="display: none;">
                                     <div class="form-floating mb-3">
                                         <select id="exclusive_type" name="exclusive_type"
                                             class="form-select @error('exclusive_type') is-invalid @enderror">
                                             <option value="" disabled selected>Select Exclusive Type</option>
-                                            <option value="internal_exclusive">Internal Exclusive</option>
-                                            <option value="external_exclusive">External Exclusive</option>
+                                            @foreach ($facility->prices->where('price_type', 'whole') as $price)
+                                                <option value="{{ $price->id }}" data-price="{{ $price->value }}">
+                                                    {{ $price->name }} (₱{{ number_format($price->value, 2) }})
+                                                </option>
+                                            @endforeach
                                         </select>
                                         <label for="exclusive_type">Exclusive Type:</label>
                                         @error('exclusive_type')
@@ -733,26 +749,42 @@
                                         @enderror
                                     </div>
                                 </div>
-                                @endif        
-                        @endif    --}}
+                                <div class="reservation-section">
+                                    <div class="my-2">
+                                        <div id="calendar"></div>
+                                        <input type="hidden" id="date_from" name="date_from"
+                                            value="{{ old('date_from', $reservationData['date_from'] ?? '') }}">
+                                        <input type="hidden" id="date_to" name="date_to"
+                                            value="{{ old('date_to', $reservationData['date_to'] ?? '') }}">
+                                        <div id="selected-date" class="my-3">
+                                            @if (isset($date_from))
+                                                {{-- <p class="select-date"><strong>Selected Date:</strong> {{ $date_from }}</p> --}}
+                                                <p class="select-date"><strong>Selected Date:</strong>
+                                                    {{ $reservationData['date_from'] }}</p>
+                                            @endif
+                                        </div>
+
+                                        @error('date_from')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                        @error('date_to')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            @endif
+                            <div id="total_price" style="font-weight: bold; "><strong>Total Price:</strong> &#8369; 0.00
+                            </div>
+                        @endif
+
+                        <button type="submit" class="btn btn-shop btn-addtocart" id="reserve-btn"
+                            style="padding: 15px 30px; font-size: 18px">
+                            Reserve
+                        </button>
+                    </form>
 
 
-                <form action="{{ route('facility.reserve') }}" method="POST" style="margin: 0">
-                    @csrf
-                    <input type="hidden" name="facility_id" value="{{ $facility->id }}">
-                    <input type="hidden" name="total_price" id="total-price-field" value="{{ $individualPrice }}">
-                    <input type="hidden" name="facility_type" value="{{ $facility->facility_type }}">
-                    @if ($facility->facility_type === 'individual')
-                        <input type="hidden" name="date_from" value="{{ $price->date_from }}">
-                        <input type="hidden" name="date_to" value="{{ $price->date_to }}">
-                    @endif
-
-                    <button type="submit" class="btn btn-shop btn-addtocart" id="reserve-btn"
-                        style="padding: 15px 30px; font-size: 18px">
-                        Reserve
-                    </button>
-                </form>
-            </div>
+                </div>
 
 
 
@@ -885,9 +917,11 @@
 @endsection
 @push('scripts')
 
+
     <script>
         //IMAGE//
         document.addEventListener('DOMContentLoaded', function() {
+
             const mainSwiper = new Swiper('.main-swiper', {
                 navigation: {
                     nextEl: '.swiper-button-next',
@@ -925,7 +959,7 @@
                         checkbox.setCustomValidity('You must agree to the rules and regulations.');
                         return false;
                     }
-                    checkbox.setCustomValidity(''); // Clear the custom validation message
+                    checkbox.setCustomValidity('');
                     return true;
                 }
 
@@ -935,64 +969,683 @@
     </script>
 
 
+
+
     @if ($facility->facility_type == 'both')
-        <script>
-           document.addEventListener('DOMContentLoaded', function () {
-        const soloRadio = document.getElementById('solo');
-        const sharedRadio = document.getElementById('shared');
-        const resetButton = document.getElementById('reset_button');
-        const sharedInputs = document.getElementById('shared_inputs');
-        const soloDropdown = document.getElementById('solo_dropdown');
-        const sharedRooms = document.getElementById('shared_rooms');
-        const soloRooms = document.getElementById('solo_rooms');
+        @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->capacity)
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const soloRadio = document.getElementById('solo');
+                    const sharedRadio = document.getElementById('shared');
+                    const resetButton = document.getElementById('reset_button');
+                    const dateFromEl = document.getElementById('date_from');
+                    const dateToEl = document.getElementById('date_to');
+                    const pricesDisplay = document.getElementById('prices_display');
+                    const submitButton = document.getElementById('submit-button');
+                    const selectedDateEl = document.getElementById('selected-date');
+                    const sharedInputs = document.getElementById('shared_inputs');
+                    @if ($facility->prices->where('is_there_a_quantity', true)->count() > 0)
+                        const individualInputs = document.getElementById('individual_inputs');
+                    @endif
+                    const totalPriceEl = document.getElementById('total_price');
+                    const soloTypeDropdown = document.getElementById('solo_type_dropdown');
+                    const sharedTypeDropdown = document.getElementById('shared_type_dropdown');
+                    const soloDropdown = document.getElementById('solo_dropdown');
+                    const roomsDisplay = document.getElementById('rooms_display');
+                    const sharedRooms = document.getElementById('shared_rooms');
+                    const soloRooms = document.getElementById('solo_rooms');
+                    const calendarEl = document.getElementById('calendar');
 
-        // Function to hide all sections
-        function hideAll() {
-            sharedInputs.style.display = 'none';
-            soloDropdown.style.display = 'none';
-            sharedRooms.style.display = 'none';
-            soloRooms.style.display = 'none';
-        }
 
-        // Event Listener for Solo Radio
-        soloRadio.addEventListener('change', function () {
-            if (this.checked) {
-                sharedInputs.style.display = 'none';
-                soloDropdown.style.display = 'block';
-                sharedRooms.style.display = 'none';
-                soloRooms.style.display = 'block';
-            }
-        });
+                    const sharedRoomSelect = document.getElementById('shared_room_select');
+                    const sharedPriceSelect = document.getElementById('shared_price_select');
 
-        // Event Listener for Shared Radio
-        sharedRadio.addEventListener('change', function () {
-            if (this.checked) {
-                soloDropdown.style.display = 'none';
-                sharedInputs.style.display = 'block';
-                soloRooms.style.display = 'none';
-                sharedRooms.style.display = 'block';
-            }
-        });
+                    const soloRoomSelect = document.getElementById('solo_room_select');
+                    const soloPriceSelect = document.getElementById('solo_price_select');
 
-        // Event Listener for Reset Button
-        resetButton.addEventListener('click', function () {
-            hideAll();
-            // Reset radio buttons
-            soloRadio.checked = false;
-            sharedRadio.checked = false;
-            // Reset dropdowns
-            document.getElementById('shared_type').selectedIndex = 0;
-            document.getElementById('solo_type').selectedIndex = 0;
-        });
-    });
-        </script>
+                    const prices = @json($pricesWithAttributes);
+                    const facilityId = "{{ $facility->id }}";
+
+                    // This function calls your "calculatePrice" route via AJAX
+                    function ajaxCalculatePrice() {
+                        const dateFrom = dateFromEl.value;
+                        const dateTo = dateToEl.value;
+
+
+                        if (!dateFrom || !dateTo) {
+                            totalPriceEl.innerText = '';
+                            return;
+                        }
+
+                        let priceType = null;
+                        if (soloRadio.checked) {
+                            priceType = 'whole';
+                        } else if (sharedRadio.checked) {
+                            priceType = 'individual';
+                        } else {
+                            totalPriceEl.innerText = '';
+                            return;
+                        }
+
+                        // Decide which <select> to read for the Price ID
+                        let priceId = null;
+                        if (priceType === 'whole' && soloPriceSelect) {
+                            priceId = soloPriceSelect.value;
+                        } else if (priceType === 'individual' && sharedPriceSelect) {
+                            priceId = sharedPriceSelect.value;
+                        }
+
+                        let roomId = null;
+                        // if (priceType === 'whole') {
+                        //     roomId = document.getElementById('solo_room_select').value;
+                        // } else if (priceType === 'individual') {
+                        //     roomId = document.getElementById('shared_room_select').value;
+                        // }
+                        if (priceType === 'whole' && soloRoomSelect) {
+                            roomId = soloRoomSelect.value;
+                        } else if (priceType === 'individual' && sharedRoomSelect) {
+                            roomId = sharedRoomSelect.value;
+                        }
+
+                        if (!priceId || !roomId) {
+                            totalPriceEl.innerText = '';
+                            return;
+                        }
+                        fetch("{{ route('facilities.calculatePrice') }}", {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                                },
+                                body: JSON.stringify({
+                                    facility_id: facilityId,
+                                    date_from: dateFrom,
+                                    date_to: dateTo,
+                                    price_type: priceType,
+                                    price_id: priceId,
+                                    room_id: roomId,
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    totalPriceEl.innerText =
+                                        'Total Price: ₱' + parseFloat(data.total_price).toFixed(2);
+
+                                    document.getElementById('price_type').value = priceType;
+                                    document.getElementById('price_id').value = priceId;
+                                    document.getElementById('room_id').value = roomId;
+                                    document.getElementById('total_price').value = data.total_price;
+                                } else {
+                                    console.error(data.message || 'Calculation failed.');
+                                }
+                            })
+                            .catch(error => console.error('Error calculating price:', error));
+                    }
+
+                    soloRadio.addEventListener('change', ajaxCalculatePrice);
+                    sharedRadio.addEventListener('change', ajaxCalculatePrice);
+
+                    if (sharedRoomSelect) {
+                        sharedRoomSelect.addEventListener('change', ajaxCalculatePrice);
+                    }
+                    if (sharedPriceSelect) {
+                        sharedPriceSelect.addEventListener('change', ajaxCalculatePrice);
+                    }
+                    if (soloRoomSelect) {
+                        soloRoomSelect.addEventListener('change', ajaxCalculatePrice);
+                    }
+                    if (soloPriceSelect) {
+                        soloPriceSelect.addEventListener('change', ajaxCalculatePrice);
+                    }
+
+                    dateFromEl.addEventListener('change', ajaxCalculatePrice);
+                    dateToEl.addEventListener('change', ajaxCalculatePrice);
+
+                    // store current selection so we can restore them
+                    let sharedTypeValue = '';
+                    let soloTypeValue = '';
+
+                    // Show/hide logic for prices
+                    function updatePrices(type) {
+                        pricesDisplay.innerHTML = ''; // Clear previous
+                        const filteredPrices = prices.filter(p => p.price_type === type);
+
+                        if (filteredPrices.length > 0) {
+                            filteredPrices.forEach(p => {
+                                const priceHTML = `
+                    <h4><strong>${p.name}:</strong>
+                        <span class="product-type text-primary">&#8369;
+                            ${parseFloat(p.value).toFixed(2)}
+                        </span>
+                    </h4>
+                    <p>${p.is_based_on_days ? '<span class="badge">Per Day</span>' : ''}</p>
+                `;
+                                pricesDisplay.innerHTML += priceHTML;
+                            });
+                        } else {
+                            pricesDisplay.innerHTML = '<p>No prices available for this selection.</p>';
+                        }
+                    }
+
+                    function hideAll() {
+                        sharedInputs.style.display = 'none';
+                        @if ($facility->prices->where('is_there_a_quantity', true)->count() > 0)
+                            individualInputs.style.display = 'none';
+                        @endif
+                        soloDropdown.style.display = 'none';
+                        soloTypeDropdown.style.display = 'none';
+                        sharedTypeDropdown.style.display = 'none';
+                        roomsDisplay.style.display = 'none';
+                        sharedRooms.style.display = 'none';
+                        soloRooms.style.display = 'none';
+                    }
+
+                    // When user clicks the "Solo" radio
+                    soloRadio.addEventListener('change', function() {
+                        if (this.checked) {
+
+                            if (sharedPriceSelect) {
+                                sharedTypeValue = sharedPriceSelect.value;
+                            }
+
+                            if (soloPriceSelect) {
+                                soloPriceSelect.value = soloTypeValue;
+                            }
+
+                            updatePrices('whole');
+                            hideAll();
+
+
+                            soloDropdown.style.display = 'block';
+                            soloTypeDropdown.style.display = 'block';
+                            roomsDisplay.style.display = 'block';
+                            soloRooms.style.display = 'block';
+                        }
+                    });
+
+
+                    sharedRadio.addEventListener('change', function() {
+                        if (this.checked) {
+
+                            if (soloPriceSelect) {
+                                soloTypeValue = soloPriceSelect.value;
+                            }
+
+                            if (sharedPriceSelect) {
+                                sharedPriceSelect.value = sharedTypeValue;
+                            }
+
+                            updatePrices('individual');
+                            hideAll();
+
+
+                            sharedInputs.style.display = 'block';
+                            sharedTypeDropdown.style.display = 'block';
+                            @if ($facility->prices->where('is_there_a_quantity', true)->count() > 0)
+                                individualInputs.style.display = 'block';
+                            @endif
+                            roomsDisplay.style.display = 'block';
+                            sharedRooms.style.display = 'block';
+                        }
+                    });
+
+                    // Reset button
+                    resetButton.addEventListener('click', function() {
+                        document.getElementById('date_from').value = '';
+                        document.getElementById('date_to').value = '';
+                        selectedDateEl.innerHTML = '';
+                        totalPriceEl.innerText = '';
+
+                        if (soloRoomSelect) soloRoomSelect.value = '';
+                        if (soloPriceSelect) soloPriceSelect.value = '';
+                        if (sharedRoomSelect) sharedRoomSelect.value = '';
+                        if (sharedPriceSelect) sharedPriceSelect.value = '';
+
+                        calendar.unselect();
+
+                        if (submitButton) {
+                            submitButton.disabled = true;
+                        }
+
+                        calendar.getEvents().forEach(function(event) {
+                            if (event.display === 'background') {
+                                event.remove();
+                            }
+                        });
+
+                        soloRadio.checked = false;
+                        sharedRadio.checked = false;
+                        sharedTypeValue = '';
+                        soloTypeValue = '';
+
+                        hideAll();
+                        pricesDisplay.innerHTML = '<p>Please select a type to view prices.</p>';
+                    });
+
+                    // Setup FullCalendar
+                    var today = new Date();
+                    var startDate = new Date();
+                    startDate.setDate(today.getDate() + 3);
+
+                    var calendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: 'dayGridMonth',
+                        selectable: true,
+                        selectMirror: true,
+                        timeZone: 'local',
+                        select: function(info) {
+                            var selectedDate = info.start;
+                            var minDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate
+                                .getDate());
+
+                            if (selectedDate >= minDate) {
+                                var year = selectedDate.getFullYear();
+                                var month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                                var day = String(selectedDate.getDate()).padStart(2, '0');
+                                var formattedDate = `${year}-${month}-${day}`;
+
+                                if (!dateFromEl.value) {
+
+                                    dateFromEl.value = formattedDate;
+                                    selectedDateEl.innerHTML =
+                                        '<p class="select-date"><strong>Selected Date From:</strong> ' +
+                                        formattedDate + '</p>';
+                                } else if (!dateToEl.value && formattedDate >= dateFromEl.value) {
+
+                                    dateToEl.value = formattedDate;
+                                    selectedDateEl.innerHTML +=
+                                        '<p class="select-date"><strong>Selected Date To:</strong> ' +
+                                        formattedDate + '</p>';
+
+                                    if (submitButton) {
+                                        submitButton.disabled = false;
+                                    }
+                                    ajaxCalculatePrice();
+                                } else {
+                                    alert('Date To cannot be before Date From.');
+                                    calendar.unselect();
+                                }
+
+
+                                calendar.getEvents().forEach(function(event) {
+                                    if (event.display === 'background') {
+                                        event.remove();
+                                    }
+                                });
+
+
+                                var dateFrom = dateFromEl.value;
+                                var dateTo = dateToEl.value;
+
+                                if (dateFrom) {
+                                    var dateFromObj = new Date(dateFrom);
+                                    calendar.addEvent({
+                                        title: 'Selected Date From',
+                                        start: dateFromObj,
+                                        allDay: true,
+                                        display: 'background',
+                                        backgroundColor: '#B0E0E6'
+                                    });
+                                }
+                                if (dateTo) {
+                                    var dateToObj = new Date(dateTo);
+                                    calendar.addEvent({
+                                        title: 'Selected Date To',
+                                        start: dateToObj,
+                                        allDay: true,
+                                        display: 'background',
+                                        backgroundColor: '#FFB6C1'
+                                    });
+                                }
+                            } else {
+                                alert('Please select a date starting from ' + minDate.toISOString().split('T')[
+                                    0]);
+                                calendar.unselect();
+                            }
+                        },
+                        validRange: {
+                            start: startDate.toISOString().split('T')[0],
+                        },
+                        headerToolbar: {
+                            left: 'prev,next',
+                            center: 'title',
+                            right: ''
+                        },
+                        dateClick: function(info) {
+                            // no-op
+                        },
+                    });
+
+                    calendar.render();
+
+                    // Ensure the submit button is disabled initially
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                    }
+                });
+            </script>
+        @endif
+        @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const reservationTypeRadios = document.querySelectorAll('input[name="reservation_type"]');
+                    const individualInputs = document.getElementById('individual_inputs');
+                    const resetButton = document.getElementById('reset_button');
+                    const totalPriceElement = document.getElementById('total_price'); // Use existing total price element
+
+                    reservationTypeRadios.forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            if (this.value === 'individual') {
+                                individualInputs.style.display = 'block';
+                            } else {
+                                individualInputs.style.display = 'none';
+                                updateTotalPrice(0); // Reset total price when type changes
+                            }
+                        });
+                    });
+
+                    const updateTotalPrice = (total) => {
+                        totalPriceElement.innerHTML = `<strong>Total Price:</strong> &#8369; ${total.toFixed(2)}`;
+                    };
+
+                    const calculateGrandTotal = () => {
+                        let grandTotal = 0;
+                        document.querySelectorAll('.quantity-input').forEach(input => {
+                            const price = parseFloat(input.dataset.price);
+                            const quantity = parseFloat(input.value) || 0;
+                            grandTotal += price * quantity;
+                        });
+                        updateTotalPrice(grandTotal); // Update the total price
+                    };
+
+                    document.querySelectorAll('.quantity-input').forEach(input => {
+                        input.addEventListener('input', function() {
+                            calculateGrandTotal(); // Recalculate total whenever an input changes
+                        });
+                    });
+
+                    resetButton.addEventListener('click', function() {
+                        reservationTypeRadios.forEach(radio => (radio.checked = false));
+                        individualInputs.style.display = 'none';
+                        document.querySelectorAll('.quantity-input').forEach(input => {
+                            input.value = '';
+                        });
+                        updateTotalPrice(0); // Reset total price
+                    });
+                });
+
+
+
+                document.addEventListener('DOMContentLoaded', function() {
+                    const individualRadio = document.getElementById('individual');
+                    const exclusiveRadio = document.getElementById('exclusive');
+                    @if ($facility->prices->where('is_there_a_quantity', true)->count() > 0)
+                        const individualInputs = document.getElementById('individual_inputs');
+                    @endif
+                    const exclusiveDropdown = document.getElementById('exclusive_dropdown');
+                    const resetButton = document.getElementById('reset_button');
+                    const totalPriceEl = document.getElementById('total_price');
+                    const pricesDisplay = document.getElementById('prices_display');
+
+                    // Get all price elements
+                    const individualPrices = pricesDisplay.querySelectorAll('[data-price-type="individual"]');
+                    const wholePrices = pricesDisplay.querySelectorAll('[data-price-type="whole"]');
+
+                    if (!individualRadio || !exclusiveRadio || !resetButton || !totalPriceEl || !pricesDisplay) {
+                        console.error("One or more elements are missing. Check your HTML element IDs.");
+                        return;
+                    }
+
+                    // Function to hide all sections
+                    function hideAll() {
+                        @if ($facility->prices->where('is_there_a_quantity', true)->count() > 0)
+                            individualInputs.style.display = 'none';
+                        @endif
+                        exclusiveDropdown.style.display = 'none';
+                        console.log("Hiding all sections.");
+                    }
+
+                    // Function to show/hide prices based on type
+                    function togglePrices(showIndividual) {
+                        const individualPrices = pricesDisplay.querySelectorAll('[data-price-type="individual"]');
+                        const wholePrices = pricesDisplay.querySelectorAll('[data-price-type="whole"]');
+
+                        individualPrices.forEach(price => {
+                            price.style.display = showIndividual ? 'block' : 'none';
+                        });
+
+                        wholePrices.forEach(price => {
+                            price.style.display = showIndividual ? 'none' : 'block';
+                        });
+                    }
+
+                    // Reset total price
+                    function resetTotalPrice() {
+                        totalPriceEl.innerHTML = `<strong>Total Price:</strong> &#8369; 0.00`;
+                    }
+
+                    // Event listener for Individual radio button
+                    individualRadio.addEventListener('change', function() {
+                        if (individualRadio.checked) {
+                            hideAll();
+                            @if ($facility->prices->where('is_there_a_quantity', true)->count() > 0)
+                                individualInputs.style.display = 'block';
+                            @endif
+                            togglePrices(true); // Show individual prices
+                            console.log("Showing individual inputs and prices.");
+                            resetTotalPrice();
+                        }
+                    });
+
+                    // Event listener for Exclusive radio button
+                    exclusiveRadio.addEventListener('change', function() {
+                        if (exclusiveRadio.checked) {
+                            hideAll();
+                            exclusiveDropdown.style.display = 'block';
+                            togglePrices(false); // Show whole/exclusive prices
+                            console.log("Showing exclusive dropdown and prices.");
+                            resetTotalPrice();
+                        }
+                    });
+
+                    // Event listener for Reset button
+                    resetButton.addEventListener('click', function() {
+                        hideAll();
+                        individualRadio.checked = false;
+                        exclusiveRadio.checked = false;
+                        // Show all prices on reset
+                        individualPrices.forEach(price => price.style.display = 'block');
+                        wholePrices.forEach(price => price.style.display = 'block');
+                        resetTotalPrice();
+                        console.log("Reset button clicked. All options reset.");
+                    });
+
+                    // Initialize by hiding all sections
+                    hideAll();
+
+                    // Event listener for dropdown change to update total price
+                    const exclusiveTypeDropdown = document.getElementById('exclusive_type');
+                    if (exclusiveTypeDropdown) {
+                        exclusiveTypeDropdown.addEventListener('change', function() {
+                            const selectedOption = exclusiveTypeDropdown.options[exclusiveTypeDropdown
+                                .selectedIndex];
+                            const price = parseFloat(selectedOption.dataset.price || 0);
+                            totalPriceEl.innerHTML = `<strong>Total Price:</strong> &#8369; ${price.toFixed(2)}`;
+                            console.log("Updated total price: ", price);
+                        });
+                    }
+
+                    // FullCalendar setup
+                    const calendarEl = document.getElementById('calendar');
+                    const submitButton = document.getElementById('submit-button');
+                    const selectedDateEl = document.getElementById('selected-date');
+
+                    if (calendarEl) {
+                        const today = new Date();
+                        const startDate = new Date();
+                        startDate.setDate(today.getDate() + 3);
+
+                        const calendar = new FullCalendar.Calendar(calendarEl, {
+                            initialView: 'dayGridMonth',
+                            selectable: true,
+                            selectMirror: true,
+                            timeZone: 'local',
+                            select: function(info) {
+                                const selectedDate = info.start;
+                                const selected = new Date(selectedDate.getFullYear(), selectedDate.getMonth(),
+                                    selectedDate.getDate());
+                                const minDate = new Date(startDate.getFullYear(), startDate.getMonth(),
+                                    startDate.getDate());
+
+                                if (selected >= minDate) {
+                                    const year = selected.getFullYear();
+                                    const month = String(selected.getMonth() + 1).padStart(2, '0');
+                                    const day = String(selected.getDate()).padStart(2, '0');
+                                    const formattedDate = `${year}-${month}-${day}`;
+
+                                    document.getElementById('date_from').value = formattedDate;
+                                    document.getElementById('date_to').value = formattedDate;
+
+                                    if (selectedDateEl) {
+                                        selectedDateEl.innerText = 'Selected Date: ' + formattedDate;
+                                    }
+
+                                    if (submitButton) {
+                                        submitButton.disabled = false;
+                                    }
+
+                                    calendar.getEvents().forEach(function(event) {
+                                        if (event.display === 'background') {
+                                            event.remove();
+                                        }
+                                    });
+
+                                    calendar.addEvent({
+                                        title: 'Selected',
+                                        start: selectedDate,
+                                        allDay: true,
+                                        display: 'background',
+                                        backgroundColor: '#B0E0E6'
+                                    });
+                                } else {
+                                    alert('Please select a date starting from ' + minDate.toISOString().split(
+                                        'T')[0]);
+                                    calendar.unselect();
+                                }
+                            },
+                            validRange: {
+                                start: startDate.toISOString().split('T')[0],
+                            },
+                            headerToolbar: {
+                                left: 'prev,next',
+                                center: 'title',
+                                right: ''
+                            },
+                            dateClick: function(info) {
+                                // Do nothing
+                            },
+                        });
+
+                        calendar.render();
+                    }
+                });
+            </script>
+        @endif
     @endif
+
 
 
 
     @if ($facility->facility_type === 'whole_place')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
+                var calendarEl = document.getElementById('calendar');
+                var submitButton = document.getElementById('submit-button');
+                var selectedDateEl = document.getElementById('selected-date');
+
+                // Calculate the start date (3 days from today)
+                var today = new Date();
+                var startDate = new Date();
+                startDate.setDate(today.getDate() + 3);
+
+                // Initialize FullCalendar
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    selectable: true,
+                    selectMirror: true,
+                    timeZone: 'local',
+                    select: function(info) {
+                        // Ensure the selected date is valid
+                        var selectedDate = info.start;
+
+                        // Compare dates (ignoring time)
+                        var selected = new Date(selectedDate.getFullYear(), selectedDate.getMonth(),
+                            selectedDate.getDate());
+                        var minDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate
+                            .getDate());
+
+                        if (selected >= minDate) {
+                            var year = selected.getFullYear();
+                            var month = String(selected.getMonth() + 1).padStart(2,
+                                '0'); // Months are zero-based
+                            var day = String(selected.getDate()).padStart(2, '0');
+                            var formattedDate = `${year}-${month}-${day}`;
+
+                            // Automatically set date_to
+                            document.getElementById('date_from').value = formattedDate;
+                            document.getElementById('date_to').value = formattedDate;
+
+                            // Update the displayed selected date
+                            if (selectedDateEl) {
+                                selectedDateEl.innerText = 'Selected Date: ' + formattedDate;
+                            }
+
+                            // Enable the submit button
+                            if (submitButton) {
+                                submitButton.disabled = false;
+                            }
+
+                            // Remove existing background events
+                            calendar.getEvents().forEach(function(event) {
+                                if (event.display === 'background') {
+                                    event.remove();
+                                }
+                            });
+
+
+                            calendar.addEvent({
+                                title: 'Selected',
+                                start: selectedDate,
+                                allDay: true,
+                                display: 'background',
+                                backgroundColor: '#B0E0E6'
+                            });
+                        } else {
+                            alert('Please select a date starting from ' + minDate.toISOString().split('T')[
+                                0]);
+                            calendar.unselect();
+                        }
+                    },
+                    validRange: {
+                        start: startDate.toISOString().split('T')[0],
+                    },
+                    headerToolbar: {
+                        left: 'prev,next',
+                        center: 'title',
+                        right: ''
+                    },
+
+                    dateClick: function(info) {
+                        // Do nothing
+                    },
+                });
+
+                calendar.render();
+
+                // Ensure the submit button is disabled initially
+                if (submitButton) {
+                    submitButton.disabled = true;
+                }
                 const clientTypeDropdown = document.getElementById('client_type');
                 const totalPriceElement = document.getElementById('total-price').querySelector('span');
 
@@ -1015,53 +1668,6 @@
                 });
 
             });
-        </script>
-    @endif
-
-
-    @if ($facility->facility_type === 'individual')
-        <script>
-            // document.addEventListener('DOMContentLoaded', function() {
-            //     const individualPriceDiv = document.getElementById('individual-price');
-            //     const individualRadio = document.getElementById('individual');
-            //     const totalPriceSpan = document.getElementById('total_price');
-
-            //     // Function to calculate the total price (no quantity)
-            //     function calculateTotalPrice() {
-            //         let totalPrice = 0;
-
-            //         if (individualRadio && individualRadio.checked) {
-            //             const individualPriceEntries = document.querySelectorAll('.individual-price-entry');
-
-            //             individualPriceEntries.forEach(entry => {
-            //                 const priceLabel = entry.querySelector('label');
-
-            //                 if (priceLabel) {
-            //                     const priceText = priceLabel.textContent.split('₱')[1];
-            //                     const price = parseFloat(priceText.replace(/,/g, '').trim());
-
-            //                     if (!isNaN(price)) {
-            //                         totalPrice = price; // Direct price without quantity
-            //                     }
-            //                 }
-            //             });
-            //         }
-
-            //         totalPriceSpan.textContent = isNaN(totalPrice) ? '0.00' : totalPrice.toFixed(2);
-            //     }
-
-            //     // Event listener for when the individual radio button changes
-            //     individualRadio?.addEventListener('change', function() {
-            //         individualPriceDiv.style.display = 'block';  // Show individual price section
-            //         calculateTotalPrice();
-            //     });
-
-            //     // If 'individual' is selected on page load, ensure it's shown and calculate total
-            //     if (individualRadio && individualRadio.checked) {
-            //         individualPriceDiv.style.display = 'block';
-            //         calculateTotalPrice();
-            //     }
-            // });
         </script>
     @endif
 

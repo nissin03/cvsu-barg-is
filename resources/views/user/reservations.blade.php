@@ -27,18 +27,18 @@
     :breadcrumbs="$breadcrumbs" 
 />
 
-<main class="container" style="padding-top: 1em;">
-    <section class="my-account container">
-        <h2 class="page-title">Rentals</h2>
+    <main class="container" style="padding-top: 1em;">
+        <section class="my-account container">
+            <h2 class="page-title">Rentals</h2>
 
-        <div class="row">
-            <div class="col-lg-2">
-                @include('user.account__nav')
-            </div>
+            <div class="row">
+                <div class="col-lg-2">
+                    @include('user.account__nav')
+                </div>
 
-            <div class="col-lg-10">
-    <div class="accordion mt-5" id="facilityAccordion">
-        @foreach ($availabilities as $availability)
+                <div class="col-lg-10">
+                <div class="accordion mt-5" id="facilityAccordion">
+        @forelse ($availabilities as $availability)
             <div class="accordion-item mb-3 shadow-sm border rounded">
                 <h2 class="accordion-header" id="headingReservation{{ $availability->id }}">
                     <button class="accordion-button d-flex justify-content-between align-items-center" 
@@ -59,9 +59,9 @@
                     </button>
                 </h2>
                 <div id="collapseReservation{{ $availability->id }}" 
-                     class="accordion-collapse collapse" 
-                     aria-labelledby="headingReservation{{ $availability->id }}" 
-                     data-bs-parent="#facilityAccordion">
+                    class="accordion-collapse collapse" 
+                    aria-labelledby="headingReservation{{ $availability->id }}" 
+                    data-bs-parent="#facilityAccordion">
                     <div class="accordion-body">
                         <!-- Reservation Summary Section -->
                         <div class="d-flex justify-content-between mb-3">
@@ -81,9 +81,10 @@
                     </div>
                 </div>
             </div>
-        @endforeach
+        @empty
+            <p>No reservations found.</p>
+        @endforelse
     </div>
-</div>
 
 
                 <div class="divider"></div>

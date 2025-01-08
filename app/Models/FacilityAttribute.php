@@ -26,6 +26,11 @@ class FacilityAttribute extends Model
         return $this->belongsTo(Facility::class);
     }
 
+
+    public function prices()
+    {
+        return $this->hasMany(Price::class, 'facility_attribute_id');
+    }
     public function availabilities()
     {
         return $this->hasMany(Availability::class);
