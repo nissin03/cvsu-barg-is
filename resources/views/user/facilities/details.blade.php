@@ -448,10 +448,6 @@
                         @endif
 
                         @if ($facility->facility_type == 'both')
-                            <input type="hidden" name="price_type" id="price_type" value="">
-                            <input type="hidden" name="price_id" id="price_id" value="">
-                            <input type="hidden" name="room_id" id="room_id" value="">
-                            {{-- <input type="hidden" name="total_price" id="total_price" value=""> --}}
                             <div id="dynamic_prices_container">
                                 <div id="prices_display">
                                     <div data-price-type="individual">
@@ -540,6 +536,10 @@
 
 
                             @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->capacity)
+                                <input type="hidden" name="price_type" id="price_type" value="">
+                                <input type="hidden" name="price_value" id="price_value" value="">
+                                <input type="hidden" name="price_id" id="price_id" value="">
+                                <input type="hidden" name="room_id" id="room_id" value="">
                                 <div class="reservation-section">
                                     <div class="my-2">
                                         <label for="calendar"><strong>Select Reservation Date:</strong></label>
@@ -688,7 +688,8 @@
                             @endif
 
                             @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
-
+                                <input type="hidden" name="price_type" id="price_type" value="">
+                                <input type="hidden" name="price_id" id="price_id" value="">
                                 <div style="margin-bottom: 15px;">
                                     <label><strong>Select Type:</strong></label>
                                     <div style="display: flex; justify-content: space-between;">
