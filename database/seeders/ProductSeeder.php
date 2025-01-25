@@ -19,117 +19,117 @@ class ProductSeeder extends Seeder
         // Define image mappings for each product
         $imageMappings = [
             'Umbrella' => [
-                'image' => 'images/barg_images/IMG_0109.jpg',
+                'image' => 'storage/barg_images/IMG_0109.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0109.jpg',
-                    'images/barg_images/IMG_0109.jpg',
+                    'storage/barg_images/IMG_0109.jpg',
+                    'storage/barg_images/IMG_0109.jpg',
                 ],
             ],
             'Keychain' => [
-                'image' => 'images/barg_images/IMG_0121.jpg',
+                'image' => 'storage/barg_images/IMG_0121.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0121.jpg',
-                    'images/barg_images/IMG_0121.jpg',
+                    'storage/barg_images/IMG_0121.jpg',
+                    'storage/barg_images/IMG_0121.jpg',
                 ],
             ],
             'CVSU Mug' => [
-                'image' => 'images/barg_images/IMG_0113.jpg',
+                'image' => 'storage/barg_images/IMG_0113.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0113.jpg',
-                    'images/barg_images/IMG_0114.jpg',
+                    'storage/barg_images/IMG_0113.jpg',
+                    'storage/barg_images/IMG_0114.jpg',
                 ],
             ],
             'Cap' => [
-                'image' => 'images/barg_images/IMG_0125.jpg',
+                'image' => 'storage/barg_images/IMG_0125.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0125.jpg',
-                    'images/barg_images/IMG_0125.jpg',
+                    'storage/barg_images/IMG_0125.jpg',
+                    'storage/barg_images/IMG_0125.jpg',
                 ],
             ],
             'Bonnet' => [
-                'image' => 'images/barg_images/IMG_0123.jpg',
+                'image' => 'storage/barg_images/IMG_0123.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0123.jpg',
-                    'images/barg_images/IMG_0123.jpg',
+                    'storage/barg_images/IMG_0123.jpg',
+                    'storage/barg_images/IMG_0123.jpg',
                 ],
             ],
             'Keychain for Car' => [
-                'image' => 'images/barg_images/IMG_0127.jpg',
+                'image' => 'storage/barg_images/IMG_0127.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0127.jpg',
-                    'images/barg_images/IMG_0127.jpg',
+                    'storage/barg_images/IMG_0127.jpg',
+                    'storage/barg_images/IMG_0127.jpg',
                 ],
             ],
             'T-Shirt' => [
-                'image' => 'images/barg_images/IMG_0136.jpg',
+                'image' => 'storage/barg_images/IMG_0136.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0136.jpg',
-                    'images/barg_images/IMG_0137.jpg',
+                    'storage/barg_images/IMG_0136.jpg',
+                    'storage/barg_images/IMG_0137.jpg',
                 ],
             ],
             'Polo Shirt' => [
-                'image' => 'images/barg_images/IMG_0140.jpg',
+                'image' => 'storage/barg_images/IMG_0140.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0142.jpg',
-                    'images/barg_images/IMG_0145.jpg',
+                    'storage/barg_images/IMG_0142.jpg',
+                    'storage/barg_images/IMG_0145.jpg',
                 ],
             ],
             'Case of Utensils' => [
-                'image' => 'images/barg_images/IMG_0147.jpg',
+                'image' => 'storage/barg_images/IMG_0147.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0147.jpg',
-                    'images/barg_images/IMG_0147.jpg',
+                    'storage/barg_images/IMG_0147.jpg',
+                    'storage/barg_images/IMG_0147.jpg',
                 ],
             ],
             'Notebook' => [
-                'image' => 'images/barg_images/IMG_0148.jpg',
+                'image' => 'storage/barg_images/IMG_0148.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0148.jpg',
-                    'images/barg_images/IMG_0148.jpg',
+                    'storage/barg_images/IMG_0148.jpg',
+                    'storage/barg_images/IMG_0148.jpg',
                 ],
             ],
             'Coffee Blend' => [
-                'image' => 'images/barg_images/IMG_0150.jpg',
+                'image' => 'storage/barg_images/IMG_0150.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0152.jpg',
-                    'images/barg_images/IMG_0155.jpg',
-                    'images/barg_images/IMG_0156.jpg',
+                    'storage/barg_images/IMG_0152.jpg',
+                    'storage/barg_images/IMG_0155.jpg',
+                    'storage/barg_images/IMG_0156.jpg',
                 ],
             ],
             'Fans' => [
-                'image' => 'images/barg_images/IMG_0159.jpg',
+                'image' => 'storage/barg_images/IMG_0159.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0159.jpg',
-                    'images/barg_images/IMG_0159.jpg',
+                    'storage/barg_images/IMG_0159.jpg',
+                    'storage/barg_images/IMG_0159.jpg',
                 ],
             ],
             'Lace' => [
-                'image' => 'images/barg_images/IMG_0161.jpg',
+                'image' => 'storage/barg_images/IMG_0161.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0161.jpg',
-                    'images/barg_images/IMG_0161.jpg',
+                    'storage/barg_images/IMG_0161.jpg',
+                    'storage/barg_images/IMG_0161.jpg',
                 ],
             ],
             'Jacket' => [
-                'image' => 'images/barg_images/IMG_0161.jpg',
+                'image' => 'storage/barg_images/IMG_0161.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0161.jpg',
-                    'images/barg_images/IMG_0161.jpg',
+                    'storage/barg_images/IMG_0161.jpg',
+                    'storage/barg_images/IMG_0161.jpg',
                 ],
             ],
             'Ballpens' => [
-                'image' => 'images/barg_images/IMG_0163.jpg',
+                'image' => 'storage/barg_images/IMG_0163.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0163.jpg',
-                    'images/barg_images/IMG_0161.jpg',
+                    'storage/barg_images/IMG_0163.jpg',
+                    'storage/barg_images/IMG_0161.jpg',
                 ],
             ],
             'Books' => [
-                'image' => 'images/barg_images/IMG_0171.jpg',
+                'image' => 'storage/barg_images/IMG_0171.jpg',
                 'images' => [
-                    'images/barg_images/IMG_0175.jpg',
-                    'images/barg_images/IMG_0176.jpg',
-                    'images/barg_images/IMG_0180.jpg',
+                    'storage/barg_images/IMG_0175.jpg',
+                    'storage/barg_images/IMG_0176.jpg',
+                    'storage/barg_images/IMG_0180.jpg',
                 ],
             ], 
             

@@ -2,8 +2,8 @@
     @foreach ($products as $product)
         @if (!$product->archived)
         <div class="col-md-4 mb-4 d-flex justify-content-center">
-            
-            <div class="product-item d-flex flex-column">
+
+                        <div class="product-item d-flex flex-column">
                 <div class="product-img position-relative flex-grow-1">
                  
                     <div class="swiper-container js-swiper-slider">

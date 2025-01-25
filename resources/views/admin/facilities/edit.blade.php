@@ -525,16 +525,16 @@
                                 <!-- Change these checkbox inputs -->
                                 <div class="form-check d-flex justify-content-center align-items-center my-4">
                                     <input type="checkbox" class="form-check-input" id="isBasedOnDays"
-                                        name="is_based_on_days" value="1" <!-- Add this -->
-                                    {{ old('is_based_on_days') ? 'checked' : '' }}> <!-- Add this -->
+                                        name="is_based_on_days" value="1" 
+                                    {{ old('is_based_on_days') ? 'checked' : '' }}>
                                     <label class="form-check-label ms-2 pt-2" for="isBasedOnDays">Is based on
                                         days?</label>
                                 </div>
 
                                 <div class="form-check d-flex justify-content-center align-items-center my-4">
                                     <input type="checkbox" class="form-check-input" id="isThereAQuantity"
-                                        name="is_there_a_quantity" value="1" <!-- Add this -->
-                                    {{ old('is_there_a_quantity') ? 'checked' : '' }}> <!-- Add this -->
+                                        name="is_there_a_quantity" value="1" 
+                                    {{ old('is_there_a_quantity') ? 'checked' : '' }}> 
                                     <label class="form-check-label ms-2 pt-2" for="isThereAQuantity">Is there a
                                         quantity?</label>
                                 </div>

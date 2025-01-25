@@ -20,6 +20,8 @@ class Price extends Model
     {
         return $this->belongsToMany(FacilityAttribute::class);
     }
+
+    
    
 
 }
