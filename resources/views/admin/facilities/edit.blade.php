@@ -542,13 +542,13 @@
                                 <div id="dateFields" style="display: none;">
                                     <div class="input-group">
                                         <label for="date_from">Date From</label>
-                                        <input type="date" id="date_from" name="prices[0][date_from]">
+                                        <input type="date" id="date_from" name="prices[0][date_from]" value="{{ old('prices.0.date_from', $price->date_from ?? '') }}">
                                     </div>
                                     <div class="input-group">
                                         <label for="date_to">Date To</label>
-                                        <input type="date" id="date_to" name="prices[0][date_to]">
+                                        <input type="date" id="date_to" name="prices[0][date_to]" value="{{ old('prices.0.date_to', $price->date_to ?? '') }}">
                                     </div>
-                                </div>
+                                </div> 
 
                                 {{-- <div id="dateFields" style="display: none;">
                                     <div class="input-group">
@@ -628,7 +628,6 @@
     {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
     <script>
         $(document).ready(function() {
-            let prices = @json($prices);
             // let rooms = [];
             let rooms = @json($rooms);
             console.log("Initial Rooms Data:", rooms);
@@ -822,6 +821,15 @@
             function createHiddenInputRooms(name, value) {
                 return `<input type="hidden" name="${name}" value="${value}">`;
             }
+
+            // Prices functions  
+
+            $(document).ready(function () {
+                renderPriceList();
+            });
+
+            let prices = @json($prices);
+
             // Handle Save Price Changes (Add Price)
             $("#savePriceChanges").on("click", function(event) {
                 event.preventDefault();
@@ -831,18 +839,10 @@
                 const value = $("#value").val();
                 const isBasedOnDays = $("#isBasedOnDays").prop("checked");
                 const isThereAQuantity = $("#isThereAQuantity").prop("checked");
-
-
-
-                // Check for required fields
-                if (!name || !price_type || !value) {
-                    alert("Please fill in all fields");
-                    return;
-                }
-
-                // Validate price value
-                if (isNaN(value) || parseFloat(value) <= 0) {
-                    alert("Price must be a valid positive number.");
+                const dateFrom = $("#date_from").val();
+                 const dateTo = $("#date_to").val();
+                 if (isBasedOnDays && (!dateFrom || !dateTo)) {
+                    alert("Date From and Date To are required when 'Is Based on Days?' is checked.");
                     return;
                 }
 
@@ -853,67 +853,58 @@
                     value: parseFloat(value),
                     is_based_on_days: isBasedOnDays,
                     is_there_a_quantity: isThereAQuantity,
+
+                    ...(isBasedOnDays ? { date_from: dateFrom, date_to: dateTo } : {})
                 };
 
-
                 prices.push(newPrice);
-                console.log("New Price:", newPrice);
                 renderPriceList();
                 updateHiddenPrices();
 
                 // Close the price modal
                 $("#addPrice").modal("hide");
-
-                $("#priceName").val("");
-                $("#priceTypeSelect").val("");
-                $("#value").val("");
-                $("#isBasedOnDays").val("");
-                $("#isThereAQuantity").val("");
+                clearPriceFields();
             });
 
             // Render the price list dynamically
             function renderPriceList() {
                 $("#priceList").empty();
+
                 if (prices && prices.length > 0) {
                     prices.forEach((price, index) => {
                         const listItem = `
-                <div class="card p-3 mb-3">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div class="text-start">
-                            <h4>${price.name || ''}</h4>
-                            <p>Type: <span class="badge bg-success">${price.price_type || ''}</span></p>
-                            <p>Price: PHP ${price.value || '0'}</p>
-                            <p>Is Based on Days?: 
-                                <span class="badge ${price.is_based_on_days ? 'bg-success' : 'bg-danger'}">
-                                    ${price.is_based_on_days ? 'Yes' : 'No'}
-                                </span>
-                            </p>
-                            <p>Is there a quantity?: 
-                                <span class="badge ${price.is_there_a_quantity ? 'bg-success' : 'bg-danger'}">
-                                    ${price.is_there_a_quantity ? 'Yes' : 'No'}
-                                </span>
-                            </p>
-                        </div>
-                        <div class="d-flex">
-                            <button type="button" class="btn btn-lg btn-outline-warning me-2" onclick="editPrice(${index})">
-                                <i class="icon-pen">Edit</i>
-                            </button>
-                            <button type="button" class="btn btn-lg btn-outline-danger delete-btn" onclick="deletePrice(${index})">
-                                <i class="icon-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                                <div class="card p-3 mb-3">
+                                    <div class="card-body d-flex justify-content-between align-items-center">
+                                        <div class="text-start">
+                                            <h4>${price.name}</h4>
+                                            <p>Type: <span class="badge bg-success">${price.price_type}</span></p>
+                                            <p>Price: PHP ${price.value}</p>
+                                            <p>Is Based on Days?: 
+                                                <span class="badge ${price.is_based_on_days ? 'bg-success' : 'bg-danger'}">
+                                                    ${price.is_based_on_days ? 'Yes' : 'No'}
+                                                </span>
+                                            </p>
+                                            <p>Is there a quantity?: 
+                                                <span class="badge ${price.is_there_a_quantity ? 'bg-success' : 'bg-danger'}">
+                                                    ${price.is_there_a_quantity ? 'Yes' : 'No'}
+                                                </span>
+                                            </p>
+                                        </div>
+                                        <div class="d-flex">
+                                            <button type="button" class="btn btn-lg btn-outline-warning me-2" onclick="editPrice(${index})">
+                                                <i class="icon-pen">Edit</i>
+                                            </button>
+                                            <button type="button" class="btn btn-lg btn-outline-danger delete-btn" onclick="deletePrice(${index})">
+                                                <i class="icon-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
             `;
                         $("#priceList").append(listItem);
                     });
                 }
             }
-            $(document).ready(function() {
-                renderPriceList();
-            });
-
-
 
             window.editPrice = function(index) {
                 const price = prices[index];
@@ -922,6 +913,15 @@
                 $("#value").val(price.value || "");
                 $("#isBasedOnDays").prop("checked", price.is_based_on_days);
                 $("#isThereAQuantity").prop("checked", price.is_there_a_quantity);
+                
+                // Only set date fields if is_based_on_days is true
+                if (price.is_based_on_days) {
+                    $("#date_from").val(price.date_from || "");
+                    $("#date_to").val(price.date_to || "");
+                    $("#dateFields").show();
+                } else {
+                    $("#dateFields").hide();
+                }
 
                 $("#savePriceChanges")
                     .off("click")
@@ -931,13 +931,13 @@
                         const updatedValue = $("#value").val();
                         const updatedBasedOnDays = $("#isBasedOnDays").prop("checked");
                         const updatedAQuantity = $("#isThereAQuantity").prop("checked");
+                        const updatedDateFrom = updatedBasedOnDays ? $("#date_from").val() : "";
+                        const updatedDateTo = updatedBasedOnDays ? $("#date_to").val() : "";
 
-                        // Validate room data
-                        if (!updatedPriceName || !updatedValue) {
-                            alert("Please fill in all fields");
+                        if (!updatedPriceName || !updatedValue || isNaN(updatedValue) || parseFloat(updatedValue) <= 0) {
+                            alert("Please enter a valid price.");
                             return;
                         }
-
 
                         prices[index] = {
                             ...prices[index],
@@ -946,32 +946,23 @@
                             value: parseFloat(updatedValue),
                             is_based_on_days: updatedBasedOnDays,
                             is_there_a_quantity: updatedAQuantity,
+                            ...(updatedBasedOnDays && { 
+                                date_from: updatedDateFrom, 
+                                date_to: updatedDateTo 
+                            })
                         };
+
                         renderPriceList();
                         updateHiddenPrices();
 
-                        // Close the modal
                         $("#addPrice").modal("hide");
-
-                        // Clear fields
-                        $("#priceName").val("");
-                        $("#priceTypeSelect").val("");
-                        $("#value").val("");
-                        $("#isBasedOnDays").val("");
-                        $("#isThereAQuantity").val("");
-
-                        // Reset modal title
+                        clearPriceFields();
                         $("#addPriceLabel").text("Add Price");
                     });
 
-                // Change modal title to 'Edit Price'
                 $("#addPriceLabel").text("Edit Price");
-
-                // Show the modal
                 $("#addPrice").modal("show");
             };
-
-
 
             window.deletePrice = function(index) {
                 if (confirm("Are you sure you want to delete this room?")) {
@@ -981,8 +972,6 @@
                 }
             };
 
-
-
             function clearPriceFields() {
                 $("#priceName").val("");
                 $("#priceTypeSelect").val("");
@@ -991,37 +980,31 @@
                 $("#isThereAQuantity").prop("checked", false);
             }
 
-
             function updateHiddenPrices() {
-                const priceInput = $("#hiddenPrices");
+            const priceInput = $("#hiddenPrices");
                 priceInput.empty();
 
                 prices.forEach((price, index) => {
                     if (price.name && price.price_type && !isNaN(price.value)) {
                         priceInput.append(createHiddenInput(`prices[${index}][name]`, price.name));
-                        priceInput.append(createHiddenInput(`prices[${index}][price_type]`, price
-                            .price_type));
+                        priceInput.append(createHiddenInput(`prices[${index}][price_type]`, price.price_type));
                         priceInput.append(createHiddenInput(`prices[${index}][value]`, price.value));
-                        priceInput.append(
-                            createHiddenInput(`prices[${index}][is_based_on_days]`, price
-                                .is_based_on_days ? "1" : "0")
-                        );
-                        priceInput.append(
-                            createHiddenInput(`prices[${index}][is_there_a_quantity]`, price
-                                .is_there_a_quantity ? "1" : "0")
-                        );
+                        priceInput.append(createHiddenInput(`prices[${index}][is_based_on_days]`, price.is_based_on_days ? "1" : "0"));
+                        priceInput.append(createHiddenInput(`prices[${index}][is_there_a_quantity]`, price.is_there_a_quantity ? "1" : "0"));
+                        
+                         if (price.is_based_on_days) {
+                        const dateFrom = price.date_from || "";
+                        const dateTo = price.date_to || "";
+                        priceInput.append(createHiddenInput(`prices[${index}][date_from]`, dateFrom));
+                        priceInput.append(createHiddenInput(`prices[${index}][date_to]`, dateTo));
+                }
                     }
                 });
-
             }
 
             function createHiddenInput(name, value) {
-                if (typeof value === "boolean") {
-                    value = value ? "1" : "0"; // Convert boolean to string for compatibility
-                }
                 return `<input type="hidden" name="${name}" value="${value}">`;
             }
-
 
 
 

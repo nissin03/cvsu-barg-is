@@ -291,6 +291,9 @@ class FacilityController extends Controller
         if (!$request->has('name') || empty($request->name)) {
             $request->merge(['name' => $facility->name]);
         }
+
+        Log::info('Update Request Data:', $request->all());
+
         $request->validate([
             'name' => [
                 'required',
@@ -309,21 +312,34 @@ class FacilityController extends Controller
             'prices.*.price_type' => 'nullable|string|in:individual,whole',
             'prices.*.is_based_on_days' => 'nullable|boolean',
             'prices.*.is_there_a_quantity' => 'nullable|boolean',
-            'prices.*.date_from' => [
-                'nullable',
-                'date',
-                Rule::requiredIf(function () use ($request) {
-                    return collect($request->input('prices', []))->contains(fn($price) => isset($price['is_based_on_days']) && $price['is_based_on_days']);
-                }),
-            ],
-            'prices.*.date_to' => [
-                'nullable',
-                'date',
-                'after_or_equal:prices.*.date_from',
-                Rule::requiredIf(function () use ($request) {
-                    return collect($request->input('prices', []))->contains(fn($price) => isset($price['is_based_on_days']) && $price['is_based_on_days']);
-                }),
-            ],
+                'prices.*.date_from' => [
+                        'nullable',
+                        Rule::requiredIf(function () use ($request) {
+                            return collect($request->input('prices', []))
+                                ->filter(function($price) {
+                                    return 
+                                        isset($price['is_based_on_days']) && 
+                                        filter_var($price['is_based_on_days'], FILTER_VALIDATE_BOOLEAN) === true &&
+                                        (!isset($price['date_from']) || $price['date_from'] === '');
+                                })
+                                ->isNotEmpty();
+                        }),
+                    ],
+                    'prices.*.date_to' => [
+                        'nullable',
+                        'after_or_equal:prices.*.date_from',
+                        Rule::requiredIf(function () use ($request) {
+                            return collect($request->input('prices', []))
+                                ->filter(function($price) {
+                                    return 
+                                        isset($price['is_based_on_days']) && 
+                                        filter_var($price['is_based_on_days'], FILTER_VALIDATE_BOOLEAN) === true &&
+                                        (!isset($price['date_to']) || $price['date_to'] === '');
+                                })
+                                ->isNotEmpty();
+                        }),
+                    ],
+
 
             'whole_capacity' => $request->facility_type === 'whole_place' ||
                 ($request->facility_type === 'both' && empty($request->input('facility_attributes', [])))
