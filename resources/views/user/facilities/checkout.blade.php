@@ -59,15 +59,10 @@
                     <input type="hidden" name="date_to" value="{{ $reservationData['date_to'] }}">
                 @elseif($facility->facility_type === 'whole_place')
                     <div class="my-2">
-                        {{-- <label for="calendar"><strong>Select Reservation Date:</strong></label>
-                        <div id="calendar"></div> --}}
-                        {{-- <input type="hidden" id="date_from" name="date_from" value="{{ old('date_from') }}">
-                        <input type="hidden" id="date_to" name="date_to" value="{{ old('date_to') }}"> --}}
                         <input type="hidden" id="date_from" name="date_from" value="{{ old('date_from', $reservationData['date_from'] ?? '') }}">
                         <input type="hidden" id="date_to" name="date_to" value="{{ old('date_to', $reservationData['date_to'] ?? '') }}">
                         <div id="selected-date" class="my-3">
                             @if (isset($date_from))
-                                {{-- <p class="select-date"><strong>Selected Date:</strong> {{ $date_from }}</p> --}}
                                 <p class="select-date"><strong>Selected Date:</strong> {{ $reservationData['date_from'] }}</p>
                             @endif
                         </div>
@@ -77,6 +72,23 @@
                         @error('date_to')
                         <span class="text-danger">{{ $message }}</span>
                         @enderror
+                    </div>
+                @elseif($facility->facility_type === 'both')
+                    <div class="my-2">
+                        <input type="hidden" name="facility_id" value="{{ $reservationData['facility_id'] }}">
+                        @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->capacity)
+                        <input type="hidden" name="facility_attribute_id" value="{{ $facilityAttribute->id ?? $reservationData['facility_attribute_id'] }}">
+                        @endif
+                        <input type="hidden" name="date_from" value="{{ $reservationData['date_from'] }}">
+                        <input type="hidden" name="date_to" value="{{ $reservationData['date_to'] }}">
+                        <input type="hidden" name="total_price" value="{{ $reservationData['total_price'] }}">
+                          
+                        @if($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
+                            @foreach($reservationData['quantity'] as $key => $value)
+                                <input type="hidden" name="quantity[{{ $key }}]" value="{{ $value }}">
+                            @endforeach
+                        @endif
+
                     </div>
                 @endif
                 <input type="hidden" name="total_price" value="{{ $reservationData['total_price'] }}">
@@ -157,6 +169,42 @@
                                     <td><strong>Date To</strong></td>
                                     <td class="text-end"><strong>{{ $date_to }}</strong></td>
                                 </tr>
+                             @elseif ($facility->facility_type === 'both')
+                                <tr>
+                                    <td><strong>{{ $roomName }}</strong></td>
+                                    <td class="text-end"><strong>{{ $reservationData['total_price'] ?? 'N/A' }}</strong>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td><strong>Date From</strong></td>
+                                    <td class="text-end"><strong>{{ $date_from }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date To</strong></td>
+                                    <td class="text-end"><strong>{{ $date_to }}</strong></td>
+                                </tr>
+
+                                 @if($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
+                                <tr>
+                                    <td><strong>Quantity</strong></td>
+                                    <td class="text-end">
+                                        <strong>
+                                            @if(isset($reservationData['quantity']))
+                                                @if(is_array($reservationData['quantity']))
+                                                    @foreach($reservationData['quantity'] as $priceId => $qty)
+                                                        {{ $qty }} (Price ID: {{ $priceId }})<br>
+                                                    @endforeach
+                                                @else
+                                                    {{ $reservationData['quantity'] }}
+                                                @endif
+                                            @else
+                                                N/A
+                                            @endif
+                                        </strong>
+                                    </td>
+                                </tr>
+                                @endif
                             @endif
                             <tr>
                                 <td><strong>Total Price</strong></td>

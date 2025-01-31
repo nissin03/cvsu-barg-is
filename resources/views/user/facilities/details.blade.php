@@ -688,8 +688,23 @@
                             @endif
 
                             @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
+                            
+                            @if ($errors->any())
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <strong>Oops! Something went wrong.</strong>
+                                    <ul class="mb-0">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            @endif
+
                                 <input type="hidden" name="price_type" id="price_type" value="">
                                 <input type="hidden" name="price_id" id="price_id" value="">
+                                <input type="hidden" name="total_price" id="total_price_input" value="0">
+
                                 <div style="margin-bottom: 15px;">
                                     <label><strong>Select Type:</strong></label>
                                     <div style="display: flex; justify-content: space-between;">
@@ -717,11 +732,7 @@
                                         <label><strong>Set Quantity:</strong></label>
                                         @foreach ($facility->prices->where('is_there_a_quantity', true)->where('price_type', 'individual') as $price)
                                             <div class="form-floating mb-3">
-                                                <input id="quantity_{{ $price->id }}" type="number"
-                                                    class="form-control quantity-input"
-                                                    name="quantity[{{ $price->id }}]"
-                                                    value="{{ old('quantity.' . $price->id) }}" min="0"
-                                                    data-price="{{ $price->value }}">
+                                                <input id="quantity_{{ $price->id }}" type="number" class="form-control quantity-input" name="quantity[{{ $price->id }}]" value="{{ old('quantity.' . $price->id) }}" min="0" data-price="{{ $price->value }}">
                                                 <label for="quantity_{{ $price->id }}">Enter Quantity for
                                                     {{ $price->name }}</label>
                                             </div>
@@ -786,12 +797,6 @@
 
 
                 </div>
-
-
-
-
-
-
         </section>
         <div class="rental-single__details-tab" style="margin-top: 30px;">
             <ul class="nav nav-tabs" id="myTab" role="tablist"
@@ -1328,51 +1333,89 @@
         @endif
         @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
             <script>
+                
                 document.addEventListener('DOMContentLoaded', function() {
                     const reservationTypeRadios = document.querySelectorAll('input[name="reservation_type"]');
-                    const individualInputs = document.getElementById('individual_inputs');
+                     const individualInputs = document.getElementById('individual_inputs');
+                    const exclusiveDropdown = document.getElementById('exclusive_dropdown');
                     const resetButton = document.getElementById('reset_button');
-                    const totalPriceElement = document.getElementById('total_price'); // Use existing total price element
+                    const totalPriceElement = document.getElementById('total_price');
+                    const totalPriceInput = document.getElementById('total_price_input');
+                    const priceTypeInput = document.getElementById('price_type');
+                    const priceIdInput = document.getElementById('price_id');
+
+                    setTimeout(() => {
+                        let alertBox = document.querySelector('.alert');
+                        if (alertBox) {
+                            alertBox.classList.remove('show');
+                            alertBox.classList.add('fade');
+                            setTimeout(() => alertBox.remove(), 500);
+                        }
+                    }, 5000); 
+    
+
+                    const updateTotalPrice = (total, type, priceId) => {
+                        totalPriceElement.innerHTML = `<strong>Total Price:</strong> &#8369; ${total.toFixed(2)}`;
+                        totalPriceInput.value = total.toFixed(2);
+                        priceTypeInput.value = type;
+                        priceIdInput.value = priceId;
+                    };
+                    const calculateGrandTotal = () => {
+                        let grandTotal = 0;
+                        let selectedPriceId = null;
+                        
+                        document.querySelectorAll('.quantity-input').forEach(input => {
+                            const price = parseFloat(input.dataset.price);
+                            const quantity = parseFloat(input.value) || 0;
+                            if (quantity > 0) {
+                                grandTotal += price * quantity;
+                                selectedPriceId = input.id.replace('quantity_', '');
+                            }
+                        });
+                        
+                        updateTotalPrice(grandTotal, 'individual', selectedPriceId);
+                    };
 
                     reservationTypeRadios.forEach(radio => {
                         radio.addEventListener('change', function() {
                             if (this.value === 'individual') {
                                 individualInputs.style.display = 'block';
+                                exclusiveDropdown.style.display = 'none';
+                                calculateGrandTotal();
                             } else {
                                 individualInputs.style.display = 'none';
-                                updateTotalPrice(0); // Reset total price when type changes
+                                exclusiveDropdown.style.display = 'block';
+                                updateTotalPrice(0, 'exclusive', ''); // Reset when switching types
                             }
                         });
                     });
 
-                    const updateTotalPrice = (total) => {
-                        totalPriceElement.innerHTML = `<strong>Total Price:</strong> &#8369; ${total.toFixed(2)}`;
-                    };
+                    const exclusiveTypeDropdown = document.getElementById('exclusive_type');
+                        if (exclusiveTypeDropdown) {
+                            exclusiveTypeDropdown.addEventListener('change', function() {
+                                const selectedOption = exclusiveTypeDropdown.options[exclusiveTypeDropdown.selectedIndex];
+                                const price = parseFloat(selectedOption.dataset.price || 0);
+                                const priceId = selectedOption.value;
+                                updateTotalPrice(price, 'whole', priceId);
+                            });
+                        }
 
-                    const calculateGrandTotal = () => {
-                        let grandTotal = 0;
+
                         document.querySelectorAll('.quantity-input').forEach(input => {
-                            const price = parseFloat(input.dataset.price);
-                            const quantity = parseFloat(input.value) || 0;
-                            grandTotal += price * quantity;
+                            input.addEventListener('input', calculateGrandTotal);
                         });
-                        updateTotalPrice(grandTotal); // Update the total price
-                    };
-
-                    document.querySelectorAll('.quantity-input').forEach(input => {
-                        input.addEventListener('input', function() {
-                            calculateGrandTotal(); // Recalculate total whenever an input changes
+                        resetButton.addEventListener('click', function() {
+                            reservationTypeRadios.forEach(radio => (radio.checked = false));
+                            individualInputs.style.display = 'none';
+                            exclusiveDropdown.style.display = 'none';
+                            document.querySelectorAll('.quantity-input').forEach(input => {
+                                input.value = '';
+                            });
+                            if (exclusiveTypeDropdown) {
+                                exclusiveTypeDropdown.value = '';
+                            }
+                            updateTotalPrice(0, '', '');
                         });
-                    });
-
-                    resetButton.addEventListener('click', function() {
-                        reservationTypeRadios.forEach(radio => (radio.checked = false));
-                        individualInputs.style.display = 'none';
-                        document.querySelectorAll('.quantity-input').forEach(input => {
-                            input.value = '';
-                        });
-                        updateTotalPrice(0); // Reset total price
-                    });
                 });
 
 

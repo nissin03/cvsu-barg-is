@@ -734,8 +734,8 @@
                                 ${room.sex_restriction ? `<span class="badge bg-info">${room.sex_restriction}</span>` : ""}
                             </div>
                             <div class="d-flex">
-                                <button class="btn btn-warning me-2" onclick="editRoom(${index})">Edit</button>
-                                <button class="btn btn-danger" onclick="deleteRoom(${index})">Delete</button>
+                                <button type="button" class="btn btn-warning me-2" onclick="editRoom(${index})">Edit</button>
+                                <button type="button" class="btn btn-danger" onclick="deleteRoom(${index})">Delete</button>
                             </div>
                         </div>
                     </div>`;
