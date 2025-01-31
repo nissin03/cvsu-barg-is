@@ -9,11 +9,10 @@ class Availability extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'facility_id', 'facility_attribute_id', 'price_id', 'remaining_capacity', 
-        'qualification', 'date_from', 'date_to', 'total_price',  'user_id',
-        'status', 'transaction_id',
+        'user_id', 'facility_id', 'price_id', 'facility_attribute_id',
+        'qualification', 'date_from', 'date_to', 'remaining_capacity',
+        'quantity', 'total_price', 'status', 'transaction_id'
     ];
-
     public function facility()
     {
         return $this->belongsTo(Facility::class);
