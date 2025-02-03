@@ -414,12 +414,7 @@
                     </div>
                 </div>
 
-
-
-
                 {{-- prices fields  --}}
-
-
                 <div class="wg-box">
 
                     <div id="dormitoryFields"
@@ -525,16 +520,16 @@
                                 <!-- Change these checkbox inputs -->
                                 <div class="form-check d-flex justify-content-center align-items-center my-4">
                                     <input type="checkbox" class="form-check-input" id="isBasedOnDays"
-                                        name="is_based_on_days" value="1" 
-                                    {{ old('is_based_on_days') ? 'checked' : '' }}>
+                                        name="is_based_on_days" value="1"
+                                        {{ old('is_based_on_days') ? 'checked' : '' }}>
                                     <label class="form-check-label ms-2 pt-2" for="isBasedOnDays">Is based on
                                         days?</label>
                                 </div>
 
                                 <div class="form-check d-flex justify-content-center align-items-center my-4">
                                     <input type="checkbox" class="form-check-input" id="isThereAQuantity"
-                                        name="is_there_a_quantity" value="1" 
-                                    {{ old('is_there_a_quantity') ? 'checked' : '' }}> 
+                                        name="is_there_a_quantity" value="1"
+                                        {{ old('is_there_a_quantity') ? 'checked' : '' }}>
                                     <label class="form-check-label ms-2 pt-2" for="isThereAQuantity">Is there a
                                         quantity?</label>
                                 </div>
@@ -542,13 +537,15 @@
                                 <div id="dateFields" style="display: none;">
                                     <div class="input-group">
                                         <label for="date_from">Date From</label>
-                                        <input type="date" id="date_from" name="prices[0][date_from]" value="{{ old('prices.0.date_from', $price->date_from ?? '') }}">
+                                        <input type="date" id="date_from" name="prices[0][date_from]"
+                                            value="{{ old('prices.0.date_from', $price->date_from ?? '') }}">
                                     </div>
                                     <div class="input-group">
                                         <label for="date_to">Date To</label>
-                                        <input type="date" id="date_to" name="prices[0][date_to]" value="{{ old('prices.0.date_to', $price->date_to ?? '') }}">
+                                        <input type="date" id="date_to" name="prices[0][date_to]"
+                                            value="{{ old('prices.0.date_to', $price->date_to ?? '') }}">
                                     </div>
-                                </div> 
+                                </div>
 
                                 {{-- <div id="dateFields" style="display: none;">
                                     <div class="input-group">
@@ -572,7 +569,6 @@
                         </div>
                     </div>
                 </div>
-
 
                 @php
                     $rooms = $facility->facilityAttributes
@@ -610,19 +606,10 @@
                         ->values();
                 @endphp
 
-
-
             </form>
 
-            <!-- /form-add-rental -->
         </div>
-        <!-- /main-content-wrap -->
-    </div>
-    <!-- /main-content-wrap -->
-@endsection
-
-@push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    </div @endsection @push('scripts') <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
     {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
@@ -631,7 +618,6 @@
             // let rooms = [];
             let rooms = @json($rooms);
             console.log("Initial Rooms Data:", rooms);
-
 
             $("#rentalType").on("change", function() {
                 const rentalType = $(this).val();
@@ -676,8 +662,7 @@
 
             $("#rentalType").trigger("change");
 
-            // renderRoomList();
-
+            renderRoomList();
             $("#saveRoomChanges").on("click", function(event) {
                 event.preventDefault();
 
@@ -685,69 +670,72 @@
                 const roomCapacity = $("#roomCapacity").val();
                 const roomSexRestriction = $("#roomSexRestriction").val();
 
-                // Validate room data
-                if (!roomName || !roomCapacity) {
-                    alert("Please fill in all fields");
-                    return;
-                }
-                if (isNaN(roomCapacity) || roomCapacity <= 0) {
-                    alert("Capacity must be a positive number.");
-                    return;
-                }
-
-
-
                 const validSexRestrictions = ["male", "female"];
                 const newRoom = {
                     room_name: roomName,
-                    capacity: parseInt(roomCapacity) || null,
+                    capacity: parseInt(roomCapacity, 10),
                     sex_restriction: validSexRestrictions.includes(roomSexRestriction) ?
-                        roomSexRestriction :
-                        null,
+                        roomSexRestriction : "",
                 };
+
                 rooms.push(newRoom);
                 renderRoomList();
                 updateHiddenRooms();
 
                 $("#addRoom").modal("hide");
-
                 $("#roomName, #roomCapacity, #roomSexRestriction").val("");
-
-                // Reset modal title if it was changed during edit
                 $("#addRoomLabel").text("Add Room");
             });
 
+
             function renderRoomList() {
-                $("#roomList").empty();
-                if (rooms.length === 0) {
-                    $("#roomList").append('<li class="list-group-item">No rooms yet :(</li>');
+                const roomList = $("#roomList");
+                roomList.empty();
+
+                // First, filter out null/invalid rooms
+                const validRooms = rooms.filter(room =>
+                    room &&
+                    room.room_name &&
+                    room.room_name !== 'null' &&
+                    room.room_name !== null &&
+                    room.capacity &&
+                    room.capacity > 0
+                );
+
+                if (!validRooms || validRooms.length === 0) {
+                    roomList.append('<li class="list-group-item">No rooms yet :(</li>');
                     return;
                 }
-                rooms.forEach((room, index) => {
+
+                validRooms.forEach((room, index) => {
                     const listItem = `
-                    <div class="card p-3 mb-3">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <div>
-                                <h4>${room.room_name}</h4>
-                                <p>Capacity: <span class="badge bg-warning">${room.capacity}</span></p>
-                                ${room.sex_restriction ? `<span class="badge bg-info">${room.sex_restriction}</span>` : ""}
-                            </div>
-                            <div class="d-flex">
-                                <button type="button" class="btn btn-warning me-2" onclick="editRoom(${index})">Edit</button>
-                                <button type="button" class="btn btn-danger" onclick="deleteRoom(${index})">Delete</button>
-                            </div>
-                        </div>
-                    </div>`;
-                    $("#roomList").append(listItem);
+            <div class="card p-3 mb-3">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4>${room.room_name}</h4>
+                        <p>Capacity: <span class="badge bg-warning">${room.capacity}</span></p>
+                        ${room.sex_restriction && room.sex_restriction !== 'null' 
+                            ? `<span class="badge bg-info">${room.sex_restriction}</span>` 
+                            : ""}
+                    </div>
+                    <div class="d-flex">
+                        <button type="button" class="btn btn-warning me-2" onclick="editRoom(${index})">Edit</button>
+                        <button type="button" class="btn btn-danger" onclick="deleteRoom(${index})">Delete</button>
+                    </div>
+                </div>
+            </div>`;
+                    roomList.append(listItem);
                 });
+                rooms = validRooms;
+
+                updateHiddenRooms();
             }
 
-            $(document).ready(function() {
-                renderRoomList();
-            });
 
 
-
+            // $(document).ready(function() {
+            //     renderRoomList();
+            // });
 
             window.editRoom = function(index) {
                 const room = rooms[index];
@@ -772,7 +760,7 @@
                         rooms[index] = {
                             room_name: updatedRoomName,
                             capacity: parseInt(updatedCapacity),
-                            sex_restriction: updatedSexRestriction || null,
+                            sex_restriction: updatedSexRestriction ? updatedSexRestriction : "",
                         };
                         renderRoomList();
                         updateHiddenRooms();
@@ -801,11 +789,17 @@
                 const roomInput = $("#hiddenRooms");
                 roomInput.empty();
 
+                const facilityType = $("#rentalType").val();
+    
+                if (facilityType === "whole_place") {
+                    return;
+                }
+
                 rooms.forEach((room, index) => {
                     const sexRestrictionValue =
                         room.sex_restriction && ['male', 'female'].includes(room.sex_restriction) ?
                         room.sex_restriction :
-                        '';
+                        "";
 
                     if (room.room_name && room.capacity > 0) {
                         roomInput.append(createHiddenInputRooms(`facility_attributes[${index}][room_name]`,
@@ -824,7 +818,7 @@
 
             // Prices functions  
 
-            $(document).ready(function () {
+            $(document).ready(function() {
                 renderPriceList();
             });
 
@@ -840,8 +834,8 @@
                 const isBasedOnDays = $("#isBasedOnDays").prop("checked");
                 const isThereAQuantity = $("#isThereAQuantity").prop("checked");
                 const dateFrom = $("#date_from").val();
-                 const dateTo = $("#date_to").val();
-                 if (isBasedOnDays && (!dateFrom || !dateTo)) {
+                const dateTo = $("#date_to").val();
+                if (isBasedOnDays && (!dateFrom || !dateTo)) {
                     alert("Date From and Date To are required when 'Is Based on Days?' is checked.");
                     return;
                 }
@@ -854,7 +848,10 @@
                     is_based_on_days: isBasedOnDays,
                     is_there_a_quantity: isThereAQuantity,
 
-                    ...(isBasedOnDays ? { date_from: dateFrom, date_to: dateTo } : {})
+                    ...(isBasedOnDays ? {
+                        date_from: dateFrom,
+                        date_to: dateTo
+                    } : {})
                 };
 
                 prices.push(newPrice);
@@ -913,7 +910,7 @@
                 $("#value").val(price.value || "");
                 $("#isBasedOnDays").prop("checked", price.is_based_on_days);
                 $("#isThereAQuantity").prop("checked", price.is_there_a_quantity);
-                
+
                 // Only set date fields if is_based_on_days is true
                 if (price.is_based_on_days) {
                     $("#date_from").val(price.date_from || "");
@@ -934,7 +931,8 @@
                         const updatedDateFrom = updatedBasedOnDays ? $("#date_from").val() : "";
                         const updatedDateTo = updatedBasedOnDays ? $("#date_to").val() : "";
 
-                        if (!updatedPriceName || !updatedValue || isNaN(updatedValue) || parseFloat(updatedValue) <= 0) {
+                        if (!updatedPriceName || !updatedValue || isNaN(updatedValue) || parseFloat(
+                                updatedValue) <= 0) {
                             alert("Please enter a valid price.");
                             return;
                         }
@@ -946,9 +944,9 @@
                             value: parseFloat(updatedValue),
                             is_based_on_days: updatedBasedOnDays,
                             is_there_a_quantity: updatedAQuantity,
-                            ...(updatedBasedOnDays && { 
-                                date_from: updatedDateFrom, 
-                                date_to: updatedDateTo 
+                            ...(updatedBasedOnDays && {
+                                date_from: updatedDateFrom,
+                                date_to: updatedDateTo
                             })
                         };
 
@@ -981,23 +979,26 @@
             }
 
             function updateHiddenPrices() {
-            const priceInput = $("#hiddenPrices");
+                const priceInput = $("#hiddenPrices");
                 priceInput.empty();
 
                 prices.forEach((price, index) => {
                     if (price.name && price.price_type && !isNaN(price.value)) {
                         priceInput.append(createHiddenInput(`prices[${index}][name]`, price.name));
-                        priceInput.append(createHiddenInput(`prices[${index}][price_type]`, price.price_type));
+                        priceInput.append(createHiddenInput(`prices[${index}][price_type]`, price
+                            .price_type));
                         priceInput.append(createHiddenInput(`prices[${index}][value]`, price.value));
-                        priceInput.append(createHiddenInput(`prices[${index}][is_based_on_days]`, price.is_based_on_days ? "1" : "0"));
-                        priceInput.append(createHiddenInput(`prices[${index}][is_there_a_quantity]`, price.is_there_a_quantity ? "1" : "0"));
-                        
-                         if (price.is_based_on_days) {
-                        const dateFrom = price.date_from || "";
-                        const dateTo = price.date_to || "";
-                        priceInput.append(createHiddenInput(`prices[${index}][date_from]`, dateFrom));
-                        priceInput.append(createHiddenInput(`prices[${index}][date_to]`, dateTo));
-                }
+                        priceInput.append(createHiddenInput(`prices[${index}][is_based_on_days]`, price
+                            .is_based_on_days ? "1" : "0"));
+                        priceInput.append(createHiddenInput(`prices[${index}][is_there_a_quantity]`, price
+                            .is_there_a_quantity ? "1" : "0"));
+
+                        if (price.is_based_on_days) {
+                            const dateFrom = price.date_from || "";
+                            const dateTo = price.date_to || "";
+                            priceInput.append(createHiddenInput(`prices[${index}][date_from]`, dateFrom));
+                            priceInput.append(createHiddenInput(`prices[${index}][date_to]`, dateTo));
+                        }
                     }
                 });
             }
@@ -1010,14 +1011,19 @@
 
             $("#facilityForm").on("submit", function(event) {
                 event.preventDefault();
-
                 const formData = new FormData(this);
-
                 const facilityType = $("#rentalType").val();
 
+                // Clear any existing facility attributes
+                for (let pair of formData.entries()) {
+                    if (pair[0].startsWith('facility_attributes')) {
+                        formData.delete(pair[0]);
+                    }
+                }
+
+                // Handle prices
                 if (prices && prices.length > 0) {
                     prices.forEach((price, index) => {
-                        // Only append if values exist
                         if (price.name) formData.append(`prices[${index}][name]`, price.name);
                         if (price.price_type) formData.append(`prices[${index}][price_type]`, price
                             .price_type);
@@ -1026,47 +1032,50 @@
                             .is_based_on_days ? '1' : '0');
                         formData.append(`prices[${index}][is_there_a_quantity]`, price
                             .is_there_a_quantity ? '1' : '0');
-                    });
-                }
 
-                for (let pair of formData.entries()) {
-                    console.log(pair[0] + ': ' + pair[1]);
-                }
-                if (rooms.length > 0) {
-                    rooms.forEach((room, index) => {
-                        if (room.room_name && room.capacity > 0) { // Only add valid room data
-                            formData.append(`facility_attributes[${index}][room_name]`, room
-                                .room_name);
-                            formData.append(`facility_attributes[${index}][capacity]`, room
-                                .capacity);
-                            formData.append(`facility_attributes[${index}][sex_restriction]`, room
-                                .sex_restriction || '');
+                        if (price.is_based_on_days) {
+                            formData.append(`prices[${index}][date_from]`, price.date_from || '');
+                            formData.append(`prices[${index}][date_to]`, price.date_to || '');
                         }
                     });
                 }
 
+                // Handle facility attributes based on facility type
                 if (facilityType === "whole_place") {
-                    // Only append whole_capacity
                     const wholeCapacity = $("#roomCapacityWhole").val();
-                    formData.append("whole_capacity", wholeCapacity);
+                    if (wholeCapacity) {
+                        formData.append("whole_capacity", wholeCapacity);
+                    }
+                    // For whole_place, ensure facility_attributes are set with default values
+                    formData.append('facility_attributes[0][room_name]', '');
+                    formData.append('facility_attributes[0][capacity]', '0');
+                    formData.append('facility_attributes[0][sex_restriction]', '');
                 } else {
-                    // Append facility attributes for individual or both
-                    rooms.forEach((room, index) => {
-                        formData.append(
-                            `facility_attributes[${index}][room_name]`,
-                            room.room_name
+                    // For individual or both types
+                    if (rooms && rooms.length > 0) {
+                        const validRooms = rooms.filter(room =>
+                            room &&
+                            room.room_name &&
+                            typeof room.capacity === 'number' &&
+                            room.capacity > 0
                         );
-                        formData.append(
-                            `facility_attributes[${index}][capacity]`,
-                            room.capacity
-                        );
-                        formData.append(
-                            `facility_attributes[${index}][sex_restriction]`,
-                            room.sex_restriction || ''
-                        );
-                    });
+
+                        validRooms.forEach((room, index) => {
+                            formData.append(`facility_attributes[${index}][room_name]`, room
+                                .room_name);
+                            formData.append(`facility_attributes[${index}][capacity]`, room.capacity
+                                .toString());
+                            formData.append(`facility_attributes[${index}][sex_restriction]`, room
+                                .sex_restriction || '');
+                        });
+                    }
                 }
 
+                // Log the final form data for debugging
+                console.log("Form data to be sent:");
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
 
                 $.ajax({
                     url: $(this).attr("action"),
@@ -1089,19 +1098,15 @@
                         }, 2000);
                     },
                     error: function(xhr) {
-                        console.log("Error:", xhr);
+                        console.log("Error response:", xhr);
                         if (xhr.status === 422) {
                             displayValidationErrors(xhr.responseJSON.errors);
                         } else {
-                            showAlert(
-                                "An unexpected error occurred. Please try again.",
-                                "danger"
-                            );
+                            showAlert("An unexpected error occurred. Please try again.",
+                                "danger");
                         }
                     },
                 });
-
-                console.log("Hidden form data", $("#hiddenRooms").html()); // Log hidden input fields
             });
 
             // Display validation errors in form
