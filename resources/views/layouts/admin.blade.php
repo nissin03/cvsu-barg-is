@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<!DOCTYPE htm <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
     <meta charset="utf-8">
@@ -183,6 +182,7 @@
             /* Adjust max-width as needed */
         }
     </style>
+    @livewireStyles
     @stack('styles')
 </head>
 
@@ -305,7 +305,7 @@
                                         </a>
                                     </li>
 
-                                    <li class="menu-item has-children">
+                                    {{-- <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
                                             <div class="icon"><i class="icon-home"></i></div>
                                             <div class="text">Rentals</div>
@@ -323,14 +323,14 @@
                                             </li>
 
                                         </ul>
-                                    </li>
+                                    </li> --}}
 
-                                    <li class="menu-item">
+                                    {{-- <li class="menu-item">
                                         <a href="{{ route('admin.reservation') }}">
                                             <div class="icon"><i class="icon-calendar"></i></div>
                                             <div class="text">Rental Reservations</div>
                                         </a>
-                                    </li>
+                                    </li> --}}
 
                                     <li class="menu-item">
                                         <a href="{{ route('admin.slides') }}">
@@ -388,7 +388,7 @@
                                                 </a>
                                             </li>
                                             <li class="sub-menu-item">
-                                                <a href="{{ route('admin.user-reports') }}">
+                                                <a href="{{ route('admin.generate-input-users') }}">
                                                     <div class="text">Input User</div>
                                                 </a>
                                             </li>
@@ -401,7 +401,7 @@
                                         </ul>
                                     </li>
 
-                                    <li class="menu-item has-children">
+                                    {{-- <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="">
                                             <div class="icon"><i class="icon-bar-chart-2"></i></div>
                                             <div class="text">Rentals Reports</div>
@@ -424,7 +424,7 @@
                                                 </a>
                                             </li>
                                         </ul>
-                                    </li>
+                                    </li> --}}
 
 
                                     <!-- <li class="menu-item">
@@ -633,6 +633,7 @@
         </div>
     </div>
 
+    @livewireScripts
     <script src="{{ asset('assets/js/jquery.min.js') }}"></script>
     <script src="{{ asset('assets/js/bootstrap.min.js') }}"></script>
     <script src="{{ asset('assets/js/bootstrap-select.min.js') }}"></script>

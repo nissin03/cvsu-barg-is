@@ -561,14 +561,6 @@
                                                     {{ $reservationData['date_to'] }}</p>
                                             @endif
                                         </div>
-
-
-                                        @error('date_from')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                        @error('date_to')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
                                     </div>
                                 </div>
                                 <div style="margin-bottom: 15px;">
@@ -603,11 +595,6 @@
                                             <label for="internal_quantity">
                                                 Enter Internal Quantity
                                             </label>
-                                            @error('internal_quantity')
-                                                <span class="invalid-feedback" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
                                         </div>
 
                                         <div class="form-floating mb-3">
@@ -617,11 +604,6 @@
                                             <label for="external_quantity">
                                                 Enter External Quantity
                                             </label>
-                                            @error('external_quantity')
-                                                <span class="invalid-feedback" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
                                         </div>
                                     </div>
                                 @endif
@@ -688,7 +670,7 @@
                             @endif
 
                             @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
-                            
+
                             @if ($errors->any())
                                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                                     <strong>Oops! Something went wrong.</strong>
@@ -754,11 +736,7 @@
                                             @endforeach
                                         </select>
                                         <label for="exclusive_type">Exclusive Type:</label>
-                                        @error('exclusive_type')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
+                                       
                                     </div>
                                 </div>
                                 <div class="reservation-section">
@@ -776,12 +754,7 @@
                                             @endif
                                         </div>
 
-                                        @error('date_from')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                        @error('date_to')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
+                                        
                                     </div>
                                 </div>
                             @endif
@@ -1333,7 +1306,7 @@
         @endif
         @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
             <script>
-                
+
                 document.addEventListener('DOMContentLoaded', function() {
                     const reservationTypeRadios = document.querySelectorAll('input[name="reservation_type"]');
                      const individualInputs = document.getElementById('individual_inputs');
@@ -1351,8 +1324,8 @@
                             alertBox.classList.add('fade');
                             setTimeout(() => alertBox.remove(), 500);
                         }
-                    }, 5000); 
-    
+                    }, 5000);
+
 
                     const updateTotalPrice = (total, type, priceId) => {
                         totalPriceElement.innerHTML = `<strong>Total Price:</strong> &#8369; ${total.toFixed(2)}`;
@@ -1363,7 +1336,7 @@
                     const calculateGrandTotal = () => {
                         let grandTotal = 0;
                         let selectedPriceId = null;
-                        
+
                         document.querySelectorAll('.quantity-input').forEach(input => {
                             const price = parseFloat(input.dataset.price);
                             const quantity = parseFloat(input.value) || 0;
@@ -1372,7 +1345,7 @@
                                 selectedPriceId = input.id.replace('quantity_', '');
                             }
                         });
-                        
+
                         updateTotalPrice(grandTotal, 'individual', selectedPriceId);
                     };
 

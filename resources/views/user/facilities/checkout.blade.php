@@ -59,32 +59,30 @@
                     <input type="hidden" name="date_to" value="{{ $reservationData['date_to'] }}">
                 @elseif($facility->facility_type === 'whole_place')
                     <div class="my-2">
-                        <input type="hidden" id="date_from" name="date_from" value="{{ old('date_from', $reservationData['date_from'] ?? '') }}">
-                        <input type="hidden" id="date_to" name="date_to" value="{{ old('date_to', $reservationData['date_to'] ?? '') }}">
+                        <input type="hidden" id="date_from" name="date_from"
+                            value="{{ old('date_from', $reservationData['date_from'] ?? '') }}">
+                        <input type="hidden" id="date_to" name="date_to"
+                            value="{{ old('date_to', $reservationData['date_to'] ?? '') }}">
                         <div id="selected-date" class="my-3">
                             @if (isset($date_from))
-                                <p class="select-date"><strong>Selected Date:</strong> {{ $reservationData['date_from'] }}</p>
+                                <p class="select-date"><strong>Selected Date:</strong> {{ $reservationData['date_from'] }}
+                                </p>
                             @endif
-                        </div>
-                        @error('date_from')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
-                        @error('date_to')
-                        <span class="text-danger">{{ $message }}</span>
-                        @enderror
+                        </div>A
                     </div>
                 @elseif($facility->facility_type === 'both')
                     <div class="my-2">
                         <input type="hidden" name="facility_id" value="{{ $reservationData['facility_id'] }}">
                         @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->capacity)
-                        <input type="hidden" name="facility_attribute_id" value="{{ $facilityAttribute->id ?? $reservationData['facility_attribute_id'] }}">
+                            <input type="hidden" name="facility_attribute_id"
+                                value="{{ $facilityAttribute->id ?? $reservationData['facility_attribute_id'] }}">
                         @endif
                         <input type="hidden" name="date_from" value="{{ $reservationData['date_from'] }}">
                         <input type="hidden" name="date_to" value="{{ $reservationData['date_to'] }}">
                         <input type="hidden" name="total_price" value="{{ $reservationData['total_price'] }}">
-                          
-                        @if($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
-                            @foreach($reservationData['quantity'] as $key => $value)
+
+                        @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
+                            @foreach ($reservationData['quantity'] as $key => $value)
                                 <input type="hidden" name="quantity[{{ $key }}]" value="{{ $value }}">
                             @endforeach
                         @endif
@@ -169,7 +167,7 @@
                                     <td><strong>Date To</strong></td>
                                     <td class="text-end"><strong>{{ $date_to }}</strong></td>
                                 </tr>
-                             @elseif ($facility->facility_type === 'both')
+                            @elseif ($facility->facility_type === 'both')
                                 <tr>
                                     <td><strong>{{ $roomName }}</strong></td>
                                     <td class="text-end"><strong>{{ $reservationData['total_price'] ?? 'N/A' }}</strong>
@@ -185,25 +183,25 @@
                                     <td class="text-end"><strong>{{ $date_to }}</strong></td>
                                 </tr>
 
-                                 @if($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
-                                <tr>
-                                    <td><strong>Quantity</strong></td>
-                                    <td class="text-end">
-                                        <strong>
-                                            @if(isset($reservationData['quantity']))
-                                                @if(is_array($reservationData['quantity']))
-                                                    @foreach($reservationData['quantity'] as $priceId => $qty)
-                                                        {{ $qty }} (Price ID: {{ $priceId }})<br>
-                                                    @endforeach
+                                @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
+                                    <tr>
+                                        <td><strong>Quantity</strong></td>
+                                        <td class="text-end">
+                                            <strong>
+                                                @if (isset($reservationData['quantity']))
+                                                    @if (is_array($reservationData['quantity']))
+                                                        @foreach ($reservationData['quantity'] as $priceId => $qty)
+                                                            {{ $qty }} (Price ID: {{ $priceId }})<br>
+                                                        @endforeach
+                                                    @else
+                                                        {{ $reservationData['quantity'] }}
+                                                    @endif
                                                 @else
-                                                    {{ $reservationData['quantity'] }}
+                                                    N/A
                                                 @endif
-                                            @else
-                                                N/A
-                                            @endif
-                                        </strong>
-                                    </td>
-                                </tr>
+                                            </strong>
+                                        </td>
+                                    </tr>
                                 @endif
                             @endif
                             <tr>
@@ -229,95 +227,97 @@
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
 
     <script>
-       document.addEventListener('DOMContentLoaded', function() {
-        @if ($facility->facility_type === 'whole_place')
-        var calendarEl = document.getElementById('calendar');
-        var submitButton = document.getElementById('submit-button');
-        var selectedDateEl = document.getElementById('selected-date');
+        document.addEventListener('DOMContentLoaded', function() {
+            @if ($facility->facility_type === 'whole_place')
+                var calendarEl = document.getElementById('calendar');
+                var submitButton = document.getElementById('submit-button');
+                var selectedDateEl = document.getElementById('selected-date');
 
-        // Calculate the start date (3 days from today)
-        var today = new Date();
-        var startDate = new Date();
-        startDate.setDate(today.getDate() + 3);
+                // Calculate the start date (3 days from today)
+                var today = new Date();
+                var startDate = new Date();
+                startDate.setDate(today.getDate() + 3);
 
-        // Initialize FullCalendar
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            selectable: true,
-            selectMirror: true,
-            timeZone: 'local', 
-            select: function(info) {
-                // Ensure the selected date is valid
-                var selectedDate = info.start;
+                // Initialize FullCalendar
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    selectable: true,
+                    selectMirror: true,
+                    timeZone: 'local',
+                    select: function(info) {
+                        // Ensure the selected date is valid
+                        var selectedDate = info.start;
 
-                // Compare dates (ignoring time)
-                var selected = new Date(selectedDate.getFullYear(), selectedDate.getMonth(),
-                    selectedDate.getDate());
-                var minDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate
-                    .getDate());
+                        // Compare dates (ignoring time)
+                        var selected = new Date(selectedDate.getFullYear(), selectedDate.getMonth(),
+                            selectedDate.getDate());
+                        var minDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate
+                            .getDate());
 
-                if (selected >= minDate) {
-                    var year = selected.getFullYear();
-                    var month = String(selected.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-                    var day = String(selected.getDate()).padStart(2, '0');
-                    var formattedDate = `${year}-${month}-${day}`;
+                        if (selected >= minDate) {
+                            var year = selected.getFullYear();
+                            var month = String(selected.getMonth() + 1).padStart(2,
+                                '0'); // Months are zero-based
+                            var day = String(selected.getDate()).padStart(2, '0');
+                            var formattedDate = `${year}-${month}-${day}`;
 
-                    // var formattedDate = selected.toISOString().split('T')[0];    
-                    document.getElementById('date_from').value = formattedDate;
-                    document.getElementById('date_to').value = formattedDate; // Automatically set date_to
+                            // var formattedDate = selected.toISOString().split('T')[0];
+                            document.getElementById('date_from').value = formattedDate;
+                            document.getElementById('date_to').value =
+                                formattedDate; // Automatically set date_to
 
-                    // Update the displayed selected date
-                    if (selectedDateEl) {
-                        selectedDateEl.innerText = 'Selected Date: ' + formattedDate;
-                    }
+                            // Update the displayed selected date
+                            if (selectedDateEl) {
+                                selectedDateEl.innerText = 'Selected Date: ' + formattedDate;
+                            }
 
-                    // Enable the submit button
-                    if (submitButton) {
-                        submitButton.disabled = false;
-                    }
+                            // Enable the submit button
+                            if (submitButton) {
+                                submitButton.disabled = false;
+                            }
 
-                    // Remove existing background events
-                    calendar.getEvents().forEach(function(event) {
-                        if (event.display === 'background') {
-                            event.remove();
+                            // Remove existing background events
+                            calendar.getEvents().forEach(function(event) {
+                                if (event.display === 'background') {
+                                    event.remove();
+                                }
+                            });
+
+                            // Add a new background event to highlight the selected date
+                            calendar.addEvent({
+                                title: 'Selected',
+                                start: selectedDate,
+                                allDay: true,
+                                display: 'background',
+                                backgroundColor: '#B0E0E6' // Light blue background
+                            });
+                        } else {
+                            alert('Please select a date starting from ' + minDate.toISOString().split(
+                                'T')[0]);
+                            calendar.unselect();
                         }
-                    });
+                    },
+                    validRange: {
+                        start: startDate.toISOString().split('T')[0], // 3 days from today
+                    },
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,dayGridWeek,dayGridDay'
+                    },
+                    // Disable dateClick to prevent individual date selection
+                    dateClick: function(info) {
+                        // Do nothing
+                    },
+                });
 
-                    // Add a new background event to highlight the selected date
-                    calendar.addEvent({
-                        title: 'Selected',
-                        start: selectedDate,
-                        allDay: true,
-                        display: 'background',
-                        backgroundColor: '#B0E0E6' // Light blue background
-                    });
-                } else {
-                    alert('Please select a date starting from ' + minDate.toISOString().split(
-                        'T')[0]);
-                    calendar.unselect();
+                calendar.render();
+
+                // Ensure the submit button is disabled initially
+                if (submitButton) {
+                    submitButton.disabled = true;
                 }
-            },
-            validRange: {
-                start: startDate.toISOString().split('T')[0], // 3 days from today
-            },
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,dayGridWeek,dayGridDay'
-            },
-            // Disable dateClick to prevent individual date selection
-            dateClick: function(info) {
-                // Do nothing
-            },
+            @endif
         });
-
-        calendar.render();
-
-        // Ensure the submit button is disabled initially
-        if (submitButton) {
-            submitButton.disabled = true;
-        }
-        @endif
-    });
     </script>
 @endpush

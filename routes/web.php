@@ -4,6 +4,7 @@ use App\Models\Contact;
 use App\Models\Product;
 use App\Events\LowStockEvent;
 use App\Http\Middleware\AuthAdmin;
+use Livewire\Livewire;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Auth;
@@ -166,11 +167,11 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::get('/admin/facility/reservation', [FacilityController::class, 'reservations'])->name('admin.facilities.reservations');
     Route::get('/admin/reservation/events/{availability_id}', [FacilityController::class, 'events'])->name('admin.facilities.reservations-events');
     Route::get('/admin/{availability_id}/reservation-history', [FacilityController::class, 'reservationHistory'])->name('admin.facilities.reservations-history');
-    
 
 
 
-    
+
+
     Route::post('/prices/store', [FacilityController::class, 'price_store'])->name('prices.store');
     // archive routes 
     Route::get('/admin/facility/archive/show', [FacilityController::class, 'showFacilities'])->name('admin.facilities.archive.index');
@@ -182,13 +183,13 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     // Route::post('/admin/facility/room/store', [FacilityController::class, 'room_store'])->name('admin.facilities.room.store');
     // Route::post('/admin/facility/rooms-range/store', [FacilityController::class, 'room_store_range'])->name('admin.facilities.store.range');
 
-    
 
 
-   
+
+
     //update status
     Route::put('/admin/facilities/reservation/{id}/update-status', [FacilityController::class, 'updateStatus'])
-    ->name('admin.facilities.reservation.updateStatus');
+        ->name('admin.facilities.reservation.updateStatus');
     // Route for saving rooms
     Route::post('/facility/{facilityId}/rooms', [FacilityController::class, 'storeRooms'])
         ->name('facility.rooms.store');
@@ -282,9 +283,15 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::get('/admin/sales-report', function () {
         return view('admin.input-sales');
     });
+    Route::post('/admin/user-report', [AdminController::class, 'generateInputUsers'])->name('admin.generate-input-users');
+    Route::get('/admin/user-report', function () {
+        return view('admin.input-user');
+    });
+
 
     Route::post('/admin/sales-report/download', [AdminController::class, 'downloadInputSales'])->name('admin.download-input-sales');
-    Route::post('/user-reports/download', [AdminController::class, 'downloadInputUsers'])->name('admin.user-reports.download');
+    Route::post('/admin/user-report/download', [AdminController::class, 'downloadInputUsers'])->name('admin.download-input-users');
+
 
     Route::post('/rentals-reports/generate', [AdminController::class, 'generateInputRentalReports'])->name('admin.generate-input-rentals-reports');
     Route::get('/rentals-reports', function () {
@@ -292,20 +299,10 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     })->name('admin.rentals-reports');
     Route::post('/rentals-reports/download', [AdminController::class, 'downloadInputRentalsReports'])->name('admin.download-input-rentals-reports');
 
-
-
-
-
-
-
-
-
-
-
     Route::get('/admin/report-statement/{orderId}', [AdminController::class, 'generateBillingStatement'])->name('admin.report-statement');
     Route::get('/admin/report-statements/download', [AdminController::class, 'downloadBillingStatements'])->name('admin.report-statements.download');
     Route::post('/admin/downloadPdf', [AdminController::class, 'downloadPdf'])->name('admin.downloadPdf');
-    Route::get('/admin/report-user/pdf', [AdminController::class, 'downloadUserReportPdf'])->name('admin.report-user.pdf');
+    Route::post('/admin/report-user/pdf', [AdminController::class, 'downloadUserReportPdf'])->name('admin.report-user.pdf');
     Route::get('/admin/report-inventory/pdf', [AdminController::class, 'downloadInventoryReportPdf'])->name('admin.report-inventory.pdf');
 
     Route::get('/admin/rentals', [AdminController::class, 'rentals'])->name('admin.rentals');

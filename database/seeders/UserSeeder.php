@@ -20,52 +20,67 @@ class UserSeeder extends Seeder
         $departments = ['CEIT', 'GSOLC', 'CAFENR', 'CAS', 'CCJ', 'CEMDS', 'CED', 'CON', 'CVMBS'];
         $yearLevels = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
 
-        // User::create([
-        //     'name' => 'Admin User',
-        //     'email' => 'admin@cvsu.edu.ph',
-        //     'email_verified_at' => now(),
-        //     'password' => Hash::make('password123'),
-        //     'utype' => 'ADM',
-        //     'password_set' => true,
-        // ]);
-
-        for ($i = 1; $i <= 4; $i++) { 
-            User::create([
-                'name' => 'Admin User ' . $i,  // Name changes for each admin
-                'email' => 'admin' . $i . '@cvsu.edu.ph',  // Dynamic email based on $i
-                'email_verified_at' => now(),
-                'password' => Hash::make('password123'),
-                'utype' => 'ADM',
-                'password_set' => true,
-            ]);
-        }
-
+        // Create Admin User
+        $createdAt = $faker->dateTimeBetween('2025-01-01', '2025-12-31');
         User::create([
-            'name' => 'Director User',
-            'email' => 'director@cvsu.edu.ph',
+            'name'              => 'Admin User',
+            'email'             => 'admin@cvsu.edu.ph',
             'email_verified_at' => now(),
-            'password' => Hash::make('password123'),
-            'utype' => 'DIR',
-            'password_set' => true,
+            'password'          => Hash::make('password123'),
+            'utype'             => 'ADM',
+            'password_set'      => true,
+            'created_at'        => $createdAt,
+            'updated_at'        => $createdAt,
         ]);
 
-        for ($i = 1; $i <= 100; $i++) {
+        // Create additional Admin Users
+        for ($i = 1; $i <= 4; $i++) {
+            $createdAt = $faker->dateTimeBetween('2025-01-01', '2025-12-31');
             User::create([
-                'name' => $faker->name,
-                'email' => "user{$i}@cvsu.edu.ph",
+                'name'              => 'Admin User ' . $i,
+                'email'             => 'admin' . $i . '@cvsu.edu.ph',
                 'email_verified_at' => now(),
-                'password' => Hash::make('password123'),
-                'utype' => 'USR',
-                'password_set' => false,
-                'phone_number' => '9' . $faker->numerify('#########'),
-                'year_level' => $faker->randomElement($yearLevels),
-                'department' => $faker->randomElement($departments),
-                'course' => $faker->words(3, true),
-                'profile_image' => null,
-                'role' => 'student',
-                'sex' => $faker->randomElement(['male', 'female']),
+                'password'          => Hash::make('password123'),
+                'utype'             => 'ADM',
+                'password_set'      => true,
+                'created_at'        => $createdAt,
+                'updated_at'        => $createdAt,
             ]);
         }
 
+        // Create Director User
+        $createdAt = $faker->dateTimeBetween('2025-01-01', '2025-12-31');
+        User::create([
+            'name'              => 'Director User',
+            'email'             => 'director@cvsu.edu.ph',
+            'email_verified_at' => now(),
+            'password'          => Hash::make('password123'),
+            'utype'             => 'DIR',
+            'password_set'      => true,
+            'created_at'        => $createdAt,
+            'updated_at'        => $createdAt,
+        ]);
+
+        // Create Regular Users
+        for ($i = 1; $i <= 500; $i++) {
+            $createdAt = $faker->dateTimeBetween('2024-01-01', '2025-12-31');
+            User::create([
+                'name'              => $faker->name,
+                'email'             => "user{$i}@cvsu.edu.ph",
+                'email_verified_at' => now(),
+                'password'          => Hash::make('password123'),
+                'utype'             => 'USR',
+                'password_set'      => false,
+                'phone_number'      => '9' . $faker->numerify('#########'),
+                'year_level'        => $faker->randomElement($yearLevels),
+                'department'        => $faker->randomElement($departments),
+                'course'            => $faker->words(3, true),
+                'profile_image'     => null,
+                'role'              => 'student',
+                'sex'               => $faker->randomElement(['male', 'female']),
+                'created_at'        => $createdAt,
+                'updated_at'        => $createdAt,
+            ]);
+        }
     }
 }

@@ -33,61 +33,43 @@
             @endif
 
             <!-- Header Row with Date Range Inputs, "Today" Filter, Stock Status Filter, and Download PDF Button -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="m-0">Inventory Report</h5>
-                <div class="d-flex align-items-center">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 p-3 bg-light rounded shadow-sm">
+                <h5 class="m-0 text fw-bold">Inventory Report</h5>
+                
+                <div class="d-flex flex-wrap align-items-center gap-3">
                     <!-- Date Range Filter Form -->
-                    <form action="{{ route('admin.report-inventory') }}" method="GET" id="filterForm" class="form-inline d-flex align-items-center">
-                         <!-- "Today" Checkbox with Text Inside -->
-                         <div class="form-group mr-2 me-3">
-                            <label class="checkbox-container">
-                                <input type="checkbox" name="today" id="today" value="1" {{ request('today') ? 'checked' : '' }}>
-                                <span class="checkmark">Today</span>
-                            </label>
-                        </div>
+                    <form action="{{ route('admin.report-inventory') }}" method="GET" id="filterForm" class="d-flex flex-wrap align-items-center gap-2">
                         
-                        <div class="form-group mr-2 me-3">
-                            <label for="start_date" class="mr-2">Start Date:</label>
-                            <div id="start_date_container">
-                                <input type="date" name="start_date" id="start_date" value="{{ old('start_date', request('start_date')) }}" class="form-control">
-                            </div>
-                        </div>
-                        <div class="form-group mr-2 me-3">
-                            <label for="end_date" class="mr-2">End Date:</label>
-                            <div id="end_date_container">
-                                <input type="date" name="end_date" id="end_date" value="{{ old('end_date', request('end_date')) }}" class="form-control">
-                            </div>
-                        </div>
-
                         <!-- Stock Status Filter -->
-                        <div class="form-group mr-2 me-3">
-                            <label for="stock_status" class="mr-2">Stock Status:</label>
-                            <select name="stock_status" id="stock_status" class="form-control">
+                        <div class="form-group d-flex align-items-center gap-2">
+                            <label for="stock_status" class="fw-semibold">Stock Status:</label>
+                            <select name="stock_status" id="stock_status" class="form-select">
                                 <option value="">All</option>
                                 <option value="instock" {{ request('stock_status') == 'instock' ? 'selected' : '' }}>In Stock</option>
                                 <option value="outofstock" {{ request('stock_status') == 'outofstock' ? 'selected' : '' }}>Out of Stock</option>
                                 <option value="reorder" {{ request('stock_status') == 'reorder' ? 'selected' : '' }}>Reorder Level</option>
                             </select>
                         </div>
-                       
-                        <div class="form-group mr-2 me-3">
-                            <button type="submit" class="btn btn-primary">Filter</button>
-                        </div>
+            
+                        <button type="submit" class="btn btn-primary px-3">Filter</button>
                     </form>
-
+            
                     <!-- Download PDF Form -->
-                    <form action="{{ route('admin.report-inventory.pdf') }}" method="GET" class="d-flex align-items-center">
+                    <form action="{{ route('admin.report-inventory.pdf') }}" method="GET" class="d-flex align-items-center gap-2">
                         
-                        <!-- Pass the date range parameters -->
+                        <!-- Hidden Inputs for Date Range & Stock Status -->
                         <input type="hidden" name="start_date" id="download_start_date" value="{{ old('start_date', request('start_date')) }}">
                         <input type="hidden" name="end_date" id="download_end_date" value="{{ old('end_date', request('end_date')) }}">
                         <input type="hidden" name="today" value="{{ request('today') ? '1' : '' }}">
-                        <!-- Pass the stock status parameter -->
                         <input type="hidden" name="stock_status" id="download_stock_status" value="{{ request('stock_status') }}">
-                        <button type="submit" class="btn btn-danger ml-2">Download PDF</button>
+            
+                        <button type="submit" class="btn btn-danger px-3">
+                            <i class="fas fa-file-pdf me-1"></i> Download PDF
+                        </button>
                     </form>
                 </div>
             </div>
+            
 
             <div class="wg-table table-all-user">
                 <div class="table-responsive">

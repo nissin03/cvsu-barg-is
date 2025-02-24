@@ -12,13 +12,22 @@ class Facility extends Model
 
 
     protected $fillable = [
-        'name', 'description', 'facility_type', 'image', 'images', 'slug', 
-        'featured', 'status', 'created_by', 'rules_and_regulations', 
-        'requirements', 'archived_at', 'archived', 'created_by'
+        'name',
+        'description',
+        'facility_type',
+        'image',
+        'images',
+        'slug',
+        'featured',
+        'status',
+        'created_by',
+        'rules_and_regulations',
+        'requirements',
+        'archived_at',
+        'archived',
+        'created_by'
     ];
 
-
-    
     public function facilityAttributes()
     {
         return $this->hasMany(FacilityAttribute::class);
@@ -34,11 +43,10 @@ class Facility extends Model
         return $this->hasMany(Availability::class);
     }
 
-
-    public function user()  
-    {  
-        return $this->belongsTo(User::class); 
-    }  
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
     public function individualPrice()
     {
         $price = $this->prices()->where('price_type', 'individual')->first();
@@ -54,4 +62,3 @@ class Facility extends Model
     // }
 
 }
-

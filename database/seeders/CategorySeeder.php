@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
-use App\Models\Category; // Ensure the Category model is correctly namespaced
+use App\Models\Category;
 
 class CategorySeeder extends Seeder
 {
@@ -13,7 +13,8 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
-        // Define the category hierarchy
+        // Define the category hierarchy.
+        // Under Apparel, we add two subcategories: "PE" and "Cspear".
         $categories = [
             'Accessories' => [
                 'Umbrella',
@@ -21,19 +22,35 @@ class CategorySeeder extends Seeder
                     'Keychain for Car',
                 ],
                 'Lace',
+         
+                'Pin',
             ],
             'Apparel' => [
                 'T-Shirt',
-                'Polo Shirt',
                 'Cap',
                 'Bonnet',
                 'Jacket',
+                'Polo',
+                'NSTP',
+                'PE' => [
+                    'pe tshirt',
+                    'pe short',
+                ],
+                'Cspear' => [
+                    'Cspear tshirt',
+                    'Cspear short',
+                    'Cspear jogging pants',
+                ],
+
+                'Male Uniform',
+                'Female Uniform',
             ],
             'Home & Kitchen' => [
-                'CVSU Mug',
-                'Case of Utensils',
+                'Mug',
+                'Utensils',
                 'Coffee Blend',
                 'Fans',
+                'Tumbler',
             ],
             'Stationery' => [
                 'Notebook',
@@ -42,19 +59,19 @@ class CategorySeeder extends Seeder
             ],
         ];
 
+        // Loop through top-level categories.
         foreach ($categories as $parentName => $children) {
-            // Create parent category
             $parentCategory = Category::create([
                 'name' => $parentName,
                 'slug' => Str::slug($parentName),
-                'image' => null, // You can set a default image path if available
+                'image' => null, // Adjust if you have a default image.
                 'parent_id' => null,
             ]);
 
-            // Iterate through children
+            // Loop through children.
             foreach ($children as $childKey => $childValue) {
                 if (is_array($childValue)) {
-                    // If the child has its own children
+                    // For subcategories: $childKey is the subcategory name.
                     $childCategory = Category::create([
                         'name' => $childKey,
                         'slug' => Str::slug($childKey),
@@ -62,7 +79,7 @@ class CategorySeeder extends Seeder
                         'parent_id' => $parentCategory->id,
                     ]);
 
-                    // Iterate through grandchildren
+                    // Create grandchildren.
                     foreach ($childValue as $grandchildName) {
                         Category::create([
                             'name' => $grandchildName,
@@ -72,7 +89,7 @@ class CategorySeeder extends Seeder
                         ]);
                     }
                 } else {
-                    // If the child has no further children
+                    // For simple children.
                     Category::create([
                         'name' => $childValue,
                         'slug' => Str::slug($childValue),
@@ -82,14 +99,5 @@ class CategorySeeder extends Seeder
                 }
             }
         }
-
-        // Optionally, add any standalone categories here
-        // Example:
-        // Category::create([
-        //     'name' => 'Books',
-        //     'slug' => Str::slug('Books'),
-        //     'image' => null,
-        //     'parent_id' => null,
-        // ]);
     }
 }

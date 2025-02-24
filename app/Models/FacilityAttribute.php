@@ -36,5 +36,8 @@ class FacilityAttribute extends Model
         return $this->hasMany(Availability::class);
     }
 
-    
+    public function transactionReservations()
+    {
+        return $this->hasMany(TransactionReservation::class);
+    }
 }

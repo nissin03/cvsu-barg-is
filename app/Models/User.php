@@ -34,9 +34,9 @@ class User extends Authenticatable
         if ($this->profile_image) {
             return Storage::disk('public')->url($this->profile_image);
         }
-        return asset('images/profile.jpg'); 
+        return asset('images/profile.jpg');
     }
-    
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -56,11 +56,8 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
-    public function facilities()  
-    {  
+    public function facilities()
+    {
         return $this->hasMany(Facility::class);
-    }  
-
-
-  
+    }
 }

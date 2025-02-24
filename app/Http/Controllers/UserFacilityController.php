@@ -3,15 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Price;
+use App\Models\Payment;
 use App\Models\Facility;
 use App\Models\Availability;
+use App\Models\QualificationApproval;
 use Illuminate\Http\Request;
+use App\Models\PaymentDetail;
 use Illuminate\Support\Carbon;
 use App\Models\FacilityAttribute;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use App\Models\TransactionReservation;
 use Illuminate\Support\Facades\Session;
 
 class UserFacilityController extends Controller
@@ -41,12 +45,17 @@ class UserFacilityController extends Controller
         // dd($pricesWithoutAttributes);
 
         foreach ($facility->facilityAttributes as $attribute) {
-            $reserved = $attribute->availabilities()
+            // Fetch reserved quantity from transaction_reservations instead of availabilities
+            $reserved = TransactionReservation::whereHas('availability', function ($query) use ($attribute) {
+                $query->where('facility_attribute_id', $attribute->id);
+            })
                 ->where('status', 'reserved')
-                ->sum('quantity');
+                ->sum('quantity'); // Now summing from transaction_reservations
 
+            // Compute remaining capacity
             $attribute->remaining_capacity = $attribute->capacity - $reserved;
         }
+
 
         $individualPrice = $facility->individualPrice();
         $selectedRoom = $this->findRoomWithLeastCapacity($facility);
@@ -66,20 +75,6 @@ class UserFacilityController extends Controller
         $facility = Facility::with(['facilityAttributes', 'prices'])->find($request->facility_id);
         $userSex = Auth::user()->sex;
         if ($facility->facility_type === 'individual') {
-
-            $pendingReservation = Availability::where('user_id', Auth::id())
-                ->where('facility_id', $facility->id)
-                ->where('status', 'pending')
-                ->where(function ($query) use ($request) {
-                    $query->whereBetween('date_from', [$request->date_from, $request->date_to])
-                        ->orWhereBetween('date_to', [$request->date_from, $request->date_to]);
-                })
-                ->first();
-
-            if ($pendingReservation) {
-                Session::flash('error', 'You already have a pending reservation for this facility.');
-                return redirect()->route('user.facilities.details', ['slug' => $facility->slug]);
-            }
 
             $availableRoom = $this->findRoomWithLeastCapacity($facility);
             if ($availableRoom->sex_restriction && $availableRoom->sex_restriction !== $userSex) {
@@ -128,7 +123,7 @@ class UserFacilityController extends Controller
                 $priceType  = $request->input('price_type');
                 $roomId     = $request->input('room_id');
                 $priceId    = $request->input('price_id');
-                // dd($priceId, $priceType, $facility->prices()->get());   
+                // dd($priceId, $priceType, $facility->prices()->get());
 
                 $priceRecord = $facility->prices()
                     ->where('id', $priceId)
@@ -191,12 +186,12 @@ class UserFacilityController extends Controller
                         ->where('date_from', $dateFrom)
                         ->whereIn('status', ['pending', 'reserved'])
                         ->first();
-            
+
                     if ($existingReservation) {
                         return back()->withErrors(['date_from' => 'This facility is already reserved for this date.']);
                     }
                 }
-            
+
                 // Calculate days of stay
                 $days = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1;
                 $computedTotal = 0;
@@ -221,14 +216,14 @@ class UserFacilityController extends Controller
                     $computedTotal = $priceRecord->is_based_on_days ? ($priceRecord->value * $days) : $priceRecord->value;
                 }
 
-             
+
                 $frontendTotalPrice = floatval($request->input('total_price', 0));
 
-                if (abs($computedTotal - $frontendTotalPrice) > 0.01) { 
+                if (abs($computedTotal - $frontendTotalPrice) > 0.01) {
                     return back()->withErrors(['total_price' => 'Mismatch in computed total price. Please refresh and try again.']);
                 }
 
-                
+
                 $reservationData = [
                     'facility_id' => $facility->id,
                     'facility_name' => $facility->name,
@@ -336,9 +331,8 @@ class UserFacilityController extends Controller
 
     public function checkout(Request $request)
     {
-        // if (!Auth::check()) {
-        //     return redirect()->route('login');
-        // }
+
+        // dd($request->all());
         $user = Auth::user();
         $reservationData = session('reservation_data');
         if (!$reservationData || !isset($reservationData['facility_slug'])) {
@@ -388,11 +382,7 @@ class UserFacilityController extends Controller
         $price = Price::where('facility_id', $facility->id)
             ->whereIn('price_type', ['individual', 'whole']) // Accept both price types
             ->first();
-            
-            // dd(session('reservation_data'));
-            // dd($request->all());
-            // dd($price);
-            // dd($facility->facilityAttributes);
+
         return view('user.facilities.checkout', compact('user', 'reservationData', 'facilityAttribute', 'facility',  'date_from', 'date_to', 'price', 'roomName'));
     }
 
@@ -435,15 +425,15 @@ class UserFacilityController extends Controller
             DB::transaction(function () use ($request, $reservationData, $user) {
                 $facility = Facility::with(['prices', 'facilityAttributes'])->find($reservationData['facility_id']);
                 if ($facility->facility_type === 'individual') {
-                    $pendingReservation = Availability::where('user_id', $user->id)
-                        ->where('facility_id', $facility->id)
-                        ->where('status', 'pending')
-                        ->first();
+                    // $pendingReservation = Availability::where('user_id', $user->id)
+                    //     ->where('facility_id', $facility->id)
+                    //     ->where('status', 'pending')
+                    //     ->first();
 
-                    if ($pendingReservation) {
-                        return redirect()->route('user.facilities.index')
-                            ->with('error', 'You already have a pending reservation for this facility.');
-                    }
+                    // if ($pendingReservation) {
+                    //     return redirect()->route('user.facilities.index')
+                    //         ->with('error', 'You already have a pending reservation for this facility.');
+                    // }
 
                     $facilityAttribute = FacilityAttribute::find($request->facility_attribute_id);
 
@@ -475,29 +465,84 @@ class UserFacilityController extends Controller
 
                     $dateFrom = $price->date_from;
                     $dateTo = $price->date_to;
-                    // Create New Availability Record
-                    $newAvailability = Availability::create([
-                        'user_id' => $user->id,
+
+                    $availability = Availability::firstOrCreate([
                         'facility_id' => $facility->id,
-                        'price_id' => $price->id,
                         'facility_attribute_id' => $facilityAttribute->id,
-                        'qualification' => $qualificationPath,
                         'date_from' => $dateFrom,
                         'date_to' => $dateTo,
+                    ], [
                         'remaining_capacity' => $facilityAttribute->capacity,
+                    ]);
+
+                    Log::info('New availability created', ['availability_id' => $availability->id]);
+
+                    // Create QualificationApproval **only if a qualification file is uploaded**
+                    if ($qualificationPath) {
+                        $qualification_r = new QualificationApproval();
+                        $qualification_r->availability_id = $availability->id;
+                        $qualification_r->user_id = $user->id;
+                        $qualification_r->status = 'pending';
+                        $qualification_r->qualification = $qualificationPath;
+                        $qualification_r->save();
+
+                        Log::info('Qualification approval record created', ['qualification_id' => $qualification_r->id]);
+                    }
+
+                    // Create Payment Record
+                    $payment = Payment::create([
+                        'availability_id' => $availability->id,
+                        'user_id' => $user->id,
+                        'status' => 'pending',
                         'total_price' => $reservationData['total_price'],
+                    ]);
+
+                    Log::info('Payment record created', ['payment_id' => $payment->id]);
+
+                    // Create Payment Details
+                    PaymentDetail::create([
+                        'payment_id' => $payment->id,
+                        'facility_id' => $facility->id,
+                        'quantity' => 0, // not applicable
+                        'total_price' => $reservationData['total_price'],
+                    ]);
+
+                    Log::info('Payment detail created');
+
+                    // Create Transaction Reservation
+                    TransactionReservation::create([
+                        'availability_id' => $availability->id,
+                        'price_id' => $price->id,
+                        'quantity' => 0, // not applicable
+                        'user_id' => $user->id,
                         'status' => 'pending',
                     ]);
-                    Log::info('New availability created', ['availability_id' => $newAvailability->id]);
+
+                    Log::info('Transaction reservation created');
+
+
+                    // // Create New Availability Record
+                    // $newAvailability = Availability::create([
+                    //     'user_id' => $user->id,
+                    //     'facility_id' => $facility->id,
+                    //     'price_id' => $price->id,
+                    //     'facility_attribute_id' => $facilityAttribute->id,
+                    //     'qualification' => $qualificationPath,
+                    //     'date_from' => $dateFrom,
+                    //     'date_to' => $dateTo,
+                    //     'remaining_capacity' => $facilityAttribute->capacity,
+                    //     'total_price' => $reservationData['total_price'],
+                    //     'status' => 'pending',
+                    // ]);
 
                     Session::put('checkout', [
-                        'reservation_id' => $newAvailability->id,
+                        'reservation_id' => $availability->id,
                         'facility_id' => $facility->id,
                         'facility_slug' => $facility->slug,
                         'facility_attribute_id' => $facilityAttribute->id,
                         'status' => 'pending',
-                        'date_from' => $dateFrom,
-                        'date_to' => $dateTo,
+                        'date_from' => $reservationData['date_from'],
+                        'date_to' => $reservationData['date_to'],
                         'total_price' => $reservationData['total_price'],
                     ]);
                 } elseif ($facility->facility_type === 'whole_place') {
@@ -625,19 +670,19 @@ class UserFacilityController extends Controller
 
                         $facilityAttribute = $facility->facilityAttributes()->first();
                         $initialCapacity = $facilityAttribute->whole_capacity;
-                
+
                         $reservedCapacity = Availability::where('facility_id', $facility->id)
                             ->where('date_from', $dateFrom)
                             ->sum('quantity');
-                    
+
                         $remainingCapacity = $initialCapacity - $reservedCapacity;
-                    
+
                         $totalQuantity = 0;
                         $totalPrice = 0;
-                    
+
                         if ($priceType === 'individual') {
                             $quantities = $request->input('quantity', []);
-                    
+
                             foreach ($quantities as $priceId => $qty) {
                                 $price = $facility->prices()->find($priceId);
                                 if ($price && $qty > 0) {
@@ -645,15 +690,15 @@ class UserFacilityController extends Controller
                                     $totalPrice += $price->value * $qty;
                                 }
                             }
-                    
+
                             // Check if the requested quantity exceeds the available capacity
                             if ($totalQuantity > $remainingCapacity) {
                                 throw new \Exception('The total quantity exceeds the remaining capacity for this date.');
                             }
-                    
-                            
+
+
                             $remainingCapacity -= $totalQuantity;
-                    } elseif ($priceType === 'whole') {
+                        } elseif ($priceType === 'whole') {
                             $totalPrice = $price->value;
                             $totalQuantity = $remainingCapacity;
                             $remainingCapacity = 0;
@@ -694,7 +739,7 @@ class UserFacilityController extends Controller
                     }
                     // dd($remainingCapacity);
                 }
-            // dd(session('reservation_data'));
+                // dd(session('reservation_data'));
 
             });
             Session::forget('reservation_data');

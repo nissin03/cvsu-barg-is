@@ -63,14 +63,14 @@ class AdminController extends Controller
         });
 
         // Dashboard data (overall totals) for the selected year
-        $dashboardDatas = DB::select("SELECT 
+        $dashboardDatas = DB::select("SELECT
                                         SUM(total) AS TotalAmount,
                                         SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                                         SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
                                         SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount,
                                         COUNT(*) AS Total,
                                         SUM(IF(status = 'reserved', 1, 0)) AS TotalReserved,
-                                        SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp, 
+                                        SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp,
                                         SUM(IF(status = 'canceled', 1, 0)) AS TotalCanceled
                                     FROM Orders
                                     WHERE YEAR(created_at) = ?", [$selectedYear]);
@@ -80,17 +80,17 @@ class AdminController extends Controller
                                         IFNULL(D.TotalAmount, 0) AS TotalAmount,
                                         IFNULL(D.TotalReservedAmount, 0) AS TotalReservedAmount,
                                         IFNULL(D.TotalPickedUpAmount, 0) AS TotalPickedUpAmount,
-                                        IFNULL(D.TotalCanceledAmount, 0) AS TotalCanceledAmount 
+                                        IFNULL(D.TotalCanceledAmount, 0) AS TotalCanceledAmount
                                     FROM month_names M
                                     LEFT JOIN (
-                                        SELECT 
+                                        SELECT
                                             MONTH(created_at) AS MonthNo,
                                             SUM(total) AS TotalAmount,
                                             SUM(IF(status='reserved', total, 0)) AS TotalReservedAmount,
                                             SUM(IF(status='pickedup', total, 0)) AS TotalPickedUpAmount,
                                             SUM(IF(status='canceled', total, 0)) AS TotalCanceledAmount
-                                        FROM Orders 
-                                        WHERE YEAR(created_at) = ? 
+                                        FROM Orders
+                                        WHERE YEAR(created_at) = ?
                                         GROUP BY MONTH(created_at)
                                     ) D ON D.MonthNo = M.id
                                     ORDER BY M.id", [$selectedYear]);
@@ -142,14 +142,14 @@ class AdminController extends Controller
         $selectedMonth = $availableMonths->firstWhere('id', $selectedMonthId);
 
         // Dashboard data (overall totals) for the selected year
-        $dashboardDatas = DB::select("SELECT 
+        $dashboardDatas = DB::select("SELECT
                                         SUM(total) AS TotalAmount,
                                         SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                                         SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
                                         SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount,
                                         COUNT(*) AS Total,
                                         SUM(IF(status = 'reserved', 1, 0)) AS TotalReserved,
-                                        SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp, 
+                                        SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp,
                                         SUM(IF(status = 'canceled', 1, 0)) AS TotalCanceled
                                     FROM Orders
                                     WHERE YEAR(created_at) = ?", [$selectedYear]);
@@ -206,7 +206,7 @@ class AdminController extends Controller
         foreach ($weekRanges as $week => [$startOfSelectedWeek, $endOfSelectedWeek]) {
             // Fetch total amounts for the week
             $dashboardData = DB::select(
-                "SELECT 
+                "SELECT
                     SUM(total) AS TotalAmount,
                     SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                     SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
@@ -306,7 +306,7 @@ class AdminController extends Controller
 
         // Aggregate data for dashboard display
         $dashboardDatas = DB::select(
-            "SELECT 
+            "SELECT
                 SUM(total) AS TotalAmount,
                 SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                 SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
@@ -328,7 +328,7 @@ class AdminController extends Controller
                     SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                     SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
                     SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
-               FROM Orders 
+               FROM Orders
                WHERE created_at BETWEEN ? AND ?
                GROUP BY DAYOFWEEK(created_at), DAYNAME(created_at)
                ORDER BY DayNo",
@@ -522,7 +522,7 @@ class AdminController extends Controller
             'price' => $hasVariant ? 'nullable' : 'required|numeric',
             'quantity' => $hasVariant ? 'nullable' : 'required|integer',
             'featured' => 'required',
-            'image' => 'required|mimes:png,jpg,jpeg|max:2048',
+            'image' => 'required|mimes:png,jpg,jpeg|max:10240',
             'sex' => 'required|in:male,female,all',
             'category_id' => 'required|integer|exists:categories,id',
 
@@ -665,12 +665,12 @@ class AdminController extends Controller
     public function product_update(Request $request)
     {
         $product = Product::findOrFail($request->input('id'));
-    
+
         // Determine if product has variants
         $hasVariant = $request->has('variant_name') &&
             is_array($request->variant_name) &&
             count(array_filter($request->variant_name)) > 0;
-    
+
         // Validation
         $request->validate([
             'name' => 'required',
@@ -688,7 +688,7 @@ class AdminController extends Controller
 
         $previousStockStatus = $product->stock_status;
         $previousTotalQuantity = $product->quantity ?? $product->attributeValues->sum('quantity');
-    
+
         // Update product fields
         $product->name = $request->name;
         $product->short_description = $request->short_description;
@@ -700,12 +700,12 @@ class AdminController extends Controller
         $product->category_id = $request->category_id;
         $product->reorder_quantity = $request->reorder_quantity;
         $product->outofstock_quantity = $request->outofstock_quantity;
-    
+
         $current_timestamp = Carbon::now()->timestamp;
-    
+
         // Stock Status Logic
         $totalQuantity = $product->quantity ?? $product->attributeValues->sum('quantity');
-    
+
         if ($totalQuantity > $product->reorder_quantity) {
             $product->stock_status = 'instock';
         } elseif ($totalQuantity <= $product->reorder_quantity && $totalQuantity > $product->outofstock_quantity) {
@@ -713,7 +713,7 @@ class AdminController extends Controller
         } else {
             $product->stock_status = 'outofstock';
         }
-    
+
         // Handle image upload
         if ($request->hasFile('image')) {
             if (File::exists(public_path('uploads/products') . '/' . $product->image)) {
@@ -724,7 +724,7 @@ class AdminController extends Controller
             $this->GenerateProductThumbnailsImage($image, $imageName);
             $product->image = $imageName;
         }
-    
+
         // Handle gallery images
         if ($request->hasFile('images')) {
             $gallery_arr = [];
@@ -740,13 +740,13 @@ class AdminController extends Controller
             }
             $product->images = implode(',', $gallery_arr);
         }
-    
+
         $product->save();
-    
+
         // Handle variants
         if ($hasVariant) {
             $product->attributeValues()->delete();
-    
+
             $attributeValues = [];
             foreach ($request->variant_name as $index => $name) {
                 $attributeValues[] = [
@@ -757,7 +757,7 @@ class AdminController extends Controller
                     'quantity' => $request->variant_quantity[$index],
                 ];
             }
-    
+
             foreach ($attributeValues as $value) {
                 ProductAttributeValue::updateOrCreate(
                     [
@@ -768,9 +768,9 @@ class AdminController extends Controller
                     $value
                 );
             }
-    
+
             $variantTotalQuantity = collect($attributeValues)->sum('quantity');
-    
+
             // Stock status based on variant quantities
             if ($variantTotalQuantity > $product->reorder_quantity) {
                 $product->stock_status = 'instock';
@@ -779,7 +779,7 @@ class AdminController extends Controller
             } else {
                 $product->stock_status = 'outofstock';
             }
-    
+
             $product->save();
         }
 
@@ -788,10 +788,10 @@ class AdminController extends Controller
             $message = "Good news! The product {$product->name} is now back in stock.";
             Notification::send($users, new StockUpdate($product, $message));
         }
-    
+
         return redirect()->route('admin.products')->with('status', 'Product has been updated successfully!');
     }
-    
+
 
 
 
@@ -1089,13 +1089,13 @@ class AdminController extends Controller
     {
         $notification = Auth::user()->notifications()->findOrFail($id);
         $notification->markAsRead();
-    
+
         return response()->json([
             'status' => 'success',
             'unreadCount' => Auth::user()->unreadNotifications->count(),
         ]);
     }
-    
+
 
     public function markMultipleAsRead(Request $request)
     {
@@ -1106,83 +1106,83 @@ class AdminController extends Controller
                 'message' => 'No notification IDs provided.',
             ], 400);
         }
-    
+
         // Mark notifications as read
         $notifications = Auth::user()->notifications()->whereIn('id', $notificationIds)->get();
-    
+
         if ($notifications->isEmpty()) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'No matching notifications found.',
             ], 404);
         }
-    
+
         foreach ($notifications as $notification) {
             $notification->markAsRead();
         }
-    
+
         return response()->json([
             'status' => 'success',
             'unreadCount' => Auth::user()->unreadNotifications->count(),
         ]);
     }
-    
+
     public function unreadCount()
     {
         return response()->json([
             'unreadCount' => Auth::user()->unreadNotifications->count(),
         ]);
     }
-    
+
 
     public function latest()
-{
-    $user = Auth::user();
+    {
+        $user = Auth::user();
 
-    $notifications = $user->notifications()
-        ->orderBy('created_at', 'desc')
-        ->take(10) // Fetch the latest 10 notifications
-        ->get();
+        $notifications = $user->notifications()
+            ->orderBy('created_at', 'desc')
+            ->take(10) // Fetch the latest 10 notifications
+            ->get();
 
-    $formattedNotifications = $notifications->map(function ($notification) {
-        return [
-            'id' => $notification->id,
-            'message' => $notification->data['message'] ?? 'No message available',
-            'icon' => match ($notification->type) {
-                'App\\Notifications\\LowStockNotification' => 'fa-solid fa-box',
-                'App\\Notifications\\ContactReceivedMessage' => 'fas fa-envelope',
-                default => 'fas fa-bell',
-            },
-            'redirect_route' => match ($notification->type) {
-                'App\\Notifications\\LowStockNotification' => route('admin.products'),
-                'App\\Notifications\\ContactReceivedMessage' => route('admin.contacts'),
-                default => '#',
-            },
-            'created_at' => $notification->created_at->diffForHumans(),
-            'read_at' => $notification->read_at,
-        ];
-    });
+        $formattedNotifications = $notifications->map(function ($notification) {
+            return [
+                'id' => $notification->id,
+                'message' => $notification->data['message'] ?? 'No message available',
+                'icon' => match ($notification->type) {
+                    'App\\Notifications\\LowStockNotification' => 'fa-solid fa-box',
+                    'App\\Notifications\\ContactReceivedMessage' => 'fas fa-envelope',
+                    default => 'fas fa-bell',
+                },
+                'redirect_route' => match ($notification->type) {
+                    'App\\Notifications\\LowStockNotification' => route('admin.products'),
+                    'App\\Notifications\\ContactReceivedMessage' => route('admin.contacts'),
+                    default => '#',
+                },
+                'created_at' => $notification->created_at->diffForHumans(),
+                'read_at' => $notification->read_at,
+            ];
+        });
 
-    return response()->json([
-        'unreadCount' => $user->unreadNotifications->count(),
-        'notifications' => $formattedNotifications,
-    ]);
-}
+        return response()->json([
+            'unreadCount' => $user->unreadNotifications->count(),
+            'notifications' => $formattedNotifications,
+        ]);
+    }
 
-    
 
-    
+
+
     // Delete multiple notifications
     public function deleteMultipleNotifications(Request $request)
     {
         $notificationIds = $request->input('notification_ids');
         Auth::user()->notifications()->whereIn('id', $notificationIds)->delete();
-    
+
         return response()->json([
             'status' => 'success',
         ]);
     }
-    
+
     // Reports Page
     public function generateReport(Request $request)
     {
@@ -1211,14 +1211,14 @@ class AdminController extends Controller
         $orders = Order::orderBy('created_at', 'DESC')->take(10)->get();
 
         // Fetch dashboard data for the selected month and year
-        $dashboardDatas = DB::select("SELECT 
+        $dashboardDatas = DB::select("SELECT
                                         SUM(total) AS TotalAmount,
                                         SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                                         SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
                                         SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount,
                                         COUNT(*) AS Total,
                                         SUM(IF(status = 'reserved', 1, 0)) AS TotalReserved,
-                                        SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp, 
+                                        SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp,
                                         SUM(IF(status = 'canceled', 1, 0)) AS TotalCanceled
                                       FROM Orders
                                       WHERE created_at BETWEEN ? AND ?", [$startOfMonth, $endOfMonth]);
@@ -1252,7 +1252,7 @@ class AdminController extends Controller
         foreach ($weekRanges as $week => [$startOfSelectedWeek, $endOfSelectedWeek]) {
             // Fetch total amounts for the week
             $dashboardData = DB::select(
-                "SELECT 
+                "SELECT
                                             SUM(total) AS TotalAmount,
                                             SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                                             SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
@@ -1285,17 +1285,17 @@ class AdminController extends Controller
                                         IFNULL(D.TotalAmount, 0) AS TotalAmount,
                                         IFNULL(D.TotalReservedAmount, 0) AS TotalReservedAmount,
                                         IFNULL(D.TotalPickedUpAmount, 0) AS TotalPickedUpAmount,
-                                        IFNULL(D.TotalCanceledAmount, 0) AS TotalCanceledAmount 
+                                        IFNULL(D.TotalCanceledAmount, 0) AS TotalCanceledAmount
                                      FROM month_names M
                                      LEFT JOIN (
-                                         SELECT 
+                                         SELECT
                                              MONTH(created_at) AS MonthNo,
                                              SUM(total) AS TotalAmount,
                                              SUM(IF(status='reserved', total, 0)) AS TotalReservedAmount,
                                              SUM(IF(status='pickedup', total, 0)) AS TotalPickedUpAmount,
                                              SUM(IF(status='canceled', total, 0)) AS TotalCanceledAmount
-                                         FROM Orders 
-                                         WHERE YEAR(created_at) = ? 
+                                         FROM Orders
+                                         WHERE YEAR(created_at) = ?
                                          GROUP BY MONTH(created_at)
                                      ) D ON D.MonthNo = M.id
                                      ORDER BY M.id", [$selectedYear]);
@@ -1340,7 +1340,7 @@ class AdminController extends Controller
                                         SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                                         SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
                                         SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
-                                       FROM Orders 
+                                       FROM Orders
                                        WHERE created_at BETWEEN ? AND ?
                                        GROUP BY DAYOFWEEK(created_at), DAYNAME(created_at)
                                        ORDER BY DayNo",
@@ -1438,7 +1438,7 @@ class AdminController extends Controller
             )
             ->groupBy('products.id', 'products.name')
             ->orderByDesc('total_orders')
-            ->limit(5)
+            ->limit(10)
             ->get();
 
         // Least bought products data - simplified query for testing
@@ -1450,7 +1450,7 @@ class AdminController extends Controller
             )
             ->groupBy('products.id', 'products.name')
             ->orderBy('total_orders')
-            ->limit(5)
+            ->limit(10)
             ->get();
 
         // Prepare data for charts
@@ -1477,35 +1477,34 @@ class AdminController extends Controller
 
     public function generateUser(Request $request)
     {
-        // Initialize variables for the existing month/year report
-        $currentYear = Carbon::now()->year;
+        // Set default year and month from current date.
+        $currentYear  = Carbon::now()->year;
         $currentMonth = Carbon::now()->month;
         $selectedYear = $request->input('year', $currentYear);
         $selectedMonth = $request->input('month', $currentMonth);
 
-        // Initialize variables for the new date range report
-        $newUsersCount = null;
-        $newUsers = null;
-        $startDate = null;
-        $endDate = null;
-        $chartData = null;
+        // Retrieve available weeks from the seeded week_names table.
+        $availableWeeks = DB::table('week_names')->orderBy('week_number')->get();
 
-        // Check if the date range form was submitted
+        // (Optional) Variables for a custom date-range report.
+        $newUsersCount = null;
+        $newUsers      = null;
+        $startDate     = null;
+        $endDate       = null;
+        $chartData     = null;
+
+        // If a date-range form was submitted, validate and compute its data.
         if ($request->isMethod('POST') && $request->has(['start_date', 'end_date'])) {
-            // Validate the request
             $request->validate([
                 'start_date' => 'required|date',
-                'end_date' => 'required|date|after_or_equal:start_date',
+                'end_date'   => 'required|date|after_or_equal:start_date',
             ]);
 
-            // Retrieve input and parse dates
             $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
-            $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
+            $endDate   = Carbon::parse($request->input('end_date'))->endOfDay();
 
-            // Query the database for new users within the date range
             $newUsersCount = User::whereBetween('created_at', [$startDate, $endDate])->count();
 
-            // Aggregate user registrations by day
             $userRegistrations = User::select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COUNT(*) as count')
@@ -1515,45 +1514,53 @@ class AdminController extends Controller
                 ->orderBy('date', 'asc')
                 ->get();
 
-            // Prepare data for ApexCharts
             $chartData = [
-                'dates' => $userRegistrations->pluck('date')->map(function ($date) {
+                'dates'  => $userRegistrations->pluck('date')->map(function ($date) {
                     return Carbon::parse($date)->format('Y-m-d');
                 })->toArray(),
                 'counts' => $userRegistrations->pluck('count')->toArray(),
             ];
 
-            // Retrieve user details
             $newUsers = User::whereBetween('created_at', [$startDate, $endDate])->get();
         }
 
-        // Existing recent users
+        // Retrieve statistics for the dashboard.
+        $totalUsers = User::count();
+        $newUsersThisMonth = User::whereYear('created_at', $currentYear)
+            ->whereMonth('created_at', $currentMonth)
+            ->count();
+        $activeUsers = User::where('isDefault', false)->count(); // Customize your query as needed.
+        // Calculate a dummy growth rate (adjust your logic as necessary)
+        $growthRate = ($totalUsers > 0) ? (($newUsersThisMonth / $totalUsers) * 100) : 0;
+
+        // Retrieve recently registered users (limit 10).
         $recentUsers = User::orderBy('created_at', 'DESC')->take(10)->get();
 
-        // Monthly user data for the selected year
+        // === Monthly Chart Data ===
         $userRegistrations = DB::select("
             SELECT COUNT(*) AS TotalUsers, MONTH(created_at) AS MonthNo
             FROM users
             WHERE YEAR(created_at) = ?
             GROUP BY MonthNo
-            ORDER BY MonthNo", [$selectedYear]);
+            ORDER BY MonthNo
+        ", [$selectedYear]);
 
+        // Build an array with one entry per month (fill missing months with 0).
         $monthlyData = array_fill(1, 12, 0);
         foreach ($userRegistrations as $data) {
             $monthlyData[$data->MonthNo] = $data->TotalUsers;
         }
         $userRegistrationsByMonth = implode(',', $monthlyData);
 
-        // Weekly user data
+        // === Weekly Chart Data ===
         $weeklyData = array_fill(1, 6, 0);
         $userCounts = DB::table('users')
-            ->selectRaw('WEEK(created_at, 1) - WEEK(DATE_SUB(created_at, INTERVAL DAYOFMONTH(created_at) - 1 DAY), 1) + 1 as week_number')
+            ->selectRaw('WEEK(created_at, 1) - WEEK(DATE_SUB(created_at, INTERVAL DAYOFMONTH(created_at)-1 DAY), 1) + 1 as week_number')
             ->selectRaw('COUNT(*) as count')
             ->whereYear('created_at', $selectedYear)
             ->whereMonth('created_at', $selectedMonth)
             ->groupBy('week_number')
             ->get();
-
         foreach ($userCounts as $count) {
             $weekIndex = $count->week_number;
             if (isset($weeklyData[$weekIndex])) {
@@ -1562,33 +1569,65 @@ class AdminController extends Controller
         }
         $weeklyChartData = implode(',', $weeklyData);
 
-        // Daily user data
-        $dailyData = array_fill(0, 7, 0);
+        // === Daily Chart Data (Filtered by Week) ===
+        // Determine start and end of the selected month.
+        $startOfMonth = Carbon::createFromDate($selectedYear, $selectedMonth, 1)->startOfMonth();
+        $endOfMonth   = Carbon::createFromDate($selectedYear, $selectedMonth, 1)->endOfMonth();
+
+        // Calculate week ranges for the month.
+        $weekRanges = [];
+        for ($week = 1; $week <= 6; $week++) {
+            $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek(Carbon::MONDAY);
+            $endOfWeek   = $startOfWeek->copy()->endOfWeek(Carbon::SUNDAY);
+
+            if ($startOfWeek->lt($startOfMonth)) {
+                $startOfWeek = $startOfMonth;
+            }
+            if ($endOfWeek->gt($endOfMonth)) {
+                $endOfWeek = $endOfMonth;
+            }
+            if ($startOfWeek->lte($endOfMonth)) {
+                $weekRanges[$week] = [$startOfWeek, $endOfWeek];
+            }
+        }
+
+        // Get selected week from the request; default to week 1.
+        $selectedWeekId = $request->input('week', 1);
+        if (!array_key_exists($selectedWeekId, $weekRanges)) {
+            $selectedWeekId = 1;
+        }
+        list($dailyStart, $dailyEnd) = $weekRanges[$selectedWeekId];
+
+        // Query daily registration counts within the selected week.
         $dailyCounts = DB::table('users')
-            ->selectRaw('DAYOFWEEK(created_at) as day_of_week')
-            ->selectRaw('COUNT(*) as count')
-            ->whereYear('created_at', $selectedYear)
-            ->whereMonth('created_at', $selectedMonth)
-            ->groupBy('day_of_week')
+            ->selectRaw('DAYNAME(created_at) as day_name, DAYOFWEEK(created_at) as day_of_week, COUNT(*) as count')
+            ->whereBetween('created_at', [$dailyStart, $dailyEnd])
+            ->groupBy('day_of_week', 'day_name')
+            ->orderBy('day_of_week')
             ->get();
 
+        // We want to display data for Monday through Sunday.
+        $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        $dailyData = array_fill(0, 7, 0);
         foreach ($dailyCounts as $count) {
-            $dayIndex = $count->day_of_week - 2;
-            if (isset($dailyData[$dayIndex])) {
-                $dailyData[$dayIndex] = $count->count;
+            $index = array_search($count->day_name, $daysOfWeek);
+            if ($index !== false) {
+                $dailyData[$index] = $count->count;
             }
         }
         $dailyChartData = implode(',', $dailyData);
 
-        // Available months and year range for the form
+        // Retrieve available months from the seeded month_names table.
         $availableMonths = DB::table('month_names')->get();
         $yearRange = range($currentYear, $currentYear - 10);
 
-        // Page Title
         $pageTitle = 'User Registrations Report';
 
-        // Return the view with all necessary data
         return view('admin.report-user', compact(
+            'totalUsers',
+            'newUsersThisMonth',
+            'activeUsers',
+            'growthRate',
             'recentUsers',
             'userRegistrationsByMonth',
             'weeklyChartData',
@@ -1597,12 +1636,14 @@ class AdminController extends Controller
             'yearRange',
             'selectedMonth',
             'selectedYear',
+            'availableWeeks',
             'pageTitle',
             'newUsersCount',
             'newUsers',
             'startDate',
             'endDate',
-            'chartData'
+            'chartData',
+            'selectedWeekId'
         ))->with('showChart', true);
     }
 
@@ -1700,48 +1741,51 @@ class AdminController extends Controller
 
     public function listBillingStatements(Request $request)
     {
-        // Validate the date inputs
         $validator = Validator::make($request->all(), [
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
             'today' => 'nullable|boolean',
+            'search' => 'nullable|string',
         ]);
 
-        // If validation fails, redirect back with errors and input
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Check if "Today" filter is applied
         if ($request->has('today') && $request->input('today') == '1') {
             $startDate = Carbon::today()->toDateString();
             $endDate = Carbon::today()->toDateString();
         } else {
-            // Get start_date and end_date from the request
             $startDate = $request->input('start_date');
             $endDate = $request->input('end_date');
         }
 
-        // Additional validation: Ensure end_date is after or equal to start_date
         if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
             return redirect()->back()->withErrors(['end_date' => 'The end date must be after or equal to the start date.'])->withInput();
         }
 
-        // Build the query for orders
         $ordersQuery = Order::with('user');
 
-        // Apply date filter if dates are provided
+        if ($request->has('search') && $request->input('search')) {
+            $searchTerm = $request->input('search');
+            $ordersQuery->whereHas('user', function ($query) use ($searchTerm) {
+                $query->where('name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('email', 'like', '%' . $searchTerm . '%');
+            });
+        }
+
         if ($startDate && $endDate) {
             $start = Carbon::parse($startDate)->startOfDay();
             $end = Carbon::parse($endDate)->endOfDay();
-
             $ordersQuery->whereBetween('created_at', [$start, $end]);
         }
 
-        $orders = $ordersQuery->orderBy('created_at', 'desc')->get();
+        $orders = $ordersQuery->orderBy('created_at', 'desc')->paginate(20);
 
         return view('admin.report-statements', compact('orders', 'startDate', 'endDate'));
     }
+
+
 
     // DomPDF for Reports Products Page
     public function downloadBillingStatements(Request $request)
@@ -1796,10 +1840,10 @@ class AdminController extends Controller
             'startDate' => $startDate,
             'endDate' => $endDate
         ])
-        ->setPaper('A4', 'portrait'); 
+            ->setPaper('A4', 'portrait');
 
-        
-       
+
+
 
         // Return the generated PDF for download
         return $pdf->download('billing_statements.pdf');
@@ -1821,6 +1865,9 @@ class AdminController extends Controller
             'total_reserved_amount_d' => $request->input('total_reserved_amount_d'),
             'total_picked_up_amount_d' => $request->input('total_picked_up_amount_d'),
             'total_canceled_amount_d' => $request->input('total_canceled_amount_d'),
+            'selectedYear'             => $request->input('selected_year'),
+            'selectedMonth'            => (object)['name' => $request->input('selected_month_name')],
+            'selectedWeekId'           => $request->input('selected_week_id'),
         ];
 
         // Generate the PDF using the data only (no graph images)
@@ -1850,7 +1897,7 @@ class AdminController extends Controller
             )
             ->groupBy('products.id', 'products.name')
             ->orderByDesc('total_orders')
-            ->limit(5)
+            ->limit(10)
             ->get();
 
         $leastBoughtProducts = DB::table('products')
@@ -1861,7 +1908,7 @@ class AdminController extends Controller
             )
             ->groupBy('products.id', 'products.name')
             ->orderBy('total_orders')
-            ->limit(5)
+            ->limit(10)
             ->get();
 
         // Prepare data for the PDF view
@@ -1874,9 +1921,11 @@ class AdminController extends Controller
         $dompdf = new Dompdf();
         $options = new Options();
         $options->set("isHtml5ParserEnabled", true);
+        // Uncomment the following line if you need to load remote images:
+        $options->setIsRemoteEnabled(true);
         $dompdf->setOptions($options);
 
-        // Load HTML content
+        // Load HTML content from the view (which now includes the header and images)
         $html = view('admin.pdf-products', compact(
             'mostFrequentLabels',
             'mostFrequentData',
@@ -1893,12 +1942,13 @@ class AdminController extends Controller
     }
 
 
+
     public function getMonthlyRegisteredUsers($month, $year)
     {
         // Fetch the number of users registered in the specified month and year
         return User::whereMonth('created_at', $month)
-                ->whereYear('created_at', $year)
-                ->count() ?: 0;
+            ->whereYear('created_at', $year)
+            ->count() ?: 0;
     }
 
     public function getWeeklyRegisteredUsers($month, $year)
@@ -1906,8 +1956,8 @@ class AdminController extends Controller
         // Fetch the number of users registered weekly in the specified month and year
         // Modify as per your requirements
         return User::whereMonth('created_at', $month)
-                ->whereYear('created_at', $year)
-                ->count() ?: 0;
+            ->whereYear('created_at', $year)
+            ->count() ?: 0;
     }
 
     public function getDailyRegisteredUsers($month, $year)
@@ -1915,16 +1965,16 @@ class AdminController extends Controller
         // Fetch the number of users registered daily in the specified month and year
         // Modify as per your requirements
         return User::whereMonth('created_at', $month)
-                ->whereYear('created_at', $year)
-                ->groupBy(DB::raw('DAY(created_at)'))
-                ->select(DB::raw('DAY(created_at) as day'), DB::raw('count(*) as count'))
-                ->get() ?: [];
+            ->whereYear('created_at', $year)
+            ->groupBy(DB::raw('DAY(created_at)'))
+            ->select(DB::raw('DAY(created_at) as day'), DB::raw('count(*) as count'))
+            ->get() ?: [];
     }
 
     public function getRecentUsers()
     {
         // Fetch the most recent users
-        return User::latest()->take(5)->get() ?: [];// Adjust as necessary
+        return User::latest()->take(5)->get() ?: []; // Adjust as necessary
     }
 
 
@@ -1934,41 +1984,102 @@ class AdminController extends Controller
 
     public function downloadUserReportPdf(Request $request)
     {
-        // Fetch form data for selected month and year
-        $selectedMonth = $request->input('month');
-        $selectedYear = $request->input('year');
+        $selectedYear  = $request->input('selectedYear');
+        $selectedMonth = $request->input('selectedMonth');
+        $selectedWeekId = $request->input('week', 1);
 
-        // Fetch the chart images (base64)
-        $monthlyChartImage = $request->input('monthlyChartImage');
-        $weeklyChartImage = $request->input('weeklyChartImage');
-        $dailyChartImage = $request->input('dailyChartImage');
+        // --- Recompute Monthly Data ---
+        $userRegistrations = DB::select("
+            SELECT COUNT(*) AS TotalUsers, MONTH(created_at) AS MonthNo
+            FROM users
+            WHERE YEAR(created_at) = ?
+            GROUP BY MonthNo
+            ORDER BY MonthNo
+        ", [$selectedYear]);
 
-        // Fetch the necessary data for the selected month and year
-        $monthlyRegisteredUsers = $this->getMonthlyRegisteredUsers($selectedMonth, $selectedYear);
-        $weeklyRegisteredUsers = $this->getWeeklyRegisteredUsers($selectedMonth, $selectedYear);
-        $dailyRegisteredUsers = $this->getDailyRegisteredUsers($selectedMonth, $selectedYear);
-        $recentUsers = $this->getRecentUsers();
+        $monthlyData = array_fill(1, 12, 0);
+        foreach ($userRegistrations as $data) {
+            $monthlyData[$data->MonthNo] = $data->TotalUsers;
+        }
+        $userRegistrationsByMonth = implode(',', $monthlyData);
 
-        // Prepare data for the PDF
-        $data = [
-            'selectedMonth' => $selectedMonth,
-            'selectedYear' => $selectedYear,
-            'monthlyRegisteredUsers' => $monthlyRegisteredUsers,
-            'weeklyRegisteredUsers' => $weeklyRegisteredUsers,
-            'dailyRegisteredUsers' => $dailyRegisteredUsers,
-            'recentUsers' => $recentUsers,
-            'monthlyChartImage' => $monthlyChartImage,
-            'weeklyChartImage' => $weeklyChartImage,
-            'dailyChartImage' => $dailyChartImage,
+        // --- Recompute Weekly Data ---
+        $weeklyData = array_fill(1, 6, 0);
+        $userCounts = DB::table('users')
+            ->selectRaw('WEEK(created_at, 1) - WEEK(DATE_SUB(created_at, INTERVAL DAYOFMONTH(created_at)-1 DAY), 1) + 1 as week_number')
+            ->selectRaw('COUNT(*) as count')
+            ->whereYear('created_at', $selectedYear)
+            ->whereMonth('created_at', $selectedMonth)
+            ->groupBy('week_number')
+            ->get();
+
+        foreach ($userCounts as $count) {
+            $weekIndex = $count->week_number;
+            if (isset($weeklyData[$weekIndex])) {
+                $weeklyData[$weekIndex] = $count->count;
+            }
+        }
+        $weeklyChartData = implode(',', $weeklyData);
+
+        // --- Recompute Daily Data (for the selected week) ---
+        $startOfMonth = \Carbon\Carbon::createFromDate($selectedYear, $selectedMonth, 1)->startOfMonth();
+        $endOfMonth   = \Carbon\Carbon::createFromDate($selectedYear, $selectedMonth, 1)->endOfMonth();
+        $weekRanges = [];
+
+        for ($week = 1; $week <= 6; $week++) {
+            $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek(\Carbon\Carbon::MONDAY);
+            $endOfWeek   = $startOfWeek->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
+
+            if ($startOfWeek->lt($startOfMonth)) {
+                $startOfWeek = $startOfMonth;
+            }
+            if ($endOfWeek->gt($endOfMonth)) {
+                $endOfWeek = $endOfMonth;
+            }
+            if ($startOfWeek->lte($endOfMonth)) {
+                $weekRanges[$week] = [$startOfWeek, $endOfWeek];
+            }
+        }
+        list($dailyStart, $dailyEnd) = $weekRanges[$selectedWeekId];
+
+        $dailyCounts = DB::table('users')
+            ->selectRaw('DAYNAME(created_at) as day_name, DAYOFWEEK(created_at) as day_of_week, COUNT(*) as count')
+            ->whereBetween('created_at', [$dailyStart, $dailyEnd])
+            ->groupBy('day_of_week', 'day_name')
+            ->orderBy('day_of_week')
+            ->get();
+
+        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        $dailyData = array_fill(0, 7, 0);
+        foreach ($dailyCounts as $count) {
+            $index = array_search($count->day_name, $days);
+            if ($index !== false) {
+                $dailyData[$index] = $count->count;
+            }
+        }
+        $dailyChartData = implode(',', $dailyData);
+
+        // Get the recent users.
+        $recentUsers = User::orderBy('created_at', 'DESC')->take(10)->get();
+
+        // Prepare data for the PDF view.
+        $pdfData = [
+            'recentUsers'               => $recentUsers,
+            'userRegistrationsByMonth'  => $userRegistrationsByMonth,
+            'weeklyChartData'           => $weeklyChartData,
+            'dailyChartData'            => $dailyChartData,
+            'selectedMonth'             => $selectedMonth,
+            'selectedYear'              => $selectedYear,
+            'selectedWeekId'            => $selectedWeekId,
         ];
 
-        // Generate the PDF
-        $pdf = PDF::loadView('admin.report-user', $data)
-            ->setPaper('A4', 'portrait'); // Set paper size to A4, portrait orientation
+        $pdf = PDF::loadView('admin.pdf-user', $pdfData)
+            ->setPaper('a4', 'portrait');
 
-        // Return the PDF file
-        return $pdf->download('user_report.pdf');
+        return $pdf->download('user_report_' . $selectedYear . '_' . $selectedMonth . '.pdf');
     }
+
+
 
 
 
@@ -2156,14 +2267,14 @@ class AdminController extends Controller
     }
 
     public function updateStatus(Request $request,  Reservation $reservation)
-    {   
+    {
 
         $reservation->update([
             'payment_status' => $request->input('payment_status'),
             'rent_status' => $request->input('rent_status'),
         ]);
-    
-        
+
+
         // Validate the incoming request
         $request->validate([
             'reservation_id' => 'required|exists:reservations,id',
@@ -2191,8 +2302,8 @@ class AdminController extends Controller
             ], 500);
         }
     }
-    
-    
+
+
     // public function filterReservations(Request $request)
     // {
     //     $query = Reservation::with(['user', 'rental']);
@@ -2232,7 +2343,7 @@ class AdminController extends Controller
 
         // Filter by Rental Type
         if ($request->filled('rental_type')) {
-            $query->whereHas('rental', function($q) use ($request) {
+            $query->whereHas('rental', function ($q) use ($request) {
                 $q->where('name', $request->rental_type);
             });
         }
@@ -2370,7 +2481,7 @@ class AdminController extends Controller
         return view('admin.user-edit', compact('user'));
     }
 
-    
+
     public function users_update(Request $request, $id)
     {
         $request->validate([
@@ -2428,65 +2539,65 @@ class AdminController extends Controller
     }
 
     public function searchProducts(Request $request)
-{
-    $query = $request->input('query');
+    {
+        $query = $request->input('query');
 
-    // Fetch products with their related data (including variants and categories)
-    $products = Product::with(['category.parent', 'attributeValues.productAttribute'])
-        ->where('name', 'LIKE', "%{$query}%")
-        ->orWhereHas('category', function ($q) use ($query) {
-            $q->where('name', 'LIKE', "%{$query}%");
-        })
-        ->get();
+        // Fetch products with their related data (including variants and categories)
+        $products = Product::with(['category.parent', 'attributeValues.productAttribute'])
+            ->where('name', 'LIKE', "%{$query}%")
+            ->orWhereHas('category', function ($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%");
+            })
+            ->get();
 
-    // Add total quantity, variant prices, and stock status to each product
-    foreach ($products as $product) {
-        $variantPrices = [];
-        $totalQuantity = 0;
+        // Add total quantity, variant prices, and stock status to each product
+        foreach ($products as $product) {
+            $variantPrices = [];
+            $totalQuantity = 0;
 
-        // If the product has variants, calculate total quantity and variant prices
-        if ($product->attributeValues->isNotEmpty()) {
-            foreach ($product->attributeValues as $variant) {
+            // If the product has variants, calculate total quantity and variant prices
+            if ($product->attributeValues->isNotEmpty()) {
+                foreach ($product->attributeValues as $variant) {
+                    $variantPrices[] = [
+                        'value' => $variant->value,
+                        'price' => $variant->price
+                    ];
+                    $totalQuantity += $variant->quantity; // Sum of variant quantities
+                }
+            } else {
+                // If no variants, use the product's base quantity and price
+                $totalQuantity = $product->quantity;
                 $variantPrices[] = [
-                    'value' => $variant->value,
-                    'price' => $variant->price
+                    'value' => 'Base Price',
+                    'price' => $product->price
                 ];
-                $totalQuantity += $variant->quantity; // Sum of variant quantities
             }
-        } else {
-            // If no variants, use the product's base quantity and price
-            $totalQuantity = $product->quantity;
-            $variantPrices[] = [
-                'value' => 'Base Price',
-                'price' => $product->price
-            ];
+
+            // Add the calculated data to the product
+            $product->total_quantity = $totalQuantity;
+            $product->variant_prices = $variantPrices;
+
+            // Set stock status based on total quantity
+            if ($totalQuantity == 0) {
+                $product->stock_status = "Out of Stock";
+                $product->badge_class = "badge-danger"; // Badge for out of stock
+            } elseif ($totalQuantity <= $product->outofstock_quantity) {
+                $product->stock_status = "Out of Stock"; // Out of stock level
+                $product->badge_class = "badge-danger"; // Badge for out of stock
+            } elseif ($totalQuantity <= $product->reorder_quantity) {
+                $product->stock_status = "Reorder Level"; // Set reorder level if quantity is below reorder threshold
+                $product->badge_class = "badge-warning"; // Badge for reorder level
+            } else {
+                $product->stock_status = "In Stock"; // This can be used if you have some threshold
+                $product->badge_class = "badge-success"; // Badge for in stock
+            }
+
+            // Set the product price (either base price or first variant's price)
+            $product->price = $product->attributeValues->isNotEmpty() ? $product->attributeValues->first()->price : $product->price;
         }
 
-        // Add the calculated data to the product
-        $product->total_quantity = $totalQuantity;
-        $product->variant_prices = $variantPrices;
-
-        // Set stock status based on total quantity
-        if ($totalQuantity == 0) {
-            $product->stock_status = "Out of Stock";
-            $product->badge_class = "badge-danger"; // Badge for out of stock
-        } elseif ($totalQuantity <= $product->outofstock_quantity) {
-            $product->stock_status = "Out of Stock"; // Out of stock level
-            $product->badge_class = "badge-danger"; // Badge for out of stock
-        } elseif ($totalQuantity <= $product->reorder_quantity) {
-            $product->stock_status = "Reorder Level"; // Set reorder level if quantity is below reorder threshold
-            $product->badge_class = "badge-warning"; // Badge for reorder level
-        } else {
-            $product->stock_status = "In Stock"; // This can be used if you have some threshold
-            $product->badge_class = "badge-success"; // Badge for in stock
-        }
-
-        // Set the product price (either base price or first variant's price)
-        $product->price = $product->attributeValues->isNotEmpty() ? $product->attributeValues->first()->price : $product->price;
+        return response()->json($products);
     }
-
-    return response()->json($products);
-}
 
 
 
@@ -2512,7 +2623,7 @@ class AdminController extends Controller
         // Define rental names that require specific fields
         $priceRequiredNames = ['Male Dormitory', 'Female Dormitory', 'International House II'];
         $internalExternalRequiredNames = ['International Convention Center', 'Rolle Hall', 'Swimming Pool'];
-        // dd($request->all());    
+        // dd($request->all());
         try {
             $rules = [
                 'name' => 'required|unique:rentals,name',
@@ -2913,7 +3024,7 @@ class AdminController extends Controller
         // Initial query for reservations with related models
         $query = Reservation::with('rental', 'user', 'dormitoryRoom')
             ->orderBy('created_at', 'DESC');
-    
+
         // Search functionality
         if ($request->has('search')) {
             $search = $request->input('search');
@@ -2925,16 +3036,16 @@ class AdminController extends Controller
                 $q->where('name', 'like', "%{$search}%");
             });
         }
-    
+
         // Fetch reservations with pagination
         $reservations = $query->paginate(10)->withQueryString();
-    
+
         // List of rental names that need specific payment statuses
         $rentalNames = ['Male Dormitory', 'Female Dormitory', 'International House II'];
-    
+
         // Get rental IDs that match these names
         $filteredRentals = Rental::whereIn('name', $rentalNames)->pluck('id')->toArray();
-    
+
         // Get available dormitory rooms for the filtered rentals
         $availableRooms = DormitoryRoom::whereIn('rental_id', $filteredRentals)
             ->withCount([
@@ -2947,20 +3058,20 @@ class AdminController extends Controller
                 return $room->reservations_count < $room->room_capacity;
             })
             ->groupBy('rental_id');
-    
+
         // Filter reservations to only include those with rental IDs from the filtered rentals
         $reservations = $reservations->filter(function ($reservation) use ($filteredRentals) {
             return in_array($reservation->rental_id, $filteredRentals);
         });
-    
+
         // Return the view with the filtered data
         return view("admin.reservation", compact('reservations', 'availableRooms'));
     }
-    
-    
 
 
-    
+
+
+
 
     public function reservationHistory($reservation_id)
     {
@@ -3151,7 +3262,7 @@ class AdminController extends Controller
 
         // Fetch dashboard data for the selected month and year
         $dashboardDatas = DB::select("
-            SELECT 
+            SELECT
                 SUM(total_price) AS TotalPaymentAmount,
                 SUM(IF(payment_status = 'pending', total_price, 0)) AS TotalPaymentPendingAmount,
                 SUM(IF(payment_status = 'completed', total_price, 0)) AS TotalPaymentCompletedAmount,
@@ -3198,7 +3309,7 @@ class AdminController extends Controller
         foreach ($weekRanges as $week => [$startOfSelectedWeek, $endOfSelectedWeek]) {
             // Fetch total amounts for the week
             $weeklyData = DB::select("
-                SELECT 
+                SELECT
                     SUM(total_price) AS TotalPaymentAmount,
                     SUM(IF(payment_status = 'pending', total_price, 0)) AS TotalPaymentPendingAmount,
                     SUM(IF(payment_status = 'completed', total_price, 0)) AS TotalPaymentCompletedAmount,
@@ -3226,17 +3337,17 @@ class AdminController extends Controller
                 IFNULL(D.TotalPaymentAmount, 0) AS TotalPaymentAmount,
                 IFNULL(D.TotalPaymentPendingAmount, 0) AS TotalPaymentPendingAmount,
                 IFNULL(D.TotalPaymentCompletedAmount, 0) AS TotalPaymentCompletedAmount,
-                IFNULL(D.TotalPaymentCanceledAmount, 0) AS TotalPaymentCanceledAmount 
+                IFNULL(D.TotalPaymentCanceledAmount, 0) AS TotalPaymentCanceledAmount
             FROM month_names M
             LEFT JOIN (
-                SELECT 
+                SELECT
                     MONTH(created_at) AS MonthNo,
                     SUM(total_price) AS TotalPaymentAmount,
                     SUM(IF(payment_status='pending', total_price, 0)) AS TotalPaymentPendingAmount,
                     SUM(IF(payment_status='completed', total_price, 0)) AS TotalPaymentCompletedAmount,
                     SUM(IF(payment_status='canceled', total_price, 0)) AS TotalPaymentCanceledAmount
-                FROM reservations 
-                WHERE YEAR(created_at) = ? 
+                FROM reservations
+                WHERE YEAR(created_at) = ?
                 GROUP BY MONTH(created_at)
             ) D ON D.MonthNo = M.id
             ORDER BY M.id
@@ -3274,12 +3385,12 @@ class AdminController extends Controller
 
         // Query for daily data within the selected week, grouped by day
         $dailyDatasRaw = DB::select("
-            SELECT 
+            SELECT
                 DAYNAME(created_at) AS DayName,
                 SUM(IF(payment_status = 'pending', total_price, 0)) AS TotalPaymentPendingAmount,
                 SUM(IF(payment_status = 'completed', total_price, 0)) AS TotalPaymentCompletedAmount,
                 SUM(IF(payment_status = 'canceled', total_price, 0)) AS TotalPaymentCanceledAmount
-            FROM reservations 
+            FROM reservations
             WHERE created_at BETWEEN ? AND ?
             GROUP BY DAYNAME(created_at)
             ORDER BY FIELD(DAYNAME(created_at), 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
@@ -3353,7 +3464,7 @@ class AdminController extends Controller
         ));
     }
 
-    // Rental Reports PDF 
+    // Rental Reports PDF
     public function downloadPdfRentals(Request $request)
     {
         // Validate incoming request data
@@ -3639,16 +3750,16 @@ class AdminController extends Controller
 
 
 
-    // try code 
+    // try code
 
     public function showUserReports(Request $request)
     {
         // Get the current year and set the selected year from the request or default to the current year
         $selectedYear = $request->year ?? Carbon::now()->year;
-    
+
         // Get the current month and set the selected month from the request or default to the current month
         $selectedMonth = $request->month ?? Carbon::now()->month;
-    
+
         // Manually define the months if no Month model exists
         $availableMonths = collect([
             (object) ['id' => 1, 'name' => 'January'],
@@ -3664,18 +3775,18 @@ class AdminController extends Controller
             (object) ['id' => 11, 'name' => 'November'],
             (object) ['id' => 12, 'name' => 'December']
         ]);
-    
+
         // Generate year range (e.g., last 5 years for the dropdown)
         $yearRange = range(Carbon::now()->year - 5, Carbon::now()->year);
-    
+
         // Fetch user registration data (implement your logic here)
         $userRegistrationsByMonth = $this->getUserRegistrationsByMonth($selectedYear);
         $weeklyChartData = $this->getUserRegistrationsWeekly($selectedMonth, $selectedYear);
         $dailyChartData = $this->getUserRegistrationsDaily($selectedMonth, $selectedYear);
-    
+
         // Get recent users (you can adjust this query to fetch actual recent users)
         $recentUsers = User::orderBy('created_at', 'desc')->take(5)->get();
-    
+
         // Return the view and use 'with()' to pass the variable
         return view('admin.report-user')
             ->with('availableMonths', $availableMonths)
@@ -3687,13 +3798,6 @@ class AdminController extends Controller
             ->with('dailyChartData', $dailyChartData)
             ->with('recentUsers', $recentUsers);
     }
-
-
-
-    
-    /**
-     * Generate the user report based on the selected date range.
-     */
     public function generateUserReports(Request $request)
     {
         // Validate the request
@@ -3705,7 +3809,7 @@ class AdminController extends Controller
         $availableMonths = collect(range(1, 12))->map(function ($month) {
             return Carbon::createFromDate(null, $month, 1)->format('F');
         });
-        
+
 
         // Retrieve input and parse dates
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
@@ -3750,11 +3854,11 @@ class AdminController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
-    
+
         // Retrieve input and parse dates
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
         $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
-    
+
         // Query sales data grouped by day
         $salesData = Order::select(
             DB::raw('DATE(created_at) as date'),
@@ -3763,11 +3867,11 @@ class AdminController extends Controller
             DB::raw('SUM(CASE WHEN status = "pickedup" THEN total ELSE 0 END) as pickedup_sales'),
             DB::raw('SUM(CASE WHEN status = "canceled" THEN total ELSE 0 END) as canceled_sales')
         )
-        ->whereBetween('created_at', [$startDate, $endDate])
-        ->groupBy('date')
-        ->orderBy('date', 'asc')
-        ->get();
-    
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+
         // Aggregate totals
         $totalOrders = Order::whereBetween('created_at', [$startDate, $endDate])->count();
         $reservedSalesTotal = Order::where('status', 'reserved')
@@ -3779,7 +3883,7 @@ class AdminController extends Controller
         $canceledSalesTotal = Order::where('status', 'canceled')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->sum('total');
-    
+
         // Prepare data for the chart
         $chartData = [
             'dates' => $salesData->pluck('date')->toArray(),
@@ -3792,54 +3896,57 @@ class AdminController extends Controller
             'pickedup_sales_total' => $pickedUpSalesTotal,
             'canceled_sales_total' => $canceledSalesTotal,
         ];
-    
+
         // Pass data to the view
         return view('admin.input-sales', compact('chartData', 'startDate', 'endDate'));
     }
-
-    public function generateInputRentalReports(Request $request)
+    public function generateInputUsers(Request $request)
     {
         // Validate the request
         $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
-    
-        // Parse dates
+
+        // Retrieve input and parse dates
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
         $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
-    
-        // Query rental data grouped by payment status and day
-        $rentalData = DB::table('reservations')
-            ->select(
-                DB::raw('DATE(reservation_date) as date'),
-                DB::raw('SUM(CASE WHEN payment_status = "pending" THEN total_price ELSE 0 END) as pending'),
-                DB::raw('SUM(CASE WHEN payment_status = "full payment complete" THEN total_price ELSE 0 END) as full_payment'),
-                DB::raw('SUM(CASE WHEN payment_status = "canceled" THEN total_price ELSE 0 END) as canceled'),
-                DB::raw('SUM(total_price) as total')
-            )
-            ->whereBetween('reservation_date', [$startDate, $endDate])
+
+        // Query users data grouped by registration day
+        $usersData = User::select(
+            DB::raw('DATE(created_at) as date'),
+            DB::raw('COUNT(id) as total_users'),
+            DB::raw('COUNT(CASE WHEN role = "student" THEN 1 END) as total_students'),
+            DB::raw('COUNT(CASE WHEN role = "employee" THEN 1 END) as total_employees'),
+            DB::raw('COUNT(CASE WHEN role = "non-employee" THEN 1 END) as total_non_employees')
+        )
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('date')
             ->orderBy('date', 'asc')
             ->get();
-    
+
         // Aggregate totals
-        $reportData = [
-            'dates' => $rentalData->pluck('date')->toArray(),
-            'pending' => $rentalData->pluck('pending')->toArray(),
-            'full_payment' => $rentalData->pluck('full_payment')->toArray(),
-            'canceled' => $rentalData->pluck('canceled')->toArray(),
-            'pending_total' => $rentalData->sum('pending'),
-            'full_payment_total' => $rentalData->sum('full_payment'),
-            'canceled_total' => $rentalData->sum('canceled'),
-            'total_sales' => $rentalData->sum('total'),
+        $totalUsers = User::whereBetween('created_at', [$startDate, $endDate])->count();
+        $totalStudents = User::where('role', 'student')->whereBetween('created_at', [$startDate, $endDate])->count();
+        $totalEmployees = User::where('role', 'employee')->whereBetween('created_at', [$startDate, $endDate])->count();
+        $totalNonEmployees = User::where('role', 'non-employee')->whereBetween('created_at', [$startDate, $endDate])->count();
+
+        // Prepare data for the chart
+        $chartData = [
+            'dates' => $usersData->pluck('date')->toArray(),
+            'total_users' => $usersData->pluck('total_users')->toArray(),
+            'total_students' => $usersData->pluck('total_students')->toArray(),
+            'total_employees' => $usersData->pluck('total_employees')->toArray(),
+            'total_non_employees' => $usersData->pluck('total_non_employees')->toArray(),
+            'total_users_count' => $totalUsers,
+            'total_students_count' => $totalStudents,
+            'total_employees_count' => $totalEmployees,
+            'total_non_employees_count' => $totalNonEmployees,
         ];
-    
-        // Return to view
-        return view('admin.input-rentals-reports', compact('startDate', 'endDate', 'reportData'));
+
+        // Pass data to the view
+        return view('admin.input-user', compact('chartData', 'startDate', 'endDate'));
     }
-
-
 
     public function downloadInputSales(Request $request)
     {
@@ -3847,12 +3954,12 @@ class AdminController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
-    
+
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
         $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
-    
+
         $chartImage = $request->input('chart_image'); // Retrieve the Base64 chart image
-    
+
         $salesData = Order::select(
             DB::raw('DATE(created_at) as date'),
             DB::raw('SUM(total) as total_sales'),
@@ -3860,11 +3967,11 @@ class AdminController extends Controller
             DB::raw('SUM(CASE WHEN status = "pickedup" THEN total ELSE 0 END) as pickedup_sales'),
             DB::raw('SUM(CASE WHEN status = "canceled" THEN total ELSE 0 END) as canceled_sales')
         )
-        ->whereBetween('created_at', [$startDate, $endDate])
-        ->groupBy('date')
-        ->orderBy('date', 'asc')
-        ->get();
-    
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+
         $chartData = [
             'dates' => $salesData->pluck('date')->toArray(),
             'total_sales' => $salesData->pluck('total_sales')->toArray(),
@@ -3882,25 +3989,24 @@ class AdminController extends Controller
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->sum('total'),
         ];
-    
+
         // Generate the PDF
         $pdf = new Dompdf();
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isRemoteEnabled', true);
         $pdf->setOptions($options);
-    
+
         $html = view('admin.pdf-input-sales', compact('chartData', 'startDate', 'endDate', 'chartImage'))->render();
         $pdf->loadHtml($html);
         $pdf->setPaper('A4', 'portrait');
         $pdf->render();
-    
+
         return $pdf->stream('sales-report.pdf');
     }
-    
+
     public function downloadInputUsers(Request $request)
     {
-        // Validate the request
         $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
@@ -3911,9 +4017,31 @@ class AdminController extends Controller
 
         $chartImage = $request->input('chart_image'); // Retrieve the Base64 chart image
 
-        // Query for user data
-        $newUsersCount = User::whereBetween('created_at', [$startDate, $endDate])->count();
-        $newUsers = User::whereBetween('created_at', [$startDate, $endDate])->get();
+        // Query user data grouped by registration day
+        $usersData = User::select(
+            DB::raw('DATE(created_at) as date'),
+            DB::raw('COUNT(id) as total_users'),
+            DB::raw('COUNT(CASE WHEN role = "student" THEN 1 END) as total_students'),
+            DB::raw('COUNT(CASE WHEN role = "employee" THEN 1 END) as total_employees'),
+            DB::raw('COUNT(CASE WHEN role = "non-employee" THEN 1 END) as total_non_employees')
+        )
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+
+        // Prepare data for the chart
+        $chartData = [
+            'dates' => $usersData->pluck('date')->toArray(),
+            'total_users' => $usersData->pluck('total_users')->toArray(),
+            'total_students' => $usersData->pluck('total_students')->toArray(),
+            'total_employees' => $usersData->pluck('total_employees')->toArray(),
+            'total_non_employees' => $usersData->pluck('total_non_employees')->toArray(),
+            'total_users_count' => User::whereBetween('created_at', [$startDate, $endDate])->count(),
+            'total_students_count' => User::where('role', 'student')->whereBetween('created_at', [$startDate, $endDate])->count(),
+            'total_employees_count' => User::where('role', 'employee')->whereBetween('created_at', [$startDate, $endDate])->count(),
+            'total_non_employees_count' => User::where('role', 'non-employee')->whereBetween('created_at', [$startDate, $endDate])->count(),
+        ];
 
         // Generate the PDF
         $pdf = new Dompdf();
@@ -3922,15 +4050,59 @@ class AdminController extends Controller
         $options->set('isRemoteEnabled', true);
         $pdf->setOptions($options);
 
-        $html = view('admin.pdf-input-users', compact('startDate', 'endDate', 'newUsersCount', 'newUsers', 'chartImage'))->render();
+        $html = view('admin.pdf-input-user', compact('chartData', 'startDate', 'endDate', 'chartImage'))->render();
         $pdf->loadHtml($html);
         $pdf->setPaper('A4', 'portrait');
         $pdf->render();
 
-        // Return the generated PDF as a download
         return $pdf->stream('user-report.pdf');
     }
 
+
+
+
+
+    public function generateInputRentalReports(Request $request)
+    {
+        // Validate the request
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        // Parse dates
+        $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+        $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
+
+        // Query rental data grouped by payment status and day
+        $rentalData = DB::table('reservations')
+            ->select(
+                DB::raw('DATE(reservation_date) as date'),
+                DB::raw('SUM(CASE WHEN payment_status = "pending" THEN total_price ELSE 0 END) as pending'),
+                DB::raw('SUM(CASE WHEN payment_status = "full payment complete" THEN total_price ELSE 0 END) as full_payment'),
+                DB::raw('SUM(CASE WHEN payment_status = "canceled" THEN total_price ELSE 0 END) as canceled'),
+                DB::raw('SUM(total_price) as total')
+            )
+            ->whereBetween('reservation_date', [$startDate, $endDate])
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+
+        // Aggregate totals
+        $reportData = [
+            'dates' => $rentalData->pluck('date')->toArray(),
+            'pending' => $rentalData->pluck('pending')->toArray(),
+            'full_payment' => $rentalData->pluck('full_payment')->toArray(),
+            'canceled' => $rentalData->pluck('canceled')->toArray(),
+            'pending_total' => $rentalData->sum('pending'),
+            'full_payment_total' => $rentalData->sum('full_payment'),
+            'canceled_total' => $rentalData->sum('canceled'),
+            'total_sales' => $rentalData->sum('total'),
+        ];
+
+        // Return to view
+        return view('admin.input-rentals-reports', compact('startDate', 'endDate', 'reportData'));
+    }
     public function downloadInputRentalsReports(Request $request)
     {
         // Validate the request
@@ -3987,7 +4159,4 @@ class AdminController extends Controller
         // Return the generated PDF as a download
         return $pdf->stream('rental-sales-report.pdf');
     }
-
-
-
 }
