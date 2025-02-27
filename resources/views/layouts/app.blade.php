@@ -23,8 +23,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
         integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-        <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' rel='stylesheet' />
-        <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' rel='stylesheet' />
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.8.0/pikaday.min.js"></script>
     <link rel="stylesheet"
@@ -37,7 +37,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <!-- Toastr JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    
+
     <!-- Sweet Alert JS -->
     <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11.13.1/dist/sweetalert2.all.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
@@ -48,7 +48,7 @@
     <link rel="stylesheet" href="{{ asset('css/plugins/swiper.min.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('plugins/ijaboCropTool/ijaboCropTool.min.css') }}">
-   
+
 
 
     <!-- Custom CSS -->
@@ -60,72 +60,81 @@
 
 <body data-bs-spy="scroll" data-bs-target="#goTop">
     <style>
-            /* Product Item Styling */
-      
-         #box-content-search li{
-            list-style: none;
-         }
-         #box-content-search  .product-item{
-            margin-bottom: 2px;
-         }
+        /* Product Item Styling */
 
-         .divider {
-        border-top: 1px solid #eaeaea; 
-        margin: 0; 
-        padding: 0; 
-        width: 100%; 
-        height: 1px; 
-    }
+        #box-content-search li {
+            list-style: none;
+        }
+
+        #box-content-search .product-item {
+            margin-bottom: 2px;
+        }
+
+        .divider {
+            border-top: 1px solid #eaeaea;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 1px;
+        }
     </style>
 
 
-<nav class="navbar navbar-expand-lg navbar-light bg-white py-4 fixed-top">
-  <div class="container">
-      <!-- Logo and Brand -->
-      <a href="{{ route('home.index') }}" class="navbar-brand d-flex justify-content-between align-items-center order-lg-0">
-          <img src="{{ asset('images/logo.png') }}" alt="Site Logo" class="navbar-logo">
-      </a>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white py-4 fixed-top">
+        <div class="container">
+            <!-- Logo and Brand -->
+            <a href="{{ route('home.index') }}"
+                class="navbar-brand d-flex justify-content-between align-items-center order-lg-0">
+                <img src="{{ asset('images/logo.png') }}" alt="Site Logo" class="navbar-logo">
+            </a>
 
-      <!-- Search and Cart Buttons -->
-      <div class="order-lg-2 nav-btns header-tools__item header-tools__cart">
-          <div class="header-tools d-flex align-items-center">
-            
-              <div class="header-tools__item hover-container">
-                  <a class="js-search-popup search-field__actor" href="#" id="searchToggle">
-                      <i class="fa-regular fa-magnifying-glass" id="searchIcon"></i>
-                      <i class="fa-solid fa-times d-none" id="closeIcon"></i>
-                  </a>
-              </div>
+            <!-- Search and Cart Buttons -->
+            <div class="order-lg-2 nav-btns header-tools__item header-tools__cart">
+                <div class="header-tools d-flex align-items-center">
 
-              <button type="button" class="btn position-relative" onclick="window.location.href='{{ route('cart.index') }}'">
-                  <i class="fa-sharp fa-regular fa-bag-shopping"></i>
-                  @if (Cart::instance('cart')->content()->count() > 0)
-                      <span class="cart-amount d-block position-absolute js-cart-items-count">{{ Cart::instance('cart')->content()->count() }}</span>
-                  @endif
-              </button>
-              @guest
-                  <button type="button" class="btn position-relative" onclick="location.href='{{ route('login') }}'">
-                      <i class="fa-regular fa-user"></i>
-                  </button>
+                    <div class="header-tools__item hover-container">
+                        <a class="js-search-popup search-field__actor" href="#" id="searchToggle">
+                            <i class="fa-regular fa-magnifying-glass" id="searchIcon"></i>
+                            <i class="fa-solid fa-times d-none" id="closeIcon"></i>
+                        </a>
+                    </div>
+
+                    <button type="button" class="btn position-relative"
+                        onclick="window.location.href='{{ route('cart.index') }}'">
+                        <i class="fa-sharp fa-regular fa-bag-shopping"></i>
+                        @if (Cart::instance('cart')->content()->count() > 0)
+                            <span
+                                class="cart-amount d-block position-absolute js-cart-items-count">{{ Cart::instance('cart')->content()->count() }}</span>
+                        @endif
+                    </button>
+                    @guest
+                        <button type="button" class="btn position-relative"
+                            onclick="location.href='{{ route('login') }}'">
+                            <i class="fa-regular fa-user"></i>
+                        </button>
                     @else
-            <!-- Profile Button -->
-                    <button type="button" class="btn d-flex align-items-center position-relative" 
-                    onclick="location.href='{{ Auth::user()->utype == 'ADM' ? route('admin.index') : (Auth::user()->utype == 'DIR' ? route('admin.index') : route('user.index')) }}'">
-                <div class="profile-image d-flex justify-content-center me-2">
-                    @if(Auth::user()->profile_image)
-                        <img src="{{ asset('storage/' . Auth::user()->profile_image) }}" alt="Profile Image" class="img-fluid rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
-                    @else
-                        <img src="{{ asset('images/profile.jpg') }}" loading="lazy" alt="Default Profile Image" class="img-fluid rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
-                    @endif
-                </div>
-                <span class="d-none d-md-inline">{{ strtok(Auth::user()->name, ' ') }}</span>
-            </button>
-    
-                  {{-- <!-- Profile Dropdown -->
+                        <!-- Profile Button -->
+                        <button type="button" class="btn d-flex align-items-center position-relative"
+                            onclick="location.href='{{ Auth::user()->utype == 'ADM' ? route('admin.index') : (Auth::user()->utype == 'DIR' ? route('admin.index') : route('user.index')) }}'">
+                            <div class="profile-image d-flex justify-content-center me-2">
+                                @if (Auth::user()->profile_image)
+                                    <img src="{{ asset('storage/' . Auth::user()->profile_image) }}" alt="Profile Image"
+                                        class="img-fluid rounded-circle"
+                                        style="width: 40px; height: 40px; object-fit: cover;">
+                                @else
+                                    <img src="{{ asset('images/profile.jpg') }}" loading="lazy" alt="Default Profile Image"
+                                        class="img-fluid rounded-circle"
+                                        style="width: 40px; height: 40px; object-fit: cover;">
+                                @endif
+                            </div>
+                            <span class="d-none d-md-inline">{{ strtok(Auth::user()->name, ' ') }}</span>
+                        </button>
+
+                        {{-- <!-- Profile Dropdown -->
                   <div class="dropdown">
                       <button class="btn dropdown-toggle d-flex align-items-center" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                           <div class="profile-image d-flex justify-content-center me-2">
-                              @if(Auth::user()->profile_image)
+                              @if (Auth::user()->profile_image)
                                   <img src="{{ asset('storage/' . Auth::user()->profile_image) }}" alt="Profile Image" class="img-fluid rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
                               @else
                                   <img src="{{ asset('images/profile.jpg') }}" loading="lazy" alt="Default Profile Image" class="img-fluid rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
@@ -145,59 +154,61 @@
                           </li>
                       </ul>
                   </div> --}}
-              @endguest
+                    @endguest
 
-          </div>
-      </div>
+                </div>
+            </div>
 
-      <!-- Navbar Menu -->
-      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-          <span class="navbar-toggler-icon"></span>
-      </button>
+            <!-- Navbar Menu -->
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-      <div class="collapse navbar-collapse order-lg-1" id="navMenu">
-          <ul class="navbar-nav mx-auto text-center">
-              <li class="nav-item px-2 py-2">
-                  <a href="{{ route('home.index') }}" class="nav-link text-uppercase text-dark">Home</a>
-              </li>
-              <li class="nav-item px-2 py-2">
-                  <a href="{{ route('shop.index') }}" class="nav-link text-uppercase text-dark">Shop</a>
-              </li>
-              <li class="nav-item px-2 py-2">
-                  <a href="{{ route('rentals.index') }}" class="nav-link text-uppercase text-dark">Rentals</a>
-              </li>
-              <li class="nav-item px-2 py-2">
-                  <a href="{{ route('user.facilities.index') }}" class="nav-link text-uppercase text-dark">Facilities</a>
-              </li>
-              <li class="nav-item px-2 py-2">
-                <a href="{{ route('about.index') }}" class="nav-link text-uppercase text-dark">About Us</a>
-              </li>
-              <li class="nav-item px-2 py-2 border-0">
-                  <a href="{{ route('home.contact') }}" class="nav-link text-uppercase text-dark">Contact</a>
-              </li>
-          </ul>
-      </div>
-  </div>
+            <div class="collapse navbar-collapse order-lg-1" id="navMenu">
+                <ul class="navbar-nav mx-auto text-center">
+                    <li class="nav-item px-2 py-2">
+                        <a href="{{ route('home.index') }}" class="nav-link text-uppercase text-dark">Home</a>
+                    </li>
+                    <li class="nav-item px-2 py-2">
+                        <a href="{{ route('shop.index') }}" class="nav-link text-uppercase text-dark">Shop</a>
+                    </li>
+                    <li class="nav-item px-2 py-2">
+                        <a href="{{ route('rentals.index') }}" class="nav-link text-uppercase text-dark">Rentals</a>
+                    </li>
+                    <li class="nav-item px-2 py-2">
+                        <a href="{{ route('user.facilities.index') }}"
+                            class="nav-link text-uppercase text-dark">Facilities</a>
+                    </li>
+                    <li class="nav-item px-2 py-2">
+                        <a href="{{ route('about.index') }}" class="nav-link text-uppercase text-dark">About Us</a>
+                    </li>
+                    <li class="nav-item px-2 py-2 border-0">
+                        <a href="{{ route('home.contact') }}" class="nav-link text-uppercase text-dark">Contact</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
 
-  <!-- Search Popup -->
-  <div class="search-popup js-hidden-content">
-      <form action="#" method="GET" class="search-field container">
-          <p class="text-uppercase text-secondary fw-medium mb-4">What are you looking for?</p>
-          <div class="position-relative">
-              <input class="search-field__input search-popup__input w-100 fw-medium" id="search-input" type="text" name="search-keyword" placeholder="Search products" />
-              <button class="search-popup__submit" type="submit">
-                  <i class="fa-solid fa-magnifying-glass"></i>
-              </button>
-          </div>
-          <div class="search-popup__results">
-              <ul id="box-content-search"></ul>
-          </div>
-      </form>
-  </div>
-</nav>
+        <!-- Search Popup -->
+        <div class="search-popup js-hidden-content">
+            <form action="#" method="GET" class="search-field container">
+                <p class="text-uppercase text-secondary fw-medium mb-4">What are you looking for?</p>
+                <div class="position-relative">
+                    <input class="search-field__input search-popup__input w-100 fw-medium" id="search-input"
+                        type="text" name="search-keyword" placeholder="Search products" />
+                    <button class="search-popup__submit" type="submit">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+                <div class="search-popup__results">
+                    <ul id="box-content-search"></ul>
+                </div>
+            </form>
+        </div>
+    </nav>
 
 
-    
+
 
 
     <!-- go top  -->
@@ -297,12 +308,11 @@
     </footer>
 
     <script src="{{ asset('js/jquery.min.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
         integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous">
     </script>
-    <script src = "{{ asset('js/plugins/swiper.min.js') }}" ></script>
+    <script src="{{ asset('js/plugins/swiper.min.js') }}"></script>
     <script src="{{ asset('plugins/ijaboCropTool/ijaboCropTool.min.js') }}"></script>
     <!-- owl carousel script  -->
     <script src="{{ asset('owl_carousel/owl.carousel.js') }}"></script>
@@ -313,31 +323,35 @@
 
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales-all.min.js"></script>
-  
+
 
     <script>
-    $(document).ready(function() {
-    $("#search-input").on("keyup", function() {
-      var searchQuery = $(this).val().trim(); // Trim whitespace from the query
-      
-      if (searchQuery.length > 2) { // Proceed only if query length is greater than 2
-        $.ajax({
-          type: "GET",
-          url: "{{ route('home.search') }}", // Route to search endpoint
-          data: { query: searchQuery }, // Correct data parameter format
-          dataType: 'json', // Expected data type from server
-          success: function(data) {
-            $("#box-content-search").empty(); // Clear previous results
-            
-            if (data.length > 0) {
-              $.each(data, function(index, item) {
-                // Generate the URL with the item's slug
-                var urlTemplate = "{{ route('shop.product.details', ['product_slug' => 'product_slug_pls']) }}";
-                var productUrl = urlTemplate.replace('product_slug_pls', item.slug);
-                
-                // Append the search result item
-                $("#box-content-search").append(
-                  `<li>
+        $(document).ready(function() {
+            $("#search-input").on("keyup", function() {
+                var searchQuery = $(this).val().trim(); // Trim whitespace from the query
+
+                if (searchQuery.length > 2) { // Proceed only if query length is greater than 2
+                    $.ajax({
+                        type: "GET",
+                        url: "{{ route('home.search') }}", // Route to search endpoint
+                        data: {
+                            query: searchQuery
+                        }, // Correct data parameter format
+                        dataType: 'json', // Expected data type from server
+                        success: function(data) {
+                            $("#box-content-search").empty(); // Clear previous results
+
+                            if (data.length > 0) {
+                                $.each(data, function(index, item) {
+                                    // Generate the URL with the item's slug
+                                    var urlTemplate =
+                                        "{{ route('shop.product.details', ['product_slug' => 'product_slug_pls']) }}";
+                                    var productUrl = urlTemplate.replace(
+                                        'product_slug_pls', item.slug);
+
+                                    // Append the search result item
+                                    $("#box-content-search").append(
+                                        `<li>
                      <ul>
                        <li class="product-item-search gap14 mb-10">
                          <div class="image no-bg">
@@ -354,26 +368,26 @@
                        </li>
                      </ul>
                    </li>`
-                );
-              });
-            } else {
-              $("#box-content-search").html('<p>No results found</p>');
-            }
-          },
-          error: function(xhr, status, error) {
-            console.error('AJAX Error:', status, error);
-          }
+                                    );
+                                });
+                            } else {
+                                $("#box-content-search").html('<p>No results found</p>');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('AJAX Error:', status, error);
+                        }
+                    });
+                } else {
+                    $("#box-content-search").empty();
+                }
+            });
         });
-      } else {
-        $("#box-content-search").empty();
-      }
-    });
-  });
 
-  $(function () {
-    $('[data-toggle="tooltip"]').tooltip();
-  });
-</script>
+        $(function() {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+    </script>
 
     <!-- main js  -->
     <script src="{{ asset('js/main.js') }}"></script>

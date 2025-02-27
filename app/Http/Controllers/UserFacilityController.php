@@ -329,6 +329,8 @@ class UserFacilityController extends Controller
     }
 
 
+
+
     public function checkout(Request $request)
     {
 
@@ -425,16 +427,6 @@ class UserFacilityController extends Controller
             DB::transaction(function () use ($request, $reservationData, $user) {
                 $facility = Facility::with(['prices', 'facilityAttributes'])->find($reservationData['facility_id']);
                 if ($facility->facility_type === 'individual') {
-                    // $pendingReservation = Availability::where('user_id', $user->id)
-                    //     ->where('facility_id', $facility->id)
-                    //     ->where('status', 'pending')
-                    //     ->first();
-
-                    // if ($pendingReservation) {
-                    //     return redirect()->route('user.facilities.index')
-                    //         ->with('error', 'You already have a pending reservation for this facility.');
-                    // }
-
                     $facilityAttribute = FacilityAttribute::find($request->facility_attribute_id);
 
                     if ($facilityAttribute->capacity <= 0) {
@@ -451,10 +443,9 @@ class UserFacilityController extends Controller
                     $qualificationPath = null;
                     if ($request->hasFile('qualification')) {
                         $qualificationPath = $request->file('qualification')->store('qualifications', 'public');
-                        Log::info('Qualification file uploaded', ['qualification_path' => $qualificationPath]);
+                        // Log::info('Qualification file uploaded', ['qualification_path' => $qualificationPath]);
                     }
 
-                    // Fetch Price with Predefined Dates
                     $price = Price::where('facility_id', $facility->id)
                         ->where('price_type', $facility->facility_type)
                         ->first();
@@ -477,19 +468,10 @@ class UserFacilityController extends Controller
 
                     Log::info('New availability created', ['availability_id' => $availability->id]);
 
-                    // Create QualificationApproval **only if a qualification file is uploaded**
                     if ($qualificationPath) {
-                        $qualification_r = new QualificationApproval();
-                        $qualification_r->availability_id = $availability->id;
-                        $qualification_r->user_id = $user->id;
-                        $qualification_r->status = 'pending';
-                        $qualification_r->qualification = $qualificationPath;
-                        $qualification_r->save();
-
-                        Log::info('Qualification approval record created', ['qualification_id' => $qualification_r->id]);
+                        $this->createQualificationApproval($availability, $user, $qualificationPath);
                     }
 
-                    // Create Payment Record
                     $payment = Payment::create([
                         'availability_id' => $availability->id,
                         'user_id' => $user->id,
@@ -498,43 +480,19 @@ class UserFacilityController extends Controller
                     ]);
 
                     Log::info('Payment record created', ['payment_id' => $payment->id]);
-
-                    // Create Payment Details
                     PaymentDetail::create([
                         'payment_id' => $payment->id,
                         'facility_id' => $facility->id,
-                        'quantity' => 0, // not applicable
+                        'quantity' => 0,
                         'total_price' => $reservationData['total_price'],
                     ]);
-
-                    Log::info('Payment detail created');
-
-                    // Create Transaction Reservation
                     TransactionReservation::create([
                         'availability_id' => $availability->id,
                         'price_id' => $price->id,
-                        'quantity' => 0, // not applicable
+                        'quantity' => 0,
                         'user_id' => $user->id,
                         'status' => 'pending',
                     ]);
-
-                    Log::info('Transaction reservation created');
-
-
-                    // // Create New Availability Record
-                    // $newAvailability = Availability::create([
-                    //     'user_id' => $user->id,
-                    //     'facility_id' => $facility->id,
-                    //     'price_id' => $price->id,
-                    //     'facility_attribute_id' => $facilityAttribute->id,
-                    //     'qualification' => $qualificationPath,
-                    //     'date_from' => $dateFrom,
-                    //     'date_to' => $dateTo,
-                    //     'remaining_capacity' => $facilityAttribute->capacity,
-                    //     'total_price' => $reservationData['total_price'],
-                    //     'status' => 'pending',
-                    // ]);
-
                     Session::put('checkout', [
                         'reservation_id' => $availability->id,
                         'facility_id' => $facility->id,
@@ -557,15 +515,6 @@ class UserFacilityController extends Controller
                         throw new \Exception('The selected date is too soon. Please select a date at least 3 days from today.');
                     }
 
-
-                    $existingReservation = Availability::where('facility_id', $facility->id)
-                        ->where('date_to', $selectedDate)
-                        ->whereNull('facility_attribute_id')
-                        ->first();
-                    if ($existingReservation) {
-                        throw new \Exception('The selected date is already booked for this facility.');
-                    }
-
                     $qualificationPath = null;
                     if ($request->hasFile('qualification')) {
                         $qualificationPath = $request->file('qualification')->store('qualifications', 'public');
@@ -574,30 +523,67 @@ class UserFacilityController extends Controller
 
                     $price = $facility->prices()->where('value', $reservationData['total_price'])->first();
 
-                    $newAvailability = Availability::create([
-                        'user_id' => $user->id,
+                    // $newAvailability = Availability::create([
+                    //     'user_id' => $user->id,
+                    //     'facility_id' => $facility->id,
+                    //     'price_id' => $price->id,
+                    //     'facility_attribute_id' => null,
+                    //     'qualification' => $qualificationPath,
+                    //     'date_from' => $selectedDate,
+                    //     'date_to' => $selectedDate,
+                    //     'remaining_capacity' => 0,
+                    //     'total_price' => $price->value,
+                    //     'status' => 'pending',
+                    // ]);
+                    // Log::info('New availability created for whole_place', ['availability_id' => $newAvailability->id]);
+
+                    $availability = Availability::firstOrCreate([
+                        // 'user_id' => $user->id,
                         'facility_id' => $facility->id,
-                        'price_id' => $price->id,
                         'facility_attribute_id' => null,
-                        'qualification' => $qualificationPath,
                         'date_from' => $selectedDate,
                         'date_to' => $selectedDate,
+                    ], [
                         'remaining_capacity' => 0,
-                        'total_price' => $price->value,
+                    ]);
+
+                    if ($qualificationPath) {
+                        $this->createQualificationApproval($availability, $user, $qualificationPath);
+                    }
+
+                    $payment = Payment::create([
+                        'availability_id' => $availability->id,
+                        'user_id' => $user->id,
+                        'status' => 'pending',
+                        'total_price' => $reservationData['total_price'],
+                    ]);
+
+                    Log::info('Payment record created for whole place', ['payment_id' => $payment->id]);
+
+                    PaymentDetail::create([
+                        'payment_id' => $payment->id,
+                        'facility_id' => $facility->id,
+                        'quantity' => 0,
+                        'total_price' => $reservationData['total_price'],
+                    ]);
+
+                    TransactionReservation::create([
+                        'availability_id' => $availability->id,
+                        'price_id' => $price->id,
+                        'quantity' => 0,
+                        'user_id' => $user->id,
                         'status' => 'pending',
                     ]);
-                    Log::info('New availability created for whole_place', ['availability_id' => $newAvailability->id]);
 
                     Session::put('checkout', [
-                        'reservation_id' => $newAvailability->id,
+                        'reservation_id' => $availability->id,
                         'facility_id' => $facility->id,
                         'facility_slug' => $facility->slug,
                         'facility_attribute_id' => null,
                         'status' => 'pending',
                         'date_from' => $selectedDate,
                         'date_to' => $selectedDate,
-                        // 'remaining_capacity' => 0,
-                        'total_price' => $price->value,
+                        'total_price' => $reservationData['total_price'],
                     ]);
                 } elseif ($facility->facility_type === 'both') {
                     $priceType = $reservationData['price_type'];
@@ -757,9 +743,20 @@ class UserFacilityController extends Controller
     }
 
 
+    private function createQualificationApproval($availability, $user, $qualificationPath)
+    {
+        $qualification_r = new QualificationApproval();
+        $qualification_r->availability_id = $availability->id;
+        $qualification_r->user_id = $user->id;
+        $qualification_r->status = 'pending';
+        $qualification_r->qualification = $qualificationPath;
+        $qualification_r->save();
+        Log::info('Qualification approval record created', ['qualification_id' => $qualification_r->id]);
+    }
+
     public function account_reservation()
     {
-        $user = Auth::user()->id; // Get the currently logged-in user
+        $user = Auth::user()->id;
 
         // Fetch only reservations belonging to the user
         $availabilities = Availability::where('user_id', $user)->get();
@@ -769,7 +766,7 @@ class UserFacilityController extends Controller
 
     public function reservation_history()
     {
-        $user = Auth::user()->id; // Get the currently logged-in user's ID
+        $user = Auth::user()->id;
 
         // Fetch only reservations that belong to the current user
         $availabilities = Availability::where('user_id', $user)->get();
@@ -778,7 +775,7 @@ class UserFacilityController extends Controller
 
     public function account_reservation_details()
     {
-        $user = Auth::user()->id; // Get the currently logged-in user's ID
+        $user = Auth::user()->id;
 
         // Fetch only reservations that belong to the current user
         $availabilities = Availability::where('user_id', $user)->get();

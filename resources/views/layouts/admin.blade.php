@@ -1,4 +1,5 @@
-<!DOCTYPE htm <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
     <meta charset="utf-8">
@@ -182,7 +183,6 @@
             /* Adjust max-width as needed */
         }
     </style>
-    @livewireStyles
     @stack('styles')
 </head>
 
@@ -633,7 +633,6 @@
         </div>
     </div>
 
-    @livewireScripts
     <script src="{{ asset('assets/js/jquery.min.js') }}"></script>
     <script src="{{ asset('assets/js/bootstrap.min.js') }}"></script>
     <script src="{{ asset('assets/js/bootstrap-select.min.js') }}"></script>
