@@ -68,7 +68,7 @@
                             <input type="hidden" name="selected_year" value="{{ $selectedYear }}">
                             <input type="hidden" name="selected_month_name" value="{{ $selectedMonth->name }}">
                             <input type="hidden" name="selected_week_id" value="{{ $selectedWeekId }}">
-                            
+
                             <button type="submit" class="btn btn-outline-danger">
                                 <i class="fas fa-file-pdf me-1"></i> Download PDF
                             </button>

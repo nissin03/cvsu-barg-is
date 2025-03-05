@@ -1530,7 +1530,7 @@ class AdminController extends Controller
             ->whereMonth('created_at', $currentMonth)
             ->count();
         $activeUsers = User::where('isDefault', false)->count(); // Customize your query as needed.
-        // Calculate a dummy growth rate (adjust your logic as necessary)
+
         $growthRate = ($totalUsers > 0) ? (($newUsersThisMonth / $totalUsers) * 100) : 0;
 
         // Retrieve recently registered users (limit 10).
@@ -4156,7 +4156,141 @@ class AdminController extends Controller
         $pdf->setPaper('A4', 'portrait');
         $pdf->render();
 
-        // Return the generated PDF as a download
+
         return $pdf->stream('rental-sales-report.pdf');
     }
+
+
+    // FACILITIES REPORTS
+    public function generateFacilitespayment(Request $request)
+    {
+        $currentDate = Carbon::now(); // Define the current date here
+        $currentYear = $currentDate->year;
+        $currentMonthId = $currentDate->month;
+
+        // Get selected year and month from request, default to current year/month
+        $selectedYear = $request->input('year', $currentYear);
+        $selectedMonthId = $request->input('month', $currentMonthId);
+
+        // Fetch available months and the selected month
+        $availableMonths = MonthName::orderBy('id')->get();
+        $selectedMonth = $availableMonths->firstWhere('id', $selectedMonthId);
+
+        if (!$selectedMonth) {
+            $selectedMonth = $availableMonths->first();
+            $selectedMonthId = $selectedMonth->id;
+        }
+
+        // Calculate the start and end of the selected month
+        $startOfMonth = Carbon::create($selectedYear, $selectedMonthId, 1)->startOfMonth();
+        $endOfMonth = $startOfMonth->copy()->endOfMonth();
+
+        // Fetch data from the Payments table
+        $paymentDatas = DB::select("SELECT
+                                        SUM(total_price) AS TotalAmount,
+                                        SUM(IF(status = 'reserved', total_price, 0)) AS TotalReservedAmount,
+                                        SUM(IF(status = 'completed', total_price, 0)) AS TotalCompletedAmount,
+                                        SUM(IF(status = 'canceled', total_price, 0)) AS TotalCanceledAmount
+                                      FROM payments
+                                      WHERE created_at BETWEEN ? AND ?", [$startOfMonth, $endOfMonth]);
+
+        // Weekly data for the selected month
+        $weekRanges = [];
+        for ($week = 1; $week <= 6; $week++) {
+            $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek(Carbon::MONDAY);
+            $endOfWeek = $startOfWeek->copy()->endOfWeek(Carbon::SUNDAY);
+
+            if ($startOfWeek->lt($startOfMonth)) {
+                $startOfWeek = $startOfMonth;
+            }
+            if ($endOfWeek->gt($endOfMonth)) {
+                $endOfWeek = $endOfMonth;
+            }
+
+            if ($startOfWeek->lte($endOfMonth)) {
+                $weekRanges[$week] = [$startOfWeek, $endOfWeek];
+            }
+        }
+
+        // Fetch totals for each week
+        $totalAmounts = [];
+        $reservedAmounts = [];
+        $completedAmounts = [];
+        $canceledAmounts = [];
+
+        foreach ($weekRanges as $week => [$startOfSelectedWeek, $endOfSelectedWeek]) {
+            $paymentData = DB::select(
+                "SELECT
+                    SUM(total_price) AS TotalAmount,
+                    SUM(IF(status = 'reserved', total_price, 0)) AS TotalReservedAmount,
+                    SUM(IF(status = 'completed', total_price, 0)) AS TotalCompletedAmount,
+                    SUM(IF(status = 'canceled', total_price, 0)) AS TotalCanceledAmount
+                FROM payments
+                WHERE created_at BETWEEN ? AND ?",
+                [$startOfSelectedWeek, $endOfSelectedWeek]
+            )[0];
+
+            $totalAmounts[$week] = $paymentData->TotalAmount ?? 0;
+            $reservedAmounts[$week] = $paymentData->TotalReservedAmount ?? 0;
+            $completedAmounts[$week] = $paymentData->TotalCompletedAmount ?? 0;
+            $canceledAmounts[$week] = $paymentData->TotalCanceledAmount ?? 0;
+        }
+
+        // Prepare Weekly Data for View
+        $AmountW = implode(',', $totalAmounts);
+        $ReservedAmountW = implode(',', $reservedAmounts);
+        $CompletedAmountW = implode(',', $completedAmounts);
+        $CanceledAmountW = implode(',', $canceledAmounts);
+
+        // Calculate overall totals for weekly data display
+        $TotalAmountW = array_sum($totalAmounts);
+        $TotalReservedAmountW = array_sum($reservedAmounts);
+        $TotalCompletedAmountW = array_sum($completedAmounts);
+        $TotalCanceledAmountW = array_sum($canceledAmounts);
+
+        // Monthly data for the selected year
+        $monthlyDatas = DB::select("SELECT M.id AS MonthNo, M.name AS MonthName,
+                                            IFNULL(D.TotalAmount, 0) AS TotalAmount,
+                                            IFNULL(D.TotalReservedAmount, 0) AS TotalReservedAmount,
+                                            IFNULL(D.TotalCompletedAmount, 0) AS TotalCompletedAmount,
+                                            IFNULL(D.TotalCanceledAmount, 0) AS TotalCanceledAmount
+                                         FROM month_names M
+                                         LEFT JOIN (
+                                             SELECT
+                                                 MONTH(created_at) AS MonthNo,
+                                                 SUM(total_price) AS TotalAmount,
+                                                 SUM(IF(status='reserved', total_price, 0)) AS TotalReservedAmount,
+                                                 SUM(IF(status='completed', total_price, 0)) AS TotalCompletedAmount,
+                                                 SUM(IF(status='canceled', total_price, 0)) AS TotalCanceledAmount
+                                             FROM payments
+                                             WHERE YEAR(created_at) = ?
+                                             GROUP BY MONTH(created_at)
+                                         ) D ON D.MonthNo = M.id
+                                         ORDER BY M.id", [$selectedYear]);
+
+        // Prepare Monthly Data for View
+        $AmountM = implode(',', collect($monthlyDatas)->pluck('TotalAmount')->toArray());
+        $ReservedAmountM = implode(',', collect($monthlyDatas)->pluck('TotalReservedAmount')->toArray());
+        $CompletedAmountM = implode(',', collect($monthlyDatas)->pluck('TotalCompletedAmount')->toArray());
+        $CanceledAmountM = implode(',', collect($monthlyDatas)->pluck('TotalCanceledAmount')->toArray());
+
+        // Calculate overall totals for monthly data display
+        $TotalAmount = collect($monthlyDatas)->sum('TotalAmount');
+        $TotalReservedAmount = collect($monthlyDatas)->sum('TotalReservedAmount');
+        $TotalCompletedAmount = collect($monthlyDatas)->sum('TotalCompletedAmount');
+        $TotalCanceledAmount = collect($monthlyDatas)->sum('TotalCanceledAmount');
+
+        // Fetch year range for dropdown
+        $yearRange = range($currentYear, $currentYear - 10);
+
+        // Return View with all data
+        return view('admin.report-facilities', compact(
+            'AmountM', 'ReservedAmountM', 'CompletedAmountM', 'CanceledAmountM',
+            'TotalAmount', 'TotalReservedAmount', 'TotalCompletedAmount', 'TotalCanceledAmount',
+            'AmountW', 'ReservedAmountW', 'CompletedAmountW', 'CanceledAmountW',
+            'TotalAmountW', 'TotalReservedAmountW', 'TotalCompletedAmountW', 'TotalCanceledAmountW',
+            'selectedMonth', 'selectedYear', 'availableMonths', 'yearRange'
+        ));
+    }
+
 }

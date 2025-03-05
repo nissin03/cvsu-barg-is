@@ -5,8 +5,6 @@
             background-color: darkred;
         }
 
-
-
         .file-name-overlay {
             position: absolute;
             bottom: 0;
@@ -376,8 +374,6 @@
                         <button class="tf-button w-full" type="submit">Create facility</button>
                     </div>
                 </div>
-
-
 
                 <div class="modal fade" id="addPrice" tabindex="-1" aria-labelledby="addPriceLabel"
                     aria-hidden="true">

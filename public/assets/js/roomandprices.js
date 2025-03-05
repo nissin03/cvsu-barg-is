@@ -13,11 +13,11 @@ $(document).ready(function () {
 
         switch (rentalType) {
             case "individual":
-                $("hideRoomBox").hide();
+                $("#hideRoomBox").hide();
                 $("#roomBox").show();
                 $("#dormitoryRooms").show();
                 $("#QuantityChecked").show();
-             
+
                 $("#pIndividual").removeAttr("hidden").prop("disabled", false);
                 break;
             case "whole_place":
@@ -25,10 +25,10 @@ $(document).ready(function () {
                 $("#roomBox").show();
                 $("#hideRoomBox").show();
                 $("#QuantityChecked").hide();
-              
+
                 $("#pWhole").removeAttr("hidden").prop("disabled", false);
                 break;
-    
+
             case "both":
                 $("#roomBox").show();
                 $("#hideRoomBox").show();
@@ -222,7 +222,7 @@ $(document).ready(function () {
                               price.price_type
                           }</span></p>
                           <p>Price: PHP ${price.value}</p>
-                          <p>Is Based on Days?: 
+                          <p>Is Based on Days?:
                               <span class="badge ${
                                   price.is_based_on_days
                                       ? "bg-success"
@@ -231,7 +231,7 @@ $(document).ready(function () {
                                   ${price.is_based_on_days ? "Yes" : "No"}
                               </span>
                           </p>
-                          <p>Is There A Quantity?: 
+                          <p>Is There A Quantity?:
                               <span class="badge ${
                                   price.is_there_a_quantity
                                       ? "bg-success"
@@ -240,7 +240,7 @@ $(document).ready(function () {
                                   ${price.is_there_a_quantity ? "Yes" : "No"}
                               </span>
                           </p>
-                       
+
                       </div>
                       <button class="btn btn-lg btn-outline-danger delete-btn" onclick="deletePrice(${index})">
                           <i class="icon-trash"></i>

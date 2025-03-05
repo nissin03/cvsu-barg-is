@@ -18,7 +18,7 @@ class OrderSeeder extends Seeder
         $userIds = User::pluck('id')->toArray();
         $products = Product::all();
 
-        for ($i = 0; $i < 1000; $i++) {
+        for ($i = 0; $i < 500; $i++) {
             $createdAt = $faker->dateTimeBetween('2024-01-01', '2025-12-31');
             $reservationStart = Carbon::now()->greaterThan(Carbon::create(2025, 1, 1))
                 ? Carbon::now()

@@ -1,4 +1,5 @@
-<!DOCTYPE htm <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
     <meta charset="utf-8">
@@ -182,7 +183,6 @@
             /* Adjust max-width as needed */
         }
     </style>
-    @livewireStyles
     @stack('styles')
 </head>
 
@@ -401,35 +401,26 @@
                                         </ul>
                                     </li>
 
-                                    {{-- <li class="menu-item has-children">
+                                    <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="">
                                             <div class="icon"><i class="icon-bar-chart-2"></i></div>
-                                            <div class="text">Rentals Reports</div>
+                                            <div class="text">Facilties Reports</div>
                                         </a>
                                         <ul class="sub-menu">
                                             <li class="sub-menu-item">
-                                                <a href="{{ route('admin.rentals_reports') }}">
+                                                <a href="{{ route('admin.report.facilities') }}">
                                                     <div class="text">Sales Reports</div>
                                                 </a>
                                             </li>
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.rentals-reports') }}">
-                                                    <div class="text">Sales Input Reports</div>
-                                                </a>
-                                            </li>
 
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.rentalsReportsName') }}">
-                                                    <div class="text">Reservation Reports</div>
-                                                </a>
-                                            </li>
+
                                         </ul>
-                                    </li> --}}
+                                    </li>
 
 
                                     <!-- <li class="menu-item">
-                                        <a href="#">
-                                            <div class="icon"><i class="icon-settings"></i></div>
+                                        <a href="admin.facilities-payment-report">
+                                            <div class="icon"><i class=""></i></div>
                                             <div class="text">Settings</div>
                                         </a>
                                     </li> -->
@@ -633,7 +624,6 @@
         </div>
     </div>
 
-    @livewireScripts
     <script src="{{ asset('assets/js/jquery.min.js') }}"></script>
     <script src="{{ asset('assets/js/bootstrap.min.js') }}"></script>
     <script src="{{ asset('assets/js/bootstrap-select.min.js') }}"></script>

@@ -8,25 +8,25 @@
         transition: transform 0.2s ease-in-out;
         border: none;
     }
-    
+
     .dashboard-card:hover {
         transform: translateY(-5px);
     }
-    
+
     .stat-card {
         border-left: 4px solid;
         background: linear-gradient(45deg, rgba(255,255,255,0.9), rgba(255,255,255,1));
     }
-    
+
     .chart-container {
         min-height: 400px;
     }
-    
+
     .filter-form select {
         background-color: #f8f9fa;
         border: 1px solid #e9ecef;
     }
-    
+
     .custom-table th {
         font-weight: 600;
         text-transform: uppercase;
@@ -36,25 +36,25 @@
     .filter-form {
         transition: all 0.3s ease;
     }
-    
+
     .filter-form select:focus {
         box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
         border-color: #86b7fe;
     }
-    
+
     .filter-form .btn {
         transition: all 0.2s ease;
     }
-    
+
     .filter-form .btn:hover {
         transform: translateY(-1px);
     }
-    
+
     @media (max-width: 576px) {
         .filter-form .row > div {
             margin-bottom: 0.5rem;
         }
-        
+
         .filter-form .btn {
             width: 100%;
         }
@@ -211,7 +211,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0">
                             <i class="bi bi-calendar-week me-2"></i>
-                            Weekly Registration Analysis 
+                            Weekly Registration Analysis
                         </h5>
                     </div>
                     <form action="{{ route('admin.report-user') }}" method="GET" class="filter-form">
@@ -247,7 +247,7 @@
                 </div>
             </div>
         </div>
-    
+
         <!-- Daily Report Card -->
         <div class="col-lg-6">
             <div class="card shadow-sm h-100 dashboard-card">
@@ -557,21 +557,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle PDF download with loading state.
     document.querySelector('#pdfDownloadButton').addEventListener('click', async function(e) {
         e.preventDefault();
-        
+
         // Show loading overlay.
         document.getElementById('loadingOverlay').classList.remove('d-none');
-        
+
         try {
             const chartImages = await Promise.all([
                 monthlyChart.dataURI(),
                 weeklyChart.dataURI(),
                 dailyChart.dataURI()
             ]);
-            
+
             document.querySelector('input[name="monthlyChartImage"]').value = chartImages[0].imgURI;
             document.querySelector('input[name="weeklyChartImage"]').value = chartImages[1].imgURI;
             document.querySelector('input[name="dailyChartImage"]').value = chartImages[2].imgURI;
-            
+
             document.querySelector('#pdfForm').submit();
         } catch (error) {
             console.error('Error generating PDF:', error);
@@ -626,12 +626,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         `;
-        
+
         document.body.insertAdjacentHTML('beforeend', toastHtml);
         const toastElement = document.querySelector('.toast:last-child');
         const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
         toast.show();
-        
+
         toastElement.addEventListener('hidden.bs.toast', function() {
             this.parentElement.remove();
         });

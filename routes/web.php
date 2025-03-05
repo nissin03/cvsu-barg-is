@@ -24,6 +24,7 @@ use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\UserFacilityController;
+use App\Http\Controllers\ReportController;
 
 Auth::routes(['reset' => true]);
 
@@ -154,7 +155,7 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::delete('/admin/category/{id}/delete', [AdminController::class, 'category_delete'])->name('admin.category.delete');
 
 
-    // Profile for the admin 
+    // Profile for the admin
     Route::get('/admin/profile', [AdminProfileController::class, 'show_profile'])->name('admin.profile.index');
 
 
@@ -173,7 +174,7 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
 
 
     Route::post('/prices/store', [FacilityController::class, 'price_store'])->name('prices.store');
-    // archive routes 
+    // archive routes
     Route::get('/admin/facility/archive/show', [FacilityController::class, 'showFacilities'])->name('admin.facilities.archive.index');
     Route::delete('/admin/facility/{id}/archive', [FacilityController::class, 'archivedFacilities'])->name('admin.facilities.archive');
     Route::post('/admin/facility/restore', [FacilityController::class, 'restoreFacilities'])->name('admin.facility.restore');
@@ -319,6 +320,7 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::get('/admin/report-product/download', [AdminController::class, 'downloadProduct'])->name('admin.report-product.download');
 
 
+    Route::get('admin/report/facilities', [AdminController::class, 'generateFacilitespayment'])->name('admin.report.facilities');
 
 
 
