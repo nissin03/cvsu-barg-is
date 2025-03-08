@@ -299,14 +299,17 @@
                     <div id="dormitoryRooms">
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
                             <h4>Details</h4>
-                            <button type="button" data-bs-toggle="modal" data-bs-target="#addRoom">Add Room</button>
+                            {{-- <button type="button" data-bs-toggle="modal" data-bs-target="#addRoom">Add Room</button> --}}
+                            <button type="button" data-bs-toggle="modal" data-bs-target="#addMultipleRoomsModal">
+                                Add Rooms
+                            </button>
                         </div>
                         <p>No rooms yet :(</p>
                         <div id="roomContainer" class="mt-4">
                             <h4>Rooms</h4>
                             <ul class="list-group" id="roomList"></ul>
                         </div>
-                        <div class="modal fade" id="addRoom" tabindex="-1" aria-labelledby="addRoomLabel"
+                        {{-- <div class="modal fade" id="addRoom" tabindex="-1" aria-labelledby="addRoomLabel"
                             aria-hidden="true">
                             <div class="modal-dialog">
                                 <div class="modal-content">
@@ -347,7 +350,53 @@
                                     </div>
                                 </div>
                             </div>
+                        </div> --}}
+
+                        <!-- Add Multiple Rooms Modal -->
+                        <div class="modal fade" id="addMultipleRoomsModal" tabindex="-1"
+                            aria-labelledby="addMultipleRoomsLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="addMultipleRoomsLabel">Add Room</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+
+                                    <div class="modal-body">
+                                        <!-- Table for multiple rooms -->
+                                        <table class="table" id="multipleRoomsTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Room Name</th>
+                                                    <th>Capacity</th>
+                                                    <th>Sex Restriction</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+
+                                            </tbody>
+                                        </table>
+
+
+                                        <button type="button" id="addMultipleRoomsRowBtn">
+                                            Add Another Row
+                                        </button>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Close</button>
+
+                                        <button type="button" class="btn btn-primary" id="saveMultipleRoomsBtn">
+                                            Save All
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
                     </div>
                 </div>
 

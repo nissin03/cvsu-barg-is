@@ -790,7 +790,7 @@
                 roomInput.empty();
 
                 const facilityType = $("#rentalType").val();
-    
+
                 if (facilityType === "whole_place") {
                     return;
                 }

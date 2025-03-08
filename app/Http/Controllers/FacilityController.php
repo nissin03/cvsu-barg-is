@@ -387,9 +387,9 @@ class FacilityController extends Controller
                 $constraint->aspectRatio();
             })->save($destinationPathThumbnail . '/' . $imageName);
 
-            \Log::info('Saving image to: ' . $destinationPath . '/' . $imageName);
+            Log::info('Saving image to: ' . $destinationPath . '/' . $imageName);
         } catch (\Exception $e) {
-            \Log::error('Image processing failed: ' . $e->getMessage());
+            Log::error('Image processing failed: ' . $e->getMessage());
         }
     }
 
