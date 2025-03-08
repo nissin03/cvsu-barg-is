@@ -752,6 +752,8 @@ class UserFacilityController extends Controller
                             'date_to' => $dateTo,
                             'total_price' => $totalPrice,
                         ]);
+
+            
                     } else {
                         throw new \Exception('Invalid facility configuration.');
                     }
