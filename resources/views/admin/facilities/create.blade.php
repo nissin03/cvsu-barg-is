@@ -286,12 +286,12 @@
 
                 </div>
 
-
                 <div class="wg-box" id="roomBox">
                     <fieldset class="name" id="hideRoomBox">
                         <div class="body-title mb-10">Capacity</div>
                         <input type="number" min="0" id="roomCapacityWhole" name="whole_capacity"
                             placeholder="Enter capacity">
+
                     </fieldset>
 
                     <div id="dormitoryRooms">
@@ -484,6 +484,7 @@
 @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
+<<<<<<< HEAD
     <script>
         let rooms = [];
         let prices = [];
@@ -494,6 +495,10 @@
     <script src="{{ asset('assets/js/addRooms.js') }}"></script>
     <script type="module" src="{{ asset('assets/js/addPrice.js') }}"></script>
     <script type="module" src="{{ asset('assets/js/formSubmit.js') }}"></script>
+=======
+    <script src="{{ asset('assets/js/showhide.js') }}"></script>
+    <script src="{{ asset('assets/js/roomandprices.js') }}"></script>
+>>>>>>> 44d35e1 (Working on)
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
 
 
