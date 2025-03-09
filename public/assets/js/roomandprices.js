@@ -13,7 +13,7 @@ $(document).ready(function () {
 
         switch (rentalType) {
             case "individual":
-                $("hideRoomBox").hide();
+                $("#hideRoomBox").hide();
                 $("#roomBox").show();
                 $("#dormitoryRooms").show();
                 $("#QuantityChecked").show();
@@ -160,6 +160,77 @@ $(document).ready(function () {
         });
     }
 
+    // Add a new row for multiple room entry
+    $("#addMultipleRoomsRowBtn").on("click", function (e) {
+        e.preventDefault();
+        const newRow = `
+            <tr>
+                <td>
+                    <input type="text" class="form-control room-name" placeholder="Enter room name">
+                </td>
+                <td>
+                    <input type="number" class="form-control room-capacity" min="0" placeholder="Enter capacity">
+                </td>
+                <td>
+
+
+                     <select name="sex_restriction" class="form-control room-sex-restriction">>
+                                                <option value="">Choose Sex Restriction... </option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                            </select>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger removeRowBtn">Remove</button>
+                </td>
+            </tr>
+        `;
+        $("#multipleRoomsTable tbody").append(newRow);
+    });
+
+    // Remove a row from the multiple rooms table
+    $("#multipleRoomsTable").on("click", ".removeRowBtn", function (e) {
+        e.preventDefault();
+        $(this).closest("tr").remove();
+    });
+
+    // Save all rooms added via the multiple rooms modal
+    $("#saveMultipleRoomsBtn").on("click", function (e) {
+        e.preventDefault();
+        let valid = true;
+        // Iterate through each row
+        $("#multipleRoomsTable tbody tr").each(function () {
+            const roomName = $(this).find(".room-name").val().trim();
+            const roomCapacity = $(this).find(".room-capacity").val().trim();
+            const roomSexRestriction = $(this).find(".room-sex-restriction").val();
+
+            // Validate required fields
+            if (roomName === "" || roomCapacity === "" || isNaN(roomCapacity) || parseInt(roomCapacity) <= 0) {
+                valid = false;
+                return false; // break out of the each loop
+            }
+
+            // Create new room object and push to global rooms array
+            const newRoom = {
+                room_name: roomName,
+                capacity: parseInt(roomCapacity),
+                sex_restriction: roomSexRestriction,
+            };
+            rooms.push(newRoom);
+        });
+
+        if (!valid) {
+            alert("Please ensure all rows have a valid room name and a positive capacity.");
+            return;
+        }
+
+        // Refresh the list and hidden fields, then clear the table and hide the modal
+        renderRoomList();
+        updateHiddenRooms();
+        $("#multipleRoomsTable tbody").empty();
+        $("#addMultipleRoomsModal").modal("hide");
+    });
+
     // Handle Save Price Changes (Add Price)
     $("#savePriceChanges").on("click", function (event) {
         event.preventDefault();
@@ -218,25 +289,22 @@ $(document).ready(function () {
                   <div class="card-body d-flex justify-content-between align-items-center">
                       <div class="text-start">
                           <h4>${price.name}</h4>
-                          <p>Type: <span class="badge bg-success">${
-                              price.price_type
-                          }</span></p>
+                          <p>Type: <span class="badge bg-success">${price.price_type
+                }</span></p>
                           <p>Price: PHP ${price.value}</p>
                           <p>Is Based on Days?:
-                              <span class="badge ${
-                                  price.is_based_on_days
-                                      ? "bg-success"
-                                      : "bg-danger"
-                              }">
+                              <span class="badge ${price.is_based_on_days
+                    ? "bg-success"
+                    : "bg-danger"
+                }">
                                   ${price.is_based_on_days ? "Yes" : "No"}
                               </span>
                           </p>
                           <p>Is There A Quantity?:
-                              <span class="badge ${
-                                  price.is_there_a_quantity
-                                      ? "bg-success"
-                                      : "bg-danger"
-                              }">
+                              <span class="badge ${price.is_there_a_quantity
+                    ? "bg-success"
+                    : "bg-danger"
+                }">
                                   ${price.is_there_a_quantity ? "Yes" : "No"}
                               </span>
                           </p>
@@ -258,10 +326,10 @@ $(document).ready(function () {
         renderPriceList(); // Re-render the price list
     };
 
-    // Update hidden inputs for prices (to be submitted with the form)
+
     function updateHiddenPrices() {
         const priceInput = $("#hiddenPrices");
-        priceInput.empty(); // Clear existing hidden inputs
+        priceInput.empty();
 
         prices.forEach((price, index) => {
             priceInput.append(
@@ -381,7 +449,7 @@ $(document).ready(function () {
             },
         });
 
-        console.log("Hidden form data", $("#hiddenRooms").html()); // Log hidden input fields
+        console.log("Hidden form data", $("#hiddenRooms").html());
     });
 
     // Display validation errors in form
