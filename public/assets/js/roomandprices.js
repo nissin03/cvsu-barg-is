@@ -13,7 +13,7 @@ $(document).ready(function () {
 
         switch (rentalType) {
             case "individual":
-                $("#hideRoomBox").hide();
+                $("hideRoomBox").hide();
                 $("#roomBox").show();
                 $("#dormitoryRooms").show();
                 $("#QuantityChecked").show();
