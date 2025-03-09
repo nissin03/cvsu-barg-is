@@ -382,7 +382,7 @@ class UserFacilityController extends Controller
         }
 
         $price = Price::where('facility_id', $facility->id)
-            ->whereIn('price_type', ['individual', 'whole']) 
+            ->whereIn('price_type', ['individual', 'whole'])
             ->first();
 
         return view('user.facilities.checkout', compact('user', 'reservationData', 'facilityAttribute', 'facility',  'date_from', 'date_to', 'price', 'roomName'));
@@ -633,7 +633,7 @@ class UserFacilityController extends Controller
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
                             'facility_id' => $facility->id,
-                            'quantity' => 0, 
+                            'quantity' => 0,
                             'total_price' => $totalPrice,
                         ]);
 
@@ -642,7 +642,7 @@ class UserFacilityController extends Controller
                             'availability_id' => $newAvailability->id,
                             'facility_attribute_id' => $priceType === 'individual' ? $roomId : null,
                             'price_id' => $price->id,
-                            'quantity' => 0, 
+                            'quantity' => 0,
                             'user_id' => $user->id,
                             'status' => 'pending',
                         ]);
@@ -658,7 +658,7 @@ class UserFacilityController extends Controller
                             'date_to' => $dateTo,
                             'total_price' => $totalPrice,
                         ]);
-                        
+
                     } elseif ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity) {
 
                         $dateFrom = $request->input('date_from');
@@ -705,19 +705,6 @@ class UserFacilityController extends Controller
                             Log::info('Qualification file uploaded', ['qualification_path' => $qualificationPath]);
                         }
 
-                        // $newAvailability = Availability::create([
-                        //     'user_id' => $user->id,
-                        //     'facility_id' => $facility->id,
-                        //     'price_id' => $price->id,
-                        //     'facility_attribute_id' => null,
-                        //     'qualification' => $qualificationPath,
-                        //     'date_from' => $dateFrom,
-                        //     'date_to' => $dateTo,
-                        //     'remaining_capacity' => $remainingCapacity,
-                        //     'quantity' => $totalQuantity,
-                        //     'total_price' => $totalPrice,
-                        //     'status' => 'pending',
-                        // ]);
 
                         $newAvailability = Availability::create([
                             'facility_id' => $facility->id,
@@ -737,10 +724,10 @@ class UserFacilityController extends Controller
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
                             'facility_id' => $facility->id,
-                            'quantity' => $totalQuantity, 
+                            'quantity' => $totalQuantity,
                             'total_price' => $totalPrice,
                         ]);
-                
+
 
                         Session::put('checkout', [
                             'reservation_id' => $newAvailability->id,
@@ -753,7 +740,7 @@ class UserFacilityController extends Controller
                             'total_price' => $totalPrice,
                         ]);
 
-            
+
                     } else {
                         throw new \Exception('Invalid facility configuration.');
                     }
