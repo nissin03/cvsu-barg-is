@@ -172,9 +172,6 @@
                     <li class="nav-item px-2 py-2">
                         <a href="{{ route('shop.index') }}" class="nav-link text-uppercase text-dark">Shop</a>
                     </li>
-                    <!-- <li class="nav-item px-2 py-2">
-                  <a href="{{ route('rentals.index') }}" class="nav-link text-uppercase text-dark">Rentals</a>
-              </li> -->
                     <li class="nav-item px-2 py-2">
                         <a href="{{ route('user.facilities.index') }}"
                             class="nav-link text-uppercase text-dark">Facilities</a>
