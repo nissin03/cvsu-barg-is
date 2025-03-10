@@ -425,7 +425,7 @@
 
                     <div id="priceContainer" class="mt-4">
                         <ul class="list-group container-sm" id="priceList">
-                            @foreach ($prices as $price)
+                            @foreach ($prices as $index => $price)
                                 <div class="card p-3 mb-3">
                                     <div class="card-body d-flex justify-content-between align-items-center">
                                         <div class="text-start">
@@ -475,7 +475,8 @@
                             <div class="modal-body">
                                 <div class="input-group">
                                     <label for="user-type">Name<span class="tf-color-1">*</span></label>
-                                    <input type="text" id="priceName" name="name" value="{{ old('name') }}">
+                                    <input type="text" id="priceName" name="prices[{{ $index }}][name]"
+                                        value="{{ old('prices.' . $index . '.name', $price->name ?? '') }}">
                                 </div>
                                 @error('name')
                                     <span class="alert alert-danger text-center">{{ $message }} </span>
@@ -483,17 +484,17 @@
 
                                 <div class="gap22 cols">
                                     <fieldset class="price_type">
-                                        <div class="body-title mb-10">Price Type<span class="tf-color-1">*</span>
-                                        </div>
+                                        <div class="body-title mb-10">Price Type<span class="tf-color-1">*</span></div>
                                         <div class="select">
-                                            <select id="priceTypeSelect" name="price_type">
+                                            <select id="priceTypeSelect" name="prices[{{ $index }}][price_type]">
+                                                <!-- Notice the change here -->
                                                 <option value="" selected disabled>Choose Price Type...</option>
                                                 <option value="individual"
-                                                    {{ old('price_type', $price->price_type ?? '') === 'individual' ? 'selected' : '' }}>
+                                                    {{ old('prices.' . $index . '.price_type', $price->price_type ?? '') === 'individual' ? 'selected' : '' }}>
                                                     Individual
                                                 </option>
                                                 <option value="whole"
-                                                    {{ old('price_type', $price->price_type ?? '') === 'whole' ? 'selected' : '' }}>
+                                                    {{ old('prices.' . $index . '.price_type', $price->price_type ?? '') === 'whole' ? 'selected' : '' }}>
                                                     Whole Place
                                                 </option>
                                             </select>
@@ -501,7 +502,7 @@
                                     </fieldset>
                                 </div>
 
-                                @error('type')
+                                @error('price_type')
                                     <span class="alert alert-danger text-center">{{ $message }} </span>
                                 @enderror
 
@@ -509,8 +510,10 @@
                                     <fieldset class="name">
                                         <div class="body-title mb-10">Price <span class="tf-color-1">*</span>
                                         </div>
-                                        <input type="number" min="1" id="value" name="value"
-                                            value="{{ old('value') }}" placeholder="Enter price">
+                                        <input type="number" min="1" id="value"
+                                            name="prices[{{ $index }}][value]"
+                                            value="{{ old('prices.' . $index . '.value', $price->value ?? '') }}"
+                                            placeholder="Enter price">
                                     </fieldset>
                                 </div>
                                 @error('value')
@@ -520,16 +523,16 @@
                                 <!-- Change these checkbox inputs -->
                                 <div class="form-check d-flex justify-content-center align-items-center my-4">
                                     <input type="checkbox" class="form-check-input" id="isBasedOnDays"
-                                        name="is_based_on_days" value="1"
-                                        {{ old('is_based_on_days') ? 'checked' : '' }}>
+                                        name="prices[{{ $index }}][is_based_on_days]" value="1"
+                                        {{ old('prices.' . $index . '.is_based_on_days', $price->is_based_on_days ?? false) ? 'checked' : '' }}>
                                     <label class="form-check-label ms-2 pt-2" for="isBasedOnDays">Is based on
                                         days?</label>
                                 </div>
 
                                 <div class="form-check d-flex justify-content-center align-items-center my-4">
                                     <input type="checkbox" class="form-check-input" id="isThereAQuantity"
-                                        name="is_there_a_quantity" value="1"
-                                        {{ old('is_there_a_quantity') ? 'checked' : '' }}>
+                                        name="prices[{{ $index }}][is_there_a_quantity]" value="1"
+                                        {{ old('prices.' . $index . '.is_there_a_quantity', $price->is_there_a_quantity ?? false) ? 'checked' : '' }}>
                                     <label class="form-check-label ms-2 pt-2" for="isThereAQuantity">Is there a
                                         quantity?</label>
                                 </div>
@@ -537,13 +540,14 @@
                                 <div id="dateFields" style="display: none;">
                                     <div class="input-group">
                                         <label for="date_from">Date From</label>
-                                        <input type="date" id="date_from" name="prices[0][date_from]"
-                                            value="{{ old('prices.0.date_from', $price->date_from ?? '') }}">
+                                        <input type="date" id="date_from"
+                                            name="prices[{{ $index }}][date_from]"
+                                            value="{{ old('prices.' . $index . '.date_from', $price->date_from ?? '') }}">
                                     </div>
                                     <div class="input-group">
                                         <label for="date_to">Date To</label>
-                                        <input type="date" id="date_to" name="prices[0][date_to]"
-                                            value="{{ old('prices.0.date_to', $price->date_to ?? '') }}">
+                                        <input type="date" id="date_to" name="prices[{{ $index }}][date_to]"
+                                            value="{{ old('prices.' . $index . '.date_to', $price->date_to ?? '') }}">
                                     </div>
                                 </div>
 
@@ -559,8 +563,6 @@
                                             value="{{ old('date_to') }}">
                                     </div>
                                 </div> --}}
-
-
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -570,575 +572,25 @@
                     </div>
                 </div>
 
-                @php
-                    $rooms = $facility->facilityAttributes
-                        ->filter(function ($attr) use ($facility) {
-                            return $attr->facility_id == $facility->id;
-                        })
-                        ->map(function ($attribute) {
-                            return [
-                                'id' => $attribute->id,
-                                'facility_id' => $attribute->facility_id,
-                                'room_name' => $attribute->room_name,
-                                'capacity' => $attribute->capacity,
-                                'sex_restriction' => $attribute->sex_restriction,
-                            ];
-                        })
-                        ->values();
-                @endphp
-
-                @php
-                    $price = $facility->prices
-                        ->filter(function ($attr) use ($facility) {
-                            return $attr->facility_id == $facility->id;
-                        })
-                        ->map(function ($price) {
-                            return [
-                                'id' => $price->id,
-                                'facility_id' => $price->facility_id,
-                                'name' => $price->name,
-                                'priceTypeSelect' => $price->price_type,
-                                'value' => $price->value,
-                                'isBasedOnDays' => $price->is_based_on_days,
-                                'isThereAQuantity' => $price->is_there_a_quantity,
-                            ];
-                        })
-                        ->values();
-                @endphp
 
             </form>
 
         </div>
     </div @endsection @push('scripts') <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
-    <script src="{{ asset('assets/js/imagefile.js') }}"></script>
     {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
     <script>
-        $(document).ready(function() {
-            // let rooms = [];
-            let rooms = @json($rooms);
-            console.log("Initial Rooms Data:", rooms);
-
-            $("#rentalType").on("change", function() {
-                const rentalType = $(this).val();
-                console.log("Facility Type:", rentalType);
-
-                $("#pIndividual, #pWhole").attr("hidden", true).prop("disabled", true);
-
-                $("#roomBox, #hideRoomBox, #dormitoryRooms, #QuantityChecked").hide();
-
-                switch (rentalType) {
-                    case "individual":
-                        $("hideRoomBox").hide();
-                        $("#roomBox").show();
-                        $("#dormitoryRooms").show();
-                        $("#QuantityChecked").show();
-
-                        $("#pIndividual").removeAttr("hidden").prop("disabled", false);
-                        break;
-                    case "whole_place":
-                        $("#dormitoryRooms").hide();
-                        $("#roomBox").show();
-                        $("#hideRoomBox").show();
-                        $("#QuantityChecked").hide();
-
-                        $("#pWhole").removeAttr("hidden").prop("disabled", false);
-                        break;
-
-                    case "both":
-                        $("#roomBox").show();
-                        $("#hideRoomBox").show();
-                        $("#dormitoryRooms").show();
-                        $("#option").show();
-                        $("#QuantityChecked").show();
-                        $("#pIndividual").show();
-                        $("#pIndividual, #pWhole").removeAttr("hidden").prop("disabled", false);
-                        break;
-                    default:
-                        break;
-                }
-            });
-
-
-            $("#rentalType").trigger("change");
-
-            renderRoomList();
-            $("#saveRoomChanges").on("click", function(event) {
-                event.preventDefault();
-
-                const roomName = $("#roomName").val();
-                const roomCapacity = $("#roomCapacity").val();
-                const roomSexRestriction = $("#roomSexRestriction").val();
-
-                const validSexRestrictions = ["male", "female"];
-                const newRoom = {
-                    room_name: roomName,
-                    capacity: parseInt(roomCapacity, 10),
-                    sex_restriction: validSexRestrictions.includes(roomSexRestriction) ?
-                        roomSexRestriction : "",
-                };
-
-                rooms.push(newRoom);
-                renderRoomList();
-                updateHiddenRooms();
-
-                $("#addRoom").modal("hide");
-                $("#roomName, #roomCapacity, #roomSexRestriction").val("");
-                $("#addRoomLabel").text("Add Room");
-            });
-
-
-            function renderRoomList() {
-                const roomList = $("#roomList");
-                roomList.empty();
-
-                // First, filter out null/invalid rooms
-                const validRooms = rooms.filter(room =>
-                    room &&
-                    room.room_name &&
-                    room.room_name !== 'null' &&
-                    room.room_name !== null &&
-                    room.capacity &&
-                    room.capacity > 0
-                );
-
-                if (!validRooms || validRooms.length === 0) {
-                    roomList.append('<li class="list-group-item">No rooms yet :(</li>');
-                    return;
-                }
-
-                validRooms.forEach((room, index) => {
-                    const listItem = `
-            <div class="card p-3 mb-3">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h4>${room.room_name}</h4>
-                        <p>Capacity: <span class="badge bg-warning">${room.capacity}</span></p>
-                        ${room.sex_restriction && room.sex_restriction !== 'null' 
-                            ? `<span class="badge bg-info">${room.sex_restriction}</span>` 
-                            : ""}
-                    </div>
-                    <div class="d-flex">
-                        <button type="button" class="btn btn-warning me-2" onclick="editRoom(${index})">Edit</button>
-                        <button type="button" class="btn btn-danger" onclick="deleteRoom(${index})">Delete</button>
-                    </div>
-                </div>
-            </div>`;
-                    roomList.append(listItem);
-                });
-                rooms = validRooms;
-
-                updateHiddenRooms();
-            }
-
-
-
-            // $(document).ready(function() {
-            //     renderRoomList();
-            // });
-
-            window.editRoom = function(index) {
-                const room = rooms[index];
-                $("#roomName").val(room.room_name || "");
-                $("#roomCapacity").val(room.capacity || "");
-                $("#roomSexRestriction").val(room.sex_restriction || "");
-
-                $("#saveRoomChanges")
-                    .off("click")
-                    .on("click", function() {
-                        const updatedRoomName = $("#roomName").val();
-                        const updatedCapacity = $("#roomCapacity").val();
-                        let updatedSexRestriction = $("#roomSexRestriction").val();
-
-                        if (!updatedRoomName || !updatedCapacity || isNaN(updatedCapacity) ||
-                            updatedCapacity <= 0) {
-                            alert("Please provide valid room details.");
-                            return;
-                        }
-
-
-                        rooms[index] = {
-                            room_name: updatedRoomName,
-                            capacity: parseInt(updatedCapacity),
-                            sex_restriction: updatedSexRestriction ? updatedSexRestriction : "",
-                        };
-                        renderRoomList();
-                        updateHiddenRooms();
-
-                        // Close the modal
-                        $("#addRoom").modal("hide");
-                    });
-
-                // Change modal title to 'Edit Room'
-                $("#addRoomLabel").text("Edit Room");
-
-                // Show the modal
-                $("#addRoom").modal("show");
-            };
-
-
-            window.deleteRoom = function(index) {
-                if (confirm("Are you sure you want to delete this room?")) {
-                    rooms.splice(index, 1);
-                    renderRoomList();
-                    updateHiddenRooms();
-                }
-            };
-
-            function updateHiddenRooms() {
-                const roomInput = $("#hiddenRooms");
-                roomInput.empty();
-
-                const facilityType = $("#rentalType").val();
-
-                if (facilityType === "whole_place") {
-                    return;
-                }
-
-                rooms.forEach((room, index) => {
-                    const sexRestrictionValue =
-                        room.sex_restriction && ['male', 'female'].includes(room.sex_restriction) ?
-                        room.sex_restriction :
-                        "";
-
-                    if (room.room_name && room.capacity > 0) {
-                        roomInput.append(createHiddenInputRooms(`facility_attributes[${index}][room_name]`,
-                            room.room_name));
-                        roomInput.append(createHiddenInputRooms(`facility_attributes[${index}][capacity]`,
-                            room.capacity));
-                        roomInput.append(createHiddenInputRooms(
-                            `facility_attributes[${index}][sex_restriction]`, sexRestrictionValue));
-                    }
-                });
-            }
-            // Helper function to create hidden input for rooms
-            function createHiddenInputRooms(name, value) {
-                return `<input type="hidden" name="${name}" value="${value}">`;
-            }
-
-            // Prices functions  
-
-            $(document).ready(function() {
-                renderPriceList();
-            });
-
-            let prices = @json($prices);
-
-            // Handle Save Price Changes (Add Price)
-            $("#savePriceChanges").on("click", function(event) {
-                event.preventDefault();
-
-                const name = $("#priceName").val();
-                const price_type = $("#priceTypeSelect").val();
-                const value = $("#value").val();
-                const isBasedOnDays = $("#isBasedOnDays").prop("checked");
-                const isThereAQuantity = $("#isThereAQuantity").prop("checked");
-                const dateFrom = $("#date_from").val();
-                const dateTo = $("#date_to").val();
-                if (isBasedOnDays && (!dateFrom || !dateTo)) {
-                    alert("Date From and Date To are required when 'Is Based on Days?' is checked.");
-                    return;
-                }
-
-                // Add new price
-                const newPrice = {
-                    name,
-                    price_type,
-                    value: parseFloat(value),
-                    is_based_on_days: isBasedOnDays,
-                    is_there_a_quantity: isThereAQuantity,
-
-                    ...(isBasedOnDays ? {
-                        date_from: dateFrom,
-                        date_to: dateTo
-                    } : {})
-                };
-
-                prices.push(newPrice);
-                renderPriceList();
-                updateHiddenPrices();
-
-                // Close the price modal
-                $("#addPrice").modal("hide");
-                clearPriceFields();
-            });
-
-            // Render the price list dynamically
-            function renderPriceList() {
-                $("#priceList").empty();
-
-                if (prices && prices.length > 0) {
-                    prices.forEach((price, index) => {
-                        const listItem = `
-                                <div class="card p-3 mb-3">
-                                    <div class="card-body d-flex justify-content-between align-items-center">
-                                        <div class="text-start">
-                                            <h4>${price.name}</h4>
-                                            <p>Type: <span class="badge bg-success">${price.price_type}</span></p>
-                                            <p>Price: PHP ${price.value}</p>
-                                            <p>Is Based on Days?: 
-                                                <span class="badge ${price.is_based_on_days ? 'bg-success' : 'bg-danger'}">
-                                                    ${price.is_based_on_days ? 'Yes' : 'No'}
-                                                </span>
-                                            </p>
-                                            <p>Is there a quantity?: 
-                                                <span class="badge ${price.is_there_a_quantity ? 'bg-success' : 'bg-danger'}">
-                                                    ${price.is_there_a_quantity ? 'Yes' : 'No'}
-                                                </span>
-                                            </p>
-                                        </div>
-                                        <div class="d-flex">
-                                            <button type="button" class="btn btn-lg btn-outline-warning me-2" onclick="editPrice(${index})">
-                                                <i class="icon-pen">Edit</i>
-                                            </button>
-                                            <button type="button" class="btn btn-lg btn-outline-danger delete-btn" onclick="deletePrice(${index})">
-                                                <i class="icon-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-            `;
-                        $("#priceList").append(listItem);
-                    });
-                }
-            }
-
-            window.editPrice = function(index) {
-                const price = prices[index];
-                $("#priceName").val(price.name || "");
-                $("#priceTypeSelect").val(price.price_type || "");
-                $("#value").val(price.value || "");
-                $("#isBasedOnDays").prop("checked", price.is_based_on_days);
-                $("#isThereAQuantity").prop("checked", price.is_there_a_quantity);
-
-                // Only set date fields if is_based_on_days is true
-                if (price.is_based_on_days) {
-                    $("#date_from").val(price.date_from || "");
-                    $("#date_to").val(price.date_to || "");
-                    $("#dateFields").show();
-                } else {
-                    $("#dateFields").hide();
-                }
-
-                $("#savePriceChanges")
-                    .off("click")
-                    .on("click", function() {
-                        const updatedPriceName = $("#priceName").val();
-                        const updatedPriceTypeSelect = $("#priceTypeSelect").val();
-                        const updatedValue = $("#value").val();
-                        const updatedBasedOnDays = $("#isBasedOnDays").prop("checked");
-                        const updatedAQuantity = $("#isThereAQuantity").prop("checked");
-                        const updatedDateFrom = updatedBasedOnDays ? $("#date_from").val() : "";
-                        const updatedDateTo = updatedBasedOnDays ? $("#date_to").val() : "";
-
-                        if (!updatedPriceName || !updatedValue || isNaN(updatedValue) || parseFloat(
-                                updatedValue) <= 0) {
-                            alert("Please enter a valid price.");
-                            return;
-                        }
-
-                        prices[index] = {
-                            ...prices[index],
-                            name: updatedPriceName,
-                            price_type: updatedPriceTypeSelect,
-                            value: parseFloat(updatedValue),
-                            is_based_on_days: updatedBasedOnDays,
-                            is_there_a_quantity: updatedAQuantity,
-                            ...(updatedBasedOnDays && {
-                                date_from: updatedDateFrom,
-                                date_to: updatedDateTo
-                            })
-                        };
-
-                        renderPriceList();
-                        updateHiddenPrices();
-
-                        $("#addPrice").modal("hide");
-                        clearPriceFields();
-                        $("#addPriceLabel").text("Add Price");
-                    });
-
-                $("#addPriceLabel").text("Edit Price");
-                $("#addPrice").modal("show");
-            };
-
-            window.deletePrice = function(index) {
-                if (confirm("Are you sure you want to delete this room?")) {
-                    prices.splice(index, 1);
-                    renderPriceList();
-                    updateHiddenPrices();
-                }
-            };
-
-            function clearPriceFields() {
-                $("#priceName").val("");
-                $("#priceTypeSelect").val("");
-                $("#value").val("");
-                $("#isBasedOnDays").prop("checked", false);
-                $("#isThereAQuantity").prop("checked", false);
-            }
-
-            function updateHiddenPrices() {
-                const priceInput = $("#hiddenPrices");
-                priceInput.empty();
-
-                prices.forEach((price, index) => {
-                    if (price.name && price.price_type && !isNaN(price.value)) {
-                        priceInput.append(createHiddenInput(`prices[${index}][name]`, price.name));
-                        priceInput.append(createHiddenInput(`prices[${index}][price_type]`, price
-                            .price_type));
-                        priceInput.append(createHiddenInput(`prices[${index}][value]`, price.value));
-                        priceInput.append(createHiddenInput(`prices[${index}][is_based_on_days]`, price
-                            .is_based_on_days ? "1" : "0"));
-                        priceInput.append(createHiddenInput(`prices[${index}][is_there_a_quantity]`, price
-                            .is_there_a_quantity ? "1" : "0"));
-
-                        if (price.is_based_on_days) {
-                            const dateFrom = price.date_from || "";
-                            const dateTo = price.date_to || "";
-                            priceInput.append(createHiddenInput(`prices[${index}][date_from]`, dateFrom));
-                            priceInput.append(createHiddenInput(`prices[${index}][date_to]`, dateTo));
-                        }
-                    }
-                });
-            }
-
-            function createHiddenInput(name, value) {
-                return `<input type="hidden" name="${name}" value="${value}">`;
-            }
-
-
-
-            $("#facilityForm").on("submit", function(event) {
-                event.preventDefault();
-                const formData = new FormData(this);
-                const facilityType = $("#rentalType").val();
-
-                // Clear any existing facility attributes
-                for (let pair of formData.entries()) {
-                    if (pair[0].startsWith('facility_attributes')) {
-                        formData.delete(pair[0]);
-                    }
-                }
-
-                // Handle prices
-                if (prices && prices.length > 0) {
-                    prices.forEach((price, index) => {
-                        if (price.name) formData.append(`prices[${index}][name]`, price.name);
-                        if (price.price_type) formData.append(`prices[${index}][price_type]`, price
-                            .price_type);
-                        if (price.value) formData.append(`prices[${index}][value]`, price.value);
-                        formData.append(`prices[${index}][is_based_on_days]`, price
-                            .is_based_on_days ? '1' : '0');
-                        formData.append(`prices[${index}][is_there_a_quantity]`, price
-                            .is_there_a_quantity ? '1' : '0');
-
-                        if (price.is_based_on_days) {
-                            formData.append(`prices[${index}][date_from]`, price.date_from || '');
-                            formData.append(`prices[${index}][date_to]`, price.date_to || '');
-                        }
-                    });
-                }
-
-                // Handle facility attributes based on facility type
-                if (facilityType === "whole_place") {
-                    const wholeCapacity = $("#roomCapacityWhole").val();
-                    if (wholeCapacity) {
-                        formData.append("whole_capacity", wholeCapacity);
-                    }
-                    // For whole_place, ensure facility_attributes are set with default values
-                    formData.append('facility_attributes[0][room_name]', '');
-                    formData.append('facility_attributes[0][capacity]', '0');
-                    formData.append('facility_attributes[0][sex_restriction]', '');
-                } else {
-                    // For individual or both types
-                    if (rooms && rooms.length > 0) {
-                        const validRooms = rooms.filter(room =>
-                            room &&
-                            room.room_name &&
-                            typeof room.capacity === 'number' &&
-                            room.capacity > 0
-                        );
-
-                        validRooms.forEach((room, index) => {
-                            formData.append(`facility_attributes[${index}][room_name]`, room
-                                .room_name);
-                            formData.append(`facility_attributes[${index}][capacity]`, room.capacity
-                                .toString());
-                            formData.append(`facility_attributes[${index}][sex_restriction]`, room
-                                .sex_restriction || '');
-                        });
-                    }
-                }
-
-                // Log the final form data for debugging
-                console.log("Form data to be sent:");
-                for (let pair of formData.entries()) {
-                    console.log(pair[0] + ': ' + pair[1]);
-                }
-
-                $.ajax({
-                    url: $(this).attr("action"),
-                    method: "POST",
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    headers: {
-                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
-                    },
-                    success: function(response) {
-                        console.log("Success response:", response);
-                        if (response.action === "create") {
-                            showAlert("Facility created successfully!", "success");
-                        } else if (response.action === "update") {
-                            showAlert("Facility updated successfully!", "success");
-                        }
-                        setTimeout(function() {
-                            window.location.href = "/admin/facilities";
-                        }, 2000);
-                    },
-                    error: function(xhr) {
-                        console.log("Error response:", xhr);
-                        if (xhr.status === 422) {
-                            displayValidationErrors(xhr.responseJSON.errors);
-                        } else {
-                            showAlert("An unexpected error occurred. Please try again.",
-                                "danger");
-                        }
-                    },
-                });
-            });
-
-            // Display validation errors in form
-            function displayValidationErrors(errors) {
-                for (const [key, messages] of Object.entries(errors)) {
-                    const errorContainer = $(`#${key}Error`);
-                    if (errorContainer.length) {
-                        errorContainer.html(messages[0]).show();
-                    }
-                }
-            }
-
-            // Show custom alert
-            function showAlert(message, type) {
-                const alertBox = $("<div>", {
-                    class: `alert alert-${type} alert-dismissible fade show`,
-                    role: "alert",
-                    text: message,
-                }).append(
-                    $("<button>", {
-                        type: "button",
-                        class: "btn-close",
-                        "data-bs-dismiss": "alert",
-                        "aria-label": "Close",
-                    })
-                );
-
-                $("#alertContainer").html(alertBox);
-                alertBox.alert();
-            }
-        });
-
+        window.rooms = @json($facilityAttributes);
+        window.price = @json($prices);
+    </script>
+
+    {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
+    <script src="{{ asset('assets/js/formSubmit.js') }}"></script>
+    <script src="{{ asset('assets/js/hideFields.js') }}"></script>
+    <script src="{{ asset('assets/js/addRooms.js') }}"></script>
+    <script type="module" src="{{ asset('assets/js/addPrice.js') }}"></script>
+    <script src="{{ asset('assets/js/imagefile.js') }}"></script>
+    <script>
         document.addEventListener("DOMContentLoaded", function() {
             const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
             const dateFieldsDiv = document.getElementById('dateFields');

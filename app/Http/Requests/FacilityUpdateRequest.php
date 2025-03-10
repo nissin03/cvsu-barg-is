@@ -24,12 +24,12 @@ class FacilityUpdateRequest extends FormRequest
     public function rules(Request $request): array
     {
         $rules = [
-            'name' => [
-                'nullable',
-                'string',
-                'max:255',
-                Rule::unique('facilities')->ignore($this->route('facility')),
-            ],
+            // 'name' => [
+            //     'nullable',
+            //     'string',
+            //     'max:255',
+            //     Rule::unique('facilities')->ignore($this->route('facility')),
+            // ],
             'facility_type' => 'required|string|in:individual,whole_place,both',
             'description' => 'required|string',
             'image' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',

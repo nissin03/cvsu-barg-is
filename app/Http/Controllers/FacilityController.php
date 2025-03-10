@@ -56,7 +56,9 @@ class FacilityController extends Controller
 
     public function create()
     {
-        return view('admin.facilities.create');
+        $rooms = FacilityAttribute::all();
+        $prices = Price::all();
+        return view('admin.facilities.create', compact('rooms', 'prices'));
     }
     public function reservations()
     {
@@ -147,6 +149,8 @@ class FacilityController extends Controller
 
     private function handlePrices(Facility $facility, $request)
     {
+        $priceType = $request->input('price_type', 'individual');
+
         if (is_array($request->prices)) {
             $pricesData = [];
             foreach ($request->prices as $price) {
@@ -154,7 +158,8 @@ class FacilityController extends Controller
                     'facility_id' => $facility->id,
                     'name' => $price['name'],
                     'value' => $price['value'],
-                    'price_type' => $price['price_type'],
+                    // 'price_type' => $price['price_type'],
+                    'price_type' => $priceType, 
                     'is_based_on_days' => $price['is_based_on_days'] ?? false,
                     'is_there_a_quantity' => $price['is_there_a_quantity'] ?? false,
                     'date_from' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_from'] : null,
@@ -170,12 +175,17 @@ class FacilityController extends Controller
     {
         $facility =  Facility::find($id);
         $facilityAttributes = FacilityAttribute::where('facility_id', $facility->id)->get();
-        $prices = Price::where('facility_id', $facility->id)->get();
+        // $prices = Price::where('facility_id', $facility->id)->get();
+        $prices = Price::where('facility_id', $facility->id)->whereNotNull('price_type')->get();
         return view('admin.facilities.edit', compact('facility',  'facilityAttributes', 'prices'));
     }
 
     public function update(FacilityUpdateRequest $request, $id)
     {
+        $request->validate([
+            'name' => 'required|unique:facilities,name,' . $id,
+        ]);
+
         $facility = Facility::findOrFail($id);
         $request->merge([
             'sex_restriction' => $request->sex_restriction ?? '',
@@ -222,7 +232,8 @@ class FacilityController extends Controller
                     'value' => $price['value'],
                     'price_type' => $price['price_type'],
                     'is_based_on_days' => filter_var($price['is_based_on_days'], FILTER_VALIDATE_BOOLEAN),
-                    'is_there_a_quantity' => filter_var($price['is_there_a_quantity'], FILTER_VALIDATE_BOOLEAN),
+                    // 'is_there_a_quantity' => filter_var($price['is_there_a_quantity'], FILTER_VALIDATE_BOOLEAN),
+                    'is_there_a_quantity' => $price['is_there_a_quantity'] ?? false,
                     'date_from' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_from'] : null,
                     'date_to' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_to'] : null,
                     'created_at' => now(),

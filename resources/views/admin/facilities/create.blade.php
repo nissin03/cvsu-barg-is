@@ -297,7 +297,6 @@
                     <div id="dormitoryRooms">
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
                             <h4>Details</h4>
-                            {{-- <button type="button" data-bs-toggle="modal" data-bs-target="#addRoom">Add Room</button> --}}
                             <button type="button" data-bs-toggle="modal" data-bs-target="#addMultipleRoomsModal">
                                 Add Rooms
                             </button>
@@ -307,48 +306,7 @@
                             <h4>Rooms</h4>
                             <ul class="list-group" id="roomList"></ul>
                         </div>
-                        {{-- <div class="modal fade" id="addRoom" tabindex="-1" aria-labelledby="addRoomLabel"
-                            aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="addRoomLabel">Add Room</h1>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <fieldset class="name">
-                                            <div class="body-title mb-10">Room Name <span class="tf-color-1">*</span>
-                                            </div>
-                                            <input type="text" id="roomName" name="room_name"
-                                                placeholder="Enter room name">
-                                        </fieldset>
 
-                                        <fieldset class="name">
-                                            <div class="body-title mb-10">Capacity <span class="tf-color-1">*</span></div>
-                                            <input type="number" min="0" id="roomCapacity" name="capacity"
-                                                placeholder="Enter room capacity">
-                                        </fieldset>
-
-                                        <fieldset class="sex-restriction">
-                                            <div class="body-title mb-10">Sex Restriction</div>
-                                            <select id="roomSexRestriction" name="sex_restriction">
-                                                <option value="">Choose Sex Restriction... </option>
-                                                <option value="male">Male</option>
-                                                <option value="female">Female</option>
-                                            </select>
-                                        </fieldset>
-
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" id="saveRoomChanges"> Save
-                                            Changes</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> --}}
 
                         <!-- Add Multiple Rooms Modal -->
                         <div class="modal fade" id="addMultipleRoomsModal" tabindex="-1"
@@ -398,11 +356,7 @@
                     </div>
                 </div>
 
-
-
                 {{-- prices fields  --}}
-
-
                 <div class="wg-box" id="priceBox">
 
                     <div id="dormitoryFields"
@@ -530,8 +484,19 @@
 @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
-    <script src="{{ asset('assets/js/roomandprices.js') }}"></script>
+    <script>
+        let rooms = [];
+        let prices = [];
+    </script>
+
+    {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
+    <script src="{{ asset('assets/js/hideFields.js') }}"></script>
+    <script src="{{ asset('assets/js/addRooms.js') }}"></script>
+    <script type="module" src="{{ asset('assets/js/addPrice.js') }}"></script>
+    <script type="module" src="{{ asset('assets/js/formSubmit.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
+
+
     <script>
         function removeUpload(previewId, inputId) {
             $('#' + previewId).hide(); // Hide the preview
@@ -549,7 +514,6 @@
                 $('#galUpload').addClass('up-load');
             }
         }
-
 
         document.addEventListener("DOMContentLoaded", function() {
             const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
@@ -583,20 +547,5 @@
             // Disable past dates initially
             disablePastDates();
         });
-
-
-        // document.getElementById('isBasedOnDays').addEventListener('change', function() {
-
-        //     const dateFields = document.getElementById('dateFields');
-        //     if (this.checked) {
-        //         dateFields.style.display = 'block';
-
-        //         document.getElementById('isBasedOnDays').value = '1';
-        //     } else {
-        //         dateFields.style.display = 'none';
-
-        //         document.getElementById('isBasedOnDays').value = '0';
-        //     }
-        // });
     </script>
 @endpush

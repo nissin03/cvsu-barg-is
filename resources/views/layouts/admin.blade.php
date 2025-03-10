@@ -407,11 +407,11 @@
                                             <div class="text">Facilties Reports</div>
                                         </a>
                                         <ul class="sub-menu">
-                                            <li class="sub-menu-item">
+                                            {{-- <li class="sub-menu-item">
                                                 <a href="{{ route('admin.report.facilities') }}">
                                                     <div class="text">Sales Reports</div>
                                                 </a>
-                                            </li>
+                                            </li> --}}
 
 
                                         </ul>

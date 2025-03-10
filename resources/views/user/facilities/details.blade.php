@@ -671,17 +671,18 @@
 
                             @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
 
-                            @if ($errors->any())
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                    <strong>Oops! Something went wrong.</strong>
-                                    <ul class="mb-0">
-                                        @foreach ($errors->all() as $error)
-                                            <li>{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                            @endif
+                                @if ($errors->any())
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <strong>Oops! Something went wrong.</strong>
+                                        <ul class="mb-0">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                            aria-label="Close"></button>
+                                    </div>
+                                @endif
 
                                 <input type="hidden" name="price_type" id="price_type" value="">
                                 <input type="hidden" name="price_id" id="price_id" value="">
@@ -714,7 +715,11 @@
                                         <label><strong>Set Quantity:</strong></label>
                                         @foreach ($facility->prices->where('is_there_a_quantity', true)->where('price_type', 'individual') as $price)
                                             <div class="form-floating mb-3">
-                                                <input id="quantity_{{ $price->id }}" type="number" class="form-control quantity-input" name="quantity[{{ $price->id }}]" value="{{ old('quantity.' . $price->id) }}" min="0" data-price="{{ $price->value }}">
+                                                <input id="quantity_{{ $price->id }}" type="number"
+                                                    class="form-control quantity-input"
+                                                    name="quantity[{{ $price->id }}]"
+                                                    value="{{ old('quantity.' . $price->id) }}" min="0"
+                                                    data-price="{{ $price->value }}">
                                                 <label for="quantity_{{ $price->id }}">Enter Quantity for
                                                     {{ $price->name }}</label>
                                             </div>
@@ -736,7 +741,7 @@
                                             @endforeach
                                         </select>
                                         <label for="exclusive_type">Exclusive Type:</label>
-                                       
+
                                     </div>
                                 </div>
                                 <div class="reservation-section">
@@ -754,7 +759,7 @@
                                             @endif
                                         </div>
 
-                                        
+
                                     </div>
                                 </div>
                             @endif
@@ -1306,10 +1311,9 @@
         @endif
         @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
             <script>
-
                 document.addEventListener('DOMContentLoaded', function() {
                     const reservationTypeRadios = document.querySelectorAll('input[name="reservation_type"]');
-                     const individualInputs = document.getElementById('individual_inputs');
+                    const individualInputs = document.getElementById('individual_inputs');
                     const exclusiveDropdown = document.getElementById('exclusive_dropdown');
                     const resetButton = document.getElementById('reset_button');
                     const totalPriceElement = document.getElementById('total_price');
@@ -1364,31 +1368,32 @@
                     });
 
                     const exclusiveTypeDropdown = document.getElementById('exclusive_type');
-                        if (exclusiveTypeDropdown) {
-                            exclusiveTypeDropdown.addEventListener('change', function() {
-                                const selectedOption = exclusiveTypeDropdown.options[exclusiveTypeDropdown.selectedIndex];
-                                const price = parseFloat(selectedOption.dataset.price || 0);
-                                const priceId = selectedOption.value;
-                                updateTotalPrice(price, 'whole', priceId);
-                            });
-                        }
+                    if (exclusiveTypeDropdown) {
+                        exclusiveTypeDropdown.addEventListener('change', function() {
+                            const selectedOption = exclusiveTypeDropdown.options[exclusiveTypeDropdown
+                                .selectedIndex];
+                            const price = parseFloat(selectedOption.dataset.price || 0);
+                            const priceId = selectedOption.value;
+                            updateTotalPrice(price, 'whole', priceId);
+                        });
+                    }
 
 
+                    document.querySelectorAll('.quantity-input').forEach(input => {
+                        input.addEventListener('input', calculateGrandTotal);
+                    });
+                    resetButton.addEventListener('click', function() {
+                        reservationTypeRadios.forEach(radio => (radio.checked = false));
+                        individualInputs.style.display = 'none';
+                        exclusiveDropdown.style.display = 'none';
                         document.querySelectorAll('.quantity-input').forEach(input => {
-                            input.addEventListener('input', calculateGrandTotal);
+                            input.value = '';
                         });
-                        resetButton.addEventListener('click', function() {
-                            reservationTypeRadios.forEach(radio => (radio.checked = false));
-                            individualInputs.style.display = 'none';
-                            exclusiveDropdown.style.display = 'none';
-                            document.querySelectorAll('.quantity-input').forEach(input => {
-                                input.value = '';
-                            });
-                            if (exclusiveTypeDropdown) {
-                                exclusiveTypeDropdown.value = '';
-                            }
-                            updateTotalPrice(0, '', '');
-                        });
+                        if (exclusiveTypeDropdown) {
+                            exclusiveTypeDropdown.value = '';
+                        }
+                        updateTotalPrice(0, '', '');
+                    });
                 });
 
 
