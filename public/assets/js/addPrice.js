@@ -1,4 +1,4 @@
-export let prices = [];
+// export let prices = [];
 
 const $priceList = $("#priceList");
 const $hiddenPrices = $("#hiddenPrices");

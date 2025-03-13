@@ -160,7 +160,7 @@ class FacilityController extends Controller
                     'value' => $price['value'],
                     // 'price_type' => $price['price_type'],
                     'price_type' => $priceType, 
-                    'is_based_on_days' => $price['is_based_on_days'] ?? false,
+                    'is_based_on_days' => filter_var($price['is_based_on_days'], FILTER_VALIDATE_BOOLEAN),
                     'is_there_a_quantity' => $price['is_there_a_quantity'] ?? false,
                     'date_from' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_from'] : null,
                     'date_to' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_to'] : null,
@@ -176,6 +176,17 @@ class FacilityController extends Controller
         $facility =  Facility::find($id);
         $facilityAttributes = FacilityAttribute::where('facility_id', $facility->id)->get();
         // $prices = Price::where('facility_id', $facility->id)->get();
+        // $prices = $prices->map(function ($price) {
+        //     return [
+        //         'name' => $price->name,
+        //         'value' => $price->value,
+        //         'price_type' => $price->price_type,
+        //         'is_based_on_days' => $price->is_based_on_days,
+        //         'is_there_a_quantity' => $price->is_there_a_quantity,
+        //         'date_from' => $price->date_from,
+        //         'date_to' => $price->date_to,
+        //     ];
+        // });
         $prices = Price::where('facility_id', $facility->id)->whereNotNull('price_type')->get();
         return view('admin.facilities.edit', compact('facility',  'facilityAttributes', 'prices'));
     }

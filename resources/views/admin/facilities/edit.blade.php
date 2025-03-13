@@ -580,12 +580,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
     {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
     <script>
-        window.rooms = @json($facilityAttributes);
-        window.price = @json($prices);
+        window.rooms = @json($facilityAttributes ?? []);
+        window.prices = @json($prices ?? []);
     </script>
 
     {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
-    <script src="{{ asset('assets/js/formSubmit.js') }}"></script>
+    <script src="{{ asset('assets/js/formSubmitUpdate.js') }}"></script>
     <script src="{{ asset('assets/js/hideFields.js') }}"></script>
     <script src="{{ asset('assets/js/addRooms.js') }}"></script>
     <script type="module" src="{{ asset('assets/js/addPrice.js') }}"></script>

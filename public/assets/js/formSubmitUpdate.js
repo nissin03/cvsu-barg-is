@@ -1,32 +1,40 @@
 $("#facilityForm").on("submit", function (event) {
     event.preventDefault();
 
-    var formData = new FormData(this);
-    const facilityType = $("#rentalType").val();  // Get the facility type
+    var formData = new FormData(this);  // Get form data
+    const facilityType = $("#rentalType").val();  // Get selected rental type
 
-    // Add price data to formData
-    prices.forEach((price, index) => {
-        formData.append(`prices[${index}][name]`, price.name);
-        formData.append(`prices[${index}][price_type]`, price.price_type);
-        formData.append(`prices[${index}][value]`, price.value);
-        formData.append(`prices[${index}][is_based_on_days]`, price.is_based_on_days);
-        formData.append(`prices[${index}][is_there_a_quantity]`, price.is_there_a_quantity);
-    });
+    // Ensure prices array is defined
+    if (Array.isArray(window.prices)) {
+        window.prices.forEach((price, index) => {
+            formData.append(`prices[${index}][name]`, price.name);
+            formData.append(`prices[${index}][price_type]`, price.price_type);
+            formData.append(`prices[${index}][value]`, price.value);
+            formData.append(`prices[${index}][is_based_on_days]`, price.is_based_on_days);
+            formData.append(`prices[${index}][is_there_a_quantity]`, price.is_there_a_quantity);
+        });
+    } else {
+        console.error("Prices is not an array or is undefined");
+    }
 
-    // Check for facility type and append appropriate data
+    // Handle data for different facility types
     if (facilityType === "whole_place") {
         const wholeCapacity = $("#roomCapacityWhole").val();
         formData.append("whole_capacity", wholeCapacity);
     } else {
-        // Append rooms data for individual or both facility types
-        rooms.forEach((room, index) => {
-            formData.append(`facility_attributes[${index}][room_name]`, room.room_name);
-            formData.append(`facility_attributes[${index}][capacity]`, room.capacity);
-            formData.append(`facility_attributes[${index}][sex_restriction]`, room.sex_restriction);
-        });
+        // Append facility attributes for individual or both types
+        if (Array.isArray(window.rooms)) {
+            window.rooms.forEach((room, index) => {
+                formData.append(`facility_attributes[${index}][room_name]`, room.room_name);
+                formData.append(`facility_attributes[${index}][capacity]`, room.capacity);
+                formData.append(`facility_attributes[${index}][sex_restriction]`, room.sex_restriction);
+            });
+        } else {
+            console.error("Rooms is not an array or is undefined");
+        }
     }
 
-    // Debugging: Log formData before submission
+    // Debugging: Log form data before submission
     console.log("Form Data Before Submission:");
     for (var pair of formData.entries()) {
         console.log(pair[0] + ": " + pair[1]);
@@ -44,19 +52,17 @@ $("#facilityForm").on("submit", function (event) {
         },
         success: function (response) {
             console.log("Success response:", response);
-            if (response.action === "create") {
-                showAlert("Facility created successfully!", "success");
-            } else if (response.action === "update") {
+            if (response.action === "update") {
                 showAlert("Facility updated successfully!", "success");
             }
             setTimeout(function () {
-                window.location.href = "/admin/facilities";
+                window.location.href = "/admin/facilities"; // Redirect to facilities list
             }, 2000);
         },
         error: function (xhr) {
             console.log("Error:", xhr);
             if (xhr.status === 422) {
-                displayValidationErrors(xhr.responseJSON.errors);
+                displayValidationErrors(xhr.responseJSON.errors); // Show validation errors
             } else {
                 showAlert("An unexpected error occurred. Please try again.", "danger");
             }
