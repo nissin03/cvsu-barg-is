@@ -158,11 +158,12 @@
                     <div class="wg-filter flex-grow">
                         <form class="form-search">
                             <fieldset class="name">
-                                <input type="text" id="product-search" placeholder="Search here..." class=""
-                                    name="name" tabindex="2" value="" aria-required="true" required="">
+                                <input type="text" id="product-search" placeholder="Search here..." name="name"
+                                    aria-required="true" value="{{ request('search') }}">
                             </fieldset>
                             <div class="button-submit">
-                                <button class="" type="submit"><i class="icon-search"></i></button>
+                                <button class="" type="submit" style="display:none;"> <i
+                                        class="icon-search"></i></button> <!-- Hidden submit button -->
                             </div>
                         </form>
                     </div>
@@ -189,146 +190,8 @@
                                 <th style="width: 9%">Action</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @foreach ($products as $product)
-                                @php
-                                    $groupedAttributes = [];
-                                    $uniqueAttributes = [];
-                                    foreach ($product->attributeValues as $value) {
-                                        if ($value->productAttribute) {
-                                            $attributeId = $value->product_attribute_id;
-                                            $groupedAttributes[$attributeId][] = $value;
-                                            if (!isset($uniqueAttributes[$attributeId])) {
-                                                $uniqueAttributes[$attributeId] = $value->productAttribute;
-                                            }
-                                        }
-                                    }
-
-                                    $currentStock =
-                                        $product->attributeValues->count() > 0
-                                            ? $product->attributeValues->sum('quantity')
-                                            : $product->quantity;
-
-                                    // Set stock status based on quantities
-                                    if ($currentStock == 0) {
-                                        $stockStatus = 'Out of Stock';
-                                        $badgeClass = 'badge-danger';
-                                    } elseif ($currentStock <= $product->outofstock_quantity) {
-                                        $stockStatus = 'Low Stock';
-                                        $badgeClass = 'badge-danger';
-                                    } elseif ($currentStock <= $product->reorder_quantity) {
-                                        $stockStatus = 'Reorder Level';
-                                        $badgeClass = 'badge-warning';
-                                    } else {
-                                        $stockStatus = 'In Stock';
-                                        $badgeClass = 'badge-success';
-                                    }
-
-                                @endphp
-                                <tr>
-                                    {{-- <td style="width: 3%">{{ $product->id }}</td> --}}
-                                    <td class="pname" style="width: 100%">
-                                        <div class="image">
-                                            <img src="{{ asset('uploads/products/thumbnails') }}/{{ $product->image }}"
-                                                alt="{{ $product->name }}" class="image">
-                                        </div>
-                                        <div class="name">
-                                            <a href="#" class="body-title-2">{{ $product->name }}</a>
-                                            <div class="text-tiny mt-3">
-                                                <span class="badge {{ $badgeClass }}">{{ $stockStatus }}</span>
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    {{-- Quantity column with detailed variant tooltip --}}
-                                    <td class="variant-cell" style="width: 10%">
-                                        @if ($product->attributeValues->count() > 0)
-                                            <span class="variant-value"
-                                                data-bs-content="Quantity: {{ $product->attributeValues->first()->quantity }}">
-                                                {{ $product->attributeValues->sum('quantity') }}
-                                            </span>
-                                            <div class="variant-tooltip">
-                                                <!-- Tooltip content for variant quantities -->
-                                                @foreach ($groupedAttributes as $attributeId => $variants)
-                                                    <div class="variant-group">
-                                                        <div class="variant-attribute-name">
-                                                            {{ $uniqueAttributes[$attributeId]->name }}</div>
-                                                        @foreach ($variants as $variant)
-                                                            <div class="variant-row tooltip-highlight">
-                                                                <span class="variant-value">{{ $variant->value }}</span>
-                                                                <span class="variant-detail">{{ $variant->quantity }}
-                                                                    units</span>
-                                                            </div>
-                                                        @endforeach
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            {{ $product->quantity }}
-                                        @endif
-                                    </td>
-
-                                    <td class="variant-cell" style="width: 10%">
-                                        @if ($product->attributeValues->count() > 0)
-                                            <span class="variant-value"
-                                                data-bs-content="Price: &#8369;{{ number_format($product->attributeValues->first()->price, 2) }}">
-                                                &#8369;{{ number_format($product->attributeValues->first()->price, 2) }}
-                                            </span>
-                                            <div class="variant-tooltip">
-                                                <!-- Tooltip content for variant prices -->
-                                                @foreach ($groupedAttributes as $attributeId => $variants)
-                                                    <div class="variant-group">
-                                                        <div class="variant-attribute-name">
-                                                            {{ $uniqueAttributes[$attributeId]->name }}</div>
-                                                        @foreach ($variants as $variant)
-                                                            <div class="variant-row tooltip-highlight">
-                                                                <span class="variant-value">{{ $variant->value }}</span>
-                                                                <span
-                                                                    class="variant-detail">&#8369;{{ number_format($variant->price, 2) }}</span>
-                                                            </div>
-                                                        @endforeach
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            &#8369;{{ number_format($product->price, 2) }}
-                                        @endif
-                                    </td>
-
-
-                                    <td style="width: 10%">
-                                        @if ($product->category)
-                                            @if ($product->category->parent)
-                                                {{ $product->category->parent->name }} &raquo;
-                                                {{ $product->category->name }}
-                                            @else
-                                                {{ $product->category->name }}
-                                            @endif
-                                        @else
-                                            No Category
-                                        @endif
-                                    </td>
-
-
-                                    <td style="width: 7%">
-                                        <div class="list-icon-function">
-                                            <a href="{{ route('admin.product.edit', ['id' => $product->id]) }}">
-                                                <div class="item edit">
-                                                    <i class="icon-edit-3"></i>
-                                                </div>
-                                            </a>
-                                            <form action="{{ route('admin.product.archive', ['id' => $product->id]) }}"
-                                                method="POST">
-                                                @csrf
-                                                @method('DELETE')
-                                                <div class="item text-warning archive">
-                                                    <i class="icon-archive"></i>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
+                        <tbody id="js-products-partial-target">
+                            @include('partials._products-table', ['products' => $products])
                         </tbody>
 
                     </table>
@@ -336,8 +199,9 @@
                 </div>
 
                 <div class="divider"></div>
-                <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-                    {{ $products->links('pagination::bootstrap-5') }}
+                <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination"
+                    id="js-products-partial-target-pagination">
+                    @include('partials._products-pagination', ['products' => $products])
                 </div>
             </div>
         </div>
@@ -347,6 +211,32 @@
 
 @push('scripts')
     <script>
+        $(document).ready(function() {
+            $('#product-search').on('keyup', function() {
+                var searchTerm = $(this).val();
+
+
+                $.ajax({
+                    url: '{{ route('admin.products') }}',
+                    type: 'GET',
+                    data: {
+                        search: searchTerm,
+                        archived: '{{ request('archived', 0) }}'
+                    },
+                    success: function(response) {
+
+                        $('#js-products-partial-target').html(response.products);
+                        $('#js-products-partial-target-pagination').html(response.pagination);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error:', error);
+                    }
+                });
+            });
+
+        });
+
+
         $(function() {
 
             // $('[data-toggle="tooltip"]').tooltip();
@@ -371,125 +261,60 @@
             });
         });
 
+        // $(document).ready(function() {
+        //     $('#search-input').on('keyup', function() {
+        //         var searchTerm = $(this).val();
+
+        //         clearTimeout(window.typingTimer);
+        //         if (searchTerm) {
+        //             window.typingTimer = setTimeout(function() {
+
+        //                 $.ajax({
+        //                     url: '{{ route('admin.products') }}',
+        //                     type: 'GET',
+        //                     data: {
+        //                         search: searchTerm
+        //                     },
+        //                     success: function(response) {
+
+        //                         $('#js-products-partial-target-table').html(response
+        //                             .products);
+        //                         $('#js-products-partial-target-pagination').html(
+        //                             response.pagination);
+        //                     },
+        //                     error: function(xhr, status, error) {
+        //                         console.error('Error:', error);
+        //                     }
+        //                 });
+        //             }, 300);
+        //         } else {
+
+        //             $('#products-table').html('');
+        //             $('#pagination').html('');
+        //         }
+        //     });
+        // });
+
         $(document).ready(function() {
             const tooltip = $('<div class="custom-tooltip"></div>').appendTo('body');
 
             $('.variant-value').hover(function() {
                 const $this = $(this);
-
-                // Temporarily clear the title attribute to avoid the black tooltip
                 $this.data('title', $this.attr('title')).removeAttr('title');
 
-                // Use the custom tooltip
-                const content = $this.data('title'); // Retrieve the saved title content
-                tooltip.text(content).fadeIn('fast'); // Show custom tooltip
+                const content = $this.data('title');
+                tooltip.text(content).fadeIn('fast');
             }, function() {
                 const $this = $(this);
 
-                // Restore the title attribute for other purposes
                 $this.attr('title', $this.data('title'));
 
-                tooltip.hide(); // Hide custom tooltip
+                tooltip.hide();
             }).mousemove(function(e) {
                 tooltip.css({
-                    top: e.pageY + 10 + 'px', // Adjust position relative to cursor
+                    top: e.pageY + 10 + 'px',
                     left: e.pageX + 10 + 'px'
                 });
-            });
-        });
-
-
-        $(document).ready(function() {
-            $('#product-search').on('input', function() {
-                let query = $(this).val();
-
-                if (query.length > 0) {
-                    $.ajax({
-                        url: "{{ route('admin.products.search') }}",
-                        type: "GET",
-                        data: {
-                            query: query
-                        },
-                        success: function(data) {
-                            console.log(data); // Debug the response structure
-                            let tableBody = $('tbody');
-                            tableBody.empty(); // Clear existing table rows
-
-                            if (data.length > 0) {
-                                data.forEach(function(product) {
-                                    let category = product.category ?
-                                        (product.category.parent ?
-                                            `${product.category.parent.name} &raquo; ${product.category.name}` :
-                                            product.category.name) :
-                                        "No Category";
-
-                                    // Use the badge class and stock status returned from the backend
-                                    let badgeClass = product
-                                    .badge_class; // From backend
-                                    let stockStatus = product
-                                    .stock_status; // From backend
-                                    let productPrice = product.price; // From backend
-
-                                    let variantPricesHtml = '';
-                                    // Render the variant prices if available
-                                    if (product.variant_prices && product.variant_prices
-                                        .length > 0) {
-                                        product.variant_prices.forEach(function(
-                                        variant) {
-                                            variantPricesHtml += `
-                                        <div class="variant-row">
-                                            <span class="variant-value">${variant.value}</span>
-                                            <span class="variant-price">&#8369;${parseFloat(variant.price).toFixed(2)}</span>
-                                        </div>
-                                    `;
-                                        });
-                                    }
-
-                                    tableBody.append(`
-                                <tr>
-                                    <td>
-                                        <div class="product-info d-flex align-items-center">
-                                            <div class="product-image" style="margin-right: 10px;">
-                                                <img src="/uploads/products/thumbnails/${product.image}" alt="${product.name}" style="width: 50px; height: 50px; object-fit: cover;">
-                                            </div>
-                                            <div>
-                                                <a href="#" class="product-name">${product.name}</a>
-                                                <div class="badge-container mt-2">
-                                                    <span class="badge ${badgeClass}">${stockStatus}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">${product.total_quantity}</td>
-                                    <td class="text-center">&#8369;${parseFloat(productPrice).toFixed(2)}</td> <!-- Correct price -->
-                                    <td class="text-center">${category}</td>
-                                    <td class="text-center">
-                                        <div class="list-icon-function">
-                                            <a href="/admin/products/edit/${product.id}">
-                                                <div class="item edit"><i class="icon-edit-3"></i></div>
-                                            </a>
-                                            <form action="/admin/products/archive/${product.id}" method="POST">
-                                                @csrf
-                                                @method('DELETE')
-                                                <div class="item text-warning archive"><i class="icon-archive"></i></div>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `);
-                                });
-                            } else {
-                                tableBody.append(`
-                            <tr>
-                                <td colspan="5" class="text-center">No products found with "${query}".</td>
-                            </tr>
-                        `);
-                            }
-                        }
-                    });
-                } else {
-                    location.reload(); // Reload the page if search is cleared
-                }
             });
         });
     </script>

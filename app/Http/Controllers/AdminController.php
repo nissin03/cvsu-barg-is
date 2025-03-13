@@ -487,13 +487,35 @@ class AdminController extends Controller
     public function products(Request $request)
     {
         $archived = $request->query('archived', 0);
-        $products = Product::with(['category' => function ($query) {
-            $query->with('parent');
-        }, 'attributes'])
+        $search = $request->input('search');
+
+        // $products = Product::with(['category' => function ($query) {
+        //     $query->with('parent');
+        // }, 'attributes'])
+        //     ->where('archived', $archived)
+        //     ->orderBy('created_at', 'DESC')
+        //     ->paginate(10);
+   
+            $products = Product::with(['category' => function ($query) {
+                $query->with('parent');
+            }, 'attributes'])
             ->where('archived', $archived)
+            ->where(function ($query) use ($search) {
+                if ($search) {
+                    $query->where('name', 'like', "%{$search}%") 
+                          ->orWhere('description', 'like', "%{$search}%"); 
+                }
+            })
             ->orderBy('created_at', 'DESC')
             ->paginate(10);
 
+            if ($request->ajax()) {
+                return response()->json([
+                    'products' => view('partials._products-table', compact('products'))->render(),
+                    'pagination' => view('partials._products-pagination', compact('products'))->render()
+                ]);
+            }
+        
         return view('admin.products', compact('products', 'archived'));
     }
 
