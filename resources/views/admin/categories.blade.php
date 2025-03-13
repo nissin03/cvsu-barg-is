@@ -43,9 +43,9 @@
                         <table class="table table-striped table-bordered">
                             <thead>
                                 <tr>
-                                    <th style="width: 7%;">#</th>
-                                    <th style="width: 30%;">Name</th>
-                                    <th style="width: 10%;">Action</th>
+                                    <th scope="col"style="width: 7%;">#</th>
+                                    <th scope="col"style="width: 20%;">Name</th>
+                                    <th scope="col"style="width: 10%;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>

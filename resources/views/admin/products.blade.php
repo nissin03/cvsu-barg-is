@@ -183,11 +183,11 @@
                     <table class="table table-striped table-bordered">
                         <thead>
                             <tr>
-                                <th style="width: 5%">Name</th>
-                                <th style="width: 3%">Quantity</th>
-                                <th style="width: 3%">Price</th>
-                                <th style="width: 4%">Category</th>
-                                <th style="width: 9%">Action</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Quantity</th>
+                                <th scope="col">Price</th>
+                                <th scope="col">Category</th>
+                                <th scope="col">Action</th>
                             </tr>
                         </thead>
                         <tbody id="js-products-partial-target">
@@ -238,10 +238,6 @@
 
 
         $(function() {
-
-            // $('[data-toggle="tooltip"]').tooltip();
-
-            // Archive button confirmation
             $('.archive').on('click', function(e) {
                 e.preventDefault();
                 var form = $(this).closest('form');
@@ -260,40 +256,6 @@
                 });
             });
         });
-
-        // $(document).ready(function() {
-        //     $('#search-input').on('keyup', function() {
-        //         var searchTerm = $(this).val();
-
-        //         clearTimeout(window.typingTimer);
-        //         if (searchTerm) {
-        //             window.typingTimer = setTimeout(function() {
-
-        //                 $.ajax({
-        //                     url: '{{ route('admin.products') }}',
-        //                     type: 'GET',
-        //                     data: {
-        //                         search: searchTerm
-        //                     },
-        //                     success: function(response) {
-
-        //                         $('#js-products-partial-target-table').html(response
-        //                             .products);
-        //                         $('#js-products-partial-target-pagination').html(
-        //                             response.pagination);
-        //                     },
-        //                     error: function(xhr, status, error) {
-        //                         console.error('Error:', error);
-        //                     }
-        //                 });
-        //             }, 300);
-        //         } else {
-
-        //             $('#products-table').html('');
-        //             $('#pagination').html('');
-        //         }
-        //     });
-        // });
 
         $(document).ready(function() {
             const tooltip = $('<div class="custom-tooltip"></div>').appendTo('body');

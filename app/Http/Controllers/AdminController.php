@@ -489,13 +489,6 @@ class AdminController extends Controller
         $archived = $request->query('archived', 0);
         $search = $request->input('search');
 
-        // $products = Product::with(['category' => function ($query) {
-        //     $query->with('parent');
-        // }, 'attributes'])
-        //     ->where('archived', $archived)
-        //     ->orderBy('created_at', 'DESC')
-        //     ->paginate(10);
-   
             $products = Product::with(['category' => function ($query) {
                 $query->with('parent');
             }, 'attributes'])
@@ -503,7 +496,8 @@ class AdminController extends Controller
             ->where(function ($query) use ($search) {
                 if ($search) {
                     $query->where('name', 'like', "%{$search}%") 
-                          ->orWhere('description', 'like', "%{$search}%"); 
+                          ->orWhere('description', 'like', "%{$search}%")
+                          ->orWhere('quantity', 'like', "%{$search}%"); 
                 }
             })
             ->orderBy('created_at', 'DESC')

@@ -1,8 +1,8 @@
 $("#facilityForm").on("submit", function (event) {
     event.preventDefault();
 
-    var formData = new FormData(this);  // Get form data
-    const facilityType = $("#rentalType").val();  // Get selected rental type
+    var formData = new FormData(this);
+    const facilityType = $("#rentalType").val();
 
     // Ensure prices array is defined
     if (Array.isArray(window.prices)) {
@@ -17,30 +17,39 @@ $("#facilityForm").on("submit", function (event) {
         console.error("Prices is not an array or is undefined");
     }
 
-    // Handle data for different facility types
     if (facilityType === "whole_place") {
+
         const wholeCapacity = $("#roomCapacityWhole").val();
-        formData.append("whole_capacity", wholeCapacity);
+        if (wholeCapacity && !isNaN(wholeCapacity) && parseInt(wholeCapacity, 10) > 0) {
+            formData.append("whole_capacity", parseInt(wholeCapacity, 10));
+        } else {
+            alert("Please enter a valid whole capacity.");
+            return;
+        }
     } else {
-        // Append facility attributes for individual or both types
-        if (Array.isArray(window.rooms)) {
+
+        if (Array.isArray(window.rooms) && window.rooms.length > 0) {
             window.rooms.forEach((room, index) => {
-                formData.append(`facility_attributes[${index}][room_name]`, room.room_name);
-                formData.append(`facility_attributes[${index}][capacity]`, room.capacity);
-                formData.append(`facility_attributes[${index}][sex_restriction]`, room.sex_restriction);
+                // Ensure capacity is an integer
+                const roomCapacity = parseInt(room.capacity, 10);
+                if (!isNaN(roomCapacity) && roomCapacity > 0) {
+                    formData.append(`facility_attributes[${index}][room_name]`, room.room_name);
+                    formData.append(`facility_attributes[${index}][capacity]`, roomCapacity);
+                    formData.append(`facility_attributes[${index}][sex_restriction]`, room.sex_restriction);
+                }
             });
         } else {
             console.error("Rooms is not an array or is undefined");
         }
     }
 
-    // Debugging: Log form data before submission
+
     console.log("Form Data Before Submission:");
     for (var pair of formData.entries()) {
         console.log(pair[0] + ": " + pair[1]);
     }
 
-    // Make AJAX request to submit the form data
+
     $.ajax({
         url: $(this).attr("action"),
         method: "POST",
@@ -56,13 +65,13 @@ $("#facilityForm").on("submit", function (event) {
                 showAlert("Facility updated successfully!", "success");
             }
             setTimeout(function () {
-                window.location.href = "/admin/facilities"; // Redirect to facilities list
+                window.location.href = "/admin/facilities";
             }, 2000);
         },
         error: function (xhr) {
             console.log("Error:", xhr);
             if (xhr.status === 422) {
-                displayValidationErrors(xhr.responseJSON.errors); // Show validation errors
+                displayValidationErrors(xhr.responseJSON.errors);
             } else {
                 showAlert("An unexpected error occurred. Please try again.", "danger");
             }
