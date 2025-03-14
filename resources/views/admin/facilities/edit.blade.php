@@ -307,17 +307,19 @@
                     </div>
                 </div>
 
-                <!-- Room Management Container -->
+
                 <div class="wg-box" id="roomBox">
-                    @foreach ($facility->facilityAttributes as $facilityAttribute)
-                        <fieldset class="name" id="hideRoomBox">
-                            <div class="body-title mb-10">Capacity <span class="tf-color-1"
-                                    id="option">(optional)</span></div>
-                            <input type="number" id="roomCapacityWhole" min="0" name="whole_capacity"
-                                placeholder="Enter capacity"
-                                value="{{ old('whole_capacity', $facility->facilityAttributes->first()->whole_capacity) }}">
-                        </fieldset>
-                    @endforeach
+                    @if ($facilityAttributes && $facilityAttributes->whole_capacity)
+                        @foreach ($facility->facilityAttributes as $facilityAttribute)
+                            <fieldset class="name" id="hideRoomBox">
+                                <div class="body-title mb-10">Capacity <span class="tf-color-1"
+                                        id="option">(optional)</span></div>
+                                <input type="number" id="roomCapacityWhole" min="0" name="whole_capacity"
+                                    placeholder="Enter capacity"
+                                    value="{{ old('whole_capacity', $facility->facilityAttributes->first()->whole_capacity) }}">
+                            </fieldset>
+                        @endforeach
+                    @endif
 
 
 
@@ -337,7 +339,8 @@
 
                         <!-- No rooms message -->
                         <div id="noRoomsMessage" class="alert alert-warning">
-                            <i class="bi bi-info-circle me-2"></i> No rooms added yet. Click "Add Rooms" to get started.
+                            <i class="bi bi-info-circle me-2"></i> No rooms added yet. Click "Add Rooms" to get
+                            started.
                         </div>
 
                         <!-- Room display -->
@@ -380,6 +383,7 @@
                         </div>
                     </div>
                 </div>
+
                 {{-- prices fields  --}}
                 <div class="wg-box">
 

@@ -174,7 +174,7 @@ class FacilityController extends Controller
     public function edit($id)
     {
         $facility =  Facility::find($id);
-        $facilityAttributes = FacilityAttribute::all();
+        $facilityAttributes = FacilityAttribute::where('facility_id', $facility->id)->first();
         // dd($facilityAttributes);
         $prices = Price::where('facility_id', $facility->id)->whereNotNull('price_type')->get();
         return view('admin.facilities.edit', compact('facility',  'facilityAttributes', 'prices'));
