@@ -286,12 +286,12 @@
 
                 </div>
 
-
                 {{-- <div class="wg-box" id="roomBox">
                     <fieldset class="name" id="hideRoomBox">
                         <div class="body-title mb-10">Capacity</div>
                         <input type="number" min="0" id="roomCapacityWhole" name="whole_capacity"
                             placeholder="Enter capacity">
+
                     </fieldset>
 
                     <div id="dormitoryRooms">
