@@ -45,12 +45,12 @@ class UserFacilityController extends Controller
         // dd($pricesWithoutAttributes);
 
         foreach ($facility->facilityAttributes as $attribute) {
-            // Fetch reserved quantity from transaction_reservations instead of availabilities
+         
             $reserved = TransactionReservation::whereHas('availability', function ($query) use ($attribute) {
                 $query->where('facility_attribute_id', $attribute->id);
             })
                 ->where('status', 'reserved')
-                ->sum('quantity'); // Now summing from transaction_reservations
+                ->sum('quantity'); 
 
             // Compute remaining capacity
             $attribute->remaining_capacity = $attribute->capacity - $reserved;

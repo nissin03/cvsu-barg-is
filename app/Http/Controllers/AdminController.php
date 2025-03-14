@@ -1115,7 +1115,7 @@ class AdminController extends Controller
 
     public function markMultipleAsRead(Request $request)
     {
-        $notificationIds = $request->input('notification_ids'); // Expecting an array of IDs
+        $notificationIds = $request->input('notification_ids'); 
         if (!$notificationIds || empty($notificationIds)) {
             return response()->json([
                 'status' => 'error',
@@ -1123,7 +1123,6 @@ class AdminController extends Controller
             ], 400);
         }
 
-        // Mark notifications as read
         $notifications = Auth::user()->notifications()->whereIn('id', $notificationIds)->get();
 
         if ($notifications->isEmpty()) {

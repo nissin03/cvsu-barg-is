@@ -18,7 +18,6 @@ $("#facilityForm").on("submit", function (event) {
     }
 
     if (facilityType === "whole_place") {
-
         const wholeCapacity = $("#roomCapacityWhole").val();
         if (wholeCapacity && !isNaN(wholeCapacity) && parseInt(wholeCapacity, 10) > 0) {
             formData.append("whole_capacity", parseInt(wholeCapacity, 10));

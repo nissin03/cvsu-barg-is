@@ -53,19 +53,16 @@
         });
 
         var channel = pusher.subscribe('admin-notification');
-        channel.bind('low-stock-event', function(data) {
-            console.log("Received data from Pusher:", data);
-            if (data && data.product) {
-                const productName = data.product.name;
-                const productQuantity = data.product.quantity;
-                toastr.warning(`${productName} stock is low. Only ${productQuantity} left in stock.`);
-            } else {
-                console.error('Product data is missing:', data);
-            }
-
-            // Increment notification count locally
-            updateNotificationCountAndList();
-        });
+        // channel.bind('low-stock-event', function(data) {
+        //     console.log("Received data from Pusher:", data);
+        //     if (data && data.product) {
+        //         const productName = data.product.name;
+        //         const productQuantity = data.product.quantity;
+        //         toastr.warning(`${productName} stock is low. Only ${productQuantity} left in stock.`);
+        //     } else {
+        //         console.error('Product data is missing:', data);
+        //     }
+        // });
 
         channel.bind('contact-message-event', function(data) {
             console.log("Received contact-message-event from Pusher:", data);
@@ -74,91 +71,10 @@
                 `New message from ${contactMessage.name} (${contactMessage.email}): ${contactMessage.message}`
             );
 
-            // Increment notification count locally
-            updateNotificationCountAndList();
         });
-
-        function updateNotificationCountAndList() {
-            console.log('Fetching updated notification count and list...');
-            $.ajax({
-                url: '/notifications/latest', // Backend endpoint to fetch notifications
-                method: 'GET',
-                success: function(response) {
-                    console.log('Notifications fetched:', response);
-
-                    // Update notification count
-                    if (response.unreadCount !== undefined) {
-                        if (response.unreadCount > 0) {
-                            $('.notification-count').text(response.unreadCount).show();
-                        } else {
-                            $('.notification-count').text('').hide();
-                        }
-                    }
-
-                    // Update notification list
-                    const notificationList = $('#notifications-list');
-
-                    // Preserve the "Select All" section
-                    const selectAllSection = notificationList.find('.select-all').detach();
-
-                    // Clear only the dynamic notification items
-                    notificationList.empty();
-
-                    // Re-add the preserved "Select All" section
-                    notificationList.append(selectAllSection);
-
-                    // Add the latest notifications
-                    if (response.notifications && response.notifications.length > 0) {
-                        response.notifications.forEach(notification => {
-                            const isUnread = notification.read_at === null;
-                            const iconClass = notification.icon ||
-                                'fas fa-bell'; // Default icon if not provided
-                            const notificationHtml = `
-                        <li class="message-item notification-item ${isUnread ? 'unread' : 'read'}"
-                            data-notification-id="${notification.id}">
-                            <input type="checkbox" class="notification-checkbox" />
-                            <div class="image">
-                                <i class="${iconClass}"></i>
-                            </div>
-                            <div class="notification-content">
-                                <a href="${notification.redirect_route || '#'}" class="notification-link">
-                                    <div class="body-title-2 ${isUnread ? 'text-warning' : 'text-muted'}">
-                                        ${notification.message}
-                                    </div>
-                                </a>
-                                <div class="text-tiny ${isUnread ? '' : 'text-muted'}">
-                                    ${notification.created_at}
-                                </div>
-                            </div>
-                        </li>
-                    `;
-                            notificationList.append(notificationHtml);
-                        });
-                    } else {
-                        notificationList.append(
-                            '<li class="no-notifications"><div class="text-tiny">No unread notifications</div></li>'
-                        );
-                    }
-                },
-                error: function(xhr) {
-                    console.error('Error fetching notifications:', xhr.responseText);
-                },
-            });
-        }
     </script>
 
     <style>
-        .notification-item.selected {
-            background-color: #f1f1f1 !important;
-            border-left: 3px solid #007bff !important;
-        }
-
-        #select-all {
-            width: 20px !important;
-            height: 20px !important;
-            margin-right: 5px !important;
-        }
-
         .modal-backdrop {
             position: fixed;
             top: 0;
@@ -166,11 +82,10 @@
             width: 100%;
             height: 100%;
             z-index: 1040;
-            /* Make sure it is below the modal */
+
             background-color: rgba(0, 0, 0, 0.7);
         }
 
-        /* Ensure the modal content is centered */
         .modal-dialog {
             display: flex;
             align-items: center;
@@ -180,7 +95,7 @@
         .modal-content {
             width: 100%;
             max-width: 800px;
-            /* Adjust max-width as needed */
+
         }
     </style>
     @stack('styles')
@@ -459,85 +374,6 @@
 
                             </div>
                             <div class="header-grid">
-                                <div class="popup-wrap message type-header">
-                                    <div class="dropdown">
-                                        <button class="btn btn-secondary dropdown-toggle" type="button"
-                                            id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <span class="header-item">
-                                                @if (auth()->user()->unreadNotifications->count())
-                                                    <span
-                                                        class="text-tiny notification-count">{{ auth()->user()->unreadNotifications->count() }}</span>
-                                                @endif
-                                                <i class="icon-bell"></i>
-                                            </span>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end has-content"
-                                            aria-labelledby="dropdownMenuButton2">
-                                            <li>
-                                                <h6>Notifications</h6>
-                                            </li>
-                                            <div id="notifications-list">
-                                                <li class="select-all">
-                                                    <input type="checkbox" id="select-all" /> Select All
-                                                    <button type="button" id="mark-all-as-read-btn"
-                                                        class="btn btn-sm btn-light">Mark as Read</button>
-                                                    <button type="button" id="delete-selected-btn"
-                                                        class="btn btn-sm btn-danger">Delete Selected</button>
-                                                </li>
-                                                @forelse(auth()->user()->notifications as $notification)
-                                                    @php
-                                                        $iconClass = match ($notification->type) {
-                                                            'App\\Notifications\\LowStockNotification'
-                                                                => 'fa-solid fa-box',
-                                                            'App\\Notifications\\ContactReceivedMessage'
-                                                                => 'fas fa-envelope',
-                                                            'App\\Notifications\\OrderNotification'
-                                                                => 'fas fa-shopping-cart',
-                                                            default => 'fas fa-bell',
-                                                        };
-
-                                                        $redirectRoute = match ($notification->type) {
-                                                            'App\\Notifications\\LowStockNotification' => route(
-                                                                'admin.products',
-                                                            ),
-                                                            'App\\Notifications\\ContactReceivedMessage' => route(
-                                                                'admin.contacts',
-                                                            ),
-                                                            'App\\Notifications\\OrderNotification' => route(
-                                                                'admin.orders',
-                                                            ),
-                                                            default => '#',
-                                                        };
-                                                    @endphp
-                                                    <li class="message-item notification-item {{ $notification->read_at ? 'read' : 'unread' }}"
-                                                        data-notification-id="{{ $notification->id }}">
-                                                        <input type="checkbox" class="notification-checkbox" />
-                                                        <div class="image">
-                                                            <i class="{{ $iconClass }}"></i>
-                                                        </div>
-                                                        <div class="notification-content">
-                                                            <!-- Dynamic redirection based on notification type -->
-                                                            <a href="{{ $redirectRoute }}" class="notification-link">
-                                                                <div
-                                                                    class="body-title-2 {{ $notification->read_at ? 'text-muted' : 'text-warning' }}">
-                                                                    {{ $notification->data['message'] ?? 'No message available' }}
-                                                                </div>
-                                                            </a>
-                                                            <div
-                                                                class="text-tiny {{ $notification->read_at ? 'text-muted' : '' }}">
-                                                                {{ $notification->created_at->diffForHumans() }}
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                @empty
-                                                    <li class="no-notifications">
-                                                        <div class="text-tiny">No unread notifications</div>
-                                                    </li>
-                                                @endforelse
-                                            </div>
-                                        </ul>
-                                    </div>
-                                </div>
 
 
 
@@ -660,143 +496,6 @@
                     });
                 }
             });
-
-        });
-
-
-        document.addEventListener('DOMContentLoaded', function() {
-
-            const notificationCount = $('.notification-count');
-            const notificationList = $('#notifications-list');
-
-            // CSRF token setup for AJAX requests
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
-            });
-
-            // Handle "Select All" checkbox
-            $('#select-all').on('change', function() {
-                const isChecked = $(this).prop('checked');
-                $('.notification-checkbox').prop('checked', isChecked);
-            });
-
-            // Handle "Mark Selected" button click
-            $('#mark-all-as-read-btn').on('click', function() {
-                const unreadIds = $('.notification-item.unread').map(function() {
-                    return $(this).data('notification-id');
-                }).get();
-
-                console.log('Mark All as Read clicked. Unread IDs:', unreadIds);
-
-                if (unreadIds.length > 0) {
-                    markMultipleAsRead(unreadIds);
-                } else {
-                    alert('No unread notifications to mark as read.');
-                }
-            });
-
-            // Handle "Delete Selected" button click
-            $('#delete-selected-btn').on('click', function() {
-                const selectedIds = getSelectedNotificationIds();
-                console.log('Delete Selected clicked. Selected IDs:', selectedIds);
-
-                if (selectedIds.length > 0) {
-                    deleteMultipleNotifications(selectedIds);
-                } else {
-                    alert('No notifications selected.');
-                }
-            });
-
-            // Get selected notification IDs
-            function getSelectedNotificationIds() {
-                const ids = $('.notification-checkbox:checked')
-                    .map(function() {
-                        return $(this).closest('.notification-item').data('notification-id');
-                    })
-                    .get();
-
-                console.log('Selected Notification IDs:', ids);
-                return ids;
-            }
-            // Mark multiple notifications as read
-            function markMultipleAsRead(notificationIds) {
-                console.log('Sending mark as read request. IDs:', notificationIds);
-
-                $.ajax({
-                    url: '/notifications/mark-read-multiple',
-                    method: 'POST',
-                    data: {
-                        notification_ids: notificationIds,
-                    },
-                    success: function(response) {
-                        console.log('Mark as Read success response:', response);
-
-                        if (response.status === 'success') {
-                            notificationIds.forEach((id) => {
-                                const notification = $(
-                                    `.notification-item[data-notification-id="${id}"]`);
-                                console.log('Updating notification DOM for ID:', id);
-
-                                notification.removeClass('unread').addClass('read');
-                                notification.find('.body-title-2').removeClass('text-warning')
-                                    .addClass('text-muted');
-                                notification.find('.text-tiny').addClass('text-muted');
-                            });
-
-                            updateNotificationCount(response.unreadCount);
-                        } else {
-                            console.error('Error in response:', response);
-                            alert('Failed to mark notifications as read.');
-                        }
-                    },
-                    error: function(xhr) {
-                        console.error('Error marking notifications as read:', xhr.responseText);
-                        alert('Failed to mark notifications as read. Please try again.');
-                    },
-                });
-            }
-
-            // Delete selected notifications
-            function deleteMultipleNotifications(notificationIds) {
-                $.ajax({
-                    url: '/notifications/delete-multiple',
-                    method: 'POST',
-                    data: {
-                        notification_ids: notificationIds
-                    },
-                    success: function(response) {
-                        if (response.status === 'success') {
-                            notificationIds.forEach(function(id) {
-                                $(`.notification-item[data-notification-id="${id}"]`).fadeOut(
-                                    300,
-                                    function() {
-                                        $(this).remove();
-                                    });
-                            });
-
-                            updateNotificationCount();
-                        }
-                    },
-                    error: function(xhr) {
-                        console.error('Error deleting notifications:', xhr.responseText);
-                        alert('Failed to delete notifications. Please try again.');
-                    }
-                });
-            }
-
-            // Update notification count dynamically
-            function updateNotificationCount(unreadCount) {
-                console.log('Updating notification count. Unread Count:', unreadCount);
-
-                if (unreadCount > 0) {
-                    $('.notification-count').text(unreadCount).show();
-                } else {
-                    $('.notification-count').text('').hide();
-                }
-            }
-
 
         });
     </script>

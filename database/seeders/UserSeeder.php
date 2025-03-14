@@ -62,7 +62,7 @@ class UserSeeder extends Seeder
         ]);
 
         // Create Regular Users
-        for ($i = 1; $i <= 500; $i++) {
+        for ($i = 1; $i <= 50; $i++) {
             $createdAt = $faker->dateTimeBetween('2024-01-01', '2025-12-31');
             User::create([
                 'name'              => $faker->name,

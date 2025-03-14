@@ -307,113 +307,79 @@
                     </div>
                 </div>
 
+                <!-- Room Management Container -->
                 <div class="wg-box" id="roomBox">
                     @foreach ($facility->facilityAttributes as $facilityAttribute)
                         <fieldset class="name" id="hideRoomBox">
                             <div class="body-title mb-10">Capacity <span class="tf-color-1"
-                                    id="option">(optional)</span>
-                            </div>
-                            <input type="number" min="0" id="roomCapacityWhole" name="whole_capacity"
-                                placeholder="Enter capacity" value="{{ $facilityAttribute->whole_capacity }}">
+                                    id="option">(optional)</span></div>
+                            <input type="number" id="roomCapacityWhole" min="0" name="whole_capacity"
+                                placeholder="Enter capacity"
+                                value="{{ old('whole_capacity', $facility->facilityAttributes->first()->whole_capacity) }}">
                         </fieldset>
                     @endforeach
 
 
-                    <div id="dormitoryRooms">
-                        <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
-                            <h4>Details</h4>
-                            <button type="button" data-bs-toggle="modal" data-bs-target="#addRoom">Add Room</button>
+
+                    <!-- Hidden inputs for form submission -->
+                    <div id="hiddenRooms"></div>
+
+                    <!-- Capacity Section -->
+                    <!-- Rooms Section -->
+                    <div id="dormitoryRooms" class="mt-4">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                            <h4>Room Management</h4>
+                            <button type="button" class="" data-bs-toggle="modal"
+                                data-bs-target="#addMultipleRoomsModal">
+                                <i class="bi bi-plus-circle"></i> Add Rooms
+                            </button>
                         </div>
-                        {{-- <p class="d-flex justify-content-center align-items-center">No rooms yet :(</p> --}}
+
+                        <!-- No rooms message -->
+                        <div id="noRoomsMessage" class="alert alert-warning">
+                            <i class="bi bi-info-circle me-2"></i> No rooms added yet. Click "Add Rooms" to get started.
+                        </div>
+
+                        <!-- Room display -->
                         <div id="roomContainer" class="mt-4">
-
-                            <ul class="list-group" id="roomList">
-                                <ul class="list-group" id="roomList">
-                                    @forelse ($facility->facilityAttributes->filter(fn($attr) => $attr->facility_id == $facility->id)->values() as $index => $facilityAttribute)
-                                        @if ($facilityAttribute->room_name && $facilityAttribute->capacity > 0)
-                                            <div class="card p-3 mb-3">
-                                                <div class="card-body d-flex justify-content-between align-items-center">
-                                                    <div class="text-start">
-                                                        <div class="d-flex justify-content-center align-items-center">
-                                                            <h4 class="pe-2">{{ $facilityAttribute->room_name }}</h4>
-                                                            @if ($facilityAttribute->sex_restriction)
-                                                                <span class="badge bg-info">
-                                                                    {{ ucfirst($facilityAttribute->sex_restriction) }}
-                                                                </span>
-                                                            @endif
-                                                        </div>
-                                                        <p class="fw-bold">Capacity: <span
-                                                                class="badge bg-warning">{{ $facilityAttribute->capacity }}</span>
-                                                        </p>
-                                                    </div>
-                                                    <div class="d-flex">
-                                                        <button type="button" class="btn btn-lg btn-outline-warning me-2"
-                                                            onclick="editRoom({{ $index }})"><i
-                                                                class="icon-pen">Edit</i></button>
-                                                        <button type="button"
-                                                            class="btn btn-lg btn-outline-danger delete-btn"
-                                                            onclick="deleteRoom({{ $index }})">
-                                                            <i class="icon-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endif
-                                    @empty
-                                        <li class="list-group-item">
-                                            No facility attributes available.
-                                        </li>
-                                    @endforelse
-                                </ul>
-
-                            </ul>
-
+                            <h4 class="mb-3">Rooms</h4>
+                            <div class="row" id="roomCardsContainer">
+                                <!-- Existing rooms will be rendered here -->
+                            </div>
+                            <ul class="list-group d-none" id="roomList"></ul>
                         </div>
-                        <div class="modal fade" id="addRoom" tabindex="-1" aria-labelledby="addRoomLabel"
-                            aria-hidden="true">
-                            <div class="modal-dialog">
+
+                        <!-- Add/Edit Rooms Modal -->
+                        <div class="modal fade" id="addMultipleRoomsModal" tabindex="-1"
+                            aria-labelledby="addMultipleRoomsLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="addRoomLabel">Add Room</h1>
+                                        <h5 class="modal-title" id="addMultipleRoomsLabel">Manage Rooms</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"
                                             aria-label="Close"></button>
                                     </div>
+
                                     <div class="modal-body">
-                                        <fieldset class="name">
-                                            <div class="body-title mb-10">Room Name <span class="tf-color-1">*</span>
-                                            </div>
-                                            <input type="text" id="roomName" name="room_name"
-                                                placeholder="Enter room name">
-                                        </fieldset>
-
-                                        <fieldset class="name">
-                                            <div class="body-title mb-10">Capacity <span class="tf-color-1">*</span></div>
-                                            <input type="number" min="0" id="roomCapacity" name="capacity"
-                                                placeholder="Enter room capacity">
-                                        </fieldset>
-
-                                        <fieldset class="sex-restriction">
-                                            <div class="body-title mb-10">Sex Restriction</div>
-                                            <select id="roomSexRestriction" name="sex_restriction">
-                                                <option value="" selected>Choose Sex Restriction... </option>
-                                                <option value="male">Male</option>
-                                                <option value="female">Female</option>
-                                            </select>
-                                        </fieldset>
-
+                                        <div id="roomFormContainer">
+                                            <!-- Dynamic room form elements will go here -->
+                                        </div>
+                                        <button type="button" id="addMultipleRoomsRowBtn" class="mt-3">
+                                            <i class="bi bi-plus-circle"></i> Add Another Room
+                                        </button>
                                     </div>
+
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary"
                                             data-bs-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" id="saveRoomChanges"> Save
-                                            changes</button>
+                                        <button type="button" class="btn btn-primary" id="saveMultipleRoomsBtn">Save
+                                            All</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
                 {{-- prices fields  --}}
                 <div class="wg-box">
 
@@ -551,18 +517,6 @@
                                     </div>
                                 </div>
 
-                                {{-- <div id="dateFields" style="display: none;">
-                                    <div class="input-group">
-                                        <label for="date_from">Date From</label>
-                                        <input type="date" id="date_from" name="date_from"
-                                            value="{{ old('date_from') }}">
-                                    </div>
-                                    <div class="input-group">
-                                        <label for="date_to">Date To</label>
-                                        <input type="date" id="date_to" name="date_to"
-                                            value="{{ old('date_to') }}">
-                                    </div>
-                                </div> --}}
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -580,14 +534,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
     {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
     <script>
-        window.rooms = @json($facilityAttributes ?? []);
+        // window.rooms = @json($facilityAttributes ?? []);
+        window.rooms = @json($facility->facilityAttributes->filter(fn($attr) => $attr->facility_id == $facility->id)->toArray());
         window.prices = @json($prices ?? []);
     </script>
 
     {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
     <script src="{{ asset('assets/js/formSubmitUpdate.js') }}"></script>
     <script src="{{ asset('assets/js/hideFields.js') }}"></script>
-    <script src="{{ asset('assets/js/addRooms.js') }}"></script>
+    <script type="module" src="{{ asset('assets/js/updateRoom.js') }}"></script>
     <script type="module" src="{{ asset('assets/js/addPrice.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
     <script>

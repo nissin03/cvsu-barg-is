@@ -287,7 +287,7 @@
                 </div>
 
 
-                <div class="wg-box" id="roomBox">
+                {{-- <div class="wg-box" id="roomBox">
                     <fieldset class="name" id="hideRoomBox">
                         <div class="body-title mb-10">Capacity</div>
                         <input type="number" min="0" id="roomCapacityWhole" name="whole_capacity"
@@ -353,6 +353,78 @@
                             </div>
                         </div>
 
+                    </div>
+                </div> --}}
+
+
+                <!-- Room Management Container -->
+                <div class="wg-box" id="roomBox">
+                    <fieldset class="name" id="hideRoomBox">
+                        <div class="body-title mb-10">Capacity</div>
+                        <input type="number" min="0" id="roomCapacityWhole" name="whole_capacity"
+                            placeholder="Enter capacity">
+                    </fieldset>
+
+                    <!-- Hidden inputs for form submission -->
+                    <div id="hiddenRooms"></div>
+
+                    <!-- Capacity Section -->
+                    <!-- Rooms Section -->
+                    <div id="dormitoryRooms" class="mt-4">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                            <h4>Room Management</h4>
+                            <button type="button" class="" data-bs-toggle="modal"
+                                data-bs-target="#addMultipleRoomsModal">
+                                <i class="bi bi-plus-circle"></i> Add Rooms
+                            </button>
+                        </div>
+
+                        <!-- No rooms message -->
+                        <div id="noRoomsMessage" class="alert alert-warning">
+                            <i class="bi bi-info-circle me-2"></i> No rooms added yet. Click "Add Rooms" to get started.
+                        </div>
+
+                        <!-- Room display -->
+                        <div id="roomContainer" class="mt-4">
+                            <h4 class="mb-3">Rooms</h4>
+                            <div class="row" id="roomCardsContainer">
+                                <!-- Room cards will be inserted here -->
+                            </div>
+                            <ul class="list-group d-none" id="roomList"></ul>
+                        </div>
+
+                        <!-- Add/Edit Rooms Modal -->
+                        <div class="modal fade" id="addMultipleRoomsModal" tabindex="-1"
+                            aria-labelledby="addMultipleRoomsLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="addMultipleRoomsLabel">Manage Rooms</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+
+                                    <div class="modal-body">
+
+                                        <div id="roomFormContainer">
+
+                                        </div>
+
+                                        <button type="button" id="addMultipleRoomsRowBtn" class="mt-3">
+                                            <i class="bi bi-plus-circle"></i> Add Another Room
+                                        </button>
+
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" id="saveMultipleRoomsBtn">Save
+                                            All</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

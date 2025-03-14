@@ -174,19 +174,8 @@ class FacilityController extends Controller
     public function edit($id)
     {
         $facility =  Facility::find($id);
-        $facilityAttributes = FacilityAttribute::where('facility_id', $facility->id)->get();
-        // $prices = Price::where('facility_id', $facility->id)->get();
-        // $prices = $prices->map(function ($price) {
-        //     return [
-        //         'name' => $price->name,
-        //         'value' => $price->value,
-        //         'price_type' => $price->price_type,
-        //         'is_based_on_days' => $price->is_based_on_days,
-        //         'is_there_a_quantity' => $price->is_there_a_quantity,
-        //         'date_from' => $price->date_from,
-        //         'date_to' => $price->date_to,
-        //     ];
-        // });
+        $facilityAttributes = FacilityAttribute::all();
+        // dd($facilityAttributes);
         $prices = Price::where('facility_id', $facility->id)->whereNotNull('price_type')->get();
         return view('admin.facilities.edit', compact('facility',  'facilityAttributes', 'prices'));
     }
