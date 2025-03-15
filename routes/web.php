@@ -1,10 +1,11 @@
 <?php
 
+use Livewire\Livewire;
+use App\Events\Example;
 use App\Models\Contact;
 use App\Models\Product;
 use App\Events\LowStockEvent;
 use App\Http\Middleware\AuthAdmin;
-use Livewire\Livewire;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Auth;
@@ -18,13 +19,13 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\RentalController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DirectorController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\UserFacilityController;
-use App\Http\Controllers\ReportController;
 
 Auth::routes(['reset' => true]);
 
@@ -34,8 +35,10 @@ Route::get('/', [HomeController::class, 'index'])->name('home.index');
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 Route::get('/shop/{product_slug}', [ShopController::class, 'product_details'])->name('shop.product.details');
 
-
-
+Route::get('/broadcasting', function() {
+    broadcast(new Example());
+    return 'It was broadcasted';
+});
 Route::get('/user/facilities', [UserFacilityController::class, 'index'])->name('user.facilities.index');
 Route::get('/user/facilities/{slug}', [UserFacilityController::class, 'show'])->name('user.facilities.details');
 

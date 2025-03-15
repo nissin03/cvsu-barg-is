@@ -11,6 +11,7 @@
     {{-- <title>{{ config('app.name', 'Information System') }}</title> --}}
     <title>{{ isset($pageTitle) ? $pageTitle : config('app.name', 'Information System') }}</title>
 
+    {{-- @vite(['resources/js/app.js']) --}}
     <meta http-equiv="content-type" content="text/html; charset-utf-8" />
     <meta name="author" content="barg unit" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -26,9 +27,19 @@
     <link rel="stylesheet" href="{{ asset('assets/icon/style.css') }} ">
     {{-- <link rel="stylesheet" type="text/css" href="{{asset('css/sweetalert.min.css')}}"> --}}
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/custom.css') }} ">
-    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    {{-- <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script> --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script>
+        // console.log('Hello from Vite!')
+        Echo.channel('chats')
+            .listen('Example', (e) => {
+                console.log(e);
+            });
+    </script>
+
+    {{-- 
     <script>
         toastr.options = {
             "progressBar": true,
@@ -74,7 +85,7 @@
             );
 
         });
-    </script>
+    </script> --}}
 
     <style>
         .modal-backdrop {
