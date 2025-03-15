@@ -1089,13 +1089,13 @@ class AdminController extends Controller
         $reply = new ContactReplies();
         $reply->contact_id = $contact->id;
         $reply->admin_reply = $request->input('replyMessage');
-        $reply->admin_id = Auth::id(); // Assuming the admin is logged in
+        $reply->admin_id = Auth::id(); 
         $reply->save();
 
-        // Optionally, send an email to the user
+   
         Mail::to($contact->email)->send(new ReplyToContact($contact, $request->input('replyMessage')));
 
-        // Redirect back with a success message
+       
         return redirect()->route('admin.contacts')->with('status', 'Reply sent successfully!');
     }
 

@@ -17,7 +17,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/animate.min.css') }} ">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/animation.css') }} ">
-    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/bootstrap.css') }} ">
+    {{-- <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/bootstrap.css') }} "> --}}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/bootstrap-select.min.css') }} ">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/style.css') }} ">
     <link rel="stylesheet" href="{{ asset('assets/font/fonts.css') }} ">
@@ -374,6 +376,52 @@
 
                             </div>
                             <div class="header-grid">
+
+                                <div class="popup-wrap message type-header">
+                                    <div class="dropdown">
+                                        <button class="btn btn-primary dropdown-toggle" type="button"
+                                            id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <span class="header-item">
+                                                <span class="text-tiny notification-count">4</span>
+                                                <i class="fas fa-bell"></i>
+                                            </span>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end has-content"
+                                            aria-labelledby="dropdownMenuButton2">
+                                            <h6 class="mb-1">Notifications</h6>
+                                            <div class="d-flex justify-content-end align-items-center px-3">
+                                                <button class="btn text-primary fw-bold"
+                                                    style="background: none;">Mark all as read</button>
+                                            </div>
+                                            <div class="px-3 py-2 text-black fw-bold text-uppercase fs-5">New</div>
+
+                                            {{-- Empty State --}}
+                                            {{-- <li class="text-center text-muted fs-4" style="text-decoration: none;">
+                                                No notifications to display
+                                            </li> --}}
+                                            <li class=" notification-item d-flex align-items-center">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="notification-icon bg-light text-white rounded-circle me-3 d-flex align-items-center justify-content-center"
+                                                        style="width: 50px; height: 50px;">
+                                                        <i class="fas fa-bell"
+                                                            style="font-size: 24px; color: #252728;"></i>
+                                                    </div>
+                                                    <div>
+                                                        <p class="mb-0 fw-bold">Sale N + 1</p>
+                                                        <p class="mb-0 text-primary big fw-bold">1h</p>
+                                                    </div>
+                                                </div>
+                                                <span class="badge bg-primary ms-3 rounded-circle"
+                                                    style="width: 10px; height: 10px;"></span>
+                                            </li>
+
+                                            <button class="btn btn-secondary text-center py-3 fs-5 fw-bold">
+                                                See previous notifications
+                                            </button>
+
+                                        </ul>
+                                    </div>
+                                </div>
 
 
 

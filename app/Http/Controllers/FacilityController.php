@@ -186,6 +186,8 @@ class FacilityController extends Controller
             'name' => 'required|unique:facilities,name,' . $id,
         ]);
 
+
+
         $facility = Facility::findOrFail($id);
         $request->merge([
             'sex_restriction' => $request->sex_restriction ?? '',
