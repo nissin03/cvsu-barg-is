@@ -446,7 +446,7 @@
                                 <div class="input-group">
                                     <label for="user-type">Name<span class="tf-color-1">*</span></label>
                                     <input type="text" id="priceName" name="prices[{{ $index }}][name]"
-                                        value="{{ old('prices.' . $index . '.name', $price->name ?? '') }}">
+                                        value="{{ old('prices.' . $index . '.name') }}">
                                 </div>
                                 @error('name')
                                     <span class="alert alert-danger text-center">{{ $message }} </span>
@@ -460,11 +460,11 @@
                                                 <!-- Notice the change here -->
                                                 <option value="" selected disabled>Choose Price Type...</option>
                                                 <option value="individual"
-                                                    {{ old('prices.' . $index . '.price_type', $price->price_type ?? '') === 'individual' ? 'selected' : '' }}>
+                                                    {{ old('prices.' . $index . '.price_type') === 'individual' ? 'selected' : '' }}>
                                                     Individual
                                                 </option>
                                                 <option value="whole"
-                                                    {{ old('prices.' . $index . '.price_type', $price->price_type ?? '') === 'whole' ? 'selected' : '' }}>
+                                                    {{ old('prices.' . $index . '.price_type') === 'whole' ? 'selected' : '' }}>
                                                     Whole Place
                                                 </option>
                                             </select>

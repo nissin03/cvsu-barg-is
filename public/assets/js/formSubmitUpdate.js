@@ -5,16 +5,27 @@ $("#facilityForm").on("submit", function (event) {
     const facilityType = $("#rentalType").val();
 
     // Ensure prices array is defined
+    // if (Array.isArray(window.prices)) {
+    //     window.prices.forEach((price, index) => {
+    //         formData.append(`prices[${index}][name]`, price.name);
+    //         formData.append(`prices[${index}][price_type]`, price.price_type);
+    //         formData.append(`prices[${index}][value]`, price.value);
+    //         formData.append(`prices[${index}][is_based_on_days]`, price.is_based_on_days);
+    //         formData.append(`prices[${index}][is_there_a_quantity]`, price.is_there_a_quantity);
+    //     });
+    // } else {
+    //     console.error("Prices is not an array or is undefined");
+    // }
     if (Array.isArray(window.prices)) {
         window.prices.forEach((price, index) => {
-            formData.append(`prices[${index}][name]`, price.name);
-            formData.append(`prices[${index}][price_type]`, price.price_type);
-            formData.append(`prices[${index}][value]`, price.value);
-            formData.append(`prices[${index}][is_based_on_days]`, price.is_based_on_days);
-            formData.append(`prices[${index}][is_there_a_quantity]`, price.is_there_a_quantity);
+            if (price.name && price.price_type && price.value) {
+                formData.append(`prices[${index}][name]`, price.name);
+                formData.append(`prices[${index}][price_type]`, price.price_type);
+                formData.append(`prices[${index}][value]`, price.value);
+                formData.append(`prices[${index}][is_based_on_days]`, price.is_based_on_days);
+                formData.append(`prices[${index}][is_there_a_quantity]`, price.is_there_a_quantity);
+            }
         });
-    } else {
-        console.error("Prices is not an array or is undefined");
     }
 
     if (facilityType === "whole_place") {
