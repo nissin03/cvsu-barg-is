@@ -556,32 +556,42 @@
             const dateFromInput = document.getElementById('date_from');
             const dateToInput = document.getElementById('date_to');
 
-
-            function disablePastDates() {
-                const today = new Date().toISOString().split('T')[0];
-                dateFromInput.setAttribute('min', today);
-                dateToInput.setAttribute('min', today);
+            function toggleDateFields() {
+                if (isBasedOnDaysCheckbox.checked) {
+                    dateFieldsDiv.style.display = 'block';
+                    dateFromInput.removeAttribute('disabled');
+                    dateToInput.removeAttribute('disabled');
+                    dateFromInput.setAttribute('required', 'required');
+                    dateToInput.setAttribute('required', 'required');
+                } else {
+                    dateFieldsDiv.style.display = 'none';
+                    dateFromInput.setAttribute('disabled', 'disabled');
+                    dateToInput.setAttribute('disabled', 'disabled');
+                    dateFromInput.removeAttribute('required');
+                    dateToInput.removeAttribute('required');
+                }
             }
 
 
             dateFromInput.addEventListener('change', function() {
                 if (dateFromInput.value) {
-                    dateToInput.value = dateFromInput.value;
+                    dateToInput.setAttribute('min', dateFromInput.value);
                 }
             });
 
-            // Handle the checkbox state to show/hide the date fields
-            isBasedOnDaysCheckbox.addEventListener('change', function() {
-                if (isBasedOnDaysCheckbox.checked) {
-                    dateFieldsDiv.style.display = 'block';
-                } else {
-                    dateFieldsDiv.style.display = 'none';
-                }
-            });
 
-            // Disable past dates initially
-            disablePastDates();
+            isBasedOnDaysCheckbox.addEventListener('change', toggleDateFields);
+
+
+            toggleDateFields();
+
+
+            $('#addPrice').on('hidden.bs.modal', function() {
+                $("#date_from").val('');
+                $("#date_to").val('');
+            });
         });
+
 
         function removeUpload(previewId, inputId) {
             $('#' + previewId).hide(); // Hide the preview

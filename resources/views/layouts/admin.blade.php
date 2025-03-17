@@ -31,13 +31,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script>
+    {{-- <script>
         // console.log('Hello from Vite!')
         Echo.channel('chats')
             .listen('Example', (e) => {
                 console.log(e);
             });
-    </script>
+    </script> --}}
 
     {{-- 
     <script>

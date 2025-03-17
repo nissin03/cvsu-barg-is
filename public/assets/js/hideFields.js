@@ -10,7 +10,6 @@ const $pWhole = $("#pWhole");
 // const $multipleRoomsTable = $("#multipleRoomsTable tbody");
 // const $addRoomModal = $("#addRoom");
 
-
 $rentalType.on("change", function () {
     handleRentalTypeChange($(this).val());
 });
