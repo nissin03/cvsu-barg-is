@@ -38,30 +38,33 @@ class UserFacilityController extends Controller
 
     public function show($slug)
     {
-
         $facility = Facility::with('facilityAttributes', 'prices')->where('slug', $slug)->firstOrFail();
         $pricesWithAttributes = $facility->prices()->whereHas('facility.facilityAttributes')->get();
         $pricesWithoutAttributes = $facility->prices()->whereDoesntHave('facility.facilityAttributes')->get();
-        // dd($pricesWithoutAttributes);
 
         foreach ($facility->facilityAttributes as $attribute) {
-         
             $reserved = TransactionReservation::whereHas('availability', function ($query) use ($attribute) {
                 $query->where('facility_attribute_id', $attribute->id);
             })
                 ->where('status', 'reserved')
-                ->sum('quantity'); 
+                ->sum('quantity');
 
             // Compute remaining capacity
             $attribute->remaining_capacity = $attribute->capacity - $reserved;
         }
 
+        // Fetch reserved dates for the whole_place type facility
+        $reservedDates = [];
+        if ($facility->facility_type === 'whole_place') {
+            $reservedDates = Availability::where('facility_id', $facility->id)
+                ->where('remaining_capacity', 0) // This checks if the whole capacity is reserved
+                ->pluck('date_from') // Get the reserved dates
+                ->toArray();
+        }
 
-        $individualPrice = $facility->individualPrice();
-        $selectedRoom = $this->findRoomWithLeastCapacity($facility);
-
-        return view('user.facilities.details', compact('facility',  'pricesWithAttributes', 'pricesWithoutAttributes', 'individualPrice', 'selectedRoom'));
+        return view('user.facilities.details', compact('facility', 'pricesWithAttributes', 'pricesWithoutAttributes', 'reservedDates'));
     }
+
 
     public function reserve(Request $request)
     {

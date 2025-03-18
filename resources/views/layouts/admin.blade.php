@@ -304,17 +304,17 @@
                                                     <div class="text">Statements</div>
                                                 </a>
                                             </li>
-                                            <li class="sub-menu-item">
+                                            {{-- <li class="sub-menu-item">
                                                 <a href="{{ route('admin.generate-input-users') }}">
                                                     <div class="text">Input User</div>
                                                 </a>
-                                            </li>
+                                            </li> --}}
 
-                                            <li class="sub-menu-item">
+                                            {{-- <li class="sub-menu-item">
                                                 <a href="{{ route('admin.generate-input-sales') }}">
                                                     <div class="text">Input Sales</div>
                                                 </a>
-                                            </li>
+                                            </li> --}}
                                         </ul>
                                     </li>
 

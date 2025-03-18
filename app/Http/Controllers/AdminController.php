@@ -495,9 +495,9 @@ class AdminController extends Controller
             ->where('archived', $archived)
             ->where(function ($query) use ($search) {
                 if ($search) {
-                    $query->where('name', 'like', "%{$search}%") 
+                    $query->where('name', 'like', "%{$search}%")
                           ->orWhere('description', 'like', "%{$search}%")
-                          ->orWhere('quantity', 'like', "%{$search}%"); 
+                          ->orWhere('quantity', 'like', "%{$search}%");
                 }
             })
             ->orderBy('created_at', 'DESC')
@@ -509,7 +509,7 @@ class AdminController extends Controller
                     'pagination' => view('partials._products-pagination', compact('products'))->render()
                 ]);
             }
-        
+
         return view('admin.products', compact('products', 'archived'));
     }
 
@@ -1089,13 +1089,13 @@ class AdminController extends Controller
         $reply = new ContactReplies();
         $reply->contact_id = $contact->id;
         $reply->admin_reply = $request->input('replyMessage');
-        $reply->admin_id = Auth::id(); 
+        $reply->admin_id = Auth::id();
         $reply->save();
 
-   
+
         Mail::to($contact->email)->send(new ReplyToContact($contact, $request->input('replyMessage')));
 
-       
+
         return redirect()->route('admin.contacts')->with('status', 'Reply sent successfully!');
     }
 
@@ -1115,7 +1115,7 @@ class AdminController extends Controller
 
     public function markMultipleAsRead(Request $request)
     {
-        $notificationIds = $request->input('notification_ids'); 
+        $notificationIds = $request->input('notification_ids');
         if (!$notificationIds || empty($notificationIds)) {
             return response()->json([
                 'status' => 'error',
@@ -1199,606 +1199,603 @@ class AdminController extends Controller
     }
 
     // Reports Page
-    public function generateReport(Request $request)
-    {
-        $currentDate = Carbon::now(); // Define the current date here
-        $currentYear = $currentDate->year;
-        $currentMonthId = $currentDate->month;
-
-        // Get selected year and month from request, default to current year/month
-        $selectedYear = $request->input('year', $currentYear);
-        $selectedMonthId = $request->input('month', $currentMonthId);
-
-        // Fetch available months and the selected month
-        $availableMonths = MonthName::orderBy('id')->get();
-        $selectedMonth = $availableMonths->firstWhere('id', $selectedMonthId);
-
-        if (!$selectedMonth) {
-            $selectedMonth = $availableMonths->first();
-            $selectedMonthId = $selectedMonth->id;
-        }
-
-        // Calculate the start and end of the selected month
-        $startOfMonth = Carbon::create($selectedYear, $selectedMonthId, 1)->startOfMonth();
-        $endOfMonth = $startOfMonth->copy()->endOfMonth();
-
-        // Fetch the latest 10 orders
-        $orders = Order::orderBy('created_at', 'DESC')->take(10)->get();
-
-        // Fetch dashboard data for the selected month and year
-        $dashboardDatas = DB::select("SELECT
-                                        SUM(total) AS TotalAmount,
-                                        SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
-                                        SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
-                                        SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount,
-                                        COUNT(*) AS Total,
-                                        SUM(IF(status = 'reserved', 1, 0)) AS TotalReserved,
-                                        SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp,
-                                        SUM(IF(status = 'canceled', 1, 0)) AS TotalCanceled
-                                      FROM Orders
-                                      WHERE created_at BETWEEN ? AND ?", [$startOfMonth, $endOfMonth]);
-
-        // Weekly data for the selected month
-        $weekRanges = [];
-        for ($week = 1; $week <= 6; $week++) {
-            $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek(Carbon::MONDAY);
-            $endOfWeek = $startOfWeek->copy()->endOfWeek(Carbon::SUNDAY);
-
-            // Ensure the start and end of the week don't exceed the month boundaries
-            if ($startOfWeek->lt($startOfMonth)) {
-                $startOfWeek = $startOfMonth;
-            }
-            if ($endOfWeek->gt($endOfMonth)) {
-                $endOfWeek = $endOfMonth;
-            }
-
-            // Add valid week ranges
-            if ($startOfWeek->lte($endOfMonth)) {
-                $weekRanges[$week] = [$startOfWeek, $endOfWeek];
-            }
-        }
-
-        // Fetch totals for each week
-        $totalAmounts = [];
-        $reservationAmounts = [];
-        $pickedUpAmounts = [];
-        $canceledAmounts = [];
-
-        foreach ($weekRanges as $week => [$startOfSelectedWeek, $endOfSelectedWeek]) {
-            // Fetch total amounts for the week
-            $dashboardData = DB::select(
-                "SELECT
-                                            SUM(total) AS TotalAmount,
-                                            SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
-                                            SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
-                                            SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
-                                        FROM Orders
-                                        WHERE created_at BETWEEN ? AND ?",
-                [$startOfSelectedWeek, $endOfSelectedWeek]
-            )[0];
-
-            $totalAmounts[$week] = $dashboardData->TotalAmount ?? 0;
-            $reservationAmounts[$week] = $dashboardData->TotalReservedAmount ?? 0;
-            $pickedUpAmounts[$week] = $dashboardData->TotalPickedUpAmount ?? 0;
-            $canceledAmounts[$week] = $dashboardData->TotalCanceledAmount ?? 0;
-        }
-
-        // Prepare Weekly Data for View
-        $AmountW = implode(',', $totalAmounts);
-        $ReservationAmountW = implode(',', $reservationAmounts);
-        $PickedUpAmountW = implode(',', $pickedUpAmounts);
-        $CanceledAmountW = implode(',', $canceledAmounts);
-
-        // Calculate overall totals for weekly data display
-        $TotalAmountW = array_sum($totalAmounts);
-        $TotalReservedAmountW = array_sum($reservationAmounts);
-        $TotalPickedUpAmountW = array_sum($pickedUpAmounts);
-        $TotalCanceledAmountW = array_sum($canceledAmounts);
-
-        // Monthly data for the selected year
-        $monthlyDatas = DB::select("SELECT M.id AS MonthNo, M.name AS MonthName,
-                                        IFNULL(D.TotalAmount, 0) AS TotalAmount,
-                                        IFNULL(D.TotalReservedAmount, 0) AS TotalReservedAmount,
-                                        IFNULL(D.TotalPickedUpAmount, 0) AS TotalPickedUpAmount,
-                                        IFNULL(D.TotalCanceledAmount, 0) AS TotalCanceledAmount
-                                     FROM month_names M
-                                     LEFT JOIN (
-                                         SELECT
-                                             MONTH(created_at) AS MonthNo,
-                                             SUM(total) AS TotalAmount,
-                                             SUM(IF(status='reserved', total, 0)) AS TotalReservedAmount,
-                                             SUM(IF(status='pickedup', total, 0)) AS TotalPickedUpAmount,
-                                             SUM(IF(status='canceled', total, 0)) AS TotalCanceledAmount
-                                         FROM Orders
-                                         WHERE YEAR(created_at) = ?
-                                         GROUP BY MONTH(created_at)
-                                     ) D ON D.MonthNo = M.id
-                                     ORDER BY M.id", [$selectedYear]);
-
-        // Prepare Monthly Data for View
-        $AmountM = implode(',', collect($monthlyDatas)->pluck('TotalAmount')->toArray());
-        $ReservationAmountM = implode(',', collect($monthlyDatas)->pluck('TotalReservedAmount')->toArray());
-        $PickedUpAmountM = implode(',', collect($monthlyDatas)->pluck('TotalPickedUpAmount')->toArray());
-        $CanceledAmountM = implode(',', collect($monthlyDatas)->pluck('TotalCanceledAmount')->toArray());
-
-        // Calculate overall totals for monthly data display
-        $TotalAmount = collect($monthlyDatas)->sum('TotalAmount');
-        $TotalReservedAmount = collect($monthlyDatas)->sum('TotalReservedAmount');
-        $TotalPickedUpAmount = collect($monthlyDatas)->sum('TotalPickedUpAmount');
-        $TotalCanceledAmount = collect($monthlyDatas)->sum('TotalCanceledAmount');
-
-        // Calculate the range of years to show in the dropdown
-        $yearRange = range($currentYear, $currentYear - 10);
-
-        // New Code (Adding daily data)
-        $availableWeeks = DB::table('week_names')->orderBy('week_number')->get();
-        $selectedWeekId = $request->input('week', $currentDate->weekOfMonth);
-
-        $selectedWeek = $availableWeeks->firstWhere('week_number', $selectedWeekId);
-        if (!$selectedWeek) {
-            $selectedWeek = $availableWeeks->first();
-            $selectedWeekId = $selectedWeek->week_number;
-        }
-
-        // Define the start and end of the selected week
-        if (array_key_exists($selectedWeekId, $weekRanges)) {
-            [$startOfSelectedWeek, $endOfSelectedWeek] = $weekRanges[$selectedWeekId];
-        } else {
-            [$startOfSelectedWeek, $endOfSelectedWeek] = $weekRanges[1]; // Default to week 1
-        }
-
-        // Query for daily data within the selected week, grouped by day
-        $dailyDatasRaw = DB::select(
-            "SELECT DAYOFWEEK(created_at) AS DayNo,
-                                        DAYNAME(created_at) AS DayName,
-                                        SUM(total) AS TotalAmount,
-                                        SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
-                                        SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
-                                        SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
-                                       FROM Orders
-                                       WHERE created_at BETWEEN ? AND ?
-                                       GROUP BY DAYOFWEEK(created_at), DAYNAME(created_at)
-                                       ORDER BY DayNo",
-            [$startOfSelectedWeek, $endOfSelectedWeek]
-        );
-
-        // Define the desired order of days
-        $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-        // Create a map of DayName to daily data
-        $dailyDataMap = collect($dailyDatasRaw)->keyBy('DayName');
-
-        // Reorder the daily data from Monday to Sunday, filling missing days with zeros
-        $sortedDailyDatas = collect($daysOfWeek)->map(function ($day) use ($dailyDataMap) {
-            if ($dailyDataMap->has($day)) {
-                return $dailyDataMap->get($day);
-            } else {
-                return (object)[
-                    'DayNo' => null,
-                    'DayName' => $day,
-                    'TotalAmount' => 0,
-                    'TotalReservedAmount' => 0,
-                    'TotalPickedUpAmount' => 0,
-                    'TotalCanceledAmount' => 0,
-                ];
-            }
-        });
-
-        // Prepare Daily Data for View
-        $AmountD = implode(',', $sortedDailyDatas->pluck('TotalAmount')->toArray());
-        $ReservationAmountD = implode(',', $sortedDailyDatas->pluck('TotalReservedAmount')->toArray());
-        $PickedUpAmountD = implode(',', $sortedDailyDatas->pluck('TotalPickedUpAmount')->toArray());
-        $CanceledAmountD = implode(',', $sortedDailyDatas->pluck('TotalCanceledAmount')->toArray());
-
-        $TotalAmountD = $sortedDailyDatas->sum('TotalAmount');
-        $TotalReservedAmountD = $sortedDailyDatas->sum('TotalReservedAmount');
-        $TotalPickedUpAmountD = $sortedDailyDatas->sum('TotalPickedUpAmount');
-        $TotalCanceledAmountD = $sortedDailyDatas->sum('TotalCanceledAmount');
-
-        // Return View with all data
-        $pageTitle = 'Reports';
-        return view('admin.reports', compact(
-            'orders',
-            'dashboardDatas',
-            'AmountM',
-            'ReservationAmountM',
-            'PickedUpAmountM',
-            'CanceledAmountM',
-            'TotalAmount',
-            'TotalReservedAmount',
-            'TotalPickedUpAmount',
-            'TotalCanceledAmount',
-            'AmountW',
-            'ReservationAmountW',
-            'PickedUpAmountW',
-            'CanceledAmountW',
-            'TotalAmountW',
-            'TotalReservedAmountW',
-            'TotalPickedUpAmountW',
-            'TotalCanceledAmountW',
-            'selectedMonth',
-            'selectedYear',
-            'availableMonths',
-            'yearRange',
-            'sortedDailyDatas',
-            'AmountD',
-            'ReservationAmountD',
-            'PickedUpAmountD',
-            'CanceledAmountD',
-            'TotalAmountD',
-            'TotalReservedAmountD',
-            'TotalPickedUpAmountD',
-            'TotalCanceledAmountD',
-            'selectedWeekId',
-            'availableWeeks',
-            'pageTitle'
-        ));
-    }
-
-    public function generateProduct(Request $request)
-    {
-        // Get the current year and month
-        $currentYear = Carbon::now()->year;
-        $currentMonth = Carbon::now()->month;
-        $selectedYear = $request->input('year', $currentYear);
-        $selectedMonth = $request->input('month', $currentMonth);
-
-        // Most frequent products data - simplified query for testing
-        $mostFrequentProducts = DB::table('order_items')
-            ->join('orders', 'order_items.order_id', '=', 'orders.id')
-            ->join('products', 'order_items.product_id', '=', 'products.id')
-            ->select(
-                'products.name',
-                DB::raw('COUNT(*) as total_orders')
-            )
-            ->groupBy('products.id', 'products.name')
-            ->orderByDesc('total_orders')
-            ->limit(10)
-            ->get();
-
-        // Least bought products data - simplified query for testing
-        $leastBoughtProducts = DB::table('products')
-            ->leftJoin('order_items', 'products.id', '=', 'order_items.product_id')
-            ->select(
-                'products.name',
-                DB::raw('COUNT(order_items.id) as total_orders')
-            )
-            ->groupBy('products.id', 'products.name')
-            ->orderBy('total_orders')
-            ->limit(10)
-            ->get();
-
-        // Prepare data for charts
-        $mostFrequentLabels = $mostFrequentProducts->pluck('name');
-        $mostFrequentData = $mostFrequentProducts->pluck('total_orders');
-        $leastBoughtLabels = $leastBoughtProducts->pluck('name');
-        $leastBoughtData = $leastBoughtProducts->pluck('total_orders');
-
-        // Available months and year range for the form
-        $availableMonths = DB::table('month_names')->get();
-        $yearRange = range($currentYear, $currentYear - 10);
-
-        return view('admin.report-product', compact(
-            'mostFrequentLabels',
-            'mostFrequentData',
-            'leastBoughtLabels',
-            'leastBoughtData',
-            'availableMonths',
-            'yearRange',
-            'selectedMonth',
-            'selectedYear'
-        ));
-    }
-
-    public function generateUser(Request $request)
-    {
-        // Set default year and month from current date.
-        $currentYear  = Carbon::now()->year;
-        $currentMonth = Carbon::now()->month;
-        $selectedYear = $request->input('year', $currentYear);
-        $selectedMonth = $request->input('month', $currentMonth);
-
-        // Retrieve available weeks from the seeded week_names table.
-        $availableWeeks = DB::table('week_names')->orderBy('week_number')->get();
-
-        // (Optional) Variables for a custom date-range report.
-        $newUsersCount = null;
-        $newUsers      = null;
-        $startDate     = null;
-        $endDate       = null;
-        $chartData     = null;
-
-        // If a date-range form was submitted, validate and compute its data.
-        if ($request->isMethod('POST') && $request->has(['start_date', 'end_date'])) {
-            $request->validate([
-                'start_date' => 'required|date',
-                'end_date'   => 'required|date|after_or_equal:start_date',
-            ]);
-
-            $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
-            $endDate   = Carbon::parse($request->input('end_date'))->endOfDay();
-
-            $newUsersCount = User::whereBetween('created_at', [$startDate, $endDate])->count();
-
-            $userRegistrations = User::select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('COUNT(*) as count')
-            )
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->groupBy('date')
-                ->orderBy('date', 'asc')
-                ->get();
-
-            $chartData = [
-                'dates'  => $userRegistrations->pluck('date')->map(function ($date) {
-                    return Carbon::parse($date)->format('Y-m-d');
-                })->toArray(),
-                'counts' => $userRegistrations->pluck('count')->toArray(),
-            ];
-
-            $newUsers = User::whereBetween('created_at', [$startDate, $endDate])->get();
-        }
-
-        // Retrieve statistics for the dashboard.
-        $totalUsers = User::count();
-        $newUsersThisMonth = User::whereYear('created_at', $currentYear)
-            ->whereMonth('created_at', $currentMonth)
-            ->count();
-        $activeUsers = User::where('isDefault', false)->count(); // Customize your query as needed.
-
-        $growthRate = ($totalUsers > 0) ? (($newUsersThisMonth / $totalUsers) * 100) : 0;
-
-        // Retrieve recently registered users (limit 10).
-        $recentUsers = User::orderBy('created_at', 'DESC')->take(10)->get();
-
-        // === Monthly Chart Data ===
-        $userRegistrations = DB::select("
-            SELECT COUNT(*) AS TotalUsers, MONTH(created_at) AS MonthNo
-            FROM users
-            WHERE YEAR(created_at) = ?
-            GROUP BY MonthNo
-            ORDER BY MonthNo
-        ", [$selectedYear]);
-
-        // Build an array with one entry per month (fill missing months with 0).
-        $monthlyData = array_fill(1, 12, 0);
-        foreach ($userRegistrations as $data) {
-            $monthlyData[$data->MonthNo] = $data->TotalUsers;
-        }
-        $userRegistrationsByMonth = implode(',', $monthlyData);
-
-        // === Weekly Chart Data ===
-        $weeklyData = array_fill(1, 6, 0);
-        $userCounts = DB::table('users')
-            ->selectRaw('WEEK(created_at, 1) - WEEK(DATE_SUB(created_at, INTERVAL DAYOFMONTH(created_at)-1 DAY), 1) + 1 as week_number')
-            ->selectRaw('COUNT(*) as count')
-            ->whereYear('created_at', $selectedYear)
-            ->whereMonth('created_at', $selectedMonth)
-            ->groupBy('week_number')
-            ->get();
-        foreach ($userCounts as $count) {
-            $weekIndex = $count->week_number;
-            if (isset($weeklyData[$weekIndex])) {
-                $weeklyData[$weekIndex] = $count->count;
-            }
-        }
-        $weeklyChartData = implode(',', $weeklyData);
-
-        // === Daily Chart Data (Filtered by Week) ===
-        // Determine start and end of the selected month.
-        $startOfMonth = Carbon::createFromDate($selectedYear, $selectedMonth, 1)->startOfMonth();
-        $endOfMonth   = Carbon::createFromDate($selectedYear, $selectedMonth, 1)->endOfMonth();
-
-        // Calculate week ranges for the month.
-        $weekRanges = [];
-        for ($week = 1; $week <= 6; $week++) {
-            $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek(Carbon::MONDAY);
-            $endOfWeek   = $startOfWeek->copy()->endOfWeek(Carbon::SUNDAY);
-
-            if ($startOfWeek->lt($startOfMonth)) {
-                $startOfWeek = $startOfMonth;
-            }
-            if ($endOfWeek->gt($endOfMonth)) {
-                $endOfWeek = $endOfMonth;
-            }
-            if ($startOfWeek->lte($endOfMonth)) {
-                $weekRanges[$week] = [$startOfWeek, $endOfWeek];
-            }
-        }
-
-        // Get selected week from the request; default to week 1.
-        $selectedWeekId = $request->input('week', 1);
-        if (!array_key_exists($selectedWeekId, $weekRanges)) {
-            $selectedWeekId = 1;
-        }
-        list($dailyStart, $dailyEnd) = $weekRanges[$selectedWeekId];
-
-        // Query daily registration counts within the selected week.
-        $dailyCounts = DB::table('users')
-            ->selectRaw('DAYNAME(created_at) as day_name, DAYOFWEEK(created_at) as day_of_week, COUNT(*) as count')
-            ->whereBetween('created_at', [$dailyStart, $dailyEnd])
-            ->groupBy('day_of_week', 'day_name')
-            ->orderBy('day_of_week')
-            ->get();
-
-        // We want to display data for Monday through Sunday.
-        $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        $dailyData = array_fill(0, 7, 0);
-        foreach ($dailyCounts as $count) {
-            $index = array_search($count->day_name, $daysOfWeek);
-            if ($index !== false) {
-                $dailyData[$index] = $count->count;
-            }
-        }
-        $dailyChartData = implode(',', $dailyData);
-
-        // Retrieve available months from the seeded month_names table.
-        $availableMonths = DB::table('month_names')->get();
-        $yearRange = range($currentYear, $currentYear - 10);
-
-        $pageTitle = 'User Registrations Report';
-
-        return view('admin.report-user', compact(
-            'totalUsers',
-            'newUsersThisMonth',
-            'activeUsers',
-            'growthRate',
-            'recentUsers',
-            'userRegistrationsByMonth',
-            'weeklyChartData',
-            'dailyChartData',
-            'availableMonths',
-            'yearRange',
-            'selectedMonth',
-            'selectedYear',
-            'availableWeeks',
-            'pageTitle',
-            'newUsersCount',
-            'newUsers',
-            'startDate',
-            'endDate',
-            'chartData',
-            'selectedWeekId'
-        ))->with('showChart', true);
-    }
-
-    public function generateInventory(Request $request)
-    {
-        // Validate the inputs
-        $validator = Validator::make($request->all(), [
-            'start_date'    => 'nullable|date',
-            'end_date'      => 'nullable|date',
-            'today'         => 'nullable|boolean',
-            'stock_status'  => 'nullable|string|in:instock,outofstock,reorder',
-        ]);
-
-        // If validation fails, redirect back with errors and input
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        // Check if "Today" filter is applied
-        if ($request->has('today') && $request->input('today') == '1') {
-            $startDate = Carbon::today()->toDateString();
-            $endDate = Carbon::today()->toDateString();
-        } else {
-            // Get start_date and end_date from the request
-            $startDate = $request->input('start_date');
-            $endDate = $request->input('end_date');
-        }
-
-        // Additional validation: Ensure end_date is after or equal to start_date
-        if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
-            return redirect()->back()->withErrors(['end_date' => 'The end date must be after or equal to the start date.'])->withInput();
-        }
-
-        // Build the query for products
-        $productsQuery = Product::with(['category', 'orderItems', 'attributeValues']);
-
-        // Apply date filter if dates are provided
-        if ($startDate && $endDate) {
-            $start = Carbon::parse($startDate)->startOfDay();
-            $end = Carbon::parse($endDate)->endOfDay();
-
-            // Filter products based on updated_at date
-            $productsQuery->whereBetween('updated_at', [$start, $end]);
-        }
-
-        // Get the products
-        $products = $productsQuery->get();
-
-        // Apply stock status filter if provided
-        $stockStatus = $request->input('stock_status');
-
-        if ($stockStatus) {
-            $products = $products->filter(function ($product) use ($stockStatus) {
-                $currentStock = $product->attributeValues->isNotEmpty()
-                    ? $product->attributeValues->sum('quantity')
-                    : $product->current_stock;
-
-                if ($stockStatus == 'instock') {
-                    return $currentStock > $product->reorder_quantity;
-                } elseif ($stockStatus == 'outofstock') {
-                    return $currentStock <= $product->outofstock_quantity;
-                } elseif ($stockStatus == 'reorder') {
-                    return $currentStock > $product->outofstock_quantity && $currentStock <= $product->reorder_quantity;
-                }
-
-                return true;
-            });
-        }
-
-        // Paginate the results manually
-        $page = $request->input('page', 1);
-        $perPage = 20;
-        $total = $products->count();
-        $products = $products->forPage($page, $perPage);
-
-        $products = new \Illuminate\Pagination\LengthAwarePaginator(
-            $products,
-            $total,
-            $perPage,
-            $page,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
-
-        return view('admin.report-inventory', compact('products', 'startDate', 'endDate'));
-    }
-
-
-
-
-    public function generateBillingStatement($orderId)
-    {
-        $order = Order::with(['user', 'orderItems.product'])->findOrFail($orderId);
-        return view('admin.report-statement', compact('order'));
-    }
-
-    public function listBillingStatements(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
-            'today' => 'nullable|boolean',
-            'search' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        if ($request->has('today') && $request->input('today') == '1') {
-            $startDate = Carbon::today()->toDateString();
-            $endDate = Carbon::today()->toDateString();
-        } else {
-            $startDate = $request->input('start_date');
-            $endDate = $request->input('end_date');
-        }
-
-        if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
-            return redirect()->back()->withErrors(['end_date' => 'The end date must be after or equal to the start date.'])->withInput();
-        }
-
-        $ordersQuery = Order::with('user');
-
-        if ($request->has('search') && $request->input('search')) {
-            $searchTerm = $request->input('search');
-            $ordersQuery->whereHas('user', function ($query) use ($searchTerm) {
-                $query->where('name', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('email', 'like', '%' . $searchTerm . '%');
-            });
-        }
-
-        if ($startDate && $endDate) {
-            $start = Carbon::parse($startDate)->startOfDay();
-            $end = Carbon::parse($endDate)->endOfDay();
-            $ordersQuery->whereBetween('created_at', [$start, $end]);
-        }
-
-        $orders = $ordersQuery->orderBy('created_at', 'desc')->paginate(20);
-
-        return view('admin.report-statements', compact('orders', 'startDate', 'endDate'));
-    }
+    // public function generateReport(Request $request)
+    // {
+    //     $currentDate = Carbon::now(); // Define the current date here
+    //     $currentYear = $currentDate->year;
+    //     $currentMonthId = $currentDate->month;
+
+    //     // Get selected year and month from request, default to current year/month
+    //     $selectedYear = $request->input('year', $currentYear);
+    //     $selectedMonthId = $request->input('month', $currentMonthId);
+
+    //     // Fetch available months and the selected month
+    //     $availableMonths = MonthName::orderBy('id')->get();
+    //     $selectedMonth = $availableMonths->firstWhere('id', $selectedMonthId);
+
+    //     if (!$selectedMonth) {
+    //         $selectedMonth = $availableMonths->first();
+    //         $selectedMonthId = $selectedMonth->id;
+    //     }
+
+    //     // Calculate the start and end of the selected month
+    //     $startOfMonth = Carbon::create($selectedYear, $selectedMonthId, 1)->startOfMonth();
+    //     $endOfMonth = $startOfMonth->copy()->endOfMonth();
+
+    //     // Fetch the latest 10 orders
+    //     $orders = Order::orderBy('created_at', 'DESC')->take(10)->get();
+
+    //     // Fetch dashboard data for the selected month and year
+    //     $dashboardDatas = DB::select("SELECT
+    //                                     SUM(total) AS TotalAmount,
+    //                                     SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
+    //                                     SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
+    //                                     SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount,
+    //                                     COUNT(*) AS Total,
+    //                                     SUM(IF(status = 'reserved', 1, 0)) AS TotalReserved,
+    //                                     SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp,
+    //                                     SUM(IF(status = 'canceled', 1, 0)) AS TotalCanceled
+    //                                   FROM Orders
+    //                                   WHERE created_at BETWEEN ? AND ?", [$startOfMonth, $endOfMonth]);
+
+    //     // Weekly data for the selected month
+    //     $weekRanges = [];
+    //     for ($week = 1; $week <= 6; $week++) {
+    //         $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek(Carbon::MONDAY);
+    //         $endOfWeek = $startOfWeek->copy()->endOfWeek(Carbon::SUNDAY);
+
+    //         // Ensure the start and end of the week don't exceed the month boundaries
+    //         if ($startOfWeek->lt($startOfMonth)) {
+    //             $startOfWeek = $startOfMonth;
+    //         }
+    //         if ($endOfWeek->gt($endOfMonth)) {
+    //             $endOfWeek = $endOfMonth;
+    //         }
+
+    //         // Add valid week ranges
+    //         if ($startOfWeek->lte($endOfMonth)) {
+    //             $weekRanges[$week] = [$startOfWeek, $endOfWeek];
+    //         }
+    //     }
+
+    //     // Fetch totals for each week
+    //     $totalAmounts = [];
+    //     $reservationAmounts = [];
+    //     $pickedUpAmounts = [];
+    //     $canceledAmounts = [];
+
+    //     foreach ($weekRanges as $week => [$startOfSelectedWeek, $endOfSelectedWeek]) {
+    //         // Fetch total amounts for the week
+    //         $dashboardData = DB::select(
+    //             "SELECT
+    //                                         SUM(total) AS TotalAmount,
+    //                                         SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
+    //                                         SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
+    //                                         SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
+    //                                     FROM Orders
+    //                                     WHERE created_at BETWEEN ? AND ?",
+    //             [$startOfSelectedWeek, $endOfSelectedWeek]
+    //         )[0];
+
+    //         $totalAmounts[$week] = $dashboardData->TotalAmount ?? 0;
+    //         $reservationAmounts[$week] = $dashboardData->TotalReservedAmount ?? 0;
+    //         $pickedUpAmounts[$week] = $dashboardData->TotalPickedUpAmount ?? 0;
+    //         $canceledAmounts[$week] = $dashboardData->TotalCanceledAmount ?? 0;
+    //     }
+
+    //     // Prepare Weekly Data for View
+    //     $AmountW = implode(',', $totalAmounts);
+    //     $ReservationAmountW = implode(',', $reservationAmounts);
+    //     $PickedUpAmountW = implode(',', $pickedUpAmounts);
+    //     $CanceledAmountW = implode(',', $canceledAmounts);
+
+    //     // Calculate overall totals for weekly data display
+    //     $TotalAmountW = array_sum($totalAmounts);
+    //     $TotalReservedAmountW = array_sum($reservationAmounts);
+    //     $TotalPickedUpAmountW = array_sum($pickedUpAmounts);
+    //     $TotalCanceledAmountW = array_sum($canceledAmounts);
+
+    //     // Monthly data for the selected year
+    //     $monthlyDatas = DB::select("SELECT M.id AS MonthNo, M.name AS MonthName,
+    //                                     IFNULL(D.TotalAmount, 0) AS TotalAmount,
+    //                                     IFNULL(D.TotalReservedAmount, 0) AS TotalReservedAmount,
+    //                                     IFNULL(D.TotalPickedUpAmount, 0) AS TotalPickedUpAmount,
+    //                                     IFNULL(D.TotalCanceledAmount, 0) AS TotalCanceledAmount
+    //                                  FROM month_names M
+    //                                  LEFT JOIN (
+    //                                      SELECT
+    //                                          MONTH(created_at) AS MonthNo,
+    //                                          SUM(total) AS TotalAmount,
+    //                                          SUM(IF(status='reserved', total, 0)) AS TotalReservedAmount,
+    //                                          SUM(IF(status='pickedup', total, 0)) AS TotalPickedUpAmount,
+    //                                          SUM(IF(status='canceled', total, 0)) AS TotalCanceledAmount
+    //                                      FROM Orders
+    //                                      WHERE YEAR(created_at) = ?
+    //                                      GROUP BY MONTH(created_at)
+    //                                  ) D ON D.MonthNo = M.id
+    //                                  ORDER BY M.id", [$selectedYear]);
+
+    //     // Prepare Monthly Data for View
+    //     $AmountM = implode(',', collect($monthlyDatas)->pluck('TotalAmount')->toArray());
+    //     $ReservationAmountM = implode(',', collect($monthlyDatas)->pluck('TotalReservedAmount')->toArray());
+    //     $PickedUpAmountM = implode(',', collect($monthlyDatas)->pluck('TotalPickedUpAmount')->toArray());
+    //     $CanceledAmountM = implode(',', collect($monthlyDatas)->pluck('TotalCanceledAmount')->toArray());
+
+    //     // Calculate overall totals for monthly data display
+    //     $TotalAmount = collect($monthlyDatas)->sum('TotalAmount');
+    //     $TotalReservedAmount = collect($monthlyDatas)->sum('TotalReservedAmount');
+    //     $TotalPickedUpAmount = collect($monthlyDatas)->sum('TotalPickedUpAmount');
+    //     $TotalCanceledAmount = collect($monthlyDatas)->sum('TotalCanceledAmount');
+
+    //     // Calculate the range of years to show in the dropdown
+    //     $yearRange = range($currentYear, $currentYear - 10);
+
+    //     // New Code (Adding daily data)
+    //     $availableWeeks = DB::table('week_names')->orderBy('week_number')->get();
+    //     $selectedWeekId = $request->input('week', $currentDate->weekOfMonth);
+
+    //     $selectedWeek = $availableWeeks->firstWhere('week_number', $selectedWeekId);
+    //     if (!$selectedWeek) {
+    //         $selectedWeek = $availableWeeks->first();
+    //         $selectedWeekId = $selectedWeek->week_number;
+    //     }
+
+    //     // Define the start and end of the selected week
+    //     if (array_key_exists($selectedWeekId, $weekRanges)) {
+    //         [$startOfSelectedWeek, $endOfSelectedWeek] = $weekRanges[$selectedWeekId];
+    //     } else {
+    //         [$startOfSelectedWeek, $endOfSelectedWeek] = $weekRanges[1]; // Default to week 1
+    //     }
+
+    //     // Query for daily data within the selected week, grouped by day
+    //     $dailyDatasRaw = DB::select(
+    //         "SELECT DAYOFWEEK(created_at) AS DayNo,
+    //                                     DAYNAME(created_at) AS DayName,
+    //                                     SUM(total) AS TotalAmount,
+    //                                     SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
+    //                                     SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
+    //                                     SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
+    //                                    FROM Orders
+    //                                    WHERE created_at BETWEEN ? AND ?
+    //                                    GROUP BY DAYOFWEEK(created_at), DAYNAME(created_at)
+    //                                    ORDER BY DayNo",
+    //         [$startOfSelectedWeek, $endOfSelectedWeek]
+    //     );
+
+    //     // Define the desired order of days
+    //     $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    //     // Create a map of DayName to daily data
+    //     $dailyDataMap = collect($dailyDatasRaw)->keyBy('DayName');
+
+    //     // Reorder the daily data from Monday to Sunday, filling missing days with zeros
+    //     $sortedDailyDatas = collect($daysOfWeek)->map(function ($day) use ($dailyDataMap) {
+    //         if ($dailyDataMap->has($day)) {
+    //             return $dailyDataMap->get($day);
+    //         } else {
+    //             return (object)[
+    //                 'DayNo' => null,
+    //                 'DayName' => $day,
+    //                 'TotalAmount' => 0,
+    //                 'TotalReservedAmount' => 0,
+    //                 'TotalPickedUpAmount' => 0,
+    //                 'TotalCanceledAmount' => 0,
+    //             ];
+    //         }
+    //     });
+
+    //     // Prepare Daily Data for View
+    //     $AmountD = implode(',', $sortedDailyDatas->pluck('TotalAmount')->toArray());
+    //     $ReservationAmountD = implode(',', $sortedDailyDatas->pluck('TotalReservedAmount')->toArray());
+    //     $PickedUpAmountD = implode(',', $sortedDailyDatas->pluck('TotalPickedUpAmount')->toArray());
+    //     $CanceledAmountD = implode(',', $sortedDailyDatas->pluck('TotalCanceledAmount')->toArray());
+
+    //     $TotalAmountD = $sortedDailyDatas->sum('TotalAmount');
+    //     $TotalReservedAmountD = $sortedDailyDatas->sum('TotalReservedAmount');
+    //     $TotalPickedUpAmountD = $sortedDailyDatas->sum('TotalPickedUpAmount');
+    //     $TotalCanceledAmountD = $sortedDailyDatas->sum('TotalCanceledAmount');
+
+    //     // Return View with all data
+    //     $pageTitle = 'Reports';
+    //     return view('admin.reports.reports', compact(
+    //         'orders',
+    //         'dashboardDatas',
+    //         'AmountM',
+    //         'ReservationAmountM',
+    //         'PickedUpAmountM',
+    //         'CanceledAmountM',
+    //         'TotalAmount',
+    //         'TotalReservedAmount',
+    //         'TotalPickedUpAmount',
+    //         'TotalCanceledAmount',
+    //         'AmountW',
+    //         'ReservationAmountW',
+    //         'PickedUpAmountW',
+    //         'CanceledAmountW',
+    //         'TotalAmountW',
+    //         'TotalReservedAmountW',
+    //         'TotalPickedUpAmountW',
+    //         'TotalCanceledAmountW',
+    //         'selectedMonth',
+    //         'selectedYear',
+    //         'availableMonths',
+    //         'yearRange',
+    //         'sortedDailyDatas',
+    //         'AmountD',
+    //         'ReservationAmountD',
+    //         'PickedUpAmountD',
+    //         'CanceledAmountD',
+    //         'TotalAmountD',
+    //         'TotalReservedAmountD',
+    //         'TotalPickedUpAmountD',
+    //         'TotalCanceledAmountD',
+    //         'selectedWeekId',
+    //         'availableWeeks',
+    //         'pageTitle'
+    //     ));
+    // }
+
+    // public function generateProduct(Request $request)
+    // {
+    //     // Get the current year and month
+    //     $currentYear = Carbon::now()->year;
+    //     $currentMonth = Carbon::now()->month;
+    //     $selectedYear = $request->input('year', $currentYear);
+    //     $selectedMonth = $request->input('month', $currentMonth);
+
+    //     // Most frequent products data - simplified query for testing
+    //     $mostFrequentProducts = DB::table('order_items')
+    //         ->join('orders', 'order_items.order_id', '=', 'orders.id')
+    //         ->join('products', 'order_items.product_id', '=', 'products.id')
+    //         ->select(
+    //             'products.name',
+    //             DB::raw('COUNT(*) as total_orders')
+    //         )
+    //         ->groupBy('products.id', 'products.name')
+    //         ->orderByDesc('total_orders')
+    //         ->limit(10)
+    //         ->get();
+
+    //     // Least bought products data - simplified query for testing
+    //     $leastBoughtProducts = DB::table('products')
+    //         ->leftJoin('order_items', 'products.id', '=', 'order_items.product_id')
+    //         ->select(
+    //             'products.name',
+    //             DB::raw('COUNT(order_items.id) as total_orders')
+    //         )
+    //         ->groupBy('products.id', 'products.name')
+    //         ->orderBy('total_orders')
+    //         ->limit(10)
+    //         ->get();
+
+    //     // Prepare data for charts
+    //     $mostFrequentLabels = $mostFrequentProducts->pluck('name');
+    //     $mostFrequentData = $mostFrequentProducts->pluck('total_orders');
+    //     $leastBoughtLabels = $leastBoughtProducts->pluck('name');
+    //     $leastBoughtData = $leastBoughtProducts->pluck('total_orders');
+
+    //     // Available months and year range for the form
+    //     $availableMonths = DB::table('month_names')->get();
+    //     $yearRange = range($currentYear, $currentYear - 10);
+
+    //     return view('admin.reports.report-product', compact(
+    //         'mostFrequentLabels',
+    //         'mostFrequentData',
+    //         'leastBoughtLabels',
+    //         'leastBoughtData',
+    //         'availableMonths',
+    //         'yearRange',
+    //         'selectedMonth',
+    //         'selectedYear'
+    //     ));
+    // }
+
+    // public function generateUser(Request $request)
+    // {
+    //     // Set default year and month from current date.
+    //     $currentYear  = Carbon::now()->year;
+    //     $currentMonth = Carbon::now()->month;
+    //     $selectedYear = $request->input('year', $currentYear);
+    //     $selectedMonth = $request->input('month', $currentMonth);
+
+    //     // Retrieve available weeks from the seeded week_names table.
+    //     $availableWeeks = DB::table('week_names')->orderBy('week_number')->get();
+
+    //     // (Optional) Variables for a custom date-range report.
+    //     $newUsersCount = null;
+    //     $newUsers      = null;
+    //     $startDate     = null;
+    //     $endDate       = null;
+    //     $chartData     = null;
+
+    //     // If a date-range form was submitted, validate and compute its data.
+    //     if ($request->isMethod('POST') && $request->has(['start_date', 'end_date'])) {
+    //         $request->validate([
+    //             'start_date' => 'required|date',
+    //             'end_date'   => 'required|date|after_or_equal:start_date',
+    //         ]);
+
+    //         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+    //         $endDate   = Carbon::parse($request->input('end_date'))->endOfDay();
+
+    //         $newUsersCount = User::whereBetween('created_at', [$startDate, $endDate])->count();
+
+    //         $userRegistrations = User::select(
+    //             DB::raw('DATE(created_at) as date'),
+    //             DB::raw('COUNT(*) as count')
+    //         )
+    //             ->whereBetween('created_at', [$startDate, $endDate])
+    //             ->groupBy('date')
+    //             ->orderBy('date', 'asc')
+    //             ->get();
+
+    //         $chartData = [
+    //             'dates'  => $userRegistrations->pluck('date')->map(function ($date) {
+    //                 return Carbon::parse($date)->format('Y-m-d');
+    //             })->toArray(),
+    //             'counts' => $userRegistrations->pluck('count')->toArray(),
+    //         ];
+
+    //         $newUsers = User::whereBetween('created_at', [$startDate, $endDate])->get();
+    //     }
+
+    //     // Retrieve statistics for the dashboard.
+    //     $totalUsers = User::count();
+    //     $newUsersThisMonth = User::whereYear('created_at', $currentYear)
+    //         ->whereMonth('created_at', $currentMonth)
+    //         ->count();
+    //     $activeUsers = User::where('isDefault', false)->count(); // Customize your query as needed.
+
+    //     $growthRate = ($totalUsers > 0) ? (($newUsersThisMonth / $totalUsers) * 100) : 0;
+
+    //     // Retrieve recently registered users (limit 10).
+    //     $recentUsers = User::orderBy('created_at', 'DESC')->take(10)->get();
+
+    //     // === Monthly Chart Data ===
+    //     $userRegistrations = DB::select("
+    //         SELECT COUNT(*) AS TotalUsers, MONTH(created_at) AS MonthNo
+    //         FROM users
+    //         WHERE YEAR(created_at) = ?
+    //         GROUP BY MonthNo
+    //         ORDER BY MonthNo
+    //     ", [$selectedYear]);
+
+    //     // Build an array with one entry per month (fill missing months with 0).
+    //     $monthlyData = array_fill(1, 12, 0);
+    //     foreach ($userRegistrations as $data) {
+    //         $monthlyData[$data->MonthNo] = $data->TotalUsers;
+    //     }
+    //     $userRegistrationsByMonth = implode(',', $monthlyData);
+
+    //     // === Weekly Chart Data ===
+    //     $weeklyData = array_fill(1, 6, 0);
+    //     $userCounts = DB::table('users')
+    //         ->selectRaw('WEEK(created_at, 1) - WEEK(DATE_SUB(created_at, INTERVAL DAYOFMONTH(created_at)-1 DAY), 1) + 1 as week_number')
+    //         ->selectRaw('COUNT(*) as count')
+    //         ->whereYear('created_at', $selectedYear)
+    //         ->whereMonth('created_at', $selectedMonth)
+    //         ->groupBy('week_number')
+    //         ->get();
+    //     foreach ($userCounts as $count) {
+    //         $weekIndex = $count->week_number;
+    //         if (isset($weeklyData[$weekIndex])) {
+    //             $weeklyData[$weekIndex] = $count->count;
+    //         }
+    //     }
+    //     $weeklyChartData = implode(',', $weeklyData);
+
+    //     // === Daily Chart Data (Filtered by Week) ===
+    //     // Determine start and end of the selected month.
+    //     $startOfMonth = Carbon::createFromDate($selectedYear, $selectedMonth, 1)->startOfMonth();
+    //     $endOfMonth   = Carbon::createFromDate($selectedYear, $selectedMonth, 1)->endOfMonth();
+
+    //     // Calculate week ranges for the month.
+    //     $weekRanges = [];
+    //     for ($week = 1; $week <= 6; $week++) {
+    //         $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek(Carbon::MONDAY);
+    //         $endOfWeek   = $startOfWeek->copy()->endOfWeek(Carbon::SUNDAY);
+
+    //         if ($startOfWeek->lt($startOfMonth)) {
+    //             $startOfWeek = $startOfMonth;
+    //         }
+    //         if ($endOfWeek->gt($endOfMonth)) {
+    //             $endOfWeek = $endOfMonth;
+    //         }
+    //         if ($startOfWeek->lte($endOfMonth)) {
+    //             $weekRanges[$week] = [$startOfWeek, $endOfWeek];
+    //         }
+    //     }
+
+    //     // Get selected week from the request; default to week 1.
+    //     $selectedWeekId = $request->input('week', 1);
+    //     if (!array_key_exists($selectedWeekId, $weekRanges)) {
+    //         $selectedWeekId = 1;
+    //     }
+    //     list($dailyStart, $dailyEnd) = $weekRanges[$selectedWeekId];
+
+    //     // Query daily registration counts within the selected week.
+    //     $dailyCounts = DB::table('users')
+    //         ->selectRaw('DAYNAME(created_at) as day_name, DAYOFWEEK(created_at) as day_of_week, COUNT(*) as count')
+    //         ->whereBetween('created_at', [$dailyStart, $dailyEnd])
+    //         ->groupBy('day_of_week', 'day_name')
+    //         ->orderBy('day_of_week')
+    //         ->get();
+
+    //     // We want to display data for Monday through Sunday.
+    //     $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    //     $dailyData = array_fill(0, 7, 0);
+    //     foreach ($dailyCounts as $count) {
+    //         $index = array_search($count->day_name, $daysOfWeek);
+    //         if ($index !== false) {
+    //             $dailyData[$index] = $count->count;
+    //         }
+    //     }
+    //     $dailyChartData = implode(',', $dailyData);
+
+    //     // Retrieve available months from the seeded month_names table.
+    //     $availableMonths = DB::table('month_names')->get();
+    //     $yearRange = range($currentYear, $currentYear - 10);
+
+    //     $pageTitle = 'User Registrations Report';
+
+    //     return view('admin.reports.report-user', compact(
+    //         'totalUsers',
+    //         'newUsersThisMonth',
+    //         'activeUsers',
+    //         'growthRate',
+    //         'recentUsers',
+    //         'userRegistrationsByMonth',
+    //         'weeklyChartData',
+    //         'dailyChartData',
+    //         'availableMonths',
+    //         'yearRange',
+    //         'selectedMonth',
+    //         'selectedYear',
+    //         'availableWeeks',
+    //         'pageTitle',
+    //         'newUsersCount',
+    //         'newUsers',
+    //         'startDate',
+    //         'endDate',
+    //         'chartData',
+    //         'selectedWeekId'
+    //     ))->with('showChart', true);
+    // }
+
+    // public function generateInventory(Request $request)
+    // {
+    //     // Validate the inputs
+    //     $validator = Validator::make($request->all(), [
+    //         'start_date'    => 'nullable|date',
+    //         'end_date'      => 'nullable|date',
+    //         'today'         => 'nullable|boolean',
+    //         'stock_status'  => 'nullable|string|in:instock,outofstock,reorder',
+    //     ]);
+
+    //     // If validation fails, redirect back with errors and input
+    //     if ($validator->fails()) {
+    //         return redirect()->back()->withErrors($validator)->withInput();
+    //     }
+
+    //     // Check if "Today" filter is applied
+    //     if ($request->has('today') && $request->input('today') == '1') {
+    //         $startDate = Carbon::today()->toDateString();
+    //         $endDate = Carbon::today()->toDateString();
+    //     } else {
+    //         // Get start_date and end_date from the request
+    //         $startDate = $request->input('start_date');
+    //         $endDate = $request->input('end_date');
+    //     }
+
+    //     // Additional validation: Ensure end_date is after or equal to start_date
+    //     if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
+    //         return redirect()->back()->withErrors(['end_date' => 'The end date must be after or equal to the start date.'])->withInput();
+    //     }
+
+    //     // Build the query for products
+    //     $productsQuery = Product::with(['category', 'orderItems', 'attributeValues']);
+
+    //     // Apply date filter if dates are provided
+    //     if ($startDate && $endDate) {
+    //         $start = Carbon::parse($startDate)->startOfDay();
+    //         $end = Carbon::parse($endDate)->endOfDay();
+
+    //         // Filter products based on updated_at date
+    //         $productsQuery->whereBetween('updated_at', [$start, $end]);
+    //     }
+
+    //     // Get the products
+    //     $products = $productsQuery->get();
+
+    //     // Apply stock status filter if provided
+    //     $stockStatus = $request->input('stock_status');
+
+    //     if ($stockStatus) {
+    //         $products = $products->filter(function ($product) use ($stockStatus) {
+    //             $currentStock = $product->attributeValues->isNotEmpty()
+    //                 ? $product->attributeValues->sum('quantity')
+    //                 : $product->current_stock;
+
+    //             if ($stockStatus == 'instock') {
+    //                 return $currentStock > $product->reorder_quantity;
+    //             } elseif ($stockStatus == 'outofstock') {
+    //                 return $currentStock <= $product->outofstock_quantity;
+    //             } elseif ($stockStatus == 'reorder') {
+    //                 return $currentStock > $product->outofstock_quantity && $currentStock <= $product->reorder_quantity;
+    //             }
+
+    //             return true;
+    //         });
+    //     }
+
+    //     // Paginate the results manually
+    //     $page = $request->input('page', 1);
+    //     $perPage = 20;
+    //     $total = $products->count();
+    //     $products = $products->forPage($page, $perPage);
+
+    //     $products = new \Illuminate\Pagination\LengthAwarePaginator(
+    //         $products,
+    //         $total,
+    //         $perPage,
+    //         $page,
+    //         ['path' => $request->url(), 'query' => $request->query()]
+    //     );
+
+    //     return view('admin.reports.report-inventory', compact('products', 'startDate', 'endDate'));
+    // }
+
+    // public function generateBillingStatement($orderId)
+    // {
+    //     $order = Order::with(['user', 'orderItems.product'])->findOrFail($orderId);
+    //     return view('admin.report-statement', compact('order'));
+    // }
+
+    // public function listBillingStatements(Request $request)
+    // {
+    //     $validator = Validator::make($request->all(), [
+    //         'start_date' => 'nullable|date',
+    //         'end_date' => 'nullable|date',
+    //         'today' => 'nullable|boolean',
+    //         'search' => 'nullable|string',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return redirect()->back()->withErrors($validator)->withInput();
+    //     }
+
+    //     if ($request->has('today') && $request->input('today') == '1') {
+    //         $startDate = Carbon::today()->toDateString();
+    //         $endDate = Carbon::today()->toDateString();
+    //     } else {
+    //         $startDate = $request->input('start_date');
+    //         $endDate = $request->input('end_date');
+    //     }
+
+    //     if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
+    //         return redirect()->back()->withErrors(['end_date' => 'The end date must be after or equal to the start date.'])->withInput();
+    //     }
+
+    //     $ordersQuery = Order::with('user');
+
+    //     if ($request->has('search') && $request->input('search')) {
+    //         $searchTerm = $request->input('search');
+    //         $ordersQuery->whereHas('user', function ($query) use ($searchTerm) {
+    //             $query->where('name', 'like', '%' . $searchTerm . '%')
+    //                 ->orWhere('email', 'like', '%' . $searchTerm . '%');
+    //         });
+    //     }
+
+    //     if ($startDate && $endDate) {
+    //         $start = Carbon::parse($startDate)->startOfDay();
+    //         $end = Carbon::parse($endDate)->endOfDay();
+    //         $ordersQuery->whereBetween('created_at', [$start, $end]);
+    //     }
+
+    //     $orders = $ordersQuery->orderBy('created_at', 'desc')->paginate(20);
+
+    //     return view('admin.reports.report-statements', compact('orders', 'startDate', 'endDate'));
+    // }
 
 
 
@@ -1850,7 +1847,7 @@ class AdminController extends Controller
         $orders = $ordersQuery->orderBy('created_at', 'desc')->get();
 
         // Load the view for PDF rendering
-        $pdf = PDF::loadView('admin.pdf-billing', [
+        $pdf = PDF::loadView('admin.pdf.pdf-billing', [
             'orders' => $orders,
             'startDate' => $startDate,
             'endDate' => $endDate
@@ -1886,7 +1883,7 @@ class AdminController extends Controller
         ];
 
         // Generate the PDF using the data only (no graph images)
-        $pdf = PDF::loadView('admin.pdf-reports', $data)
+        $pdf = PDF::loadView('admin.pdf.pdf-reports', $data)
             ->setPaper('A4', 'portrait'); // Set paper size to A4, portrait orientation
 
         // Download the PDF
@@ -1941,7 +1938,7 @@ class AdminController extends Controller
         $dompdf->setOptions($options);
 
         // Load HTML content from the view (which now includes the header and images)
-        $html = view('admin.pdf-products', compact(
+        $html = view('admin.pdf.pdf-products', compact(
             'mostFrequentLabels',
             'mostFrequentData',
             'leastBoughtLabels',
@@ -1988,7 +1985,7 @@ class AdminController extends Controller
 
     public function getRecentUsers()
     {
-        // Fetch the most recent users
+
         return User::latest()->take(5)->get() ?: []; // Adjust as necessary
     }
 
@@ -2088,7 +2085,7 @@ class AdminController extends Controller
             'selectedWeekId'            => $selectedWeekId,
         ];
 
-        $pdf = PDF::loadView('admin.pdf-user', $pdfData)
+        $pdf = PDF::loadView('admin.pdf.pdf-user', $pdfData)
             ->setPaper('a4', 'portrait');
 
         return $pdf->download('user_report_' . $selectedYear . '_' . $selectedMonth . '.pdf');
@@ -2173,7 +2170,7 @@ class AdminController extends Controller
         }
 
         // Load the view for PDF rendering
-        $pdfView = view('admin.pdf-inventory-report', compact('products', 'startDate', 'endDate'))->render();
+        $pdfView = view('admin.pdf.pdf-inventory-report', compact('products', 'startDate', 'endDate'))->render();
 
         // DomPDF options to improve performance
         $options = new Options();
@@ -3237,523 +3234,523 @@ class AdminController extends Controller
 
     // Rentals Reports
 
-    public function rentalsReports(Request $request)
-    {
-        // Get the current date and year
-        $currentDate = Carbon::now();
-        $currentYear = $currentDate->year;
-        $currentMonthId = $currentDate->month;
-
-        // Validate the incoming request
-        $validated = $request->validate([
-            'year'  => 'nullable|integer|min:2000|max:' . $currentYear,
-            'month' => 'nullable|integer|min:1|max:12',
-            'week'  => 'nullable|integer|min:1|max:6',
-        ]);
-
-        // Get selected year, month, and week from request, default to current year/month/week
-        $selectedYear  = $validated['year']  ?? $currentYear;
-        $selectedMonthId = $validated['month'] ?? $currentMonthId;
-        $selectedWeekId = $validated['week']  ?? $currentDate->weekOfMonth;
-
-        // Fetch available months and the selected month
-        $availableMonths = DB::table('month_names')->orderBy('id')->get();
-        $selectedMonth   = $availableMonths->firstWhere('id', $selectedMonthId);
-
-        if (!$selectedMonth) {
-            $selectedMonth   = $availableMonths->first();
-            $selectedMonthId = $selectedMonth->id;
-        }
-
-        // Calculate the start and end of the selected month
-        $startOfMonth = Carbon::create($selectedYear, $selectedMonthId, 1)->startOfMonth();
-        $endOfMonth   = $startOfMonth->copy()->endOfMonth();
-
-        // Fetch the latest 10 reservations
-        $reservations = DB::table('reservations')
-            ->orderBy('created_at', 'DESC')
-            ->take(10)
-            ->get();
-
-        // Fetch dashboard data for the selected month and year
-        $dashboardDatas = DB::select("
-            SELECT
-                SUM(total_price) AS TotalPaymentAmount,
-                SUM(IF(payment_status = 'pending', total_price, 0)) AS TotalPaymentPendingAmount,
-                SUM(IF(payment_status = 'completed', total_price, 0)) AS TotalPaymentCompletedAmount,
-                SUM(IF(payment_status = 'canceled', total_price, 0)) AS TotalPaymentCanceledAmount
-            FROM reservations
-            WHERE created_at BETWEEN ? AND ?
-        ", [$startOfMonth, $endOfMonth]);
-
-        // Get totals from dashboard data
-        $dashboardData = $dashboardDatas[0] ?? null;
-
-        // Initialize totals
-        $TotalPaymentAmount = $dashboardData->TotalPaymentAmount ?? 0;
-        $TotalPaymentPendingAmount = $dashboardData->TotalPaymentPendingAmount ?? 0;
-        $TotalPaymentCompletedAmount = $dashboardData->TotalPaymentCompletedAmount ?? 0;
-        $TotalPaymentCanceledAmount = $dashboardData->TotalPaymentCanceledAmount ?? 0;
-
-        // Weekly data for the selected month
-        $weekRanges = [];
-        for ($week = 1; $week <= 6; $week++) {
-            $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek(Carbon::MONDAY);
-            $endOfWeek   = $startOfWeek->copy()->endOfWeek(Carbon::SUNDAY);
-
-            // Ensure the start and end of the week don't exceed the month boundaries
-            if ($startOfWeek->lt($startOfMonth)) {
-                $startOfWeek = $startOfMonth;
-            }
-            if ($endOfWeek->gt($endOfMonth)) {
-                $endOfWeek = $endOfMonth;
-            }
-
-            // Add valid week ranges
-            if ($startOfWeek->lte($endOfMonth)) {
-                $weekRanges[$week] = [$startOfWeek, $endOfWeek];
-            }
-        }
-
-        // Fetch totals for each week
-        $PaymentAmountW = []; // Initialize Payment Amount for Weekly Data
-        $paymentPendingAmounts = [];
-        $paymentCompletedAmounts = [];
-        $paymentCanceledAmounts = [];
-
-        foreach ($weekRanges as $week => [$startOfSelectedWeek, $endOfSelectedWeek]) {
-            // Fetch total amounts for the week
-            $weeklyData = DB::select("
-                SELECT
-                    SUM(total_price) AS TotalPaymentAmount,
-                    SUM(IF(payment_status = 'pending', total_price, 0)) AS TotalPaymentPendingAmount,
-                    SUM(IF(payment_status = 'completed', total_price, 0)) AS TotalPaymentCompletedAmount,
-                    SUM(IF(payment_status = 'canceled', total_price, 0)) AS TotalPaymentCanceledAmount
-                FROM reservations
-                WHERE created_at BETWEEN ? AND ?
-            ", [$startOfSelectedWeek, $endOfSelectedWeek])[0] ?? null;
-
-            // Store results in arrays
-            $PaymentAmountW[$week] = $weeklyData->TotalPaymentAmount ?? 0;
-            $paymentPendingAmounts[$week] = $weeklyData->TotalPaymentPendingAmount ?? 0;
-            $paymentCompletedAmounts[$week] = $weeklyData->TotalPaymentCompletedAmount ?? 0;
-            $paymentCanceledAmounts[$week] = $weeklyData->TotalPaymentCanceledAmount ?? 0;
-        }
-
-        // Prepare Weekly Data for View
-        $PaymentAmountW = implode(',', $PaymentAmountW);
-        $PaymentPendingAmountW = implode(',', $paymentPendingAmounts);
-        $PaymentCompletedAmountW = implode(',', $paymentCompletedAmounts);
-        $PaymentCanceledAmountW = implode(',', $paymentCanceledAmounts);
-
-        // Monthly data for the selected year
-        $monthlyDatas = DB::select("
-            SELECT M.id AS MonthNo, M.name AS MonthName,
-                IFNULL(D.TotalPaymentAmount, 0) AS TotalPaymentAmount,
-                IFNULL(D.TotalPaymentPendingAmount, 0) AS TotalPaymentPendingAmount,
-                IFNULL(D.TotalPaymentCompletedAmount, 0) AS TotalPaymentCompletedAmount,
-                IFNULL(D.TotalPaymentCanceledAmount, 0) AS TotalPaymentCanceledAmount
-            FROM month_names M
-            LEFT JOIN (
-                SELECT
-                    MONTH(created_at) AS MonthNo,
-                    SUM(total_price) AS TotalPaymentAmount,
-                    SUM(IF(payment_status='pending', total_price, 0)) AS TotalPaymentPendingAmount,
-                    SUM(IF(payment_status='completed', total_price, 0)) AS TotalPaymentCompletedAmount,
-                    SUM(IF(payment_status='canceled', total_price, 0)) AS TotalPaymentCanceledAmount
-                FROM reservations
-                WHERE YEAR(created_at) = ?
-                GROUP BY MONTH(created_at)
-            ) D ON D.MonthNo = M.id
-            ORDER BY M.id
-        ", [$selectedYear]);
-
-        // Prepare Monthly Data for View
-        $PaymentAmountM = implode(',', array_map(function ($item) {
-            return $item->TotalPaymentAmount;
-        }, $monthlyDatas));
-        $PaymentPendingAmountM = implode(',', array_map(function ($item) {
-            return $item->TotalPaymentPendingAmount;
-        }, $monthlyDatas));
-        $PaymentCompletedAmountM = implode(',', array_map(function ($item) {
-            return $item->TotalPaymentCompletedAmount;
-        }, $monthlyDatas));
-        $PaymentCanceledAmountM = implode(',', array_map(function ($item) {
-            return $item->TotalPaymentCanceledAmount;
-        }, $monthlyDatas));
-
-        // Daily data within the selected week
-        $availableWeeks = DB::table('week_names')->orderBy('week_number')->get();
-        $selectedWeek   = $availableWeeks->firstWhere('week_number', $selectedWeekId);
-
-        if (!$selectedWeek) {
-            $selectedWeek   = $availableWeeks->first();
-            $selectedWeekId = $selectedWeek->week_number;
-        }
-
-        // Define the start and end of the selected week
-        if (array_key_exists($selectedWeekId, $weekRanges)) {
-            [$startOfSelectedWeek, $endOfSelectedWeek] = $weekRanges[$selectedWeekId];
-        } else {
-            [$startOfSelectedWeek, $endOfSelectedWeek] = $weekRanges[1] ?? [$startOfMonth, $endOfMonth]; // Default to week 1 or full month
-        }
-
-        // Query for daily data within the selected week, grouped by day
-        $dailyDatasRaw = DB::select("
-            SELECT
-                DAYNAME(created_at) AS DayName,
-                SUM(IF(payment_status = 'pending', total_price, 0)) AS TotalPaymentPendingAmount,
-                SUM(IF(payment_status = 'completed', total_price, 0)) AS TotalPaymentCompletedAmount,
-                SUM(IF(payment_status = 'canceled', total_price, 0)) AS TotalPaymentCanceledAmount
-            FROM reservations
-            WHERE created_at BETWEEN ? AND ?
-            GROUP BY DAYNAME(created_at)
-            ORDER BY FIELD(DAYNAME(created_at), 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
-        ", [$startOfSelectedWeek, $endOfSelectedWeek]);
-
-        // Define the desired order of days
-        $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-        // Create a map of DayName to daily data
-        $dailyDataMap = collect($dailyDatasRaw)->keyBy('DayName');
-
-        // Reorder the daily data from Monday to Sunday, filling missing days with zeros
-        $sortedDailyDatas = collect($daysOfWeek)->map(function ($day) use ($dailyDataMap) {
-            if ($dailyDataMap->has($day)) {
-                return $dailyDataMap->get($day);
-            } else {
-                return (object)[
-                    'DayName' => $day,
-                    'TotalPaymentPendingAmount' => 0,
-                    'TotalPaymentCompletedAmount' => 0,
-                    'TotalPaymentCanceledAmount' => 0,
-                ];
-            }
-        });
-
-        // Prepare Daily Data for View
-        $AmountD = implode(',', array_map(function ($item) {
-            return $item->TotalPaymentPendingAmount + $item->TotalPaymentCompletedAmount + $item->TotalPaymentCanceledAmount;
-        }, $sortedDailyDatas->toArray()));
-        $PaymentPendingAmountD = implode(',', array_map(function ($item) {
-            return $item->TotalPaymentPendingAmount;
-        }, $sortedDailyDatas->toArray()));
-        $PaymentCompletedAmountD = implode(',', array_map(function ($item) {
-            return $item->TotalPaymentCompletedAmount;
-        }, $sortedDailyDatas->toArray()));
-        $PaymentCanceledAmountD = implode(',', array_map(function ($item) {
-            return $item->TotalPaymentCanceledAmount;
-        }, $sortedDailyDatas->toArray()));
-
-        // Calculate the range of years to show in the dropdown
-        $yearRange = range($currentYear, $currentYear - 10);
-
-        // Return View with all data
-        $pageTitle = 'Rentals Reports';
-        return view('admin.rentals_reports', compact(
-            'reservations',
-            'TotalPaymentAmount',
-            'TotalPaymentPendingAmount',
-            'TotalPaymentCompletedAmount',
-            'TotalPaymentCanceledAmount',
-            'PaymentAmountW',
-            'PaymentPendingAmountW',
-            'PaymentCompletedAmountW',
-            'PaymentCanceledAmountW',
-            'selectedMonth',
-            'selectedYear',
-            'availableMonths',
-            'yearRange',
-            'PaymentAmountM',
-            'PaymentPendingAmountM',
-            'PaymentCompletedAmountM',
-            'PaymentCanceledAmountM',
-            'sortedDailyDatas',
-            'PaymentPendingAmountD',
-            'PaymentCompletedAmountD',
-            'PaymentCanceledAmountD',
-            'AmountD',
-            'selectedWeekId',
-            'availableWeeks',
-            'pageTitle'
-        ));
-    }
-
-    // Rental Reports PDF
-    public function downloadPdfRentals(Request $request)
-    {
-        // Validate incoming request data
-        $request->validate([
-            'monthly_rentals_img' => 'nullable|string',
-            'weekly_rentals_img'  => 'nullable|string',
-            'daily_rentals_img'   => 'nullable|string',
-            'total_payment'       => 'nullable|numeric',
-            'pending_amount'      => 'nullable|numeric',
-            'completed_amount'    => 'nullable|numeric',
-            'canceled_amount'     => 'nullable|numeric',
-        ]);
-
-        // Retrieve the images from the request (if any)
-        $monthlyImage = $request->input('monthly_rentals_img');
-        $weeklyImage  = $request->input('weekly_rentals_img');
-        $dailyImage   = $request->input('daily_rentals_img');
-
-        // Retrieve other totals from the request
-        $totalAmounts = [
-            'total_payment'   => $request->input('total_payment'),
-            'pending_amount'  => $request->input('pending_amount'),
-            'completed_amount' => $request->input('completed_amount'),
-            'canceled_amount' => $request->input('canceled_amount'),
-        ];
-
-        // Retrieve all rentals (or filter based on criteria)
-        $rentals = Rental::all(); // Assuming you have a Rental model with 'name' attribute
-
-        // Generate monthly, weekly, and daily data for each rental
-        $monthlyData = [];  // Example: Get monthly counts
-        $weeklyData = [];   // Example: Get weekly counts
-        $dailyData = [];    // Example: Get daily counts
-
-        foreach ($rentals as $rental) {
-            // Example queries to get monthly, weekly, and daily data for each rental
-            // Replace these with your actual logic to fetch the data.
-            $monthlyData[$rental->name] = $rental->reservations()->monthly()->count();
-            $weeklyData[$rental->name]  = $rental->reservations()->weekly()->count();
-            $dailyData[$rental->name]   = $rental->reservations()->daily()->count();
-        }
-
-        // Pass all data to the view
-        $data = [
-            'monthlyImage'  => $monthlyImage,
-            'weeklyImage'   => $weeklyImage,
-            'dailyImage'    => $dailyImage,
-            'totalAmounts'  => $totalAmounts,
-            'rentals'       => $rentals,  // Pass rentals to the view
-            'monthlyData'   => $monthlyData,
-            'weeklyData'    => $weeklyData,
-            'dailyData'     => $dailyData,
-        ];
-
-        // Generate PDF with fixed paper size (A4) and portrait orientation
-        $pdf = PDF::loadView('admin.rentals_reports_pdf', $data)
-            ->setPaper('A4', 'portrait');
-
-        // Generate a unique filename
-        $filename = 'rentals_reports_' . now()->format('Y_m_d_H_i_s') . '.pdf';
-
-        // Return the PDF download
-        return $pdf->download($filename);
-    }
-
-
-
-
-
-
-    public function rentalsReportsName(Request $request)
-    {
-        // Get the current date and year
-        $currentDate = Carbon::now();
-        $currentYear = $currentDate->year;
-
-        // Validate the incoming request
-        $validated = $request->validate([
-            'year'  => 'nullable|integer|min:2000|max:' . $currentYear,
-        ]);
-
-        // Get selected year from request, default to current year
-        $selectedYear  = $validated['year']  ?? $currentYear;
-
-        // Define rental names and corresponding colors
-        $rentalColors = [
-            'Male Dormitory' => '#6f42c1', // Purple
-            'Female Dormitory' => '#fd7e14', // Orange
-            'International House II' => '#20c997', // Cyan
-            'International Convention Center' => '#e83e8c', // Pink
-            'Rolle Hall' => '#007bff', // Blue
-            'Swimming Pool' => '#ffc107', // Yellow
-        ];
-
-        // Define rental names as objects for iteration
-        $rentalNames = collect([
-            'Male Dormitory',
-            'Female Dormitory',
-            'International House II',
-            'International Convention Center',
-            'Rolle Hall',
-            'Swimming Pool',
-        ])->map(function ($name) {
-            return (object)['name' => $name];
-        });
-
-        // Initialize data structures
-        $monthlyData = [];
-        $weeklyData = [];
-        $dailyData = [];
-        $reservationsPerRental = [];
-
-        // Prepare Monthly Data
-        foreach ($rentalNames as $rental) {
-            $monthlyReservations = DB::table('reservations')
-                ->select(DB::raw('MONTH(reservations.created_at) as month'), DB::raw('COUNT(*) as count'))
-                ->join('rentals', 'reservations.rental_id', '=', 'rentals.id')
-                ->whereYear('reservations.created_at', $selectedYear)
-                ->where('rentals.name', $rental->name)
-                ->groupBy(DB::raw('MONTH(reservations.created_at)'))
-                ->orderBy(DB::raw('MONTH(reservations.created_at)'))
-                ->pluck('count', 'month')
-                ->toArray();
-
-            // Initialize all months to 0
-            $monthlyData[$rental->name] = array_fill(1, 12, 0);
-
-            // Fill with actual data
-            foreach ($monthlyReservations as $month => $count) {
-                $monthlyData[$rental->name][$month] = $count;
-            }
-
-            // Calculate total reservations per rental
-            $reservationsPerRental[$rental->name] = DB::table('reservations')
-                ->join('rentals', 'reservations.rental_id', '=', 'rentals.id')
-                ->whereYear('reservations.created_at', $selectedYear)
-                ->where('rentals.name', $rental->name)
-                ->count();
-        }
-
-        // Prepare Weekly Data within Each Month (Weeks 1-6)
-        // Initialize weeks 1-6 to 0 for each rental
-        foreach ($rentalNames as $rental) {
-            $weeklyData[$rental->name] = array_fill(1, 6, 0); // Weeks 1-6
-
-            // Fetch all reservations for the rental in the selected year
-            $reservationsForRental = DB::table('reservations')
-                ->join('rentals', 'reservations.rental_id', '=', 'rentals.id')
-                ->whereYear('reservations.created_at', $selectedYear)
-                ->where('rentals.name', $rental->name)
-                ->select('reservations.created_at')
-                ->get();
-
-            foreach ($reservationsForRental as $reservation) {
-                $date = Carbon::parse($reservation->created_at);
-                $dayOfMonth = $date->day;
-
-                // Calculate week of month (1-6)
-                $weekOfMonth = (int)ceil($dayOfMonth / 7);
-
-                if ($weekOfMonth > 6) {
-                    $weekOfMonth = 6; // Assign to week 6 if exceeding
-                }
-
-                $weeklyData[$rental->name][$weekOfMonth]++;
-            }
-        }
-
-        // Prepare Daily Data
-        $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        foreach ($rentalNames as $rental) {
-            $dailyReservations = DB::table('reservations')
-                ->select(DB::raw('DAYNAME(reservations.created_at) as day'), DB::raw('COUNT(*) as count'))
-                ->join('rentals', 'reservations.rental_id', '=', 'rentals.id')
-                ->whereYear('reservations.created_at', $selectedYear)
-                ->where('rentals.name', $rental->name)
-                ->groupBy(DB::raw('DAYNAME(reservations.created_at)'))
-                ->orderByRaw("FIELD(DAYNAME(reservations.created_at), 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')")
-                ->pluck('count', 'day')
-                ->toArray();
-
-            // Initialize all days to 0
-            $dailyData[$rental->name] = array_fill_keys($daysOfWeek, 0);
-
-            // Fill with actual data
-            foreach ($dailyReservations as $day => $count) {
-                $dailyData[$rental->name][$day] = $count;
-            }
-        }
-
-        // Calculate the range of years to show in the dropdown
-        $yearRange = range($currentYear, $currentYear - 10);
-
-        // Pass data to the view
-        return view('admin.rentals_reports-name', compact(
-            'rentalNames',
-            'monthlyData',
-            'weeklyData',
-            'dailyData',
-            'reservationsPerRental',
-            'yearRange',
-            'selectedYear',
-            'rentalColors'
-        ));
-    }
-
-    public function downloadPdfRentalsName(Request $request)
-    {
-        // Define rental names
-        $rentalNames = [
-            'Male Dormitory',
-            'Female Dormitory',
-            'International House II',
-            'International Convention Center',
-            'Rolle Hall',
-            'Swimming Pool',
-        ];
-
-        // Define rental colors
-        $rentalColors = [
-            'Male Dormitory' => '#6f42c1', // Purple
-            'Female Dormitory' => '#fd7e14', // Orange
-            'International House II' => '#20c997', // Cyan
-            'International Convention Center' => '#e83e8c', // Pink
-            'Rolle Hall' => '#007bff', // Blue
-            'Swimming Pool' => '#ffc107', // Yellow
-        ];
-
-        // Validate the incoming request data
-        $rules = [
-            'monthly_reservations_img' => 'nullable|string',
-            'weekly_reservations_img'  => 'nullable|string',
-            'daily_reservations_img'   => 'nullable|string',
-        ];
-
-        // Add dynamic validation rules for each rental name
-        foreach ($rentalNames as $name) {
-            $snakeName = Str::snake($name);
-            $rules['reservations_' . $snakeName] = 'nullable|integer';
-        }
-
-        $request->validate($rules);
-
-        // Retrieve the images
-        $monthlyImage = $request->input('monthly_reservations_img');
-        $weeklyImage  = $request->input('weekly_reservations_img');
-        $dailyImage   = $request->input('daily_reservations_img');
-
-        // Retrieve reservations per rental
-        $reservationsPerRental = [];
-        foreach ($rentalNames as $name) {
-            $snakeName = Str::snake($name);
-            $reservationsPerRental[$name] = $request->input('reservations_' . $snakeName, 0);
-        }
-
-        // Pass data to the PDF view
-        $data = [
-            'monthlyImage' => $monthlyImage,
-            'weeklyImage'  => $weeklyImage,
-            'dailyImage'   => $dailyImage,
-            'reservationsPerRental' => $reservationsPerRental,
-            'rentalColors' => $rentalColors,
-        ];
-
-        // Generate PDF with fixed paper size (A4) and portrait orientation
-        $pdf = PDF::loadView('admin.rentals_reports_name_pdf', $data)
-            ->setPaper('A4', 'portrait');
-
-        // Generate a unique filename
-        $filename = 'rentals_reports_name_' . now()->format('Y_m_d_H_i_s') . '.pdf';
-
-        // Return the PDF download
-        return $pdf->download($filename);
-    }
+    // public function rentalsReports(Request $request)
+    // {
+    //     // Get the current date and year
+    //     $currentDate = Carbon::now();
+    //     $currentYear = $currentDate->year;
+    //     $currentMonthId = $currentDate->month;
+
+    //     // Validate the incoming request
+    //     $validated = $request->validate([
+    //         'year'  => 'nullable|integer|min:2000|max:' . $currentYear,
+    //         'month' => 'nullable|integer|min:1|max:12',
+    //         'week'  => 'nullable|integer|min:1|max:6',
+    //     ]);
+
+    //     // Get selected year, month, and week from request, default to current year/month/week
+    //     $selectedYear  = $validated['year']  ?? $currentYear;
+    //     $selectedMonthId = $validated['month'] ?? $currentMonthId;
+    //     $selectedWeekId = $validated['week']  ?? $currentDate->weekOfMonth;
+
+    //     // Fetch available months and the selected month
+    //     $availableMonths = DB::table('month_names')->orderBy('id')->get();
+    //     $selectedMonth   = $availableMonths->firstWhere('id', $selectedMonthId);
+
+    //     if (!$selectedMonth) {
+    //         $selectedMonth   = $availableMonths->first();
+    //         $selectedMonthId = $selectedMonth->id;
+    //     }
+
+    //     // Calculate the start and end of the selected month
+    //     $startOfMonth = Carbon::create($selectedYear, $selectedMonthId, 1)->startOfMonth();
+    //     $endOfMonth   = $startOfMonth->copy()->endOfMonth();
+
+    //     // Fetch the latest 10 reservations
+    //     $reservations = DB::table('reservations')
+    //         ->orderBy('created_at', 'DESC')
+    //         ->take(10)
+    //         ->get();
+
+    //     // Fetch dashboard data for the selected month and year
+    //     $dashboardDatas = DB::select("
+    //         SELECT
+    //             SUM(total_price) AS TotalPaymentAmount,
+    //             SUM(IF(payment_status = 'pending', total_price, 0)) AS TotalPaymentPendingAmount,
+    //             SUM(IF(payment_status = 'completed', total_price, 0)) AS TotalPaymentCompletedAmount,
+    //             SUM(IF(payment_status = 'canceled', total_price, 0)) AS TotalPaymentCanceledAmount
+    //         FROM reservations
+    //         WHERE created_at BETWEEN ? AND ?
+    //     ", [$startOfMonth, $endOfMonth]);
+
+    //     // Get totals from dashboard data
+    //     $dashboardData = $dashboardDatas[0] ?? null;
+
+    //     // Initialize totals
+    //     $TotalPaymentAmount = $dashboardData->TotalPaymentAmount ?? 0;
+    //     $TotalPaymentPendingAmount = $dashboardData->TotalPaymentPendingAmount ?? 0;
+    //     $TotalPaymentCompletedAmount = $dashboardData->TotalPaymentCompletedAmount ?? 0;
+    //     $TotalPaymentCanceledAmount = $dashboardData->TotalPaymentCanceledAmount ?? 0;
+
+    //     // Weekly data for the selected month
+    //     $weekRanges = [];
+    //     for ($week = 1; $week <= 6; $week++) {
+    //         $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek(Carbon::MONDAY);
+    //         $endOfWeek   = $startOfWeek->copy()->endOfWeek(Carbon::SUNDAY);
+
+    //         // Ensure the start and end of the week don't exceed the month boundaries
+    //         if ($startOfWeek->lt($startOfMonth)) {
+    //             $startOfWeek = $startOfMonth;
+    //         }
+    //         if ($endOfWeek->gt($endOfMonth)) {
+    //             $endOfWeek = $endOfMonth;
+    //         }
+
+    //         // Add valid week ranges
+    //         if ($startOfWeek->lte($endOfMonth)) {
+    //             $weekRanges[$week] = [$startOfWeek, $endOfWeek];
+    //         }
+    //     }
+
+    //     // Fetch totals for each week
+    //     $PaymentAmountW = []; // Initialize Payment Amount for Weekly Data
+    //     $paymentPendingAmounts = [];
+    //     $paymentCompletedAmounts = [];
+    //     $paymentCanceledAmounts = [];
+
+    //     foreach ($weekRanges as $week => [$startOfSelectedWeek, $endOfSelectedWeek]) {
+    //         // Fetch total amounts for the week
+    //         $weeklyData = DB::select("
+    //             SELECT
+    //                 SUM(total_price) AS TotalPaymentAmount,
+    //                 SUM(IF(payment_status = 'pending', total_price, 0)) AS TotalPaymentPendingAmount,
+    //                 SUM(IF(payment_status = 'completed', total_price, 0)) AS TotalPaymentCompletedAmount,
+    //                 SUM(IF(payment_status = 'canceled', total_price, 0)) AS TotalPaymentCanceledAmount
+    //             FROM reservations
+    //             WHERE created_at BETWEEN ? AND ?
+    //         ", [$startOfSelectedWeek, $endOfSelectedWeek])[0] ?? null;
+
+    //         // Store results in arrays
+    //         $PaymentAmountW[$week] = $weeklyData->TotalPaymentAmount ?? 0;
+    //         $paymentPendingAmounts[$week] = $weeklyData->TotalPaymentPendingAmount ?? 0;
+    //         $paymentCompletedAmounts[$week] = $weeklyData->TotalPaymentCompletedAmount ?? 0;
+    //         $paymentCanceledAmounts[$week] = $weeklyData->TotalPaymentCanceledAmount ?? 0;
+    //     }
+
+    //     // Prepare Weekly Data for View
+    //     $PaymentAmountW = implode(',', $PaymentAmountW);
+    //     $PaymentPendingAmountW = implode(',', $paymentPendingAmounts);
+    //     $PaymentCompletedAmountW = implode(',', $paymentCompletedAmounts);
+    //     $PaymentCanceledAmountW = implode(',', $paymentCanceledAmounts);
+
+    //     // Monthly data for the selected year
+    //     $monthlyDatas = DB::select("
+    //         SELECT M.id AS MonthNo, M.name AS MonthName,
+    //             IFNULL(D.TotalPaymentAmount, 0) AS TotalPaymentAmount,
+    //             IFNULL(D.TotalPaymentPendingAmount, 0) AS TotalPaymentPendingAmount,
+    //             IFNULL(D.TotalPaymentCompletedAmount, 0) AS TotalPaymentCompletedAmount,
+    //             IFNULL(D.TotalPaymentCanceledAmount, 0) AS TotalPaymentCanceledAmount
+    //         FROM month_names M
+    //         LEFT JOIN (
+    //             SELECT
+    //                 MONTH(created_at) AS MonthNo,
+    //                 SUM(total_price) AS TotalPaymentAmount,
+    //                 SUM(IF(payment_status='pending', total_price, 0)) AS TotalPaymentPendingAmount,
+    //                 SUM(IF(payment_status='completed', total_price, 0)) AS TotalPaymentCompletedAmount,
+    //                 SUM(IF(payment_status='canceled', total_price, 0)) AS TotalPaymentCanceledAmount
+    //             FROM reservations
+    //             WHERE YEAR(created_at) = ?
+    //             GROUP BY MONTH(created_at)
+    //         ) D ON D.MonthNo = M.id
+    //         ORDER BY M.id
+    //     ", [$selectedYear]);
+
+    //     // Prepare Monthly Data for View
+    //     $PaymentAmountM = implode(',', array_map(function ($item) {
+    //         return $item->TotalPaymentAmount;
+    //     }, $monthlyDatas));
+    //     $PaymentPendingAmountM = implode(',', array_map(function ($item) {
+    //         return $item->TotalPaymentPendingAmount;
+    //     }, $monthlyDatas));
+    //     $PaymentCompletedAmountM = implode(',', array_map(function ($item) {
+    //         return $item->TotalPaymentCompletedAmount;
+    //     }, $monthlyDatas));
+    //     $PaymentCanceledAmountM = implode(',', array_map(function ($item) {
+    //         return $item->TotalPaymentCanceledAmount;
+    //     }, $monthlyDatas));
+
+    //     // Daily data within the selected week
+    //     $availableWeeks = DB::table('week_names')->orderBy('week_number')->get();
+    //     $selectedWeek   = $availableWeeks->firstWhere('week_number', $selectedWeekId);
+
+    //     if (!$selectedWeek) {
+    //         $selectedWeek   = $availableWeeks->first();
+    //         $selectedWeekId = $selectedWeek->week_number;
+    //     }
+
+    //     // Define the start and end of the selected week
+    //     if (array_key_exists($selectedWeekId, $weekRanges)) {
+    //         [$startOfSelectedWeek, $endOfSelectedWeek] = $weekRanges[$selectedWeekId];
+    //     } else {
+    //         [$startOfSelectedWeek, $endOfSelectedWeek] = $weekRanges[1] ?? [$startOfMonth, $endOfMonth]; // Default to week 1 or full month
+    //     }
+
+    //     // Query for daily data within the selected week, grouped by day
+    //     $dailyDatasRaw = DB::select("
+    //         SELECT
+    //             DAYNAME(created_at) AS DayName,
+    //             SUM(IF(payment_status = 'pending', total_price, 0)) AS TotalPaymentPendingAmount,
+    //             SUM(IF(payment_status = 'completed', total_price, 0)) AS TotalPaymentCompletedAmount,
+    //             SUM(IF(payment_status = 'canceled', total_price, 0)) AS TotalPaymentCanceledAmount
+    //         FROM reservations
+    //         WHERE created_at BETWEEN ? AND ?
+    //         GROUP BY DAYNAME(created_at)
+    //         ORDER BY FIELD(DAYNAME(created_at), 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
+    //     ", [$startOfSelectedWeek, $endOfSelectedWeek]);
+
+    //     // Define the desired order of days
+    //     $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    //     // Create a map of DayName to daily data
+    //     $dailyDataMap = collect($dailyDatasRaw)->keyBy('DayName');
+
+    //     // Reorder the daily data from Monday to Sunday, filling missing days with zeros
+    //     $sortedDailyDatas = collect($daysOfWeek)->map(function ($day) use ($dailyDataMap) {
+    //         if ($dailyDataMap->has($day)) {
+    //             return $dailyDataMap->get($day);
+    //         } else {
+    //             return (object)[
+    //                 'DayName' => $day,
+    //                 'TotalPaymentPendingAmount' => 0,
+    //                 'TotalPaymentCompletedAmount' => 0,
+    //                 'TotalPaymentCanceledAmount' => 0,
+    //             ];
+    //         }
+    //     });
+
+    //     // Prepare Daily Data for View
+    //     $AmountD = implode(',', array_map(function ($item) {
+    //         return $item->TotalPaymentPendingAmount + $item->TotalPaymentCompletedAmount + $item->TotalPaymentCanceledAmount;
+    //     }, $sortedDailyDatas->toArray()));
+    //     $PaymentPendingAmountD = implode(',', array_map(function ($item) {
+    //         return $item->TotalPaymentPendingAmount;
+    //     }, $sortedDailyDatas->toArray()));
+    //     $PaymentCompletedAmountD = implode(',', array_map(function ($item) {
+    //         return $item->TotalPaymentCompletedAmount;
+    //     }, $sortedDailyDatas->toArray()));
+    //     $PaymentCanceledAmountD = implode(',', array_map(function ($item) {
+    //         return $item->TotalPaymentCanceledAmount;
+    //     }, $sortedDailyDatas->toArray()));
+
+    //     // Calculate the range of years to show in the dropdown
+    //     $yearRange = range($currentYear, $currentYear - 10);
+
+    //     // Return View with all data
+    //     $pageTitle = 'Rentals Reports';
+    //     return view('admin.rentals_reports', compact(
+    //         'reservations',
+    //         'TotalPaymentAmount',
+    //         'TotalPaymentPendingAmount',
+    //         'TotalPaymentCompletedAmount',
+    //         'TotalPaymentCanceledAmount',
+    //         'PaymentAmountW',
+    //         'PaymentPendingAmountW',
+    //         'PaymentCompletedAmountW',
+    //         'PaymentCanceledAmountW',
+    //         'selectedMonth',
+    //         'selectedYear',
+    //         'availableMonths',
+    //         'yearRange',
+    //         'PaymentAmountM',
+    //         'PaymentPendingAmountM',
+    //         'PaymentCompletedAmountM',
+    //         'PaymentCanceledAmountM',
+    //         'sortedDailyDatas',
+    //         'PaymentPendingAmountD',
+    //         'PaymentCompletedAmountD',
+    //         'PaymentCanceledAmountD',
+    //         'AmountD',
+    //         'selectedWeekId',
+    //         'availableWeeks',
+    //         'pageTitle'
+    //     ));
+    // }
+
+    // // Rental Reports PDF
+    // public function downloadPdfRentals(Request $request)
+    // {
+    //     // Validate incoming request data
+    //     $request->validate([
+    //         'monthly_rentals_img' => 'nullable|string',
+    //         'weekly_rentals_img'  => 'nullable|string',
+    //         'daily_rentals_img'   => 'nullable|string',
+    //         'total_payment'       => 'nullable|numeric',
+    //         'pending_amount'      => 'nullable|numeric',
+    //         'completed_amount'    => 'nullable|numeric',
+    //         'canceled_amount'     => 'nullable|numeric',
+    //     ]);
+
+    //     // Retrieve the images from the request (if any)
+    //     $monthlyImage = $request->input('monthly_rentals_img');
+    //     $weeklyImage  = $request->input('weekly_rentals_img');
+    //     $dailyImage   = $request->input('daily_rentals_img');
+
+    //     // Retrieve other totals from the request
+    //     $totalAmounts = [
+    //         'total_payment'   => $request->input('total_payment'),
+    //         'pending_amount'  => $request->input('pending_amount'),
+    //         'completed_amount' => $request->input('completed_amount'),
+    //         'canceled_amount' => $request->input('canceled_amount'),
+    //     ];
+
+    //     // Retrieve all rentals (or filter based on criteria)
+    //     $rentals = Rental::all(); // Assuming you have a Rental model with 'name' attribute
+
+    //     // Generate monthly, weekly, and daily data for each rental
+    //     $monthlyData = [];  // Example: Get monthly counts
+    //     $weeklyData = [];   // Example: Get weekly counts
+    //     $dailyData = [];    // Example: Get daily counts
+
+    //     foreach ($rentals as $rental) {
+    //         // Example queries to get monthly, weekly, and daily data for each rental
+    //         // Replace these with your actual logic to fetch the data.
+    //         $monthlyData[$rental->name] = $rental->reservations()->monthly()->count();
+    //         $weeklyData[$rental->name]  = $rental->reservations()->weekly()->count();
+    //         $dailyData[$rental->name]   = $rental->reservations()->daily()->count();
+    //     }
+
+    //     // Pass all data to the view
+    //     $data = [
+    //         'monthlyImage'  => $monthlyImage,
+    //         'weeklyImage'   => $weeklyImage,
+    //         'dailyImage'    => $dailyImage,
+    //         'totalAmounts'  => $totalAmounts,
+    //         'rentals'       => $rentals,  // Pass rentals to the view
+    //         'monthlyData'   => $monthlyData,
+    //         'weeklyData'    => $weeklyData,
+    //         'dailyData'     => $dailyData,
+    //     ];
+
+    //     // Generate PDF with fixed paper size (A4) and portrait orientation
+    //     $pdf = PDF::loadView('admin.rentals_reports_pdf', $data)
+    //         ->setPaper('A4', 'portrait');
+
+    //     // Generate a unique filename
+    //     $filename = 'rentals_reports_' . now()->format('Y_m_d_H_i_s') . '.pdf';
+
+    //     // Return the PDF download
+    //     return $pdf->download($filename);
+    // }
+
+
+
+
+
+
+    // public function rentalsReportsName(Request $request)
+    // {
+    //     // Get the current date and year
+    //     $currentDate = Carbon::now();
+    //     $currentYear = $currentDate->year;
+
+    //     // Validate the incoming request
+    //     $validated = $request->validate([
+    //         'year'  => 'nullable|integer|min:2000|max:' . $currentYear,
+    //     ]);
+
+    //     // Get selected year from request, default to current year
+    //     $selectedYear  = $validated['year']  ?? $currentYear;
+
+    //     // Define rental names and corresponding colors
+    //     $rentalColors = [
+    //         'Male Dormitory' => '#6f42c1', // Purple
+    //         'Female Dormitory' => '#fd7e14', // Orange
+    //         'International House II' => '#20c997', // Cyan
+    //         'International Convention Center' => '#e83e8c', // Pink
+    //         'Rolle Hall' => '#007bff', // Blue
+    //         'Swimming Pool' => '#ffc107', // Yellow
+    //     ];
+
+    //     // Define rental names as objects for iteration
+    //     $rentalNames = collect([
+    //         'Male Dormitory',
+    //         'Female Dormitory',
+    //         'International House II',
+    //         'International Convention Center',
+    //         'Rolle Hall',
+    //         'Swimming Pool',
+    //     ])->map(function ($name) {
+    //         return (object)['name' => $name];
+    //     });
+
+    //     // Initialize data structures
+    //     $monthlyData = [];
+    //     $weeklyData = [];
+    //     $dailyData = [];
+    //     $reservationsPerRental = [];
+
+    //     // Prepare Monthly Data
+    //     foreach ($rentalNames as $rental) {
+    //         $monthlyReservations = DB::table('reservations')
+    //             ->select(DB::raw('MONTH(reservations.created_at) as month'), DB::raw('COUNT(*) as count'))
+    //             ->join('rentals', 'reservations.rental_id', '=', 'rentals.id')
+    //             ->whereYear('reservations.created_at', $selectedYear)
+    //             ->where('rentals.name', $rental->name)
+    //             ->groupBy(DB::raw('MONTH(reservations.created_at)'))
+    //             ->orderBy(DB::raw('MONTH(reservations.created_at)'))
+    //             ->pluck('count', 'month')
+    //             ->toArray();
+
+    //         // Initialize all months to 0
+    //         $monthlyData[$rental->name] = array_fill(1, 12, 0);
+
+    //         // Fill with actual data
+    //         foreach ($monthlyReservations as $month => $count) {
+    //             $monthlyData[$rental->name][$month] = $count;
+    //         }
+
+    //         // Calculate total reservations per rental
+    //         $reservationsPerRental[$rental->name] = DB::table('reservations')
+    //             ->join('rentals', 'reservations.rental_id', '=', 'rentals.id')
+    //             ->whereYear('reservations.created_at', $selectedYear)
+    //             ->where('rentals.name', $rental->name)
+    //             ->count();
+    //     }
+
+    //     // Prepare Weekly Data within Each Month (Weeks 1-6)
+    //     // Initialize weeks 1-6 to 0 for each rental
+    //     foreach ($rentalNames as $rental) {
+    //         $weeklyData[$rental->name] = array_fill(1, 6, 0); // Weeks 1-6
+
+    //         // Fetch all reservations for the rental in the selected year
+    //         $reservationsForRental = DB::table('reservations')
+    //             ->join('rentals', 'reservations.rental_id', '=', 'rentals.id')
+    //             ->whereYear('reservations.created_at', $selectedYear)
+    //             ->where('rentals.name', $rental->name)
+    //             ->select('reservations.created_at')
+    //             ->get();
+
+    //         foreach ($reservationsForRental as $reservation) {
+    //             $date = Carbon::parse($reservation->created_at);
+    //             $dayOfMonth = $date->day;
+
+    //             // Calculate week of month (1-6)
+    //             $weekOfMonth = (int)ceil($dayOfMonth / 7);
+
+    //             if ($weekOfMonth > 6) {
+    //                 $weekOfMonth = 6; // Assign to week 6 if exceeding
+    //             }
+
+    //             $weeklyData[$rental->name][$weekOfMonth]++;
+    //         }
+    //     }
+
+    //     // Prepare Daily Data
+    //     $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    //     foreach ($rentalNames as $rental) {
+    //         $dailyReservations = DB::table('reservations')
+    //             ->select(DB::raw('DAYNAME(reservations.created_at) as day'), DB::raw('COUNT(*) as count'))
+    //             ->join('rentals', 'reservations.rental_id', '=', 'rentals.id')
+    //             ->whereYear('reservations.created_at', $selectedYear)
+    //             ->where('rentals.name', $rental->name)
+    //             ->groupBy(DB::raw('DAYNAME(reservations.created_at)'))
+    //             ->orderByRaw("FIELD(DAYNAME(reservations.created_at), 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')")
+    //             ->pluck('count', 'day')
+    //             ->toArray();
+
+    //         // Initialize all days to 0
+    //         $dailyData[$rental->name] = array_fill_keys($daysOfWeek, 0);
+
+    //         // Fill with actual data
+    //         foreach ($dailyReservations as $day => $count) {
+    //             $dailyData[$rental->name][$day] = $count;
+    //         }
+    //     }
+
+    //     // Calculate the range of years to show in the dropdown
+    //     $yearRange = range($currentYear, $currentYear - 10);
+
+    //     // Pass data to the view
+    //     return view('admin.rentals_reports-name', compact(
+    //         'rentalNames',
+    //         'monthlyData',
+    //         'weeklyData',
+    //         'dailyData',
+    //         'reservationsPerRental',
+    //         'yearRange',
+    //         'selectedYear',
+    //         'rentalColors'
+    //     ));
+    // }
+
+    // public function downloadPdfRentalsName(Request $request)
+    // {
+    //     // Define rental names
+    //     $rentalNames = [
+    //         'Male Dormitory',
+    //         'Female Dormitory',
+    //         'International House II',
+    //         'International Convention Center',
+    //         'Rolle Hall',
+    //         'Swimming Pool',
+    //     ];
+
+    //     // Define rental colors
+    //     $rentalColors = [
+    //         'Male Dormitory' => '#6f42c1', // Purple
+    //         'Female Dormitory' => '#fd7e14', // Orange
+    //         'International House II' => '#20c997', // Cyan
+    //         'International Convention Center' => '#e83e8c', // Pink
+    //         'Rolle Hall' => '#007bff', // Blue
+    //         'Swimming Pool' => '#ffc107', // Yellow
+    //     ];
+
+    //     // Validate the incoming request data
+    //     $rules = [
+    //         'monthly_reservations_img' => 'nullable|string',
+    //         'weekly_reservations_img'  => 'nullable|string',
+    //         'daily_reservations_img'   => 'nullable|string',
+    //     ];
+
+    //     // Add dynamic validation rules for each rental name
+    //     foreach ($rentalNames as $name) {
+    //         $snakeName = Str::snake($name);
+    //         $rules['reservations_' . $snakeName] = 'nullable|integer';
+    //     }
+
+    //     $request->validate($rules);
+
+    //     // Retrieve the images
+    //     $monthlyImage = $request->input('monthly_reservations_img');
+    //     $weeklyImage  = $request->input('weekly_reservations_img');
+    //     $dailyImage   = $request->input('daily_reservations_img');
+
+    //     // Retrieve reservations per rental
+    //     $reservationsPerRental = [];
+    //     foreach ($rentalNames as $name) {
+    //         $snakeName = Str::snake($name);
+    //         $reservationsPerRental[$name] = $request->input('reservations_' . $snakeName, 0);
+    //     }
+
+    //     // Pass data to the PDF view
+    //     $data = [
+    //         'monthlyImage' => $monthlyImage,
+    //         'weeklyImage'  => $weeklyImage,
+    //         'dailyImage'   => $dailyImage,
+    //         'reservationsPerRental' => $reservationsPerRental,
+    //         'rentalColors' => $rentalColors,
+    //     ];
+
+    //     // Generate PDF with fixed paper size (A4) and portrait orientation
+    //     $pdf = PDF::loadView('admin.rentals_reports_name_pdf', $data)
+    //         ->setPaper('A4', 'portrait');
+
+    //     // Generate a unique filename
+    //     $filename = 'rentals_reports_name_' . now()->format('Y_m_d_H_i_s') . '.pdf';
+
+    //     // Return the PDF download
+    //     return $pdf->download($filename);
+    // }
 
 
 
@@ -3862,106 +3859,106 @@ class AdminController extends Controller
 
 
     // Controller method to generate the sales report
-    public function generateInputSales(Request $request)
-    {
-        // Validate the request
-        $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-        ]);
+    // public function generateInputSales(Request $request)
+    // {
+    //     // Validate the request
+    //     $request->validate([
+    //         'start_date' => 'required|date',
+    //         'end_date' => 'nullable|date|after_or_equal:start_date',
+    //     ]);
 
-        // Retrieve input and parse dates
-        $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
-        $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
+    //     // Retrieve input and parse dates
+    //     $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+    //     $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
 
-        // Query sales data grouped by day
-        $salesData = Order::select(
-            DB::raw('DATE(created_at) as date'),
-            DB::raw('SUM(total) as total_sales'),
-            DB::raw('SUM(CASE WHEN status = "reserved" THEN total ELSE 0 END) as reserved_sales'),
-            DB::raw('SUM(CASE WHEN status = "pickedup" THEN total ELSE 0 END) as pickedup_sales'),
-            DB::raw('SUM(CASE WHEN status = "canceled" THEN total ELSE 0 END) as canceled_sales')
-        )
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->get();
+    //     // Query sales data grouped by day
+    //     $salesData = Order::select(
+    //         DB::raw('DATE(created_at) as date'),
+    //         DB::raw('SUM(total) as total_sales'),
+    //         DB::raw('SUM(CASE WHEN status = "reserved" THEN total ELSE 0 END) as reserved_sales'),
+    //         DB::raw('SUM(CASE WHEN status = "pickedup" THEN total ELSE 0 END) as pickedup_sales'),
+    //         DB::raw('SUM(CASE WHEN status = "canceled" THEN total ELSE 0 END) as canceled_sales')
+    //     )
+    //         ->whereBetween('created_at', [$startDate, $endDate])
+    //         ->groupBy('date')
+    //         ->orderBy('date', 'asc')
+    //         ->get();
 
-        // Aggregate totals
-        $totalOrders = Order::whereBetween('created_at', [$startDate, $endDate])->count();
-        $reservedSalesTotal = Order::where('status', 'reserved')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->sum('total');
-        $pickedUpSalesTotal = Order::where('status', 'pickedup')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->sum('total');
-        $canceledSalesTotal = Order::where('status', 'canceled')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->sum('total');
+    //     // Aggregate totals
+    //     $totalOrders = Order::whereBetween('created_at', [$startDate, $endDate])->count();
+    //     $reservedSalesTotal = Order::where('status', 'reserved')
+    //         ->whereBetween('created_at', [$startDate, $endDate])
+    //         ->sum('total');
+    //     $pickedUpSalesTotal = Order::where('status', 'pickedup')
+    //         ->whereBetween('created_at', [$startDate, $endDate])
+    //         ->sum('total');
+    //     $canceledSalesTotal = Order::where('status', 'canceled')
+    //         ->whereBetween('created_at', [$startDate, $endDate])
+    //         ->sum('total');
 
-        // Prepare data for the chart
-        $chartData = [
-            'dates' => $salesData->pluck('date')->toArray(),
-            'total_sales' => $salesData->pluck('total_sales')->toArray(),
-            'reserved_sales' => $salesData->pluck('reserved_sales')->toArray(),
-            'pickedup_sales' => $salesData->pluck('pickedup_sales')->toArray(),
-            'canceled_sales' => $salesData->pluck('canceled_sales')->toArray(),
-            'total_orders' => $totalOrders,
-            'reserved_sales_total' => $reservedSalesTotal,
-            'pickedup_sales_total' => $pickedUpSalesTotal,
-            'canceled_sales_total' => $canceledSalesTotal,
-        ];
+    //     // Prepare data for the chart
+    //     $chartData = [
+    //         'dates' => $salesData->pluck('date')->toArray(),
+    //         'total_sales' => $salesData->pluck('total_sales')->toArray(),
+    //         'reserved_sales' => $salesData->pluck('reserved_sales')->toArray(),
+    //         'pickedup_sales' => $salesData->pluck('pickedup_sales')->toArray(),
+    //         'canceled_sales' => $salesData->pluck('canceled_sales')->toArray(),
+    //         'total_orders' => $totalOrders,
+    //         'reserved_sales_total' => $reservedSalesTotal,
+    //         'pickedup_sales_total' => $pickedUpSalesTotal,
+    //         'canceled_sales_total' => $canceledSalesTotal,
+    //     ];
 
-        // Pass data to the view
-        return view('admin.input-sales', compact('chartData', 'startDate', 'endDate'));
-    }
-    public function generateInputUsers(Request $request)
-    {
-        // Validate the request
-        $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-        ]);
+    //     // Pass data to the view
+    //     return view('admin.reports.input-sales', compact('chartData', 'startDate', 'endDate'));
+    // }
+    // public function generateInputUsers(Request $request)
+    // {
+    //     // Validate the request
+    //     $request->validate([
+    //         'start_date' => 'required|date',
+    //         'end_date' => 'nullable|date|after_or_equal:start_date',
+    //     ]);
 
-        // Retrieve input and parse dates
-        $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
-        $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
+    //     // Retrieve input and parse dates
+    //     $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+    //     $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
 
-        // Query users data grouped by registration day
-        $usersData = User::select(
-            DB::raw('DATE(created_at) as date'),
-            DB::raw('COUNT(id) as total_users'),
-            DB::raw('COUNT(CASE WHEN role = "student" THEN 1 END) as total_students'),
-            DB::raw('COUNT(CASE WHEN role = "employee" THEN 1 END) as total_employees'),
-            DB::raw('COUNT(CASE WHEN role = "non-employee" THEN 1 END) as total_non_employees')
-        )
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->get();
+    //     // Query users data grouped by registration day
+    //     $usersData = User::select(
+    //         DB::raw('DATE(created_at) as date'),
+    //         DB::raw('COUNT(id) as total_users'),
+    //         DB::raw('COUNT(CASE WHEN role = "student" THEN 1 END) as total_students'),
+    //         DB::raw('COUNT(CASE WHEN role = "employee" THEN 1 END) as total_employees'),
+    //         DB::raw('COUNT(CASE WHEN role = "non-employee" THEN 1 END) as total_non_employees')
+    //     )
+    //         ->whereBetween('created_at', [$startDate, $endDate])
+    //         ->groupBy('date')
+    //         ->orderBy('date', 'asc')
+    //         ->get();
 
-        // Aggregate totals
-        $totalUsers = User::whereBetween('created_at', [$startDate, $endDate])->count();
-        $totalStudents = User::where('role', 'student')->whereBetween('created_at', [$startDate, $endDate])->count();
-        $totalEmployees = User::where('role', 'employee')->whereBetween('created_at', [$startDate, $endDate])->count();
-        $totalNonEmployees = User::where('role', 'non-employee')->whereBetween('created_at', [$startDate, $endDate])->count();
+    //     // Aggregate totals
+    //     $totalUsers = User::whereBetween('created_at', [$startDate, $endDate])->count();
+    //     $totalStudents = User::where('role', 'student')->whereBetween('created_at', [$startDate, $endDate])->count();
+    //     $totalEmployees = User::where('role', 'employee')->whereBetween('created_at', [$startDate, $endDate])->count();
+    //     $totalNonEmployees = User::where('role', 'non-employee')->whereBetween('created_at', [$startDate, $endDate])->count();
 
-        // Prepare data for the chart
-        $chartData = [
-            'dates' => $usersData->pluck('date')->toArray(),
-            'total_users' => $usersData->pluck('total_users')->toArray(),
-            'total_students' => $usersData->pluck('total_students')->toArray(),
-            'total_employees' => $usersData->pluck('total_employees')->toArray(),
-            'total_non_employees' => $usersData->pluck('total_non_employees')->toArray(),
-            'total_users_count' => $totalUsers,
-            'total_students_count' => $totalStudents,
-            'total_employees_count' => $totalEmployees,
-            'total_non_employees_count' => $totalNonEmployees,
-        ];
+    //     // Prepare data for the chart
+    //     $chartData = [
+    //         'dates' => $usersData->pluck('date')->toArray(),
+    //         'total_users' => $usersData->pluck('total_users')->toArray(),
+    //         'total_students' => $usersData->pluck('total_students')->toArray(),
+    //         'total_employees' => $usersData->pluck('total_employees')->toArray(),
+    //         'total_non_employees' => $usersData->pluck('total_non_employees')->toArray(),
+    //         'total_users_count' => $totalUsers,
+    //         'total_students_count' => $totalStudents,
+    //         'total_employees_count' => $totalEmployees,
+    //         'total_non_employees_count' => $totalNonEmployees,
+    //     ];
 
-        // Pass data to the view
-        return view('admin.input-user', compact('chartData', 'startDate', 'endDate'));
-    }
+    //     // Pass data to the view
+    //     return view('admin.reports.input-user', compact('chartData', 'startDate', 'endDate'));
+    // }
 
     public function downloadInputSales(Request $request)
     {
@@ -4012,7 +4009,7 @@ class AdminController extends Controller
         $options->set('isRemoteEnabled', true);
         $pdf->setOptions($options);
 
-        $html = view('admin.pdf-input-sales', compact('chartData', 'startDate', 'endDate', 'chartImage'))->render();
+        $html = view('admin.pdf.pdf-input-sales', compact('chartData', 'startDate', 'endDate', 'chartImage'))->render();
         $pdf->loadHtml($html);
         $pdf->setPaper('A4', 'portrait');
         $pdf->render();
@@ -4065,7 +4062,7 @@ class AdminController extends Controller
         $options->set('isRemoteEnabled', true);
         $pdf->setOptions($options);
 
-        $html = view('admin.pdf-input-user', compact('chartData', 'startDate', 'endDate', 'chartImage'))->render();
+        $html = view('admin.pdf.pdf-input-user', compact('chartData', 'startDate', 'endDate', 'chartImage'))->render();
         $pdf->loadHtml($html);
         $pdf->setPaper('A4', 'portrait');
         $pdf->render();

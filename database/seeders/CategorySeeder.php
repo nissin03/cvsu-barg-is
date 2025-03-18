@@ -13,8 +13,7 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
-        // Define the category hierarchy.
-        // Under Apparel, we add two subcategories: "PE" and "Cspear".
+
         $categories = [
             'Accessories' => [
                 'Umbrella',
@@ -22,7 +21,7 @@ class CategorySeeder extends Seeder
                     'Keychain for Car',
                 ],
                 'Lace',
-         
+
                 'Pin',
             ],
             'Apparel' => [

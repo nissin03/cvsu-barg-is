@@ -30,6 +30,53 @@
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm mb-4">
+
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="row align-items-center">
+                        <div class="col-lg-4 mb-3 mb-lg-0">
+                            <h4 class="card-title text-danger fw-semibold mb-0">
+                                <i class="fas fa-keyboard me-2"></i>User Input
+                            </h4>
+                        </div>
+
+
+                        <div class="col-lg-8">
+                            <div class="d-flex flex-column flex-md-row gap-2 justify-content-lg-end">
+                                <!-- Date Range Form -->
+                                <form action="{{ route('admin.generate-input-sales') }}" method="POST" id="sales-form" class="d-flex flex-grow-1 flex-md-grow-0 gap-2">
+                                    @csrf
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="bi bi-calendar3"></i>
+                                        </span>
+                                        <input type="date"
+                                               name="start_date"
+                                               id="start_date"
+                                               class="form-control border-start-0"
+                                               value="{{ old('start_date', isset($startDate) ? $startDate->toDateString() : '') }}"
+                                               required>
+                                        <span class="input-group-text bg-light border-start-0 border-end-0">to</span>
+                                        <input type="date"
+                                               name="end_date"
+                                               id="end_date"
+                                               class="form-control border-start-0"
+                                               value="{{ old('end_date', isset($endDate) ? $endDate->toDateString() : '') }}">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-funnel-fill me-1"></i>Filter
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <!-- Clear Button -->
+                                <button type="button" class="btn btn-secondary btn-sm"
+                                    onclick="document.getElementById('start_date').value=''; document.getElementById('end_date').value='';">
+                                    <i class="bi bi-x-circle me-1"></i>Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Card Header with Filter & PDF Download -->
                 <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <h5 class="mb-0 text-primary">
@@ -84,26 +131,28 @@
                         <div class="col-md-3">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-tiny">Total:</span>
-                                <h4>₱{{ $TotalAmount }}</h4>
+                                <h4>₱{{ number_format($TotalAmount, 2) }}</h4>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-tiny">Reserved:</span>
-                                <h4>₱{{ $TotalReservedAmount }}</h4>
+                                <h4>₱{{ number_format($TotalReservedAmount, 2) }}</h4>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-tiny">Picked Up:</span>
-                                <h4>₱{{ $TotalPickedUpAmount }}</h4>
+                                <h4>₱{{ number_format($TotalPickedUpAmount, 2) }}</h4>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-tiny">Canceled:</span>
-                                <h4>₱{{ $TotalCanceledAmount }}</h4>
+                                <h4>₱{{ number_format($TotalCanceledAmount, 2) }}</h4>
                             </div>
+                        </div>
+
                         </div>
                     </div>
                 </div>
@@ -146,28 +195,29 @@
                         <div class="col-md-3">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-tiny">Total:</span>
-                                <h4>₱{{ $TotalAmountW }}</h4>
+                                <h4>₱{{ number_format($TotalAmountW, 2) }}</h4>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-tiny">Reserved:</span>
-                                <h4>₱{{ $TotalReservedAmountW }}</h4>
+                                <h4>₱{{ number_format($TotalReservedAmountW, 2) }}</h4>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-tiny">Picked Up:</span>
-                                <h4>₱{{ $TotalPickedUpAmountW }}</h4>
+                                <h4>₱{{ number_format($TotalPickedUpAmountW, 2) }}</h4>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-tiny">Canceled:</span>
-                                <h4>₱{{ $TotalCanceledAmountW }}</h4>
+                                <h4>₱{{ number_format($TotalCanceledAmountW, 2) }}</h4>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
 
@@ -215,28 +265,29 @@
                         <div class="col-md-3">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-tiny">Total:</span>
-                                <h4>₱{{ $TotalAmountD }}</h4>
+                                <h4>₱{{ number_format($TotalAmountD, 2) }}</h4>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-tiny">Reserved:</span>
-                                <h4>₱{{ $TotalReservedAmountD }}</h4>
+                                <h4>₱{{ number_format($TotalReservedAmountD, 2) }}</h4>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-tiny">Picked Up:</span>
-                                <h4>₱{{ $TotalPickedUpAmountD }}</h4>
+                                <h4>₱{{ number_format($TotalPickedUpAmountD, 2) }}</h4>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="text-tiny">Canceled:</span>
-                                <h4>₱{{ $TotalCanceledAmountD }}</h4>
+                                <h4>₱{{ number_format($TotalCanceledAmountD, 2) }}</h4>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
             <!-- End Daily Section -->

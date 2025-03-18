@@ -45,15 +45,15 @@
                                     <span class="input-group-text bg-light border-end-0">
                                         <i class="bi bi-calendar3"></i>
                                     </span>
-                                    <input type="date" 
-                                           name="start_date" 
+                                    <input type="date"
+                                           name="start_date"
                                            id="start_date"
                                            class="form-control border-start-0"
                                            value="{{ old('start_date', isset($startDate) ? $startDate->toDateString() : '') }}"
                                            required>
                                     <span class="input-group-text bg-light border-start-0 border-end-0">to</span>
-                                    <input type="date" 
-                                           name="end_date" 
+                                    <input type="date"
+                                           name="end_date"
                                            id="end_date"
                                            class="form-control border-start-0"
                                            value="{{ old('end_date', isset($endDate) ? $endDate->toDateString() : '') }}">
@@ -62,13 +62,13 @@
                                     </button>
                                 </div>
                             </form>
-        
+
                             <!-- Clear Button -->
-                            <button type="button" class="btn btn-secondary btn-sm" 
+                            <button type="button" class="btn btn-secondary btn-sm"
                                 onclick="document.getElementById('start_date').value=''; document.getElementById('end_date').value='';">
                                 <i class="bi bi-x-circle me-1"></i>Clear
                             </button>
-        
+
                             <!-- PDF Download Form -->
                             <form action="{{ route('admin.download-input-sales') }}" method="POST" id="download-form">
                                 @csrf
@@ -84,7 +84,7 @@
                 </div>
             </div>
         </div>
-        
+
 
         <div class="card-body">
             <!-- Validation Errors -->
@@ -110,7 +110,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <span class="badge bg-light text-dark">
                             <i class="bi bi-calendar3 me-1"></i>
-                            {{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} - 
+                            {{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} -
                             {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}
                         </span>
                     </div>
@@ -145,7 +145,7 @@
                                         </div>
                                         <div class="flex-grow-1 ms-3">
                                             <h6 class="mb-0">Reserved Sales</h6>
-                                            <h3 class="mb-0">${{ number_format($chartData['reserved_sales_total'], 2) }}</h3>
+                                            <h3 class="mb-0">₱{{ number_format($chartData['reserved_sales_total'], 2) }}</h3>
                                         </div>
                                     </div>
                                 </div>
@@ -162,7 +162,7 @@
                                         </div>
                                         <div class="flex-grow-1 ms-3">
                                             <h6 class="mb-0">Picked Up Sales</h6>
-                                            <h3 class="mb-0">${{ number_format($chartData['pickedup_sales_total'], 2) }}</h3>
+                                            <h3 class="mb-0">₱{{ number_format($chartData['pickedup_sales_total'], 2) }}</h3>
                                         </div>
                                     </div>
                                 </div>
@@ -179,7 +179,7 @@
                                         </div>
                                         <div class="flex-grow-1 ms-3">
                                             <h6 class="mb-0">Canceled Sales</h6>
-                                            <h3 class="mb-0">${{ number_format($chartData['canceled_sales_total'], 2) }}</h3>
+                                            <h3 class="mb-0">₱{{ number_format($chartData['canceled_sales_total'], 2) }}</h3>
                                         </div>
                                     </div>
                                 </div>
@@ -249,7 +249,7 @@
             xaxis: {
                 categories: @json($chartData['dates']),
                 title: {
-                    text: 'Date',
+                    // text: 'Date',
                     style: {
                         fontSize: '14px',
                         fontWeight: 500
@@ -303,8 +303,8 @@
                 }
             },
             legend: {
-                position: 'top',
-                horizontalAlign: 'right'
+                position: 'bottom',
+                horizontalAlign: 'center'
             }
         };
 

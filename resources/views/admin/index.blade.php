@@ -11,88 +11,72 @@
                         <!-- Total Payment Amount -->
                         <div class="col">
                             <div class="card p-4 text-center shadow-sm border-0 ">
-                                <div class="image ic-bg me-3">
-                                        <i class="icon-shopping-bag"></i>
-                                </div>
                                 <div>
-                                    <div class="body-text mb-2">Total Reservation</div>
+                                    <div class="body-text mb-2 d-flex align-items-center justify-center">
+                                        <i class="icon-shopping-bag me-2"></i>
+                                      Total Reservation
+                                    </div>
                                     <h4>{{$dashboardDatas[0]->Total}}</h4>
-                                    
-                                </div>  
+                                </div>
                             </div>
                         </div>
 
                         <!-- Total Amount of Reserve Items -->
                         <div class="col">
                             <div class="card p-4 text-center shadow-sm border-0 ">
-                                <div class="image ic-bg me-3">
-                                    <i class="icon-dollar-sign"></i>
-                                </div>
                                 <div>
                                     <div class="body-text mb-2">Total Amount of Reserve Items</div>
-                                    <h4>{{$dashboardDatas[0]->TotalReservedAmount}}</h4>
+                                    <h4>₱  {{ number_format($dashboardDatas[0]->TotalReservedAmount, 2, '.', ',') }}</h4>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Total Claimed Items -->
-                    <div class="col">
-                        <div class="card p-4 text-center shadow-sm border-0 ">
-                            <div class="image ic-bg me-3">
-                                <i class="icon-shopping-bag"></i>
-                            </div>
-                            <div>
-                                <div class="body-text mb-2">Total Claimed Items</div>
-                                <h4>{{$dashboardDatas[0]->TotalPickedUp}}</h4>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Total Amount of Claimed Items -->
-                    <div class="col">
-                        <div class="card p-4 text-center shadow-sm border-0 ">
-                            <div class="image ic-bg me-3">
-                                <i class="icon-dollar-sign"></i>
-                            </div>
-                            <div>
-                                <div class="body-text mb-2">Total Amount of Claimed Items</div>
-                                <h4>{{$dashboardDatas[0]->TotalPickedUpAmount}}</h4>
+                        <div class="col">
+                            <div class="card p-4 text-center shadow-sm border-0 ">
+                                <div>
+                                    <div class="body-text mb-2 d-flex align-items-center justify-center">
+                                        <i class="icon-shopping-bag me-2"></i>
+                                        Total Claimed Orders
+                                    </div>
+                                    <h4>{{$dashboardDatas[0]->TotalPickedUp}}</h4>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Total Canceled Orders -->
-                    <div class="col">
-                        <div class="card p-4 text-center shadow-sm border-0 ">
-                            <div class="image ic-bg me-3">
-                                <i class="icon-shopping-bag"></i>
-                            </div>
-                            <div>
-                                <div class="body-text mb-2">Total Canceled Orders</div>
-                                <h4>{{$dashboardDatas[0]->TotalCanceled}}</h4>
+                        <!-- Total Amount of Claimed Items -->
+                        <div class="col">
+                            <div class="card p-4 text-center shadow-sm border-0 ">
+                                <div>
+                                    <div class="body-text mb-2">Total Amount of Claimed Items</div>
+                                    <h4>₱ {{ number_format($dashboardDatas[0]->TotalPickedUpAmount, 2, '.', ',') }}</h4>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Total Amount of Cancelled Orders -->
-                    <div class="col">
-                        <div class="card p-4 text-center shadow-sm border-0 ">
-                            <div class="image ic-bg me-3">
-                                <i class="icon-dollar-sign"></i>
-                            </div>
-                            <div>
-                                <div class="body-text mb-2">Total Amount of Cancelled Orders</div>
-                                <h4>{{$dashboardDatas[0]->TotalCanceledAmount}}</h4>
+                        <!-- Total Canceled Orders -->
+                        <div class="col">
+                            <div class="card p-4 text-center shadow-sm border-0 ">
+                                <div>
+                                    <div class="body-text mb-2 d-flex align-items-center justify-center">
+                                        <i class="icon-shopping-bag me-2"></i>
+                                        Total Canceled Orders
+                                    </div>
+                                    <h4>{{$dashboardDatas[0]->TotalCanceled}}</h4>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-
+                        <!-- Total Amount of Cancelled Orders -->
+                        <div class="col">
+                            <div class="card p-4 text-center shadow-sm border-0 ">
+                                <div>
+                                    <div class="body-text mb-2">Total Amount of Cancelled Orders</div>
+                                    <h4>₱ {{ number_format($dashboardDatas[0]->TotalCanceledAmount, 2, '.', ',') }}</h4>
+                                </div>
+                            </div>
+                        </div>
                 </div>
-
-
-
-                    
                 </div>
             </div>
 
@@ -106,11 +90,11 @@
                                     <!-- Button for Earnings Revenue Dropdown -->
                                     <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center w-100" type="button"
                                         data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="text-align: left;">
-                                        <h5 class="mb-0 me-2">Monthly Earnings Revenue</h5>
+                                        <h5 class="mb-0 me-2">Monthly Report</h5>
                                         <i class="fas fa-chart-line"></i>
                                     </button>
                                     <!-- Dropdown menu with same width as the button -->
-                                    <ul class="dropdown-menu dropdown-menu-end w-100 shadow-sm">
+                                    {{-- <ul class="dropdown-menu dropdown-menu-end w-100 shadow-sm">
                                         <li>
                                             <a class="dropdown-item d-flex align-items-center p-3" href="{{ route('admin.index-weekly') }}">
                                                 <i class="fas fa-calendar-week me-2"></i> Weekly Earnings Revenue
@@ -121,7 +105,7 @@
                                                 <i class="fas fa-calendar-day me-2"></i> Daily Earnings Revenue
                                             </a>
                                         </li>
-                                    </ul>
+                                    </ul> --}}
                                 </div>
 
                                 <form action="{{ route('admin.index') }}" method="GET" class="d-flex flex-grow-1 align-items-center">
@@ -146,10 +130,10 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        <h4>${{$TotalAmount}}</h4>
+                                        <h4>₱{{ number_format($TotalAmount, 2) }}</h4>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-6">
                                     <div class="mb-2">
                                         <div class="block-legend">
@@ -158,10 +142,10 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        <h4>${{$TotalReservedAmount}}</h4>
+                                        <h4>₱{{ number_format($TotalReservedAmount, 2) }}</h4>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-6">
                                     <div class="mb-2">
                                         <div class="block-legend">
@@ -170,10 +154,10 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        <h4>${{$TotalPickedUpAmount}}</h4>
+                                        <h4>₱{{ number_format($TotalPickedUpAmount, 2) }}</h4>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-6">
                                     <div class="mb-2">
                                         <div class="block-legend">
@@ -182,25 +166,26 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        <h4>${{$TotalCanceledAmount}}</h4>
+                                        <h4>₱{{ number_format($TotalCanceledAmount, 2) }}</h4>
                                     </div>
                                 </div>
+
                             </div>
-                            
+
                             <div id="line-chart-8"></div>
 
-                            
+
                         </div>
-                                       
+
                     </div>
-                                        
-                    <!-- Stock Status Table Container -->
+
+
                     <div class="container p-4" style="background-color: #f8f9fc; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            
+
                         </div>
                         <div style="overflow-x: auto;">
-                            <!-- Updated Stock Status Table -->
+
                             <table class="table table-bordered table-hover" style="table-layout: auto;">
                                 <thead class="bg-light">
                                     <tr>
@@ -215,12 +200,12 @@
                                 <tbody>
                                     @foreach($products as $product)
                                         @php
-                                            $currentStock = $product->attributeValues->isNotEmpty() 
-                                                ? $product->attributeValues->sum('quantity') 
+                                            $currentStock = $product->attributeValues->isNotEmpty()
+                                                ? $product->attributeValues->sum('quantity')
                                                 : $product->current_stock;
                                         @endphp
-                                
-                                        @if($currentStock == 0) <!-- Check if the stock is 0 -->
+
+                                        @if($currentStock == 0)
                                             <tr>
                                                 <td class="text-center">{{ $product->id }}</td>
                                                 <td class="text-center">{{ $product->name }}</td>
@@ -229,7 +214,7 @@
                                                 </td>
                                                 <td class="text-center">{{ $currentStock }}</td>
                                             </tr>
-                                        @elseif($currentStock <= $product->reorder_quantity) <!-- Display 'Reorder' and 'Low Stock' items -->
+                                        @elseif($currentStock <= $product->reorder_quantity)
                                             <tr>
                                                 <td class="text-center">{{ $product->id }}</td>
                                                 <td class="text-center">{{ $product->name }}</td>
@@ -246,17 +231,17 @@
 
                                     @endforeach
                                 </tbody>
-                                
+
                             </table>
-                            <!-- End of Updated Stock Status Table -->
+
                         </div>
                     </div>
-            
+
 
             </div>
         </div>
 
-            
+
             <div class="tf-section mb-30">
 
                 <div class="wg-box">
@@ -287,7 +272,7 @@
                             <th class="text-center">Status</th>
                             <th class="text-center">Order Date</th>
                             <th class="text-center">Total Items</th>
-                            <th class="text-center">Picked up on</th>   
+                            <th class="text-center">Picked up on</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -312,8 +297,8 @@
                                 @else
                                     <span class="badge bg-warning">Reserved</span>
                                 @endif
-                            </td>   
-                           
+                            </td>
+
                             <td class="text-center">{{$order->created_at}}</td>
                             <td class="text-center">{{$order->orderItems->count()}}</td>
                             <td class="text-center">{{$order->picked_up_date}}</td>
@@ -404,7 +389,7 @@
         text-decoration: underline;
     }
 </style>
-    
+
 @endpush
 
 @push('scripts')
@@ -417,9 +402,9 @@
 
                     var options = {
                         series: [{
-                                name: 'Total', 
+                                name: 'Total',
                                 data: [{{$AmountM}}]
-                            }, {      
+                            }, {
                                 name: 'Reserved',
                                 data: [{{$ReservationAmountM}}]
                             },
@@ -483,7 +468,7 @@
                         chart.render();
                     }
                 };
-                
+
                 return {
                     init: function() {},
 
@@ -507,6 +492,6 @@
 
 @push('styles')
 <style>
-    /* Additional styles if needed */
+
 </style>
 @endpush

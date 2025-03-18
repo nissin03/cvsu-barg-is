@@ -79,8 +79,8 @@
                   <i class="icon-chevron-right"></i>
                 </li>
                 <li>
-                  <a href="{{ route('admin.report-statements') }}">
-                    <div class="text-tiny">Statements</div>
+                  <a href="{{ route('admin.report-user') }}">
+                    <div class="text-tiny">Report User</div>
                   </a>
                 </li>
 
@@ -95,9 +95,9 @@
                     <input type="hidden" name="selectedMonth" value="{{ $selectedMonth }}">
                     <input type="hidden" name="selectedYear" value="{{ $selectedYear }}">
                         <input type="hidden" name="userRegistrationsByMonth" value="{{ $userRegistrationsByMonth }}">
-    <input type="hidden" name="weeklyChartData" value="{{ $weeklyChartData }}">
-    <input type="hidden" name="dailyChartData" value="{{ $dailyChartData }}">
-    <input type="hidden" name="week" value="{{ $selectedWeekId }}">
+                    <input type="hidden" name="weeklyChartData" value="{{ $weeklyChartData }}">
+                    <input type="hidden" name="dailyChartData" value="{{ $dailyChartData }}">
+                    <input type="hidden" name="week" value="{{ $selectedWeekId }}">
                     <button id="pdfDownloadButton" type="submit" class="btn btn-danger">
                         <i class="bi bi-file-earmark-pdf me-2"></i>Export Report
                     </button>
@@ -169,6 +169,61 @@
             </div>
         </div>
     </div>
+
+
+    <div class="card-header bg-white py-3">
+        <div class="row align-items-center">
+            <div class="d-flex flex-column flex-md-row gap-3 justify-content-between w-100">
+                <!-- Section Title -->
+                <div class="d-flex align-items-center mb-3 mb-md-0">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <i class="bi bi-calendar-check me-3 mb-0"></i>User Input
+                    </h5>
+                </div>
+
+                <!-- Date Range Form (Right-aligned with wider inputs) -->
+                <form action="{{ route('admin.generate-input-users') }}" method="POST" id="user-form" class="d-flex gap-2 flex-grow-1 flex-md-grow-0 align-items-center justify-content-md-end w-100">
+                    @csrf
+                    <div class="input-group w-auto">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-calendar-range"></i>
+                        </span>
+                        <!-- Wider Start Date Input -->
+                        <input type="date"
+                               name="start_date"
+                               id="start_date"
+                               class="form-control form-control-sm border-start-0 w-25"
+                               value="{{ old('start_date', isset($startDate) ? $startDate->toDateString() : '') }}"
+                               required>
+                        <span class="input-group-text bg-light border-start-0 border-end-0">to</span>
+                        <!-- Wider End Date Input -->
+                        <input type="date"
+                               name="end_date"
+                               id="end_date"
+                               class="form-control form-control-sm border-start-0 w-25"
+                               value="{{ old('end_date', isset($endDate) ? $endDate->toDateString() : '') }}">
+                        <!-- Equal Sized Buttons -->
+                        <button type="submit" class="btn btn-primary btn-sm d-flex align-items-center">
+                            <i class="bi bi-funnel-fill me-1"></i>Filter
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Clear Button (Same Size as Filter Button) -->
+                <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center"
+                        onclick="document.getElementById('start_date').value=''; document.getElementById('end_date').value='';">
+                    <i class="bi bi-x-circle me-1"></i>Clear
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+
 
     <!-- Monthly Report Card -->
     <div class="card shadow-sm mb-4 dashboard-card">
@@ -318,7 +373,7 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle custom-table mb-0">
-                    <thead class="table-light">
+                    <thead class="table-light ">
                         <tr>
                             <th class="ps-4">USER</th>
                             <th>EMAIL</th>
