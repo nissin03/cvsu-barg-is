@@ -60,14 +60,12 @@ class UserFacilityController extends Controller
                 ->where('status', 'reserved')
                 ->sum('quantity'); 
 
-            // Compute remaining capacity
             $attribute->remaining_capacity = $attribute->capacity - $reserved;
         }
 
         $individualPrice = $facility->individualPrice();
         $selectedRoom = $this->findRoomWithLeastCapacity($facility);
-        $availableRoom = $this->findRoomWithLeastCapacity($facility);
-        if (!$availableRoom) {
+        if (!$selectedRoom) {
             Session::flash('message', 'Unfortunately, there are no rooms available for this facility at the moment.');
             return redirect()->route('user.facilities.details', ['slug' => $facility->slug]);
         }
@@ -93,8 +91,22 @@ class UserFacilityController extends Controller
 
         // Facility Individual Logic
         if ($facility->facility_type === 'individual') {
-
+            
             $availableRoom = $this->findRoomWithLeastCapacity($facility);
+
+            $existingTransaction = TransactionReservation::whereHas('availability', function($query) use ($facility, $availableRoom, $request) {
+                $query->where('facility_id', $facility->id)
+                    ->where('facility_attribute_id', $availableRoom->id)
+                    ->where('date_from', $request->date_from)
+                    ->where('date_to', $request->date_to);
+            })
+            ->where('status', 'pending')
+            ->first();
+    
+            if ($existingTransaction) {
+                Session::flash('error', "Please complete or cancel any pending reservations before proceeding with this facility.");
+                return redirect()->route('user.facilities.details', ['slug' => $facility->slug]);
+            }
 
             if ($availableRoom->sex_restriction && $availableRoom->sex_restriction !== $userSex) {
                 Session::flash('error', 'This room is restricted to your gender.');
@@ -111,11 +123,9 @@ class UserFacilityController extends Controller
             if($priceWithQuantity) {
                 $totalPrice = $priceWithQuantity->value * $totalQuantity;
             } else {
-                // $price = $facility->prices()->where('price_type', 'individual')->first();
+    
                 $totalPrice = $priceWithoutQuantity->value;
-            }
-
-            // dd($priceWithQuantity);
+            }   
 
             $reservationData = [
                 'facility_id' => $facility->id,
@@ -124,7 +134,6 @@ class UserFacilityController extends Controller
                 'facility_attributes_name' => $availableRoom->room_name,
                 'facility_attribute_id' => $availableRoom->id,
                 'total_price' => $totalPrice,
-                // 'total_price' => $facility->individualPrice(),
                 'facility_type' => $facility->facility_type,
                 'date_from' => $request->date_from ?? now()->format('Y-m-d'),
                 'date_to' => $request->date_to ?? now()->addDays(1)->format('Y-m-d'),

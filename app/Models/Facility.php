@@ -43,6 +43,10 @@ class Facility extends Model
         return $this->hasMany(Availability::class);
     }
 
+    public function transaction()
+    {
+        return $this->hasMany(TransactionReservation::class);
+    }
     public function user()
     {
         return $this->belongsTo(User::class);
