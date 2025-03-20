@@ -39,29 +39,21 @@ class UserFacilityController extends Controller
     {
 
         $facility = Facility::with('facilityAttributes', 'prices')->where('slug', $slug)->firstOrFail();
-        $roomNumbers = $facility->facilityAttributes
-        ->pluck('room_name')
-        ->filter()
-        ->map(function ($name) {
-            return preg_replace('/[^0-9]/', '', $name);
-        })
-        ->sort()
-        ->values();
+        $roomNumbers = $facility->facilityAttributes->pluck('room_name')
+            ->filter()
+            ->map(fn($name) => preg_replace('/[^0-9]/', '', $name))
+            ->sort()
+            ->values();
     
-         $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first();
+        $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first();
         $pricesWithAttributes = $facility->prices()->whereHas('facility.facilityAttributes')->get();
         $pricesWithoutAttributes = $facility->prices()->whereDoesntHave('facility.facilityAttributes')->get();
 
-        foreach ($facility->facilityAttributes as $attribute) {
-         
-            $reserved = TransactionReservation::whereHas('availability', function ($query) use ($attribute) {
-                $query->where('facility_attribute_id', $attribute->id);
-            })
+        $facility->facilityAttributes->each(function ($attribute) {
+            $attribute->remaining_capacity = $attribute->capacity - TransactionReservation::whereHas('availability', fn($query) => $query->where('facility_attribute_id', $attribute->id))
                 ->where('status', 'reserved')
-                ->sum('quantity'); 
-
-            $attribute->remaining_capacity = $attribute->capacity - $reserved;
-        }
+                ->sum('quantity');
+        });
 
         $individualPrice = $facility->individualPrice();
         $selectedRoom = $this->findRoomWithLeastCapacity($facility);
@@ -69,11 +61,8 @@ class UserFacilityController extends Controller
             Session::flash('message', 'Unfortunately, there are no rooms available for this facility at the moment.');
             return redirect()->route('user.facilities.details', ['slug' => $facility->slug]);
         }
-        
 
-        return view('user.facilities.details', compact('facility',  'pricesWithAttributes', 'pricesWithoutAttributes', 'individualPrice', 'selectedRoom', 
-        'roomNumbers', 'sexRestriction'
-        ));
+        return view('user.facilities.details', compact('facility', 'pricesWithAttributes', 'pricesWithoutAttributes', 'individualPrice', 'selectedRoom', 'roomNumbers', 'sexRestriction'));
     }
     
 
@@ -88,7 +77,6 @@ class UserFacilityController extends Controller
 
         $facility = Facility::with(['facilityAttributes', 'prices'])->find($request->facility_id);
         $userSex = Auth::user()->sex;
-
         // Facility Individual Logic
         if ($facility->facility_type === 'individual') {
             
