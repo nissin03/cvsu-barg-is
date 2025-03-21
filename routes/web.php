@@ -57,14 +57,6 @@ Route::get('/user/reservation_details/{availability_id}', [UserFacilityControlle
 
 
 
-Route::get('/rentals', [RentalController::class, 'index'])->name('rentals.index');
-Route::get('/rentals/{rental_slug}', [RentalController::class, 'show'])->name('rentals.details');
-Route::post('/rentals/reserve', [RentalController::class, 'add_to_reserved'])->name('rentals.reserve');
-// Route::post('/rentals/{facility_id}/checkout', [RentalController::class, 'checkout_details'])->name('rentals.checkout.details');
-// Route::get('/rentals/checkout', [RentalController::class, 'checkout'])->name('rentals.checkout');
-// Route::get('/rentals/{facility_id}/checkout', [RentalController::class, 'checkout'])->name('rentals.checkout');
-
-
 Route::post('/reserve/{rentalId}', [RentalController::class, 'placeReservation'])->name('rentals.reserve.events');
 
 // Route::get('/checkout/{rental_id}', [RentalController::class, 'checkout'])->name('rentals.checkout');

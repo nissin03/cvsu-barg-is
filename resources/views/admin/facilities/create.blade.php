@@ -429,7 +429,7 @@
                 </div>
 
                 {{-- prices fields  --}}
-                <div class="wg-box" id="priceBox">
+                {{-- <div class="wg-box" id="priceBox">
 
                     <div id="dormitoryFields"
                         class="d-flex justify-content-between align-items-center border-bottom pb-3">
@@ -543,7 +543,63 @@
                             </div>
                         </div>
                     </div>
+                </div> --}}
+
+                <div class="wg-box" id="priceBox">
+                    <div id="dormitoryFields"
+                        class="d-flex justify-content-between align-items-center border-bottom pb-3">
+                        <h4>Prices</h4>
+                        <button type="button" data-bs-toggle="modal" data-bs-target="#addPrice">Add Price
+                        </button>
+                    </div>
+
+                    <div id="hiddenPrices"></div>
+
+                    <p id="noPricesMessage" class="alert alert-warning">
+                        <i class="bi bi-info-circle me-2"></i> No prices added yet :(
+                    </p>
+
+                    <div id="priceContainer" class="mt-4">
+                        <h4>Price List</h4>
+                        <div class="row" id="priceCardsContainer">
+                            <!-- Price cards will be inserted here dynamically -->
+                        </div>
+                        <ul class="list-group d-none" id="priceList"></ul>
+                    </div>
+
+                    <div class="cols gap10">
+                        <button class="tf-button w-full" type="submit">Create Facility</button>
+                    </div>
                 </div>
+
+                <!-- Modal for Adding Prices -->
+                <div class="modal fade" id="addPrice" tabindex="-1" aria-labelledby="addPriceLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="addPriceLabel">Add Price</h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="priceFormContainer">
+                                    <!-- Dynamic price form cards will be appended here -->
+                                </div>
+
+                                <button type="button" id="addMultiplePricesRowBtn" class="mt-3">
+                                    <i class="fa-solid fa-plus"></i> Add Another Price
+                                </button>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="saveMultiplePricesBtn">Save
+                                    All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </form>
 
             <!-- /form-add-rental -->
@@ -587,37 +643,37 @@
             }
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
-            const dateFieldsDiv = document.getElementById('dateFields');
-            const dateFromInput = document.getElementById('date_from');
-            const dateToInput = document.getElementById('date_to');
+        // document.addEventListener("DOMContentLoaded", function() {
+        //     const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
+        //     const dateFieldsDiv = document.getElementById('dateFields');
+        //     const dateFromInput = document.getElementById('date_from');
+        //     const dateToInput = document.getElementById('date_to');
 
 
-            function disablePastDates() {
-                const today = new Date().toISOString().split('T')[0];
-                dateFromInput.setAttribute('min', today);
-                dateToInput.setAttribute('min', today);
-            }
+        //     function disablePastDates() {
+        //         const today = new Date().toISOString().split('T')[0];
+        //         dateFromInput.setAttribute('min', today);
+        //         dateToInput.setAttribute('min', today);
+        //     }
 
 
-            dateFromInput.addEventListener('change', function() {
-                if (dateFromInput.value) {
-                    dateToInput.value = dateFromInput.value;
-                }
-            });
+        //     dateFromInput.addEventListener('change', function() {
+        //         if (dateFromInput.value) {
+        //             dateToInput.value = dateFromInput.value;
+        //         }
+        //     });
 
-            // Handle the checkbox state to show/hide the date fields
-            isBasedOnDaysCheckbox.addEventListener('change', function() {
-                if (isBasedOnDaysCheckbox.checked) {
-                    dateFieldsDiv.style.display = 'block';
-                } else {
-                    dateFieldsDiv.style.display = 'none';
-                }
-            });
+        //     // Handle the checkbox state to show/hide the date fields
+        //     isBasedOnDaysCheckbox.addEventListener('change', function() {
+        //         if (isBasedOnDaysCheckbox.checked) {
+        //             dateFieldsDiv.style.display = 'block';
+        //         } else {
+        //             dateFieldsDiv.style.display = 'none';
+        //         }
+        //     });
 
-            // Disable past dates initially
-            disablePastDates();
-        });
+        //     // Disable past dates initially
+        //     disablePastDates();
+        // });
     </script>
 @endpush

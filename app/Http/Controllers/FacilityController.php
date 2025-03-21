@@ -86,8 +86,10 @@ class FacilityController extends Controller
         $this->handleFacilityAttributes($facility, $request);
         $this->handlePrices($facility, $request);
 
+        // dd($request->all());
         return response()->json(['message' => 'Facility created successfully!', 'action' => 'create']);
     }
+
 
     private function handleFacilityAttributes(Facility $facility, $request)
     {
@@ -176,7 +178,8 @@ class FacilityController extends Controller
         $facility =  Facility::find($id);
         $facilityAttributes = FacilityAttribute::where('facility_id', $facility->id)->first();
         // dd($facilityAttributes);
-        $prices = Price::where('facility_id', $facility->id)->whereNotNull('price_type')->get();
+        $prices = Price::where('facility_id', $facility->id)->get();
+        // dd($prices);
         return view('admin.facilities.edit', compact('facility',  'facilityAttributes', 'prices'));
     }
 

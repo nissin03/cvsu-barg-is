@@ -320,12 +320,8 @@
                     @endif
 
 
-
-                    <!-- Hidden inputs for form submission -->
                     <div id="hiddenRooms"></div>
 
-                    <!-- Capacity Section -->
-                    <!-- Rooms Section -->
                     <div id="dormitoryRooms" class="mt-4">
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
                             <h4>Room Management</h4>
@@ -391,39 +387,12 @@
                         <button type="button" data-bs-toggle="modal" data-bs-target="#addPrice">Add Price</button>
                     </div>
 
+                    <div id="hiddenPrices"></div>
                     <div id="priceContainer" class="mt-4">
-                        <ul class="list-group container-sm" id="priceList">
-                            @foreach ($prices as $index => $price)
-                                <div class="card p-3 mb-3">
-                                    <div class="card-body d-flex justify-content-between align-items-center">
-                                        <div class="text-start">
-                                            <h4>{{ $price->name }}</h4>
-                                            <p>Type: <span class="badge bg-success">{{ $price->price_type }}</span></p>
-                                            <p>Price: PHP {{ $price->value }}</p>
-                                            <p>
-                                                Is based on days?:
-                                                <span
-                                                    class="badge {{ $price->is_based_on_days ? 'bg-success' : 'bg-danger' }}">
-                                                    {{ $price->is_based_on_days ?: 'N/A' }}
-                                                </span>
-                                            </p>
-                                            <p>
-                                                Is there a quantity?:
-                                                <span
-                                                    class="badge {{ $price->is_there_a_quantity ? 'bg-success' : 'bg-danger' }}">
-                                                    {{ $price->is_there_a_quantity ?: 'N/A' }}
-                                                </span>
-                                            </p>
+                        <div class="row" id="priceCardsContainer">
+                            <!-- The price cards will be inserted here dynamically -->
 
-                                        </div>
-                                        <button type="button" class="btn btn-lg btn-outline-danger delete-btn"
-                                            onclick="deletePrice(${index})">
-                                            <i class="icon-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </ul>
+                        </div>
                     </div>
 
 
@@ -431,7 +400,35 @@
                         <button class="tf-button w-full" type="submit">Update facility</button>
                     </div>
                 </div>
+
                 <div class="modal fade" id="addPrice" tabindex="-1" aria-labelledby="addPriceLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="addPriceLabel">Add Price</h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="priceFormContainer">
+                                    <!-- Dynamic price form cards will be appended here -->
+                                </div>
+
+                                <button type="button" id="addMultiplePricesRowBtn" class="mt-3">
+                                    <i class="fa-solid fa-plus"></i> Add Another Price
+                                </button>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="saveMultiplePricesBtn">Save
+                                    All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- <div class="modal fade" id="addPrice" tabindex="-1" aria-labelledby="addPriceLabel"
                     aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
@@ -526,7 +523,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> --}}
 
 
             </form>
@@ -538,57 +535,59 @@
     <script>
         // window.rooms = @json($facilityAttributes ?? []);
         window.rooms = @json($facility->facilityAttributes->filter(fn($attr) => $attr->facility_id == $facility->id)->toArray());
-        window.prices = @json($prices ?? []);
+        const initialPrices = @json($prices ?? []);
+        console.log(window.prices);
     </script>
 
     {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
     <script src="{{ asset('assets/js/formSubmitUpdate.js') }}"></script>
     <script src="{{ asset('assets/js/hideFields.js') }}"></script>
     <script type="module" src="{{ asset('assets/js/updateRoom.js') }}"></script>
-    <script type="module" src="{{ asset('assets/js/addPrice.js') }}"></script>
+    {{-- <script type="module" src="{{ asset('assets/js/addPrice.js') }}"></script> --}}
+    <script type="module" src="{{ asset('assets/js/updatePrice.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
-            const dateFieldsDiv = document.getElementById('dateFields');
-            const dateFromInput = document.getElementById('date_from');
-            const dateToInput = document.getElementById('date_to');
+        // document.addEventListener("DOMContentLoaded", function() {
+        //     const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
+        //     const dateFieldsDiv = document.getElementById('dateFields');
+        //     const dateFromInput = document.getElementById('date_from');
+        //     const dateToInput = document.getElementById('date_to');
 
-            function toggleDateFields() {
-                if (isBasedOnDaysCheckbox.checked) {
-                    dateFieldsDiv.style.display = 'block';
-                    dateFromInput.removeAttribute('disabled');
-                    dateToInput.removeAttribute('disabled');
-                    dateFromInput.setAttribute('required', 'required');
-                    dateToInput.setAttribute('required', 'required');
-                } else {
-                    dateFieldsDiv.style.display = 'none';
-                    dateFromInput.setAttribute('disabled', 'disabled');
-                    dateToInput.setAttribute('disabled', 'disabled');
-                    dateFromInput.removeAttribute('required');
-                    dateToInput.removeAttribute('required');
-                }
-            }
-
-
-            dateFromInput.addEventListener('change', function() {
-                if (dateFromInput.value) {
-                    dateToInput.setAttribute('min', dateFromInput.value);
-                }
-            });
+        //     function toggleDateFields() {
+        //         if (isBasedOnDaysCheckbox.checked) {
+        //             dateFieldsDiv.style.display = 'block';
+        //             dateFromInput.removeAttribute('disabled');
+        //             dateToInput.removeAttribute('disabled');
+        //             dateFromInput.setAttribute('required', 'required');
+        //             dateToInput.setAttribute('required', 'required');
+        //         } else {
+        //             dateFieldsDiv.style.display = 'none';
+        //             dateFromInput.setAttribute('disabled', 'disabled');
+        //             dateToInput.setAttribute('disabled', 'disabled');
+        //             dateFromInput.removeAttribute('required');
+        //             dateToInput.removeAttribute('required');
+        //         }
+        //     }
 
 
-            isBasedOnDaysCheckbox.addEventListener('change', toggleDateFields);
+        //     dateFromInput.addEventListener('change', function() {
+        //         if (dateFromInput.value) {
+        //             dateToInput.setAttribute('min', dateFromInput.value);
+        //         }
+        //     });
 
 
-            toggleDateFields();
+        //     isBasedOnDaysCheckbox.addEventListener('change', toggleDateFields);
 
 
-            $('#addPrice').on('hidden.bs.modal', function() {
-                $("#date_from").val('');
-                $("#date_to").val('');
-            });
-        });
+        //     toggleDateFields();
+
+
+        //     $('#addPrice').on('hidden.bs.modal', function() {
+        //         $("#date_from").val('');
+        //         $("#date_to").val('');
+        //     });
+        // });
 
 
         function removeUpload(previewId, inputId) {
