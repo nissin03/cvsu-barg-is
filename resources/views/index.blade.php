@@ -2,7 +2,7 @@
 @section('content')
 <style>
     #header {
-        padding-top: 0 !important; 
+        padding-top: 0 !important;
     }
 
     /* Header Carousel */
@@ -58,7 +58,7 @@
         font-size: 0.95rem;
     }
 
-    
+
 </style>
 <!-- Header Section -->
 @if($slides->isNotEmpty())
@@ -97,7 +97,7 @@
 @endif
 
 
-    
+
 
     <!-- Carousel Controls -->
     <button class="carousel-control-prev" type="button" data-bs-target="#header" data-bs-slide="prev">
@@ -118,7 +118,7 @@
     <div class="list">
         @foreach($categories as $index => $category)
         <div class="item" style="--position: {{ $index + 1 }}" loading="lazy">
-            <a href="{{ route('shop.index', ['categories' => $category->id]) }}" class="menu-link fw-medium" 
+            <a href="{{ route('shop.index', ['categories' => $category->id]) }}" class="menu-link fw-medium"
             data-toggle="tooltip" data-placement="top" title="{{ $category->name }}">
                 <img src="{{ asset('uploads/categories/' . $category->image) }}" alt="{{ $category->name }}">
             </a>
@@ -127,14 +127,14 @@
     </div>
     </div>
 
-    
+
     <section id="collection" class="py-3 pt-5">
         <div class="container pb-5">
             <div class="title-h2 text-center">
                 <h2 class="position-relative d-inline-block">Marketing</h2>
             </div>
 
-            
+
              <div class="row g-4 my-5 mx-auto owl-carousel owl-theme">
                 @foreach ($fproducts as $fproduct)
                     <div class="col product-item d-flex flex-column h-100">
@@ -194,7 +194,7 @@
                             <div class="avail d-flex justify-content-center">
                                 <span class="availability fw-bold me-2">Available items: </span>
                                 <span class="avail-tags"
-                                    style="color: 
+                                    style="color:
                                     @if ($fproduct->attributeValues->isNotEmpty() && isset($fproduct->attributeValues[0]->quantity)) {{ $fproduct->attributeValues[0]->quantity > 0 ? ($fproduct->attributeValues[0]->quantity == 1 ? 'orange' : 'green') : 'red' }}
                                     @else
                                         {{ $fproduct->quantity > 0 ? ($fproduct->quantity == 1 ? 'orange' : 'green') : 'red' }} @endif
@@ -274,13 +274,13 @@
                 </div>
             @endforeach
         </div>
-        <div class="container d-flex justify-content-center">
+        {{-- <div class="container d-flex justify-content-center">
             <a href="{{ route('rentals.index') }}"><button type="button" class="btn btn-link">See More</button></a>
-        </div>
+        </div> --}}
     </div>
 </section>
 
-  
+
 
     <section class="about-us py-6">
         <div class="title-h2 text-center">
