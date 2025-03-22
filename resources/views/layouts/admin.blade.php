@@ -30,7 +30,6 @@
     {{-- <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script> --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
     {{-- <script>
         // console.log('Hello from Vite!')
         Echo.channel('chats')
@@ -39,7 +38,7 @@
             });
     </script> --}}
 
-    {{-- 
+    {{--
     <script>
         toastr.options = {
             "progressBar": true,
