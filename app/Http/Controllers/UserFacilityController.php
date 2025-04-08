@@ -57,10 +57,7 @@ class UserFacilityController extends Controller
 
         $individualPrice = $facility->individualPrice();
         $selectedRoom = $this->findRoomWithLeastCapacity($facility);
-        if (!$selectedRoom) {
-            Session::flash('message', 'Unfortunately, there are no rooms available for this facility at the moment.');
-            return redirect()->route('user.facilities.details', ['slug' => $facility->slug]);
-        }
+
 
         return view('user.facilities.details', compact('facility', 'pricesWithAttributes', 'pricesWithoutAttributes', 'individualPrice', 'selectedRoom', 'roomNumbers', 'sexRestriction'));
     }
@@ -698,24 +695,29 @@ class UserFacilityController extends Controller
                         ]);
 
                     } elseif ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity) {
-
                         $dateFrom = $request->input('date_from');
-
+                    
+                        // Ensure date_from is present
+                        if (!$dateFrom) {
+                            throw new \Exception('Date from is required.');
+                        }
+                    
                         $facilityAttribute = $facility->facilityAttributes()->first();
                         $initialCapacity = $facilityAttribute->whole_capacity;
-
-                        $reservedCapacity = Availability::where('facility_id', $facility->id)
-                            ->where('date_from', $dateFrom)
-                            ->sum('quantity');
-
+                    
+                        // Modify the query to sum quantities from TransactionReservation, not Availability
+                        $reservedCapacity = \App\Models\TransactionReservation::whereHas('availability', function ($query) use ($dateFrom, $facility) {
+                            $query->where('facility_id', $facility->id)
+                                  ->where('date_from', $dateFrom);
+                        })->sum('quantity');
+                    
                         $remainingCapacity = $initialCapacity - $reservedCapacity;
-
+                    
                         $totalQuantity = 0;
                         $totalPrice = 0;
-
+                    
                         if ($priceType === 'individual') {
                             $quantities = $request->input('quantity', []);
-
                             foreach ($quantities as $priceId => $qty) {
                                 $price = $facility->prices()->find($priceId);
                                 if ($price && $qty > 0) {
@@ -723,52 +725,61 @@ class UserFacilityController extends Controller
                                     $totalPrice += $price->value * $qty;
                                 }
                             }
-
-                            // Check if the requested quantity exceeds the available capacity
+                    
                             if ($totalQuantity > $remainingCapacity) {
                                 throw new \Exception('The total quantity exceeds the remaining capacity for this date.');
                             }
-
-
+                    
                             $remainingCapacity -= $totalQuantity;
                         } elseif ($priceType === 'whole') {
                             $totalPrice = $price->value;
                             $totalQuantity = $remainingCapacity;
                             $remainingCapacity = 0;
                         }
-
+                    
                         $qualificationPath = null;
                         if ($request->hasFile('qualification')) {
                             $qualificationPath = $request->file('qualification')->store('qualifications', 'public');
                             Log::info('Qualification file uploaded', ['qualification_path' => $qualificationPath]);
                         }
-
-
+                    
+            
                         $newAvailability = Availability::create([
                             'facility_id' => $facility->id,
                             'facility_attribute_id' => null,
                             'remaining_capacity' => $remainingCapacity,
                             'date_from' => $dateFrom,
-                            'date_to' => $dateTo,
+                            'date_to' => $dateTo,  
                         ]);
-
+                    
+                        $transactionReservation = TransactionReservation::create([
+                            'availability_id' => $newAvailability->id,
+                            'facility_attribute_id' => null,
+                            'price_id' => $price->id,  
+                            'quantity' => $totalQuantity,
+                            'user_id' => $user->id,
+                            'status' => 'pending',
+                        ]);
+                    
+                        // Create the payment record
                         $payment = Payment::create([
                             'availability_id' => $newAvailability->id,
                             'user_id' => $user->id,
                             'status' => 'pending',
                             'total_price' => $totalPrice,
                         ]);
-
+                    
+                        // Create payment details for the transaction
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
                             'facility_id' => $facility->id,
                             'quantity' => $totalQuantity,
                             'total_price' => $totalPrice,
                         ]);
-
-
+                    
+                        // Store reservation details in the session
                         Session::put('checkout', [
-                            'reservation_id' => $newAvailability->id,
+                            'reservation_id' => $transactionReservation->id, // Now using transaction reservation ID
                             'facility_id' => $facility->id,
                             'facility_slug' => $facility->slug,
                             'facility_attribute_id' => null,
@@ -777,9 +788,8 @@ class UserFacilityController extends Controller
                             'date_to' => $dateTo,
                             'total_price' => $totalPrice,
                         ]);
-
-
-                    } else {
+                    }
+                    else {
                         throw new \Exception('Invalid facility configuration.');
                     }
                     // dd($remainingCapacity);
