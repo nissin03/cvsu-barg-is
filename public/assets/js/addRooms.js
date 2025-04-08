@@ -142,13 +142,13 @@ function createRoomCard(room, index) {
 function updateUI() {
     renderRoomList();
     updateHiddenRooms();
-    calculateTotalCapacity();
+    // calculateTotalCapacity();
 }
 
-function calculateTotalCapacity() {
-    const totalCapacity = rooms.reduce((sum, room) => sum + room.capacity, 0);
-    $("#roomCapacityWhole").val(totalCapacity);
-}
+// function calculateTotalCapacity() {
+//     const totalCapacity = rooms.reduce((sum, room) => sum + room.capacity, 0);
+//     $("#roomCapacityWhole").val(totalCapacity);
+// }
 
 // Edit room
 $(document).on("click", ".edit-room", function () {
@@ -236,5 +236,5 @@ $(document).ready(function () {
     });
 
     // Calculate total capacity initially
-    calculateTotalCapacity();
+    // calculateTotalCapacity();
 });
