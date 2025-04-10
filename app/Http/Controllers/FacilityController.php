@@ -160,8 +160,7 @@ class FacilityController extends Controller
                     'facility_id' => $facility->id,
                     'name' => $price['name'],
                     'value' => $price['value'],
-                    // 'price_type' => $price['price_type'],
-                    'price_type' => $priceType, 
+                    'price_type' => $price['price_type'] ?? 'individual',
                     'is_based_on_days' => filter_var($price['is_based_on_days'], FILTER_VALIDATE_BOOLEAN),
                     'is_there_a_quantity' => $price['is_there_a_quantity'] ?? false,
                     'date_from' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_from'] : null,
@@ -189,8 +188,6 @@ class FacilityController extends Controller
             'name' => 'required|unique:facilities,name,' . $id,
         ]);
         
-
-
         $facility = Facility::findOrFail($id);
         $request->merge([
             'sex_restriction' => $request->sex_restriction ?? '',
