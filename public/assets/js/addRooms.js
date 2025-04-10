@@ -142,8 +142,9 @@ function createRoomCard(room, index) {
 function updateUI() {
     renderRoomList();
     updateHiddenRooms();
-    calculateTotalCapacity();
+    // calculateTotalCapacity();
 }
+
 
 // Edit room
 $(document).on("click", ".edit-room", function () {
@@ -229,5 +230,6 @@ $(document).ready(function () {
             $("#saveMultipleRoomsBtn").text("Save All").off("click").on("click", saveMultipleRooms);
         }
     });
+
 
 });

@@ -420,10 +420,10 @@
 
                 <!-- Rental Info -->
                 <div class="col-lg-5">
-                    @if (Session::has('status') || Session::has('error'))
-                        <p class="alert {{ Session::has('status') ? 'alert-success' : 'alert-danger' }}">
-                            {{ Session::get('status') ?? Session::get('error') }}
-                        </p>
+                    @if (Session::has('status'))
+                        <p class="alert alert-success">{{ Session::get('status') }}</p>
+                    @elseif (Session::has('error'))
+                        <p class="alert alert-danger">{{ Session::get('error') }}</p>
                     @endif
                     <h1 class="facilities-single__name">{{ $facility->name }}</h1>
 
