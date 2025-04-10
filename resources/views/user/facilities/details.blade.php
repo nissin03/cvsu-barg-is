@@ -985,8 +985,10 @@
                     @if ($facility->prices->where('is_there_a_quantity', true)->count() > 0)
                         const individualInputs = document.getElementById('individual_inputs');
                     @endif
-                    const totalPriceEl = document.getElementById('total_price');
+
                     const soloTypeDropdown = document.getElementById('solo_type_dropdown');
+
+                    const totalPriceEl = document.getElementById('total_price');
                     const sharedTypeDropdown = document.getElementById('shared_type_dropdown');
                     const soloDropdown = document.getElementById('solo_dropdown');
                     const roomsDisplay = document.getElementById('rooms_display');
