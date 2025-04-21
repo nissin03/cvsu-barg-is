@@ -11,6 +11,7 @@ class TransactionReservation extends Model
 
     protected $fillable = [
         'availability_id',
+        'facility_attribute_id',
         'price_id',
         'quantity',
         'user_id',
