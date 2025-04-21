@@ -214,13 +214,15 @@ class UserFacilityController extends Controller
 
                 if ($priceType === 'whole') {
                     $existingReservation = Availability::where('facility_id', $facility->id)
-                        ->where('date_from', $dateFrom)
-                        ->whereIn('status', ['pending', 'reserved'])
-                        ->first();
+                    ->where('date_from', $dateFrom)
+                    ->whereHas('transactionReservations', function ($query) {
+                        $query->whereIn('status', ['pending', 'reserved']);
+                    })
+                    ->first();
 
-                    if ($existingReservation) {
-                        return back()->withErrors(['date_from' => 'This facility is already reserved for this date.']);
-                    }
+                if ($existingReservation) {
+                    return back()->withErrors(['date_from' => 'This facility is already reserved for this date.']);
+                }
                 }
 
                 // Calculate days of stay
@@ -396,10 +398,6 @@ class UserFacilityController extends Controller
             $selectedDate = Carbon::parse($date_to)->startOfDay();
             $minDate = Carbon::today()->addDays(3)->startOfDay();
 
-            $existingReservation = Availability::where('facility_id', $facility->id)
-                ->where('date_to', $date_to)
-                ->whereNull('facility_attribute_id')
-                ->first();
         } elseif ($facility->facility_type === 'both') {
             if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->capacity) {
                 $facilityAttribute = $facility->facilityAttributes()->find($reservationData['facility_attribute_id']);
@@ -466,12 +464,10 @@ class UserFacilityController extends Controller
 
                         $facilityAttribute = $nextAvailableRoom;
                     }
-
                     $facilityAttribute->decrement('capacity');
                     $qualificationPath = null;
                     if ($request->hasFile('qualification')) {
                         $qualificationPath = $request->file('qualification')->store('qualifications', 'public');
-                        // Log::info('Qualification file uploaded', ['qualification_path' => $qualificationPath]);
                     }
 
                     $price = Price::where('facility_id', $facility->id)
@@ -485,15 +481,6 @@ class UserFacilityController extends Controller
                     $dateFrom = $price->date_from;
                     $dateTo = $price->date_to;
 
-                    Log::info('Creating availability', [
-                        'facility_id' => $facility->id,
-                        'facility_attribute_id' => $facilityAttribute->id,
-                        'date_from' => $dateFrom,
-                        'date_to' => $dateTo,
-                        'remaining_capacity' => $facilityAttribute->capacity
-                    ]);
-    
-
                     $availability = Availability::create([
                         'facility_id' => $facility->id,
                         'facility_attribute_id' => $facilityAttribute->id,
@@ -501,8 +488,6 @@ class UserFacilityController extends Controller
                         'date_to' => $dateTo,
                         'remaining_capacity' => $facilityAttribute->capacity,
                     ]);
-
-                    Log::info('New availability created', ['availability_id' => $availability->id]);
 
                     if ($qualificationPath) {
                         $this->createQualificationApproval($availability, $user, $qualificationPath);
@@ -524,6 +509,7 @@ class UserFacilityController extends Controller
                     ]);
                     TransactionReservation::create([
                         'availability_id' => $availability->id,
+                       'facility_attribute_id' => $facilityAttribute->id, 
                         'price_id' => $price->id,
                         'quantity' => 0,
                         'user_id' => $user->id,
