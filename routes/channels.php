@@ -8,5 +8,10 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 Broadcast::channel('chats', function () {
   //
 });
+Broadcast::channel('test-event', function () {
+  //
+});
+
+
 
 
