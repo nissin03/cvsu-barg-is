@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\TestEvent;
 use Livewire\Livewire;
 use App\Events\Example;
 use App\Models\Contact;
@@ -28,6 +29,11 @@ use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\UserFacilityController;
 
 Auth::routes(['reset' => true]);
+Route::get('/test-broadcast', function() {
+    broadcast(new TestEvent());
+    return 'Event Broadcasted';
+});
+
 
 Auth::routes();
 
