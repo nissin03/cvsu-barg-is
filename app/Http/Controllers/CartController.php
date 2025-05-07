@@ -54,7 +54,7 @@ class CartController extends Controller
         //         'message' => 'You cannot add this product to the cart due to sex restrictions.'
         //     ], 403);
         // }
-        
+
 
         // Check if the product has variants
         $hasVariants = $product->attributeValues()->exists();
@@ -67,7 +67,7 @@ class CartController extends Controller
             return redirect()->back()->withErrors(['variant_id' => 'Please select a product variant.'])->withInput();
         }
 
-        
+
         if ($hasVariants) {
             $variant = $product->attributeValues->where('id', $request->variant_id)->first();
 
@@ -213,13 +213,13 @@ class CartController extends Controller
         if (!$cartItem) {
             return redirect()->back()->with('error', 'The cart does not contain the specified item.');
         }
-    
+
         $product = Product::with('attributeValues.productAttribute')->find($cartItem->options['product_id']);
-    
+
         if (!$product) {
             return redirect()->back()->with('error', 'Product not found.');
         }
-    
+
         $variantAttributes = [];
         $variantIds = [];
         foreach ($request->input('attribute', []) as $attributeId => $variantId) {
@@ -229,10 +229,10 @@ class CartController extends Controller
                 $variantIds[] = $variantId;
             }
         }
-    
-     
+
+
         $matchingVariant = $product->attributeValues()->whereIn('id', $variantIds)->first();
-    
+
         if ($matchingVariant) {
             // Update the cart item with new variant details
             Cart::instance('cart')->update($rowId, [
@@ -245,14 +245,14 @@ class CartController extends Controller
                     'is_variant' => true,
                     'variant_quantity' => $matchingVariant->quantity,
                 ]),
-                
+
             ]);
             return redirect()->back()->with('success', 'Variant updated successfully.');
         } else {
             return redirect()->back()->with('error', 'Selected variant is not available.');
         }
     }
-    
+
 
 
     public function remove_item($rowId)
@@ -385,10 +385,10 @@ class CartController extends Controller
                         if ($admin) {
                             $admin->notify(new LowStockNotification($product, $quantity));
                         }
-                        event(new LowStockEvent($product, $quantity));
+                        broadcast(new LowStockEvent($product, $quantity));
                     }
                 } else {
-                   
+
                     $product = Product::find($item->id);
                     if (!$product || $product->quantity < $item->qty) {
                         throw new \Exception('Insufficient stock for product: ' . $item->name);
@@ -397,7 +397,7 @@ class CartController extends Controller
                     $product->quantity -= $item->qty;
                     $product->stock_status = $product->quantity <= 0 ? 'outofstock' : 'instock';
                     $product->save();
-                    
+
                     if ($product->quantity <= 20) {
                         $quantity = $product->quantity;
                         \Log::info('LowStockNotification triggered for product', ['product' => $product, 'quantity' => $product->quantity]);
@@ -405,7 +405,7 @@ class CartController extends Controller
                         if ($admin) {
                             $admin->notify(new LowStockNotification($product, $quantity));
                         }
-                        event(new LowStockEvent($product, $product->quantity));
+                        broadcast(new LowStockEvent($product, $product->quantity));
                     }
                 }
 

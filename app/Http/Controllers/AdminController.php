@@ -915,7 +915,6 @@ class AdminController extends Controller
     }
 
 
-
     public function order_details($order_id)
     {
         $order = Order::find($order_id);

@@ -321,6 +321,24 @@ window.Echo.private("admin-notification").listen(
     }
 );
 
+window.Echo.private("admin-notification").listen("LowStockEvent", (e) => {
+    console.log("Low stock event received!", e);
+    const productData = e.product;
+
+    toastr.warning(
+        `<strong>${productData.name}</strong> is running low on stock. Current quantity: ${productData.quantity}`,
+        "Low Stock Alert",
+        {
+            timeOut: "7000",
+        }
+    );
+    addNotification({
+        name: "Stock Alert",
+        message: `${productData.name} is running low on stock. Current quantity: ${productData.quantity}`,
+        type: "stock",
+    });
+});
+
 document.addEventListener("DOMContentLoaded", function () {
     updateNotificationUI();
 
