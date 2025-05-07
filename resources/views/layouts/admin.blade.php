@@ -95,7 +95,6 @@
             width: 100%;
             height: 100%;
             z-index: 1040;
-
             background-color: rgba(0, 0, 0, 0.7);
         }
 
@@ -109,6 +108,105 @@
             width: 100%;
             max-width: 800px;
 
+        }
+
+        .dropdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .notification-heading {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .mark-read {
+            background: none;
+            border: none;
+            color: #30d683;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .category-header {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .notification-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+        }
+
+        .notification-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+            overflow: hidden;
+        }
+
+        .notification-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .badge-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e9ecef;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-text {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .notification-subtext {
+            margin: 0;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .unread-indicator {
+            width: 10px;
+            height: 10px;
+            background-color: #30d683;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+
+        .dropdown-footer {
+            padding: 0;
+        }
+
+        .dropdown-footer button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background-color: #f8f9fa;
+            color: #212529;
+            font-weight: 600;
+            border-radius: 0 0 10px 10px;
         }
     </style>
     @stack('styles')
@@ -397,43 +495,111 @@
                                                 <i class="fas fa-bell"></i>
                                             </span>
                                         </button>
-                                        <ul class="dropdown-menu dropdown-menu-end has-content"
+
+                                        <div class="dropdown-menu dropdown-menu-end"
                                             aria-labelledby="dropdownMenuButton2">
-                                            <h6 class="mb-1">Notifications</h6>
-                                            <div class="d-flex justify-content-end align-items-center px-3">
-                                                <button class="btn text-primary fw-bold"
-                                                    style="background: none;">Mark all as read</button>
+                                            <div class="dropdown-header">
+                                                <h6 class="notification-heading">Notifications</h6>
+                                                <button type="button" class="mark-read">Mark all as read</button>
                                             </div>
-                                            <div class="px-3 py-2 text-black fw-bold text-uppercase fs-5">New</div>
 
-                                            {{-- Empty State --}}
-                                            {{-- <li class="text-center text-muted fs-4" style="text-decoration: none;">
-                                                No notifications to display
-                                            </li> --}}
-                                            <li class=" notification-item d-flex align-items-center">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="notification-icon bg-light text-white rounded-circle me-3 d-flex align-items-center justify-content-center"
-                                                        style="width: 50px; height: 50px;">
-                                                        <i class="fas fa-bell"
-                                                            style="font-size: 24px; color: #252728;"></i>
-                                                    </div>
-                                                    <div>
-                                                        <p class="mb-0 fw-bold">Sale N + 1</p>
-                                                        <p class="mb-0 text-primary big fw-bold">1h</p>
-                                                    </div>
+                                            <!-- First notification with bell icon -->
+                                            <div class="notification-item">
+                                                <div class="badge-icon h5">
+                                                    <i class="fas fa-bell text-dark"></i>
                                                 </div>
-                                                <span class="badge bg-primary ms-3 rounded-circle"
-                                                    style="width: 10px; height: 10px;"></span>
-                                            </li>
+                                                <div class="notification-content">
+                                                    <p class="notification-text fw-bold">Samso aliao</p>
+                                                    <p class="notification-subtext">Samso Nagaro liked your homework
+                                                    </p>
+                                                </div>
+                                                <div class="unread-indicator"></div>
+                                            </div>
 
-                                            <button class="btn btn-secondary text-center py-3 fs-5 fw-bold">
-                                                See previous notifications
-                                            </button>
-
-                                        </ul>
+                                            <div class="dropdown-footer">
+                                                <button class="btn" data-bs-toggle="modal"
+                                                    data-bs-target="#notificationsModal">See previous
+                                                    notifications</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
+
+                                <div class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false"
+                                    id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel"
+                                    aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-scrollable">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="notificationsModalLabel">
+                                                    Previous
+                                                    Notifications</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="dropdown-header border-bottom mb-3">
+                                                    <h6 class="notification-heading">Old Notifications</h6>
+                                                    <button type="button" class="mark-read">Mark all as
+                                                        read</button>
+                                                </div>
+                                                <div class="notification-item">
+                                                    <div class="badge-icon h5">
+                                                        <i class="fas fa-bell text-dark"></i>
+                                                    </div>
+                                                    <div class="notification-content">
+                                                        <p class="notification-text fw-bold">Project Update
+                                                        </p>
+                                                        <p class="notification-subtext">Your project has
+                                                            been reviewed
+                                                        </p>
+                                                    </div>
+                                                    <div class="unread-indicator"></div>
+                                                </div>
+
+                                                <!-- Old notification item 2 -->
+                                                <div class="notification-item">
+                                                    <div class="badge-icon">
+                                                        <span class="text-primary"
+                                                            style="font-weight: bold; font-size: 12px">INFO</span>
+                                                    </div>
+                                                    <div class="notification-content">
+                                                        <p class="notification-text fw-bold">System Update
+                                                        </p>
+                                                        <p class="notification-subtext">System maintenance
+                                                            completed
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- New notification header -->
+                                                <div class="dropdown-header border-bottom my-3">
+                                                    <h6 class="notification-heading">New Notifications</h6>
+                                                </div>
+
+                                                <!-- New notification item -->
+                                                <div class="notification-item">
+                                                    <div class="badge-icon h5">
+                                                        <i class="fas fa-envelope text-dark"></i>
+                                                    </div>
+                                                    <div class="notification-content">
+                                                        <p class="notification-text fw-bold">New Message
+                                                        </p>
+                                                        <p class="notification-subtext">You have received a
+                                                            new message
+                                                        </p>
+                                                    </div>
+                                                    <div class="unread-indicator"></div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
 
                                 <div class="popup-wrap user type-header">
@@ -537,7 +703,7 @@
             // Search functionality
             searchInput.addEventListener('input', function() {
                 const query = searchInput.value.toLowerCase().trim();
-                searchResults.innerHTML = ''; // Clear previous results
+                searchResults.innerHTML = '';
 
                 if (query) {
                     menuItems.forEach(function(item) {
