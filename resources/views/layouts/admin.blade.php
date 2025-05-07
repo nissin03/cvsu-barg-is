@@ -140,11 +140,50 @@
             font-weight: 600;
         }
 
+
+        .remove-notification {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .remove-notification:hover {
+            opacity: 1;
+            color: #dc3545;
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .remove-all {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .remove-notification i {
+            font-size: 14px;
+        }
+
         .notification-item {
             padding: 12px 15px;
             border-bottom: 1px solid #f0f0f0;
             display: flex;
             align-items: center;
+            position: relative;
         }
 
         .notification-avatar {
@@ -185,6 +224,36 @@
             margin: 0;
             font-size: 12px;
             color: #6c757d;
+        }
+
+        /* Add these new styles to your existing CSS */
+        .notification-list-container {
+            max-height: 300px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease;
+            scrollbar-width: thin;
+        }
+
+        .notification-list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .notification-list-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .notification-list-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .notification-list-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .all-notifications {
+            max-height: 400px;
+            /* Taller container for all notifications */
         }
 
         .unread-indicator {
@@ -485,13 +554,13 @@
 
                             </div>
                             <div class="header-grid">
-
                                 <div class="popup-wrap message type-header">
                                     <div class="dropdown">
                                         <button class="btn btn-primary dropdown-toggle" type="button"
                                             id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
                                             <span class="header-item">
-                                                <span class="text-tiny notification-count">4</span>
+                                                <span
+                                                    class="text-tiny notification-count">{{ Auth::user()->unreadNotifications()->count() }}</span>
                                                 <i class="fas fa-bell"></i>
                                             </span>
                                         </button>
@@ -499,32 +568,38 @@
                                         <div class="dropdown-menu dropdown-menu-end"
                                             aria-labelledby="dropdownMenuButton2">
                                             <div class="dropdown-header">
-                                                <h6 class="notification-heading">Notifications</h6>
-                                                <button type="button" class="mark-read">Mark all as read</button>
+                                                <div class="notification-actions">
+                                                    <button type="button" class="mark-read">Mark all as read</button>
+                                                    <button type="button" class="remove-all">Remove all</button>
+                                                </div>
                                             </div>
 
-                                            <!-- First notification with bell icon -->
-                                            <div class="notification-item">
-                                                <div class="badge-icon h5">
-                                                    <i class="fas fa-bell text-dark"></i>
+                                            <div id="notification-list">
+                                                <div class="notification-item">
+                                                    <div class="notification-content">
+                                                        <p class="notification-text text-center">No notifications
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div class="notification-content">
-                                                    <p class="notification-text fw-bold">Samso aliao</p>
-                                                    <p class="notification-subtext">Samso Nagaro liked your homework
-                                                    </p>
-                                                </div>
-                                                <div class="unread-indicator"></div>
                                             </div>
 
+                                            <div id="all-notification-list"
+                                                class="notification-list-container all-notifications"
+                                                style="display: none;">
+                                                <!-- All notifications will be loaded here -->
+                                            </div>
                                             <div class="dropdown-footer">
+                                                <button id="toggle-notifications" class="btn">See all
+                                                    notifications</button>
+                                            </div>
+                                            {{-- <div class="dropdown-footer">
                                                 <button class="btn" data-bs-toggle="modal"
                                                     data-bs-target="#notificationsModal">See previous
                                                     notifications</button>
-                                            </div>
+                                            </div> --}}
                                         </div>
                                     </div>
                                 </div>
-
 
                                 <div class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false"
                                     id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel"
@@ -557,8 +632,6 @@
                                                     </div>
                                                     <div class="unread-indicator"></div>
                                                 </div>
-
-                                                <!-- Old notification item 2 -->
                                                 <div class="notification-item">
                                                     <div class="badge-icon">
                                                         <span class="text-primary"
@@ -724,6 +797,7 @@
 
         });
     </script>
+
 
 
 

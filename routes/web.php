@@ -29,10 +29,6 @@ use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\UserFacilityController;
 
 Auth::routes(['reset' => true]);
-Route::get('/test-broadcast', function() {
-    broadcast(new TestEvent());
-    return 'Event Broadcasted';
-});
 
 
 Auth::routes();
@@ -133,7 +129,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/check-pool-capacity/{rentalId}/{quantity}', [RentalController::class, 'checkPoolCapacity']);
 
 
-
+    // Route::get('reservations', [UserFacilityController::class, 'reservations'])->name('user.reservations.facilities');
+    // Route::get('reservation/{reservation_id}', [UserFacilityController::class, 'reservationDetails'])->name('user.reservation.details');
+    // Route::post('reservation/cancel/{id}', [UserFacilityController::class, 'cancelReservation'])->name('user.reservation.cancel');
 
 
 
