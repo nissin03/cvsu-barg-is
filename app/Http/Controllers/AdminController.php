@@ -378,7 +378,7 @@ class AdminController extends Controller
         $categories = Category::whereNull('parent_id')
             ->with('children')
             ->orderBy('id', 'DESC')
-            ->paginate(10);
+            ->paginate(5);
         $pageTitle = 'Category Dashboard';
         return view('admin.categories', compact('categories', 'pageTitle'));
     }
@@ -480,27 +480,53 @@ class AdminController extends Controller
     {
         $archived = $request->query('archived', 0);
         $search = $request->input('search');
+        $sortColumn = $request->input('sort_column', 'created_at');
+        $sortDirection = $request->input('sort_direction', 'DESC');
 
-            $products = Product::with(['category' => function ($query) {
+        $query = Product::with([
+            'category' => function ($query) {
                 $query->with('parent');
-            }, 'attributes'])
-            ->where('archived', $archived)
-            ->where(function ($query) use ($search) {
-                if ($search) {
-                    $query->where('name', 'like', "%{$search}%")
-                          ->orWhere('description', 'like', "%{$search}%")
-                          ->orWhere('quantity', 'like', "%{$search}%");
-                }
-            })
-            ->orderBy('created_at', 'DESC')
-            ->paginate(10);
+            },
+            'attributes',
+            'attributeValues.productAttribute'
+        ])
+        ->where('archived', $archived);
+        $isNumeric = is_numeric($search);
 
-            if ($request->ajax()) {
-                return response()->json([
-                    'products' => view('partials._products-table', compact('products'))->render(),
-                    'pagination' => view('partials._products-pagination', compact('products'))->render()
-                ]);
+        if ($search) {
+            $query->where(function ($q) use ($search, $isNumeric) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+
+                if ($isNumeric) {
+                    $q->orWhere('quantity', 'like', "%{$search}%")
+                      ->orWhere('price', 'like', "%{$search}%");
+                }
+            });
+            if ($isNumeric) {
+                $exactQuantityMatch = Product::where('quantity', $search)->exists();
+                if ($exactQuantityMatch) {
+                    $sortColumn = 'quantity';
+                } else {
+                    $priceMatch = Product::where('price', 'like', "%{$search}%")->exists();
+                    if ($priceMatch) {
+                        $sortColumn = 'price';
+                    }
+                }
+            } else {
+                $sortColumn = 'name';
             }
+        }
+        $query->orderBy($sortColumn, $sortDirection);
+
+        $products = $query->paginate(10)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'products' => view('partials._products-table', compact('products'))->render(),
+                'pagination' => view('partials._products-pagination', compact('products'))->render()
+            ]);
+        }
 
         return view('admin.products', compact('products', 'archived'));
     }
