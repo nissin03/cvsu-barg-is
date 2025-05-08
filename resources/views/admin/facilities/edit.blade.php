@@ -395,7 +395,6 @@
                         </div>
                     </div>
 
-
                     <div class="cols gap10">
                         <button class="tf-button w-full" type="submit">Update facility</button>
                     </div>
@@ -591,18 +590,19 @@
 
 
         function removeUpload(previewId, inputId) {
-            $('#' + previewId).hide(); // Hide the preview
+            // Hide the preview block
+            $('#' + previewId).hide();
             $('#' + previewId + ' img').attr('src', '{{ asset('images/upload/upload-1.png') }}');
             $('#' + previewId + ' p.file-name-overlay').remove();
             $('#' + previewId + ' .remove-upload').hide();
             $('#' + inputId).val('');
+            $('#upload-file').show();
         }
-
 
         function removeGalleryImage(button, inputId) {
             $(button).parent('.gitems').remove();
-            $('#' + inputId).val('');
             if ($('.gitems').length === 0) {
+                $('#' + inputId).val('');
                 $('#galUpload').addClass('up-load');
             }
         }
