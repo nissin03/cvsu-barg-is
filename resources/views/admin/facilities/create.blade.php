@@ -66,6 +66,7 @@
             display: block;
         }
 
+
         /* Room Field Container */
         .room-field-container {
             border: 1px solid #ddd;
@@ -247,7 +248,6 @@
                                     <input type="file" id="gFile" name="images[]" accept="image/*" multiple>
                                 </label>
                             </div>
-                            <div id="image-preview-container"></div>
                         </div>
                     </fieldset>
 
@@ -435,17 +435,19 @@
 
     <script>
         function removeUpload(previewId, inputId) {
+            // Hide the preview block
             $('#' + previewId).hide();
             $('#' + previewId + ' img').attr('src', '{{ asset('images/upload/upload-1.png') }}');
             $('#' + previewId + ' p.file-name-overlay').remove();
             $('#' + previewId + ' .remove-upload').hide();
             $('#' + inputId).val('');
+            $('#upload-file').show();
         }
 
         function removeGalleryImage(button, inputId) {
             $(button).parent('.gitems').remove();
-            $('#' + inputId).val('');
             if ($('.gitems').length === 0) {
+                $('#' + inputId).val('');
                 $('#galUpload').addClass('up-load');
             }
         }

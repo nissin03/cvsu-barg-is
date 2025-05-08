@@ -37,9 +37,16 @@ class UserFacilityController extends Controller
 
     public function show($slug)
     {
+<<<<<<< HEAD
         $facility = Facility::with('facilityAttributes', 'prices')
             ->where('slug', $slug)
             ->firstOrFail();
+=======
+
+        $facility = Facility::with('facilityAttributes', 'prices')
+        ->where('slug', $slug)
+        ->firstOrFail();
+>>>>>>> 13fb758 (Small changes (Remove image and images in facilities and showing images in index))
         $roomNumbers = $facility->facilityAttributes->pluck('room_name')
             ->filter()
             ->map(fn($name) => preg_replace('/[^0-9]/', '', $name))
