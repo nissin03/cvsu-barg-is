@@ -28,7 +28,13 @@
             <td class="text-center">&#8369;{{ $order->total }}</td>
 
             <td>{{ $order->created_at->format('M d, Y') }}</td>
-            <td class="text-center">{{ $order->picked_up_date }}</td>
+            <td class="text-center">
+                @if ($order->picked_up_date)
+                    <span class="badge bg-info"> {{ $order->picked_up_date }}</span>
+                @else
+                    <span class="badge bg-warning">Pending</span>
+                @endif
+            </td>
             <td class="text-center">
                 <a href="{{ route('admin.order.details', ['order_id' => $order->id]) }}">
                     <i class="icon-eye" title="View Details"></i>

@@ -355,6 +355,7 @@ class CartController extends Controller
             $order->email = $user->email;
             $order->reservation_date = $request->input('reservation_date');
             $order->time_slot = $request->input('time_slot');
+            $order->status = 'reserved';
             $order->save();
 
 
