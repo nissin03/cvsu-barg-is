@@ -285,78 +285,6 @@
                     </div>
 
                 </div>
-
-                {{-- <div class="wg-box" id="roomBox">
-                    <fieldset class="name" id="hideRoomBox">
-                        <div class="body-title mb-10">Capacity</div>
-                        <input type="number" min="0" id="roomCapacityWhole" name="whole_capacity"
-                            placeholder="Enter capacity">
-
-                    </fieldset>
-
-                    <div id="dormitoryRooms">
-                        <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
-                            <h4>Details</h4>
-                            <button type="button" data-bs-toggle="modal" data-bs-target="#addMultipleRoomsModal">
-                                Add Rooms
-                            </button>
-                        </div>
-                        <p>No rooms yet :(</p>
-                        <div id="roomContainer" class="mt-4">
-                            <h4>Rooms</h4>
-                            <ul class="list-group" id="roomList"></ul>
-                        </div>
-
-
-                        <!-- Add Multiple Rooms Modal -->
-                        <div class="modal fade" id="addMultipleRoomsModal" tabindex="-1"
-                            aria-labelledby="addMultipleRoomsLabel" aria-hidden="true">
-                            <div class="modal-dialog modal-lg">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="addMultipleRoomsLabel">Add Room</h1>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                    </div>
-
-                                    <div class="modal-body">
-                                        <!-- Table for multiple rooms -->
-                                        <table class="table" id="multipleRoomsTable">
-                                            <thead>
-                                                <tr>
-                                                    <th>Room Name</th>
-                                                    <th>Capacity</th>
-                                                    <th>Sex Restriction</th>
-                                                    <th></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-
-                                            </tbody>
-                                        </table>
-
-
-                                        <button type="button" id="addMultipleRoomsRowBtn">
-                                            Add Another Row
-                                        </button>
-                                    </div>
-
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Close</button>
-
-                                        <button type="button" class="btn btn-primary" id="saveMultipleRoomsBtn">
-                                            Save All
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div> --}}
-
-
                 <!-- Room Management Container -->
                 <div class="wg-box" id="roomBox">
                     <fieldset class="name" id="hideRoomBox">
@@ -379,21 +307,21 @@
                             </button>
                         </div>
 
-                        <!-- No rooms message -->
+
                         <div id="noRoomsMessage" class="alert alert-warning">
                             <i class="bi bi-info-circle me-2"></i> No rooms added yet. Click "Add Rooms" to get started.
                         </div>
 
-                        <!-- Room display -->
+
                         <div id="roomContainer" class="mt-4">
                             <h4 class="mb-3">Rooms</h4>
                             <div class="row" id="roomCardsContainer">
-                                <!-- Room cards will be inserted here -->
+
                             </div>
                             <ul class="list-group d-none" id="roomList"></ul>
                         </div>
 
-                        <!-- Add/Edit Rooms Modal -->
+
                         <div class="modal fade" id="addMultipleRoomsModal" tabindex="-1"
                             aria-labelledby="addMultipleRoomsLabel" aria-hidden="true">
                             <div class="modal-dialog modal-lg">
@@ -428,123 +356,6 @@
                     </div>
                 </div>
 
-                {{-- prices fields  --}}
-                {{-- <div class="wg-box" id="priceBox">
-
-                    <div id="dormitoryFields"
-                        class="d-flex justify-content-between align-items-center border-bottom pb-3">
-                        <h4>Prices</h4>
-                        <button type="button" data-bs-toggle="modal" data-bs-target="#addPrice">Add Price</button>
-                    </div>
-
-                    <p>No prices yet :(</p>
-
-                    <div id="priceContainer" class="mt-4">
-                        <h4>Price List</h4>
-                        <ul class="list-group container-sm" id="priceList"></ul>
-                    </div>
-
-
-                    <div class="cols gap10">
-                        <button class="tf-button w-full" type="submit">Create facility</button>
-                    </div>
-                </div>
-
-                <div class="modal fade" id="addPrice" tabindex="-1" aria-labelledby="addPriceLabel"
-                    aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h1 class="modal-title fs-5" id="exampleModalLabel">Add Price</h1>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="input-group">
-                                    <label for="user-type">Name<span class="tf-color-1">*</span></label>
-                                    <input type="text" id="priceName" name="{{ old('name') }}">
-                                </div>
-                                @error('name')
-                                    <span class="alert alert-danger text-center">{{ $message }} </span>
-                                @enderror
-
-                                <div class="gap22 cols">
-                                    <fieldset class="price_type">
-                                        <div class="body-title mb-10">Price Type<span class="tf-color-1">*</span></div>
-                                        <div class="select">
-                                            <select id="priceTypeSelect" name="price_type">
-                                                <option value="" selected disabled>Choose Price Type...</option>
-                                                <option value="individual"
-                                                    {{ old('price_type') === 'individual' ? 'selected' : '' }} hidden
-                                                    disabled id="pIndividual">
-                                                    Individual
-                                                </option>
-                                                <option value="whole"
-                                                    {{ old('price_type') === 'whole' ? 'selected' : '' }} hidden disabled
-                                                    id="pWhole">
-                                                    Whole Place
-                                                </option>
-                                            </select>
-                                        </div>
-                                    </fieldset>
-                                </div>
-
-                                @error('price_type')
-                                    <span class="alert alert-danger text-center">{{ $message }}</span>
-                                @enderror
-
-
-
-                                <div id="individualPriceFields">
-                                    <fieldset class="name">
-                                        <div class="body-title mb-10">Price <span class="tf-color-1">*</span>
-                                        </div>
-                                        <input type="number" min="1" id="value" name="{{ old('value') }}"
-                                            placeholder="Enter price">
-                                    </fieldset>
-                                </div>
-                                @error('value')
-                                    <span class="alert alert-danger text-center">{{ $message }} </span>
-                                @enderror
-
-                                <div class="form-check d-flex justify-content-center align-items-center my-4">
-                                    <div class="d-flex align-items-center">
-                                        <input type="checkbox" class="form-check-input" id="isBasedOnDays"
-                                            name="is_based_on_days" value="1">
-                                        <label class="form-check-label ms-2 pt-2" for="isBasedOnDays">Is based on
-                                            days?</label>
-                                    </div>
-
-                                    <div id="QuantityChecked" style="padding-left: 10px; display: none;">
-                                        <input class="form-check-input"
-                                            style="height: 1.5rem; width: 1.5rem; padding-left: 5px;" type="checkbox"
-                                            id="isThereAQuantity" name="is_there_a_quantity" value="1">
-                                        <label class="form-check-label pt-1" for="isThereAQuantity">Is there a
-                                            quantity?</label>
-                                    </div>
-                                </div>
-
-                                <div id="dateFields" style="display: none;">
-                                    <div class="input-group">
-                                        <label for="date_from">Date From</label>
-                                        <input type="date" id="date_from" name="prices[0][date_from]">
-                                    </div>
-                                    <div class="input-group">
-                                        <label for="date_to">Date To</label>
-                                        <input type="date" id="date_to" name="prices[0][date_to]">
-                                    </div>
-                                </div>
-
-
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-primary" id="savePriceChanges">Save</button>
-                            </div>
-                        </div>
-                    </div>
-                </div> --}}
-
                 <div class="wg-box" id="priceBox">
                     <div id="dormitoryFields"
                         class="d-flex justify-content-between align-items-center border-bottom pb-3">
@@ -573,8 +384,7 @@
                 </div>
 
                 <!-- Modal for Adding Prices -->
-                <div class="modal fade" id="addPrice" tabindex="-1" aria-labelledby="addPriceLabel"
-                    aria-hidden="true">
+                <div class="modal fade" id="addPrice" tabindex="-1" aria-labelledby="addPriceLabel">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -584,7 +394,6 @@
                             </div>
                             <div class="modal-body">
                                 <div id="priceFormContainer">
-                                    <!-- Dynamic price form cards will be appended here -->
                                 </div>
 
                                 <button type="button" id="addMultiplePricesRowBtn" class="mt-3">
@@ -627,13 +436,12 @@
 
     <script>
         function removeUpload(previewId, inputId) {
-            $('#' + previewId).hide(); // Hide the preview
+            $('#' + previewId).hide();
             $('#' + previewId + ' img').attr('src', '{{ asset('images/upload/upload-1.png') }}');
             $('#' + previewId + ' p.file-name-overlay').remove();
             $('#' + previewId + ' .remove-upload').hide();
             $('#' + inputId).val('');
         }
-
 
         function removeGalleryImage(button, inputId) {
             $(button).parent('.gitems').remove();

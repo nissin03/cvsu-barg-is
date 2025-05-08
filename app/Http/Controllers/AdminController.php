@@ -378,7 +378,7 @@ class AdminController extends Controller
         $categories = Category::whereNull('parent_id')
             ->with('children')
             ->orderBy('id', 'DESC')
-            ->paginate(10);
+            ->paginate(5);
         $pageTitle = 'Category Dashboard';
         return view('admin.categories', compact('categories', 'pageTitle'));
     }
@@ -480,28 +480,54 @@ class AdminController extends Controller
     {
         $archived = $request->query('archived', 0);
         $search = $request->input('search');
+        $sortColumn = $request->input('sort_column', 'created_at');
+        $sortDirection = $request->input('sort_direction', 'DESC');
 
-            $products = Product::with(['category' => function ($query) {
+        $query = Product::with([
+            'category' => function ($query) {
                 $query->with('parent');
-            }, 'attributes'])
-            ->where('archived', $archived)
-            ->where(function ($query) use ($search) {
-                if ($search) {
-                    $query->where('name', 'like', "%{$search}%") 
-                          ->orWhere('description', 'like', "%{$search}%")
-                          ->orWhere('quantity', 'like', "%{$search}%"); 
-                }
-            })
-            ->orderBy('created_at', 'DESC')
-            ->paginate(10);
+            },
+            'attributes',
+            'attributeValues.productAttribute'
+        ])
+        ->where('archived', $archived);
+        $isNumeric = is_numeric($search);
 
-            if ($request->ajax()) {
-                return response()->json([
-                    'products' => view('partials._products-table', compact('products'))->render(),
-                    'pagination' => view('partials._products-pagination', compact('products'))->render()
-                ]);
+        if ($search) {
+            $query->where(function ($q) use ($search, $isNumeric) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+
+                if ($isNumeric) {
+                    $q->orWhere('quantity', 'like', "%{$search}%")
+                      ->orWhere('price', 'like', "%{$search}%");
+                }
+            });
+            if ($isNumeric) {
+                $exactQuantityMatch = Product::where('quantity', $search)->exists();
+                if ($exactQuantityMatch) {
+                    $sortColumn = 'quantity';
+                } else {
+                    $priceMatch = Product::where('price', 'like', "%{$search}%")->exists();
+                    if ($priceMatch) {
+                        $sortColumn = 'price';
+                    }
+                }
+            } else {
+                $sortColumn = 'name';
             }
-        
+        }
+        $query->orderBy($sortColumn, $sortDirection);
+
+        $products = $query->paginate(10)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'products' => view('partials._products-table', compact('products'))->render(),
+                'pagination' => view('partials._products-pagination', compact('products'))->render()
+            ]);
+        }
+
         return view('admin.products', compact('products', 'archived'));
     }
 
@@ -908,13 +934,64 @@ class AdminController extends Controller
     }
 
 
-    public function orders()
+    public function orders(Request $request)
     {
-        $orders = Order::orderBy('created_at', 'DESC')->paginate(12);
+        $status = $request->input('status');
+        $timeSlot = $request->input('time_slot');
+
+        $query = Order::query();
+
+        // Apply filters if they exist
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($timeSlot) {
+            $query->where('time_slot', $timeSlot);
+        }
+
+        $orders = $query->orderBy('created_at', 'DESC')->paginate(12)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'orders' => view('partials._orders-table', compact('orders'))->render(),
+                'pagination' => view('partials._orders-pagination', compact('orders'))->render(),
+                'count' => $orders->total()
+            ]);
+        }
+
         return view('admin.orders', compact('orders'));
     }
 
+    // This route handles the filter functionality
+    public function filterOrders(Request $request)
+    {
+        $status = $request->input('status');
+        $timeSlot = $request->input('time_slot');
 
+        $query = Order::query();
+
+        // Apply filters if they exist
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($timeSlot) {
+            $query->where('time_slot', $timeSlot);
+        }
+
+        $orders = $query->orderBy('created_at', 'DESC')->paginate(12)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'orders' => view('partials._orders-table', compact('orders'))->render(),
+                'pagination' => view('partials._orders-pagination', compact('orders'))->render(),
+                'count' => $orders->total()
+            ]);
+        }
+
+        return redirect()->route('admin.orders', compact('orders'));
+    }
 
     public function order_details($order_id)
     {
@@ -1081,13 +1158,13 @@ class AdminController extends Controller
         $reply = new ContactReplies();
         $reply->contact_id = $contact->id;
         $reply->admin_reply = $request->input('replyMessage');
-        $reply->admin_id = Auth::id(); 
+        $reply->admin_id = Auth::id();
         $reply->save();
 
-   
+
         Mail::to($contact->email)->send(new ReplyToContact($contact, $request->input('replyMessage')));
 
-       
+
         return redirect()->route('admin.contacts')->with('status', 'Reply sent successfully!');
     }
 
@@ -1107,7 +1184,7 @@ class AdminController extends Controller
 
     public function markMultipleAsRead(Request $request)
     {
-        $notificationIds = $request->input('notification_ids'); 
+        $notificationIds = $request->input('notification_ids');
         if (!$notificationIds || empty($notificationIds)) {
             return response()->json([
                 'status' => 'error',
@@ -1960,8 +2037,7 @@ class AdminController extends Controller
 
     public function getWeeklyRegisteredUsers($month, $year)
     {
-        // Fetch the number of users registered weekly in the specified month and year
-        // Modify as per your requirements
+
         return User::whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->count() ?: 0;
@@ -1969,8 +2045,6 @@ class AdminController extends Controller
 
     public function getDailyRegisteredUsers($month, $year)
     {
-        // Fetch the number of users registered daily in the specified month and year
-        // Modify as per your requirements
         return User::whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->groupBy(DB::raw('DAY(created_at)'))
@@ -1980,15 +2054,8 @@ class AdminController extends Controller
 
     public function getRecentUsers()
     {
-        // Fetch the most recent users
-        return User::latest()->take(5)->get() ?: []; // Adjust as necessary
+        return User::latest()->take(5)->get() ?: [];
     }
-
-
-
-
-
-
     public function downloadUserReportPdf(Request $request)
     {
         $selectedYear  = $request->input('selectedYear');
@@ -2085,15 +2152,6 @@ class AdminController extends Controller
 
         return $pdf->download('user_report_' . $selectedYear . '_' . $selectedMonth . '.pdf');
     }
-
-
-
-
-
-
-
-
-
     public function downloadInventoryReportPdf(Request $request)
     {
         // Validate the inputs
@@ -2310,30 +2368,6 @@ class AdminController extends Controller
         }
     }
 
-
-    // public function filterReservations(Request $request)
-    // {
-    //     $query = Reservation::with(['user', 'rental']);
-
-    //     if ($request->filled('reservation_type')) {
-    //         $query->whereHas('rental', function ($q) use ($request) {
-    //             $q->where('name', $request->reservation_type);
-    //         });
-    //     }
-
-    //     if ($request->filled('rent_status')) {
-    //         $query->where('rent_status', $request->rent_status);
-    //     }
-
-    //     if ($request->filled('payment_status')) {
-    //         $query->where('payment_status', $request->payment_status);
-    //     }
-
-    //     $reservations = $query->get();
-
-    //     return response()->json($reservations);
-    // }
-
     public function filterReservations(Request $request)
     {
         $query = Reservation::query();
@@ -2416,24 +2450,24 @@ class AdminController extends Controller
         return redirect()->route('admin.users')->with('success', 'User deleted successfully');
     }
 
-    public function filterOrders(Request $request)
-    {
-        $query = Order::query();
+    // public function filterOrders(Request $request)
+    // {
+    //     $query = Order::query();
 
-        // Apply filters
-        if ($request->has('time_slot') && $request->time_slot != '') {
-            $query->where('time_slot', $request->time_slot);
-        }
+    //     // Apply filters
+    //     if ($request->has('time_slot') && $request->time_slot != '') {
+    //         $query->where('time_slot', $request->time_slot);
+    //     }
 
-        if ($request->has('status') && $request->status != '') {
-            $query->where('status', $request->status);
-        }
+    //     if ($request->has('status') && $request->status != '') {
+    //         $query->where('status', $request->status);
+    //     }
 
-        // Fetch the filtered orders with the count of order items
-        $orders = $query->withCount('orderItems')->get();
+    //     // Fetch the filtered orders with the count of order items
+    //     $orders = $query->withCount('orderItems')->get();
 
-        return response()->json($orders); // Send the filtered orders as JSON response
-    }
+    //     return response()->json($orders); // Send the filtered orders as JSON response
+    // }
 
 
     public function order_filter(Request $request)
@@ -2605,427 +2639,6 @@ class AdminController extends Controller
 
         return response()->json($products);
     }
-
-
-
-
-    // Rentals Page
-
-    public function rentals()
-    {
-        $rentals = Rental::with('dormitoryRooms')->orderBy('created_at', 'DESC')->paginate(5);
-        $dormitoryRooms = DormitoryRoom::all();
-        return view('admin.rentals', compact('rentals', 'dormitoryRooms'));
-    }
-
-
-    public function rental_add()
-    {
-
-        return view('admin.rental-add');
-    }
-
-    public function rental_store(Request $request)
-    {
-        // Define rental names that require specific fields
-        $priceRequiredNames = ['Male Dormitory', 'Female Dormitory', 'International House II'];
-        $internalExternalRequiredNames = ['International Convention Center', 'Rolle Hall', 'Swimming Pool'];
-        // dd($request->all());
-        try {
-            $rules = [
-                'name' => 'required|unique:rentals,name',
-                'description' => 'required',
-                'rules_and_regulations' => 'required|string',
-                'capacity' => 'nullable|integer',
-                'price' => [
-                    'nullable',
-                    'numeric',
-                    function ($attribute, $value, $fail) use ($request, $priceRequiredNames) {
-                        if (in_array($request->name, $priceRequiredNames) && empty($value)) {
-                            $fail('The price field is required for the selected rental type.');
-                        }
-                    },
-                ],
-                'internal_price' => [
-                    'nullable',
-                    'numeric',
-                    function ($attribute, $value, $fail) use ($request, $internalExternalRequiredNames) {
-                        if (in_array($request->name, $internalExternalRequiredNames) && empty($value)) {
-                            $fail('The internal price field is required for the selected rental type.');
-                        }
-                    },
-                ],
-                'external_price' => [
-                    'nullable',
-                    'numeric',
-                    function ($attribute, $value, $fail) use ($request, $internalExternalRequiredNames) {
-                        if (in_array($request->name, $internalExternalRequiredNames) && empty($value)) {
-                            $fail('The external price field is required for the selected rental type.');
-                        }
-                    },
-
-                ],
-                'exclusive_price' => [
-                    'nullable',
-                    'numeric',
-                    function ($attribute, $value, $fail) use ($request, $internalExternalRequiredNames) {
-                        if (in_array($request->name, $internalExternalRequiredNames) && empty($value)) {
-                            $fail('The exclusive price field is required for the selected rental type.');
-                        }
-                    },
-
-                ],
-                'status' => 'required|in:available,not available',
-                'featured' => 'required|boolean',
-                'image' => 'required|mimes:png,jpg,jpeg|max:2048',
-                'requirements' => 'required|file|mimes:pdf,doc,docx,jpg,png,jpeg|max:2048',
-                'images.*' => 'nullable|file|mimes:jpg,png,jpeg|max:2048',
-                'sex' => 'required|in:male,female,all', // Ensure the sex is required and valid
-            ];
-
-            if (in_array($request->name, ['Male Dormitory', 'Female Dormitory', 'International House II'])) {
-                $rules['room_number'] = 'required|array';
-                $rules['room_number.*'] = 'string|required';
-                $rules['room_capacity'] = 'required|array';
-                $rules['room_capacity.*'] = 'integer|required';
-            } else {
-                $rules['room_number'] = 'nullable|array';
-                $rules['room_capacity'] = 'nullable|array';
-            }
-
-            $request->validate($rules);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            // Log validation errors
-            Log::error('Validation failed for rental store: ', $e->validator->errors()->toArray());
-            return redirect()->back()->withErrors($e->validator)->withInput();
-        }
-
-        // Initialize the Rental model
-        $rental = new Rental();
-        $rental->name = $request->name;
-        $rental->slug = Str::slug($request->name);
-        $rental->description = $request->description;
-        $rental->rules_and_regulations = $request->rules_and_regulations;
-        $rental->price = in_array($request->name, $priceRequiredNames) ? $request->price : null;
-        $rental->internal_price = in_array($request->name, $internalExternalRequiredNames) ? $request->internal_price : null;
-        $rental->external_price = in_array($request->name, $internalExternalRequiredNames) ? $request->external_price : null;
-        $rental->exclusive_price = $request->name === 'Swimming Pool' ? $request->exclusive_price : null;
-        $rental->capacity = $request->capacity;
-        $rental->status = $request->status;
-        $rental->featured = $request->featured;
-        $rental->sex = $request->sex; // Store the selected sex
-
-        $current_timestamp = Carbon::now()->timestamp;
-
-        // Ensure sex restriction for Male/Female Dormitories
-        if ($request->name == 'Male Dormitory' && $request->sex != 'male') {
-            return redirect()->back()->withErrors(['sex' => 'Only males can reserve in the Male Dormitory.'])->withInput();
-        }
-
-        if ($request->name == 'Female Dormitory' && $request->sex != 'female') {
-            return redirect()->back()->withErrors(['sex' => 'Only females can reserve in the Female Dormitory.'])->withInput();
-        }
-
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = $current_timestamp . '.' . $image->extension();
-            $this->GenerateRentalThumbnailsImage($image, $imageName);
-            $rental->image = $imageName;
-        }
-
-        // Handle gallery images
-        $gallery_arr = [];
-        $gallery_images = "";
-        $counter = 1;
-
-        if ($request->hasFile('images')) {
-            $allowedFileExtension = ['jpg', 'png', 'jpeg'];
-            $files = $request->file('images');
-            foreach ($files as $file) {
-                $gextension = $file->getClientOriginalExtension();
-                $gcheck = in_array($gextension, $allowedFileExtension);
-
-                if ($gcheck) {
-                    $gFileName = $current_timestamp . "." . $counter . '.' . $gextension;
-                    $this->GenerateRentalThumbnailsImage($file, $gFileName);
-                    array_push($gallery_arr, $gFileName);
-                    $counter++;
-                }
-            }
-            $gallery_images = implode(',', $gallery_arr);
-        }
-
-        $rental->images = $gallery_images;
-
-        // Handle Requirements upload
-        if ($request->hasFile('requirements')) {
-            $requirementsFile = $request->file('requirements');
-            $requirementsFileName = $current_timestamp . '-requirements.' . $requirementsFile->getClientOriginalExtension();
-            if (Rental::where('requirements', $requirementsFileName)->exists()) {
-                Log::warning('Requirements file name already exists: ' . $requirementsFileName);
-                return redirect()->back()->withErrors(['requirements' => 'The Requirements file name already exists. Please rename the file.'])->withInput();
-            }
-            $destinationPath = public_path('uploads/rentals/files');
-            if (!File::exists($destinationPath)) {
-                File::makeDirectory($destinationPath, 0755, true);
-            }
-            $requirementsFile->move($destinationPath, $requirementsFileName);
-            $rental->requirements = $requirementsFileName;
-        }
-
-        $rental->save();
-
-        if (
-            in_array($request->name, ['Male Dormitory', 'Female Dormitory', 'International House II']) &&
-            !empty($request->room_number) && !empty($request->room_capacity)
-        ) {
-            foreach ($request->room_number as $index => $roomNumber) {
-                DormitoryRoom::create([
-                    'rental_id' => $rental->id,
-                    'room_number' => $roomNumber,
-                    'room_capacity' => $request->room_capacity[$index],
-                    'start_date' => $request->start_date,
-                    'end_date' => $request->end_date,
-                ]);
-            }
-        }
-
-        return redirect()->route('admin.rentals')->with('status', 'Rental has been added successfully!');
-    }
-
-
-
-
-
-    public function GenerateRentalThumbnailsImage($image, $imageName)
-    {
-        $destinationPathThumbnail = public_path('uploads/rentals/thumbnails');
-        $destinationPath = public_path('uploads/rentals');
-        $img = Image::read($image->getRealPath());
-        $img->cover(700, 700, "top");
-        $img->resize(700, 700, function ($constraint) {
-            $constraint->aspectRatio();
-        })->save($destinationPath . '/' . $imageName);
-
-        $img->resize(204, 204, function ($constraint) {
-            $constraint->aspectRatio();
-        })->save($destinationPathThumbnail . '/' . $imageName);
-    }
-
-    //  RENTAL ADMIN EDIT FUNCTION
-    public function rental_edit($id)
-    {
-        $rental = Rental::with('dormitoryRooms')->find($id);
-        if (!$rental) {
-            return redirect()->route('admin.rentals')->with('error', 'Rental not found.');
-        }
-        return view('admin.rental-edit', compact('rental'));
-    }
-    public function rental_update(Request $request)
-    {
-        // Define rental types that require specific fields
-        $priceRequiredNames = ['Male Dormitory', 'Female Dormitory', 'International House II'];
-        $internalExternalRequiredNames = ['International Convention Center', 'Rolle Hall', 'Swimming Pool'];
-
-        // Validate the incoming request
-        $rules = [
-            'id' => 'required|exists:rentals,id',
-            'name' => 'required',
-            'description' => 'required',
-            'rules_and_regulations' => 'required|string',
-            'price' => [
-                'nullable',
-                'numeric',
-                function ($attribute, $value, $fail) use ($request, $priceRequiredNames) {
-                    if (in_array($request->name, $priceRequiredNames) && empty($value)) {
-                        $fail('The price field is required for the selected rental type.');
-                    }
-                },
-            ],
-            'internal_price' => [
-                'nullable',
-                'numeric',
-                function ($attribute, $value, $fail) use ($request, $internalExternalRequiredNames) {
-                    if (in_array($request->name, $internalExternalRequiredNames) && empty($value)) {
-                        $fail('The internal price field is required for the selected rental type.');
-                    }
-                },
-            ],
-            'external_price' => [
-                'nullable',
-                'numeric',
-                function ($attribute, $value, $fail) use ($request, $internalExternalRequiredNames) {
-                    if (in_array($request->name, $internalExternalRequiredNames) && empty($value)) {
-                        $fail('The external price field is required for the selected rental type.');
-                    }
-                },
-            ],
-            'exclusive_price' => [
-                'nullable',
-                'numeric',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($request->name === 'Swimming Pool' && empty($value)) {
-                        $fail('The exclusive price is required for the Swimming Pool rental.');
-                    }
-                    if ($request->name !== 'Swimming Pool' && !empty($value)) {
-                        $fail('The exclusive price field should not be filled for this rental type.');
-                    }
-                },
-            ],
-
-            'status' => 'required|in:available,not available',
-            'featured' => 'required|boolean',
-            'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
-            'requirements' => 'nullable|file|mimes:pdf,doc,docx,jpg,png,jpeg|max:2048',
-            'images.*' => 'nullable|file|mimes:jpg,png,jpeg|max:2048',
-            'room_number' => 'required_if:name,Male Dormitory,Female Dormitory,International House II|array',
-            'room_number.*' => 'required|string',
-            'room_capacity' => 'required_if:name,Male Dormitory,Female Dormitory,International House II|array',
-            'room_capacity.*' => 'required|integer',
-            'start_date' => 'required_if:name,Male Dormitory,Female Dormitory,International House II|array',
-            'start_date.*' => 'required|date',
-            'end_date' => 'required_if:name,Male Dormitory,Female Dormitory,International House II|array',
-            'end_date.*' => 'required|date|after_or_equal:start_date.*',
-        ];
-
-        $validatedData = $request->validate($rules);
-
-        // Retrieve the existing Rental model
-        $rental = Rental::findOrFail($request->id);
-
-        // Update rental fields
-        $rental->name = $request->name;
-        $rental->slug = Str::slug($request->name);
-        $rental->description = $request->description;
-        $rental->rules_and_regulations = $request->rules_and_regulations;
-        $rental->price = in_array($request->name, $priceRequiredNames) ? $request->price : null;
-        $rental->internal_price = in_array($request->name, $internalExternalRequiredNames) ? $request->internal_price : null;
-        $rental->external_price = in_array($request->name, $internalExternalRequiredNames) ? $request->external_price : null;
-        $rental->exclusive_price = in_array($request->name, $internalExternalRequiredNames) ? $request->exclusive_price : null;
-
-        // Ensure capacity is updated if applicable
-        if (in_array($request->name, $internalExternalRequiredNames)) {
-            $rental->capacity = $request->capacity;
-        }
-
-        $rental->status = $request->status;
-        $rental->featured = $request->featured;
-        $current_timestamp = Carbon::now()->timestamp;
-
-        // Handle main image upload
-        if ($request->hasFile('image')) {
-            Log::info('Image file detected for rental update');
-            if ($rental->image && File::exists(public_path('uploads/rentals/' . $rental->image))) {
-                File::delete(public_path('uploads/rentals/' . $rental->image));
-            }
-            if ($rental->image && File::exists(public_path('uploads/rentals/thumbnails/' . $rental->image))) {
-                File::delete(public_path('uploads/rentals/thumbnails/' . $rental->image));
-            }
-
-            $image = $request->file('image');
-            $imageName = $current_timestamp . '.' . $image->extension();
-            $this->GenerateRentalThumbnailsImage($image, $imageName);
-            $rental->image = $imageName;
-        }
-
-        // Handle gallery images
-        $gallery_arr = [];
-        if ($request->hasFile('images')) {
-            Log::info('Gallery images detected for rental update');
-            if ($rental->images) {
-                foreach (explode(",", $rental->images) as $ofile) {
-                    if (File::exists(public_path('uploads/rentals/' . $ofile))) {
-                        File::delete(public_path('uploads/rentals/' . $ofile));
-                    }
-                    if (File::exists(public_path('uploads/rentals/thumbnails/' . $ofile))) {
-                        File::delete(public_path('uploads/rentals/thumbnails/' . $ofile));
-                    }
-                }
-            }
-
-            $counter = 1;
-            foreach ($request->file('images') as $file) {
-                $gfilename = $current_timestamp . "-" . $counter . "." . $file->getClientOriginalExtension();
-                $this->GenerateRentalThumbnailsImage($file, $gfilename);
-                $gallery_arr[] = $gfilename;
-                $counter++;
-            }
-            $rental->images = implode(',', $gallery_arr);
-        }
-
-        // Handle Requirements upload
-        if ($request->hasFile('requirements')) {
-            Log::info('Requirements file detected for rental update');
-            if ($rental->requirements && File::exists(public_path('uploads/rentals/files/' . $rental->requirements))) {
-                File::delete(public_path('uploads/rentals/files/' . $rental->requirements));
-            }
-
-            $requirementsFile = $request->file('requirements');
-            $requirementsFileName = $current_timestamp . '-requirements.' . $requirementsFile->getClientOriginalExtension();
-            $requirementsFile->move(public_path('uploads/rentals/files'), $requirementsFileName);
-            $rental->requirements = $requirementsFileName;
-        }
-
-        $rental->save();
-
-        // Handle Dormitory Rooms Deletion
-        if ($request->has('removed_rooms')) {
-            $removedRoomIds = $request->removed_rooms;
-            DormitoryRoom::whereIn('id', $removedRoomIds)->delete();
-        }
-
-        // Handle Dormitory Rooms Update or Creation
-        if (in_array($rental->name, ['Male Dormitory', 'Female Dormitory', 'International House II'])) {
-            if ($request->has('room_number')) {
-                foreach ($request->room_number as $index => $roomNumber) {
-                    // Use `findOrNew` for existing rooms and new ones
-                    $roomId = $request->room_id[$index] ?? null;
-                    $dormitoryRoom = DormitoryRoom::findOrNew($roomId);
-
-                    $dormitoryRoom->rental_id = $rental->id;
-                    $dormitoryRoom->room_number = $roomNumber;
-                    $dormitoryRoom->room_capacity = $request->room_capacity[$index];
-                    $dormitoryRoom->start_date = $request->start_date[$index];
-                    $dormitoryRoom->end_date = $request->end_date[$index];
-                    $dormitoryRoom->save();
-                }
-            }
-        }
-
-        return redirect()->route('admin.rentals')->with('success', 'Rental updated successfully.');
-    }
-
-
-
-
-    public function rental_delete($id)
-    {
-
-        $rental = Rental::find($id);
-        if (File::exists(public_path('uploads/rentals') . '/' . $rental->image)) {
-            (File::delete(public_path('uploads/rentals') . '/' . $rental->image));
-        }
-        if (File::exists(public_path('uploads/rentals/thumbnails') . '/' . $rental->image)) {
-            (File::delete(public_path('uploads/rentals/thumbnails') . '/' . $rental->image));
-        }
-
-        foreach (explode(",", $rental->images) as $ofile) {
-            if (File::exists(public_path('uploads/rentals') . '/' . $ofile)) {
-                File::delete(public_path('uploads/rentals') . '/' . $ofile);
-            }
-
-            if (File::exists(public_path('uploads/rentals/thumbails') . '/' . $ofile)) {
-                File::delete(public_path('uploads/rentals/thumbails') . '/' . $ofile);
-            }
-        }
-
-        $rental->delete();
-        return redirect()->route('admin.rentals')->with('status', 'Rental has been deleted successfully !');
-    }
-
-
-
-
     public function reservations(Request $request)
     {
         // Initial query for reservations with related models
@@ -3075,11 +2688,6 @@ class AdminController extends Controller
         return view("admin.reservation", compact('reservations', 'availableRooms'));
     }
 
-
-
-
-
-
     public function reservationHistory($reservation_id)
     {
         // Fetch the reservation record with related user and admin information
@@ -3103,9 +2711,6 @@ class AdminController extends Controller
 
         return view('admin.reservation-history', compact('reservation', 'history'));
     }
-
-
-
 
     public function event_items($reservation_id)
     {
@@ -3537,11 +3142,6 @@ class AdminController extends Controller
         return $pdf->download($filename);
     }
 
-
-
-
-
-
     public function rentalsReportsName(Request $request)
     {
         // Get the current date and year
@@ -3747,18 +3347,6 @@ class AdminController extends Controller
         return $pdf->download($filename);
     }
 
-
-
-
-
-
-
-
-
-
-
-    // try code
-
     public function showUserReports(Request $request)
     {
         // Get the current year and set the selected year from the request or default to the current year
@@ -3849,9 +3437,6 @@ class AdminController extends Controller
         // Return the results to the view
         return view('admin.user-reports', compact('newUsersCount', 'newUsers', 'startDate', 'endDate', 'chartData'));
     }
-
-
-
 
     // Controller method to generate the sales report
     public function generateInputSales(Request $request)

@@ -29,10 +29,6 @@ use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\UserFacilityController;
 
 Auth::routes(['reset' => true]);
-Route::get('/test-broadcast', function() {
-    broadcast(new TestEvent());
-    return 'Event Broadcasted';
-});
 
 
 Auth::routes();
@@ -133,7 +129,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/check-pool-capacity/{rentalId}/{quantity}', [RentalController::class, 'checkPoolCapacity']);
 
 
-
+    // Route::get('reservations', [UserFacilityController::class, 'reservations'])->name('user.reservations.facilities');
+    // Route::get('reservation/{reservation_id}', [UserFacilityController::class, 'reservationDetails'])->name('user.reservation.details');
+    // Route::post('reservation/cancel/{id}', [UserFacilityController::class, 'cancelReservation'])->name('user.reservation.cancel');
 
 
 
@@ -221,14 +219,9 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
 
 
     Route::get('/admin/orders', [AdminController::class, 'orders'])->name('admin.orders');
-    Route::get('/orders/filter', [AdminController::class, 'order_filter'])->name('orders.filter');
-    Route::get('/admin/filter-reservations', [AdminController::class, 'filterReservations']);
-
-
+    Route::get('/admin/orders/filters', [AdminController::class, 'filterOrders'])->name('admin.orders.filter');
     Route::get('/admin/order/{order_id}/details', [AdminController::class, 'order_details'])->name('admin.order.details');
-    // Route::get('/admin/order/{order_id}/details', [AdminController::class, 'showOrderDetails'])->name('admin.order.details');
     Route::put('/admin/order/update-status', [AdminController::class, 'update_order_status'])->name('admin.order.status.update');
-    Route::get('/admin/orders/filter', [AdminController::class, 'filterOrders'])->name('admin.orders.filter');
 
 
     Route::get('/admin/slide', [AdminController::class, 'slides'])->name('admin.slides');
@@ -241,17 +234,12 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::get('/admin/contact', [AdminController::class, 'contacts'])->name('admin.contacts');
     Route::delete('/admin/contact/{id}/delete', [AdminController::class, 'contact_delete'])->name('admin.contact.delete');
     Route::post('/admin/contact/{id}/reply', [AdminController::class, 'contact_reply'])->name('admin.contact.reply');
-    // Route::post('/notifications/{id}/mark-read', [AdminController::class, 'markAsRead']);
-    // Route::post('/notifications/mark-read-multiple', [AdminController::class, 'markMultipleAsRead']);
     Route::get('/notifications/count', [AdminController::class, 'getUnreadNotificationCount']);
     Route::post('/notifications/mark-read-multiple', [AdminController::class, 'markMultipleAsRead']);
     Route::post('/notifications/mark-read/{id}', [AdminController::class, 'markAsRead']);
     Route::get('/notifications/unread-count', [AdminController::class, 'unreadCount']);
     Route::post('/notifications/delete-multiple', [AdminController::class, 'deleteMultipleNotifications']);
     Route::get('/notifications/latest', [AdminController::class, 'latest']);
-
-
-
 
 
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
@@ -265,7 +253,6 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
 
     Route::get('/admin/search', [AdminController::class, 'searchproduct'])->name('admin.searchproduct');
 
-
     Route::get('/admin/index-weekly', [AdminController::class, 'indexWeekly'])->name('admin.index-weekly');
     Route::get('/admin/getWeeklyData', [AdminController::class, 'getWeeklyData'])->name('admin.getWeeklyData');
     Route::get('/admin/index-daily', [AdminController::class, 'indexDaily'])->name('admin.index-daily');
@@ -276,8 +263,6 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::get('/admin/report-inventory', [AdminController::class, 'generateInventory'])->name('admin.report-inventory');
     Route::get('/admin/report-statements', [AdminController::class, 'listBillingStatements'])->name('admin.report-statements');
     Route::get('/admin/report-statement/{orderId}', [AdminController::class, 'generateBillingStatement'])->name('admin.report-statement');
-
-
 
     Route::get('/user-reports', [AdminController::class, 'showUserReports'])->name('admin.user-reports');
     Route::post('/user-reports/generate', [AdminController::class, 'generateUserReports'])->name('admin.user-reports.generate');
@@ -323,17 +308,4 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
 
     Route::get('admin/report/facilities', [AdminController::class, 'generateFacilitespayment'])->name('admin.report.facilities');
 
-
-
-    Route::get('/admin/reservation/{reservation_id}/events', [AdminController::class, 'event_items'])->name('admin.reservation-events');
-    Route::get('/admin/reservation-history/{reservation_id}', [AdminController::class, 'reservationHistory'])->name('admin.reservation-history');
-    Route::post('/admin/update-reservation-status/', [AdminController::class, 'updateStatus'])->name('admin.updateReservationStatus');
-    Route::post('/admin/update-payment-status', [AdminController::class, 'updatePaymentStatus'])->name('admin.updatePaymentStatus');
-    // Route::post('/admin/reservation/{reservation}/update-status', [AdminController::class, 'updateStatus'])->name('admin.update-status');
-    // Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.reservatioiindex');
-
-    Route::post('/admin/reservation/{reservation_id}/update-status', [AdminController::class, 'updateReservationStatus'])->name('admin.update-reservation-status');
-
-
-    Route::get('/admin/reservation', [AdminController::class, 'reservations'])->name('admin.reservation');
 });

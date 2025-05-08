@@ -21,8 +21,6 @@ class LowStockEvent implements ShouldBroadcastNow
     public $product;
     public $quantity;
 
-    public bool $afterCommit = false;
-
     public function __construct($product, $quantity)
     {
         $this->product = $product;
@@ -31,12 +29,9 @@ class LowStockEvent implements ShouldBroadcastNow
 
     public function broadcastOn(): array
     {
-        return [new Channel('admin-notification')];
-    }
-
-    public function broadcastAs()
-    {
-        return 'low-stock-event';
+        return [
+            new PrivateChannel('admin-notification'),
+        ];
     }
 
     public function broadcastWith()
@@ -49,5 +44,5 @@ class LowStockEvent implements ShouldBroadcastNow
         ];
 
     }
-    
+
 }

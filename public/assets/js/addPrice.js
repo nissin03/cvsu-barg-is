@@ -1,109 +1,4 @@
-// export let prices = [];
-
-// 'use strict';
-// const $priceList = $("#priceList");
-// const $hiddenPrices = $("#hiddenPrices");
-// const $addPriceModal = $("#addPrice");
-
-// // Handle Save Price Changes (Add Price)
-// $("#savePriceChanges").on("click", function (event) {
-//     event.preventDefault();
-//     savePrice();
-// });
-
-// export function savePrice() {
-//     const name = $("#priceName").val().trim();
-//     const priceType = $("#priceTypeSelect").val();
-//     const value = $("#value").val().trim();
-//     const isBasedOnDays = $("#isBasedOnDays").prop("checked") ? 1 : 0;
-//     const isThereAQuantity = $("#isThereAQuantity").prop("checked") ? 1 : 0;
-
-//     if (!name || !priceType || !value) {
-//         alert("Please fill in all fields.");
-//         return;
-//     }
-
-//     if (isNaN(value) || parseFloat(value) <= 0) {
-//         alert("Price must be a valid positive number.");
-//         return;
-//     }
-
-//     prices.push({
-//         name,
-//         price_type: priceType,
-//         value: parseFloat(value),
-//         is_based_on_days: isBasedOnDays,
-//         is_there_a_quantity: isThereAQuantity,
-//     });
-
-//     updatePriceUI();
-// }
-
-// function renderPriceList() {
-//     $priceList.empty();
-//     prices.forEach((price, index) => {
-//         $priceList.append(createPriceCard(price, index));
-//     });
-// }
-
-// function createPriceCard(price, index) {
-//     return `
-//             <div class="card p-3 mb-3">
-//                 <div class="card-body d-flex justify-content-between align-items-center">
-//                     <div>
-//                         <h4>${price.name}</h4>
-//                         <p>Type: <span class="badge bg-success">${price.price_type}</span></p>
-//                         <p>Price: PHP ${price.value}</p>
-//                         <p>Is Based on Days?: 
-//                             <span class="badge ${price.is_based_on_days ? "bg-success" : "bg-danger"}">
-//                                 ${price.is_based_on_days ? "Yes" : "No"}
-//                             </span>
-//                         </p>
-//                         <p>Is There A Quantity?: 
-//                             <span class="badge ${price.is_there_a_quantity ? "bg-success" : "bg-danger"}">
-//                                 ${price.is_there_a_quantity ? "Yes" : "No"}
-//                             </span>
-//                         </p>
-//                     </div>
-//                     <button class="btn btn-lg btn-outline-danger delete-price" data-index="${index}">
-//                         <i class="icon-trash"></i>
-//                     </button>
-//                 </div>
-//             </div>`;
-// }
-
-// function updatePriceUI() {
-//     renderPriceList();
-//     updateHiddenPrices();
-//     $addPriceModal.modal("hide");
-//     clearPriceForm();
-// }
-
-// function clearPriceForm() {
-//     $("#priceName, #value").val("");
-//     $("#priceTypeSelect").val("");
-//     $("#isBasedOnDays, #isThereAQuantity").prop("checked", false);
-// }
-
-// // Delete price (using event delegation)
-// $priceList.on("click", ".delete-price", function () {
-//     const index = $(this).data("index");
-//     prices.splice(index, 1);
-//     updatePriceUI();
-// });
-
-// function updateHiddenPrices() {
-//     $hiddenPrices.empty();
-//     prices.forEach((price, index) => {
-//         $hiddenPrices.append(createHiddenInput(`prices[${index}][name]`, price.name));
-//         $hiddenPrices.append(createHiddenInput(`prices[${index}][price_type]`, price.price_type));
-//         $hiddenPrices.append(createHiddenInput(`prices[${index}][value]`, price.value));
-//         $hiddenPrices.append(createHiddenInput(`prices[${index}][is_based_on_days]`, price.is_based_on_days));
-//         $hiddenPrices.append(createHiddenInput(`prices[${index}][is_there_a_quantity]`, price.is_there_a_quantity));
-//     });
-// }
-
-'use strict';
+"use strict";
 
 $(document).ready(function () {
     const $addPriceModal = $("#addPrice");
@@ -130,15 +25,15 @@ $(document).ready(function () {
 
     // Dynamically disable past dates for all price forms
     function disablePastDates($form) {
-        const today = new Date().toISOString().split('T')[0];
-        $form.find('.date-from').attr('min', today);
-        $form.find('.date-to').attr('min', today);
+        const today = new Date().toISOString().split("T")[0];
+        $form.find(".date-from").attr("min", today);
+        $form.find(".date-to").attr("min", today);
     }
 
     // Ensure that date-to is never earlier than date-from
-    $(document).on('change', '.date-from', function () {
+    $(document).on("change", ".date-from", function () {
         const $dateFrom = $(this);
-        const $dateTo = $dateFrom.closest('.price-form-card').find('.date-to');
+        const $dateTo = $dateFrom.closest(".price-form-card").find(".date-to");
         if ($dateFrom.val()) {
             $dateTo.val($dateFrom.val());
         }
@@ -198,11 +93,11 @@ $(document).ready(function () {
     }
 
     // Toggle the display of date fields based on 'is-based-on-days' checkbox
-    $(document).on('change', '.is-based-on-days', function () {
-        const $form = $(this).closest('.price-form-card');
-        const $dateFields = $form.find('.date-fields');
+    $(document).on("change", ".is-based-on-days", function () {
+        const $form = $(this).closest(".price-form-card");
+        const $dateFields = $form.find(".date-fields");
 
-        if ($(this).prop('checked')) {
+        if ($(this).prop("checked")) {
             $dateFields.show();
             disablePastDates($form); // Disable past dates when shown
         } else {
@@ -217,7 +112,9 @@ $(document).ready(function () {
             $card.remove();
         } else {
             // Reset the first form card if it is the only one
-            $card.find("input[type='text'], input[type='number'], select").val("");
+            $card
+                .find("input[type='text'], input[type='number'], select")
+                .val("");
             $card.find("input[type='checkbox']").prop("checked", false);
             $card.find("input[type='date']").val("");
         }
@@ -242,8 +139,16 @@ $(document).ready(function () {
             const priceName = $(this).find(".price-name").val().trim();
             const priceType = $(this).find(".price-type").val();
             const priceValue = $(this).find(".price-value").val().trim();
-            const isBasedOnDays = $(this).find(".is-based-on-days").prop("checked") ? 1 : 0;
-            const isThereAQuantity = $(this).find(".is-there-a-quantity").prop("checked") ? 1 : 0;
+            const isBasedOnDays = $(this)
+                .find(".is-based-on-days")
+                .prop("checked")
+                ? 1
+                : 0;
+            const isThereAQuantity = $(this)
+                .find(".is-there-a-quantity")
+                .prop("checked")
+                ? 1
+                : 0;
             const dateFrom = $(this).find(".date-from").val();
             const dateTo = $(this).find(".date-to").val();
 
@@ -251,7 +156,13 @@ $(document).ready(function () {
                 return true;
             }
 
-            if (!priceName || !priceType || !priceValue || isNaN(priceValue) || parseFloat(priceValue) <= 0) {
+            if (
+                !priceName ||
+                !priceType ||
+                !priceValue ||
+                isNaN(priceValue) ||
+                parseFloat(priceValue) <= 0
+            ) {
                 valid = false;
                 return false;
             }
@@ -263,7 +174,7 @@ $(document).ready(function () {
                 is_based_on_days: isBasedOnDays,
                 is_there_a_quantity: isThereAQuantity,
                 date_from: dateFrom,
-                date_to: dateTo
+                date_to: dateTo,
             });
         });
 
@@ -305,9 +216,6 @@ $(document).ready(function () {
         });
     }
 
-
-
-
     // Create a price card for each price in the list
     function createPriceCard(price, index) {
         return `
@@ -315,11 +223,19 @@ $(document).ready(function () {
             <div class="card-body d-flex justify-content-between align-items-center">
                 <div>
                     <h4>${price.name}</h4>
-                    <p>Type: <span class="badge bg-success">${price.price_type}</span></p>
+                    <p>Type: <span class="badge bg-success">${
+                        price.price_type
+                    }</span></p>
                     <p>Price: PHP ${price.value.toFixed(2)}</p>
-                    <p>Based on Days?: <span class="badge ${price.is_based_on_days ? "bg-success" : "bg-danger"}">${price.is_based_on_days ? "Yes" : "No"}</span></p>
-                    <p>Quantity?: <span class="badge ${price.is_there_a_quantity ? "bg-success" : "bg-danger"}">${price.is_there_a_quantity ? "Yes" : "No"}</span></p>
-                    <p>Date: ${price.date_from || 'N/A'} to ${price.date_to || 'N/A'}</p>
+                    <p>Based on Days?: <span class="badge ${
+                        price.is_based_on_days ? "bg-success" : "bg-danger"
+                    }">${price.is_based_on_days ? "Yes" : "No"}</span></p>
+                    <p>Quantity?: <span class="badge ${
+                        price.is_there_a_quantity ? "bg-success" : "bg-danger"
+                    }">${price.is_there_a_quantity ? "Yes" : "No"}</span></p>
+                    <p>Date: ${
+                        price.date_from || "N/A"
+                    } to ${price.date_to || "N/A"}</p>
                 </div>
                 <div class="d-flex">
                     <button type="button" class="btn btn-lg btn-outline-warning me-2 edit-price" data-index="${index}">
@@ -363,8 +279,12 @@ $(document).ready(function () {
         $form.find(".price-name").val(price.name);
         $form.find(".price-type").val(price.price_type);
         $form.find(".price-value").val(price.value);
-        $form.find(".is-based-on-days").prop("checked", price.is_based_on_days === 1);
-        $form.find(".is-there-a-quantity").prop("checked", price.is_there_a_quantity === 1);
+        $form
+            .find(".is-based-on-days")
+            .prop("checked", price.is_based_on_days === 1);
+        $form
+            .find(".is-there-a-quantity")
+            .prop("checked", price.is_there_a_quantity === 1);
         $form.find(".date-from").val(price.date_from);
         $form.find(".date-to").val(price.date_to);
 
@@ -388,7 +308,13 @@ $(document).ready(function () {
             const priceValue = $form.find(".price-value").val().trim();
 
             // Validate inputs
-            if (!priceName || !priceType || !priceValue || isNaN(priceValue) || parseFloat(priceValue) <= 0) {
+            if (
+                !priceName ||
+                !priceType ||
+                !priceValue ||
+                isNaN(priceValue) ||
+                parseFloat(priceValue) <= 0
+            ) {
                 alert("Please ensure all fields are filled correctly.");
                 return;
             }
@@ -398,10 +324,18 @@ $(document).ready(function () {
                 name: priceName,
                 price_type: priceType,
                 value: parseFloat(priceValue),
-                is_based_on_days: $form.find(".is-based-on-days").prop("checked") ? 1 : 0,
-                is_there_a_quantity: $form.find(".is-there-a-quantity").prop("checked") ? 1 : 0,
+                is_based_on_days: $form
+                    .find(".is-based-on-days")
+                    .prop("checked")
+                    ? 1
+                    : 0,
+                is_there_a_quantity: $form
+                    .find(".is-there-a-quantity")
+                    .prop("checked")
+                    ? 1
+                    : 0,
                 date_from: $form.find(".date-from").val(),
-                date_to: $form.find(".date-to").val()
+                date_to: $form.find(".date-to").val(),
             };
 
             updateUI();
@@ -424,13 +358,42 @@ $(document).ready(function () {
     function updateHiddenPrices() {
         $hiddenPrices.empty();
         prices.forEach((price, index) => {
-            $hiddenPrices.append(createHiddenInput(`prices[${index}][name]`, price.name));
-            $hiddenPrices.append(createHiddenInput(`prices[${index}][price_type]`, price.price_type));
-            $hiddenPrices.append(createHiddenInput(`prices[${index}][value]`, price.value));
-            $hiddenPrices.append(createHiddenInput(`prices[${index}][is_based_on_days]`, price.is_based_on_days));
-            $hiddenPrices.append(createHiddenInput(`prices[${index}][is_there_a_quantity]`, price.is_there_a_quantity));
-            $hiddenPrices.append(createHiddenInput(`prices[${index}][date_from]`, price.date_from || ''));
-            $hiddenPrices.append(createHiddenInput(`prices[${index}][date_to]`, price.date_to || ''));
+            $hiddenPrices.append(
+                createHiddenInput(`prices[${index}][name]`, price.name)
+            );
+            $hiddenPrices.append(
+                createHiddenInput(
+                    `prices[${index}][price_type]`,
+                    price.price_type
+                )
+            );
+            $hiddenPrices.append(
+                createHiddenInput(`prices[${index}][value]`, price.value)
+            );
+            $hiddenPrices.append(
+                createHiddenInput(
+                    `prices[${index}][is_based_on_days]`,
+                    price.is_based_on_days
+                )
+            );
+            $hiddenPrices.append(
+                createHiddenInput(
+                    `prices[${index}][is_there_a_quantity]`,
+                    price.is_there_a_quantity
+                )
+            );
+            $hiddenPrices.append(
+                createHiddenInput(
+                    `prices[${index}][date_from]`,
+                    price.date_from || ""
+                )
+            );
+            $hiddenPrices.append(
+                createHiddenInput(
+                    `prices[${index}][date_to]`,
+                    price.date_to || ""
+                )
+            );
         });
     }
 

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Product;
 use Carbon\Carbon;
@@ -18,7 +19,7 @@ class OrderSeeder extends Seeder
         $userIds = User::pluck('id')->toArray();
         $products = Product::all();
 
-        for ($i = 0; $i < 50; $i++) {
+        for ($i = 0; $i < 20; $i++) {
             $createdAt = $faker->dateTimeBetween('2024-01-01', '2025-12-31');
             $reservationStart = Carbon::now()->greaterThan(Carbon::create(2025, 1, 1))
                 ? Carbon::now()
@@ -79,8 +80,16 @@ class OrderSeeder extends Seeder
             $order->subtotal = $orderSubtotal;
             $order->total = $orderSubtotal;
             $order->save();
+
+            Transaction::create([
+                'user_id'    => $order->user_id,
+                'order_id'   => $order->id,
+                'status'     => $faker->randomElement(['pending', 'approved', 'decline']),
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt,
+            ]);
         }
 
-        $this->command->info('500 orders seeded successfully.');
+        $this->command->info('20 orders seeded successfully.');
     }
 }

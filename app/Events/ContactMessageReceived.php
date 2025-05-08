@@ -11,14 +11,14 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class ContactMessageReceived implements ShouldBroadcastNow
+class ContactMessageReceived implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $message;
 
     /**
-     * Create a new event instance.
+ * Create a new event instance.
      */
     public function __construct($message)
     {
@@ -33,13 +33,8 @@ class ContactMessageReceived implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new Channel('admin-notification'),
+            new PrivateChannel('admin-notification'),
         ];
-    }
-
-    public function broadcastAs()
-    {
-        return 'contact-message-event';
     }
 
     public function broadcastWith()
@@ -49,7 +44,6 @@ class ContactMessageReceived implements ShouldBroadcastNow
                 'name' => $this->message->name,
                 'email' => $this->message->email,
                 'message' => $this->message->message,
-                // 'read' => false, 
             ]
         ];
 
