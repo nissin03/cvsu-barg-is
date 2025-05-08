@@ -934,12 +934,64 @@ class AdminController extends Controller
     }
 
 
-    public function orders()
+    public function orders(Request $request)
     {
-        $orders = Order::orderBy('created_at', 'DESC')->paginate(12);
+        $status = $request->input('status');
+        $timeSlot = $request->input('time_slot');
+
+        $query = Order::query();
+
+        // Apply filters if they exist
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($timeSlot) {
+            $query->where('time_slot', $timeSlot);
+        }
+
+        $orders = $query->orderBy('created_at', 'DESC')->paginate(12)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'orders' => view('partials._orders-table', compact('orders'))->render(),
+                'pagination' => view('partials._orders-pagination', compact('orders'))->render(),
+                'count' => $orders->total()
+            ]);
+        }
+
         return view('admin.orders', compact('orders'));
     }
 
+    // This route handles the filter functionality
+    public function filterOrders(Request $request)
+    {
+        $status = $request->input('status');
+        $timeSlot = $request->input('time_slot');
+
+        $query = Order::query();
+
+        // Apply filters if they exist
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($timeSlot) {
+            $query->where('time_slot', $timeSlot);
+        }
+
+        $orders = $query->orderBy('created_at', 'DESC')->paginate(12)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'orders' => view('partials._orders-table', compact('orders'))->render(),
+                'pagination' => view('partials._orders-pagination', compact('orders'))->render(),
+                'count' => $orders->total()
+            ]);
+        }
+
+        return redirect()->route('admin.orders', compact('orders'));
+    }
 
     public function order_details($order_id)
     {
@@ -2398,24 +2450,24 @@ class AdminController extends Controller
         return redirect()->route('admin.users')->with('success', 'User deleted successfully');
     }
 
-    public function filterOrders(Request $request)
-    {
-        $query = Order::query();
+    // public function filterOrders(Request $request)
+    // {
+    //     $query = Order::query();
 
-        // Apply filters
-        if ($request->has('time_slot') && $request->time_slot != '') {
-            $query->where('time_slot', $request->time_slot);
-        }
+    //     // Apply filters
+    //     if ($request->has('time_slot') && $request->time_slot != '') {
+    //         $query->where('time_slot', $request->time_slot);
+    //     }
 
-        if ($request->has('status') && $request->status != '') {
-            $query->where('status', $request->status);
-        }
+    //     if ($request->has('status') && $request->status != '') {
+    //         $query->where('status', $request->status);
+    //     }
 
-        // Fetch the filtered orders with the count of order items
-        $orders = $query->withCount('orderItems')->get();
+    //     // Fetch the filtered orders with the count of order items
+    //     $orders = $query->withCount('orderItems')->get();
 
-        return response()->json($orders); // Send the filtered orders as JSON response
-    }
+    //     return response()->json($orders); // Send the filtered orders as JSON response
+    // }
 
 
     public function order_filter(Request $request)

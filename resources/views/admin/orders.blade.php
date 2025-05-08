@@ -51,8 +51,6 @@
             transition: all 0.2s;
         }
 
-
-
         /* Name Column Enhancement */
         .name-cell {
             display: flex;
@@ -156,8 +154,36 @@
             min-width: 150px;
             background: #fff;
         }
+
+        /* Loading Indicator */
+        .loading-indicator {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: 9999;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
     </style>
 
+    <!-- Loading Indicator -->
+    <div id="loading-indicator" class="loading-indicator">
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
 
     <div class="main-content-inner">
         <div class="main-content-wrap">
@@ -180,11 +206,9 @@
 
             <div class="wg-box">
                 <div class="flex items-center justify-between gap10 flex-wrap">
-
                     <div class="filter-dropdowns flex items-center gap10">
-
                         <!-- Time Slot Dropdown -->
-                        <select name="time_slot" id="time_slot" class="">
+                        <select name="time_slot" id="time_slot" class="filter-select">
                             <option value="">Select Time Slot</option>
                             <option value="08:00 am - 09:00 am"
                                 {{ request('time_slot') == '08:00 am - 09:00 am' ? 'selected' : '' }}>08:00 am - 09:00 am
@@ -201,7 +225,7 @@
                         </select>
 
                         <!-- Status Dropdown -->
-                        <select name="status" id="status" class="">
+                        <select name="status" id="status" class="filter-select">
                             <option value="">Select Status</option>
                             <option value="reserved" {{ request('status') == 'reserved' ? 'selected' : '' }}>Reserved
                             </option>
@@ -210,11 +234,8 @@
                             <option value="canceled" {{ request('status') == 'canceled' ? 'selected' : '' }}>Canceled
                             </option>
                         </select>
-
                     </div>
                 </div>
-
-
 
                 <div class="wg-table table-all-user">
                     <div class="table-responsive">
@@ -226,62 +247,20 @@
                                     <th class="text-center">Total Items</th>
                                     <th class="text-center">Total Price</th>
                                     <th class="text-center">Order Date</th>
-                                    <!-- <th class="text-center">Total Items</th>  -->
                                     <th class="text-center">Picked up on</th>
-                                    <!-- <th class="text-center">Status</th> -->
                                     <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @foreach ($orders as $order)
-                                    <tr>
-
-                                        <td class="text-start">
-                                            <div class="name">
-                                                {{ $order->name }}
-                                                <div class="status-badge-container">
-                                                    <span
-                                                        class="badge status-badge 
-                                                    {{ $order->status == 'pickedup' ? 'bg-success' : ($order->status == 'canceled' ? 'bg-danger' : 'bg-warning') }}">
-                                                        {{ ucfirst($order->status) }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </td>
-
-
-                                        <!-- Reservation Date with Tooltip -->
-                                        <td class="text-center reservation-date" data-time-slot="{{ $order->time_slot }}">
-                                            <span class="reservation-date">
-                                                {{ \Carbon\Carbon::parse($order->reservation_date)->format('M d, Y') }}
-                                            </span>
-                                        </td>
-
-
-                                        <td class="text-center">
-                                            {{ $order->orderItems->count() }}
-                                            {{ $order->orderItems->count() == 1 ? 'item' : 'items' }}
-                                        </td>
-                                        <td class="text-center">&#8369;{{ $order->total }}</td>
-
-                                        <td>{{ $order->created_at->format('M d, Y') }}</td>
-                                        {{-- <td class="text-center"></td> --}}
-                                        <td class="text-center">{{ $order->picked_up_date }}</td>
-                                        <!-- <td class="text-center">{{ $order->status }}</td> -->
-                                        <td class="text-center">
-                                            <a href="{{ route('admin.order.details', ['order_id' => $order->id]) }}">
-                                                <i class="icon-eye" title="View Details"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforeach
+                            <tbody id="js-orders-partial-target">
+                                @include('partials._orders-table', ['orders' => $orders])
                             </tbody>
                         </table>
                     </div>
                 </div>
                 <div class="divider"></div>
-                <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-                    {{ $orders->links('pagination::bootstrap-5') }}
+                <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination"
+                    id="js-orders-partial-target-pagination">
+                    @include('partials._orders-pagination', ['orders' => $orders])
                 </div>
             </div>
         </div>
@@ -291,117 +270,154 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            // Tooltip for Reservation Date (Optional)
+            // Store current scroll position
+            let lastScrollPosition = 0;
+
+            // Tooltip for Reservation Date
             const tooltip = $('<div class="custom-tooltip"></div>').appendTo('body');
-            $('.reservation-date').hover(function() {
-                const timeSlot = $(this).data('time-slot');
-                tooltip.text(timeSlot).fadeIn('fast');
-            }, function() {
-                tooltip.hide();
-            }).mousemove(function(e) {
-                tooltip.css({
-                    top: e.pageY + 10 + 'px',
-                    left: e.pageX + 10 + 'px'
+
+            function initTooltips() {
+                $('.reservation-date').hover(function() {
+                    const timeSlot = $(this).data('time-slot');
+                    tooltip.text(timeSlot).fadeIn('fast');
+                }, function() {
+                    tooltip.hide();
+                }).mousemove(function(e) {
+                    tooltip.css({
+                        top: e.pageY + 10 + 'px',
+                        left: e.pageX + 10 + 'px'
+                    });
                 });
-            });
+            }
 
-            $(document).ready(function() {
-                // Trigger filtering on dropdown changes
-                $('#status, #time_slot').on('change', function() {
-                    filterOrders();
+            // Function to perform AJAX filter
+            function performFilter() {
+                // Save current scroll position
+                lastScrollPosition = $(window).scrollTop();
+
+                // Get filter values
+                let status = $('#status').val();
+                let timeSlot = $('#time_slot').val();
+
+                // Show loading indicator
+                $('#loading-indicator').show();
+
+                // Build the URL with query parameters
+                let url = '{{ route('admin.orders') }}';
+                let params = [];
+
+                if (status) {
+                    params.push('status=' + encodeURIComponent(status));
+                }
+
+                if (timeSlot) {
+                    params.push('time_slot=' + encodeURIComponent(timeSlot));
+                }
+
+                if (params.length > 0) {
+                    url += '?' + params.join('&');
+                }
+
+                // Perform AJAX request
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        // Update table content
+                        $('#js-orders-partial-target').html(response.orders);
+
+                        // Update pagination
+                        $('#js-orders-partial-target-pagination').html(response.pagination);
+
+                        // Hide loading indicator
+                        $('#loading-indicator').hide();
+
+                        // Update browser URL without page reload
+                        window.history.pushState({}, '', url);
+
+                        // Reinitialize tooltips
+                        initTooltips();
+
+                        // Reinitialize pagination events
+                        initPaginationEvents();
+
+                        // Restore scroll position
+                        $(window).scrollTop(lastScrollPosition);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error:', error);
+
+                        // Hide loading indicator
+                        $('#loading-indicator').hide();
+
+                        // Show error message if needed
+                        alert('An error occurred while filtering orders. Please try again.');
+                    }
                 });
+            }
 
-                function filterOrders() {
-                    let status = $('#status').val(); // Get selected status value
-                    let timeSlot = $('#time_slot').val(); // Get selected time slot value
+            // Function to initialize pagination click events
+            function initPaginationEvents() {
+                $('.pagination a').off('click').on('click', function(e) {
+                    e.preventDefault();
 
-                    // AJAX request to filter orders
+                    // Save current scroll position
+                    lastScrollPosition = $(window).scrollTop();
+
+                    const url = $(this).attr('href');
+
+                    // Show loading indicator
+                    $('#loading-indicator').show();
+
                     $.ajax({
-                        url: "{{ route('admin.orders.filter') }}", // Your route for filtering orders
-                        type: "GET",
-                        data: {
-                            status: status, // Send status as part of data
-                            time_slot: timeSlot // Send time slot as part of data
+                        url: url,
+                        type: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
                         },
-                        success: function(data) {
-                            updateTable(data, 'No orders found with the selected filters.');
+                        success: function(response) {
+                            // Update table content
+                            $('#js-orders-partial-target').html(response.orders);
+
+                            // Update pagination
+                            $('#js-orders-partial-target-pagination').html(response.pagination);
+
+                            // Hide loading indicator
+                            $('#loading-indicator').hide();
+
+                            // Update browser URL without page reload
+                            window.history.pushState({}, '', url);
+
+                            // Reinitialize tooltips
+                            initTooltips();
+
+                            // Reinitialize pagination events
+                            initPaginationEvents();
+
+                            // Restore scroll position
+                            $(window).scrollTop(lastScrollPosition);
                         },
-                        error: function() {
-                            alert('An error occurred while filtering orders.');
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+
+                            // Hide loading indicator
+                            $('#loading-indicator').hide();
                         }
                     });
-                }
+                });
+            }
 
-                function updateTable(data, noResultsMessage) {
-                    let tableBody = $('tbody');
-                    tableBody.empty(); // Clear existing table rows
-
-                    if (data.length > 0) {
-                        data.forEach(function(order) {
-                            tableBody.append(` 
-                              @foreach ($orders as $order)
-                     <tr>
-
-                                        <td class="text-start">
-                                            <div class="name">
-                                                {{ $order->name }}
-                                                <div class="status-badge-container">
-                                                    <span
-                                                        class="badge status-badge 
-                                                    {{ $order->status == 'pickedup' ? 'bg-success' : ($order->status == 'canceled' ? 'bg-danger' : 'bg-warning') }}">
-                                                        {{ ucfirst($order->status) }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </td>
-
-
-                                        <!-- Reservation Date with Tooltip -->
-                                        <td class="text-center reservation-date" data-time-slot="{{ $order->time_slot }}">
-                                            <span class="reservation-date">
-                                                {{ \Carbon\Carbon::parse($order->reservation_date)->format('M d, Y') }}
-                                            </span>
-                                        </td>
-
-
-                                        <td class="text-center">
-                                            {{ $order->orderItems->count() }}
-                                            {{ $order->orderItems->count() == 1 ? 'item' : 'items' }}
-                                        </td>
-                                        <td class="text-center">&#8369;{{ $order->total }}</td>
-
-                                        <td>{{ $order->created_at->format('M d, Y') }}</td>
-                                        {{-- <td class="text-center"></td> --}}
-                                        <td class="text-center">{{ $order->picked_up_date }}</td>
-                                        <!-- <td class="text-center">{{ $order->status }}</td> -->
-                                        <td class="text-center">
-                                            <a href="{{ route('admin.order.details', ['order_id' => $order->id]) }}">
-                                                <i class="icon-eye" title="View Details"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                    @endforeach
-                `);
-                        });
-                    } else {
-                        tableBody.append(`
-                <tr>
-                    <td colspan="8" class="text-center">${noResultsMessage}</td>
-                </tr>
-            `);
-                    }
-                }
-
-                // Helper function to capitalize status
-                function capitalizeStatus(status) {
-                    return status.charAt(0).toUpperCase() + status.slice(1);
-                }
-
-                // Helper function to format date
-                function formatDate(dateString) {
-                    return new Date(dateString).toLocaleDateString('en-US');
-                }
+            // Add change event listeners to the filter dropdowns
+            $('#status, #time_slot').on('change', function() {
+                performFilter();
             });
+
+            // Initialize tooltips and pagination events on page load
+            initTooltips();
+            initPaginationEvents();
         });
     </script>
 @endpush
