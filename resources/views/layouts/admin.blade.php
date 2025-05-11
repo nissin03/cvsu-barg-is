@@ -11,6 +11,7 @@
     {{-- <title>{{ config('app.name', 'Information System') }}</title> --}}
     <title>{{ isset($pageTitle) ? $pageTitle : config('app.name', 'Information System') }}</title>
 
+    {{-- @vite(['resources/js/app.js']) --}}
     <meta http-equiv="content-type" content="text/html; charset-utf-8" />
     <meta name="author" content="barg unit" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -26,9 +27,19 @@
     <link rel="stylesheet" href="{{ asset('assets/icon/style.css') }} ">
     {{-- <link rel="stylesheet" type="text/css" href="{{asset('css/sweetalert.min.css')}}"> --}}
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/custom.css') }} ">
-    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    {{-- <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script> --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    @vite('resources/js/app.js')
+    {{-- <script>
+        // console.log('Hello from Vite!')
+        Echo.channel('chats')
+            .listen('Example', (e) => {
+                console.log(e);
+            });
+    </script> --}}
+
+    {{--
     <script>
         toastr.options = {
             "progressBar": true,
@@ -74,7 +85,7 @@
             );
 
         });
-    </script>
+    </script> --}}
 
     <style>
         .modal-backdrop {
@@ -84,7 +95,6 @@
             width: 100%;
             height: 100%;
             z-index: 1040;
-
             background-color: rgba(0, 0, 0, 0.7);
         }
 
@@ -98,6 +108,174 @@
             width: 100%;
             max-width: 800px;
 
+        }
+
+        .dropdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .notification-heading {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .mark-read {
+            background: none;
+            border: none;
+            color: #30d683;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .category-header {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+
+        .remove-notification {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .remove-notification:hover {
+            opacity: 1;
+            color: #dc3545;
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .remove-all {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .remove-notification i {
+            font-size: 14px;
+        }
+
+        .notification-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .notification-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+            overflow: hidden;
+        }
+
+        .notification-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .badge-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e9ecef;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-text {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .notification-subtext {
+            margin: 0;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        /* Add these new styles to your existing CSS */
+        .notification-list-container {
+            max-height: 300px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease;
+            scrollbar-width: thin;
+        }
+
+        .notification-list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .notification-list-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .notification-list-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .notification-list-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .all-notifications {
+            max-height: 400px;
+            /* Taller container for all notifications */
+        }
+
+        .unread-indicator {
+            width: 10px;
+            height: 10px;
+            background-color: #30d683;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+
+        .dropdown-footer {
+            padding: 0;
+        }
+
+        .dropdown-footer button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background-color: #f8f9fa;
+            color: #212529;
+            font-weight: 600;
+            border-radius: 0 0 10px 10px;
         }
     </style>
     @stack('styles')
@@ -376,53 +554,125 @@
 
                             </div>
                             <div class="header-grid">
-
                                 <div class="popup-wrap message type-header">
                                     <div class="dropdown">
                                         <button class="btn btn-primary dropdown-toggle" type="button"
                                             id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
                                             <span class="header-item">
-                                                <span class="text-tiny notification-count">4</span>
+                                                <span
+                                                    class="text-tiny notification-count">{{ Auth::user()->unreadNotifications()->count() }}</span>
                                                 <i class="fas fa-bell"></i>
                                             </span>
                                         </button>
-                                        <ul class="dropdown-menu dropdown-menu-end has-content"
-                                            aria-labelledby="dropdownMenuButton2">
-                                            <h6 class="mb-1">Notifications</h6>
-                                            <div class="d-flex justify-content-end align-items-center px-3">
-                                                <button class="btn text-primary fw-bold"
-                                                    style="background: none;">Mark all as read</button>
-                                            </div>
-                                            <div class="px-3 py-2 text-black fw-bold text-uppercase fs-5">New</div>
 
-                                            {{-- Empty State --}}
-                                            {{-- <li class="text-center text-muted fs-4" style="text-decoration: none;">
-                                                No notifications to display
-                                            </li> --}}
-                                            <li class=" notification-item d-flex align-items-center">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="notification-icon bg-light text-white rounded-circle me-3 d-flex align-items-center justify-content-center"
-                                                        style="width: 50px; height: 50px;">
-                                                        <i class="fas fa-bell"
-                                                            style="font-size: 24px; color: #252728;"></i>
-                                                    </div>
-                                                    <div>
-                                                        <p class="mb-0 fw-bold">Sale N + 1</p>
-                                                        <p class="mb-0 text-primary big fw-bold">1h</p>
+                                        <div class="dropdown-menu dropdown-menu-end"
+                                            aria-labelledby="dropdownMenuButton2">
+                                            <div class="dropdown-header">
+                                                <div class="notification-actions">
+                                                    <button type="button" class="mark-read">Mark all as read</button>
+                                                    <button type="button" class="remove-all">Remove all</button>
+                                                </div>
+                                            </div>
+
+                                            <div id="notification-list">
+                                                <div class="notification-item">
+                                                    <div class="notification-content">
+                                                        <p class="notification-text text-center">No notifications
+                                                        </p>
                                                     </div>
                                                 </div>
-                                                <span class="badge bg-primary ms-3 rounded-circle"
-                                                    style="width: 10px; height: 10px;"></span>
-                                            </li>
+                                            </div>
 
-                                            <button class="btn btn-secondary text-center py-3 fs-5 fw-bold">
-                                                See previous notifications
-                                            </button>
-
-                                        </ul>
+                                            <div id="all-notification-list"
+                                                class="notification-list-container all-notifications"
+                                                style="display: none;">
+                                                <!-- All notifications will be loaded here -->
+                                            </div>
+                                            <div class="dropdown-footer">
+                                                <button id="toggle-notifications" class="btn">See all
+                                                    notifications</button>
+                                            </div>
+                                            {{-- <div class="dropdown-footer">
+                                                <button class="btn" data-bs-toggle="modal"
+                                                    data-bs-target="#notificationsModal">See previous
+                                                    notifications</button>
+                                            </div> --}}
+                                        </div>
                                     </div>
                                 </div>
 
+                                <div class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false"
+                                    id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel"
+                                    aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-scrollable">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="notificationsModalLabel">
+                                                    Previous
+                                                    Notifications</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="dropdown-header border-bottom mb-3">
+                                                    <h6 class="notification-heading">Old Notifications</h6>
+                                                    <button type="button" class="mark-read">Mark all as
+                                                        read</button>
+                                                </div>
+                                                <div class="notification-item">
+                                                    <div class="badge-icon h5">
+                                                        <i class="fas fa-bell text-dark"></i>
+                                                    </div>
+                                                    <div class="notification-content">
+                                                        <p class="notification-text fw-bold">Project Update
+                                                        </p>
+                                                        <p class="notification-subtext">Your project has
+                                                            been reviewed
+                                                        </p>
+                                                    </div>
+                                                    <div class="unread-indicator"></div>
+                                                </div>
+                                                <div class="notification-item">
+                                                    <div class="badge-icon">
+                                                        <span class="text-primary"
+                                                            style="font-weight: bold; font-size: 12px">INFO</span>
+                                                    </div>
+                                                    <div class="notification-content">
+                                                        <p class="notification-text fw-bold">System Update
+                                                        </p>
+                                                        <p class="notification-subtext">System maintenance
+                                                            completed
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- New notification header -->
+                                                <div class="dropdown-header border-bottom my-3">
+                                                    <h6 class="notification-heading">New Notifications</h6>
+                                                </div>
+
+                                                <!-- New notification item -->
+                                                <div class="notification-item">
+                                                    <div class="badge-icon h5">
+                                                        <i class="fas fa-envelope text-dark"></i>
+                                                    </div>
+                                                    <div class="notification-content">
+                                                        <p class="notification-text fw-bold">New Message
+                                                        </p>
+                                                        <p class="notification-subtext">You have received a
+                                                            new message
+                                                        </p>
+                                                    </div>
+                                                    <div class="unread-indicator"></div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
 
                                 <div class="popup-wrap user type-header">
@@ -526,7 +776,7 @@
             // Search functionality
             searchInput.addEventListener('input', function() {
                 const query = searchInput.value.toLowerCase().trim();
-                searchResults.innerHTML = ''; // Clear previous results
+                searchResults.innerHTML = '';
 
                 if (query) {
                     menuItems.forEach(function(item) {
@@ -547,6 +797,7 @@
 
         });
     </script>
+
 
 
 

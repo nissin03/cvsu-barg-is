@@ -112,7 +112,7 @@
                 <div class="col-lg-5">
                     <h1 class="product-single__name">{{ $product->name }}</h1>
                     <div class="product-single__price">
-                        <span class="current-price" id="current-price">&#8369;
+                        <span class="current-price text-success h2" id="current-price">&#8369;
                             @if ($product->attributeValues->isNotEmpty() && isset($product->attributeValues[0]->price))
                                 {{ number_format($product->attributeValues[0]->price, 2) }}
                             @else
@@ -133,14 +133,15 @@
                         <div class="d-flex flex-column">
                             @foreach ($uniqueAttributes as $attributeId => $attribute)
                                 <div class="d-flex align-items-center mb-3">
-                                    <div class="product-attributes me-3 mx-2">
+                                    <div class="product-attributes me-3 mx-2"
+                                        style="max-width: 150px; word-wrap: break-word;">
                                         <strong>{{ $attribute->name }}:</strong>
                                     </div>
-                                    <div class="product-attribute-values d-flex">
+                                    <div class="product-attribute-values d-flex" style="flex-wrap: wrap;">
                                         @if (isset($groupedAttributes[$attributeId]))
                                             @foreach ($groupedAttributes[$attributeId] as $variant)
                                                 <button type="button"
-                                                    class="btn btn-outline-primary variant-button me-2"
+                                                    class="btn btn-outline-primary variant-button me-2 mb-2"
                                                     data-attribute-id="{{ $attributeId }}"
                                                     data-variant-id="{{ $variant->id }}"
                                                     data-variant-price="{{ $variant->price }}"
@@ -185,14 +186,13 @@
                                     @if ($product->attributeValues->isNotEmpty() && isset($product->attributeValues[0]->quantity))
                                         {{ $product->attributeValues[0]->quantity > 0 ? $product->attributeValues[0]->quantity : 'Out of Stock' }}
                                     @else
-                                        {{ $product->quantity > 0 ? $product->quantity  : 'Out of Stock' }}
+                                        {{ $product->quantity > 0 ? $product->quantity : 'Out of Stock' }}
                                     @endif
                                 </span>
                             </div>
                             <input type="hidden" name="id" value="{{ $product->id }}" />
                             <input type="hidden" name="name" value="{{ $product->name }}" />
-                            <input type="hidden" name="price" id="selected-price"
-                                value="{{ $product->price }}" />
+                            <input type="hidden" name="price" id="selected-price" value="{{ $product->price }}" />
                             <input type="hidden" name="variant_id" id="selected-variant-id" value="" />
                             <button type="submit" class="btn btn-shop btn-addtocart" id="add-to-cart-button">
                                 Add to Cart
@@ -219,7 +219,8 @@
                             <div class="swiper-container js-swiper-slider">
                                 <div class="swiper-wrapper">
                                     <div class="swiper-slide">
-                                        <a href="{{ route('shop.product.details', ['product_slug' => $rproduct->slug]) }}">
+                                        <a
+                                            href="{{ route('shop.product.details', ['product_slug' => $rproduct->slug]) }}">
                                             <img loading="lazy"
                                                 src="{{ asset('uploads/products') }}/{{ $rproduct->image }}"
                                                 alt="{{ $rproduct->name }}" class="img-fluid d-block mx-auto"
@@ -235,7 +236,8 @@
                                         </div>
                                     @endforeach
                                     <div class="swiper-slide">
-                                        <a href="{{ route('shop.product.details', ['product_slug' => $rproduct->slug]) }}">
+                                        <a
+                                            href="{{ route('shop.product.details', ['product_slug' => $rproduct->slug]) }}">
                                             <img loading="lazy"
                                                 src="{{ asset('uploads/products') }}/{{ $rproduct->image }}"
                                                 alt="{{ $rproduct->name }}" class="img-fluid d-block mx-auto"
@@ -265,12 +267,10 @@
                             <div class="avail d-flex justify-content-center">
                                 <span class="availability fw-bold me-2">Available items: </span>
                                 <span class="avail-tags"
-                                    style="color: 
-                                    @if ($rproduct->attributeValues->isNotEmpty() && isset($rproduct->attributeValues[0]->quantity))
-                                        {{ $rproduct->attributeValues[0]->quantity > 0 ? ($rproduct->attributeValues[0]->quantity == 1 ? 'orange' : 'green') : 'red' }}
+                                    style="color:
+                                    @if ($rproduct->attributeValues->isNotEmpty() && isset($rproduct->attributeValues[0]->quantity)) {{ $rproduct->attributeValues[0]->quantity > 0 ? ($rproduct->attributeValues[0]->quantity == 1 ? 'orange' : 'green') : 'red' }}
                                     @else
-                                        {{ $rproduct->quantity > 0 ? ($rproduct->quantity == 1 ? 'orange' : 'green') : 'red' }}
-                                    @endif">
+                                        {{ $rproduct->quantity > 0 ? ($rproduct->quantity == 1 ? 'orange' : 'green') : 'red' }} @endif">
                                     @if ($rproduct->attributeValues->isNotEmpty() && isset($rproduct->attributeValues[0]->quantity))
                                         {{ $rproduct->attributeValues[0]->quantity > 0 ? $rproduct->attributeValues[0]->quantity : 0 }}
                                     @else
@@ -326,7 +326,8 @@
             document.querySelectorAll('.thumbnail-img').forEach((thumbnail, index) => {
                 thumbnail.addEventListener('click', function() {
                     mainSwiper.slideToLoop(index);
-                    document.querySelectorAll('.thumbnail-img').forEach((thumb) => thumb.classList.remove('active'));
+                    document.querySelectorAll('.thumbnail-img').forEach((thumb) => thumb.classList
+                        .remove('active'));
                     this.classList.add('active');
                 });
             });
@@ -356,7 +357,8 @@
                             cancelButtonText: 'No, keep it'
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                const form = document.getElementById(`remove-item-form-${index}`);
+                                const form = document.getElementById(
+                                    `remove-item-form-${index}`);
                                 form.submit();
                             }
                         });
@@ -413,7 +415,8 @@
 
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', '{{ route('cart.add') }}', true);
-                xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]')
+                    .getAttribute('content'));
 
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === XMLHttpRequest.DONE) {
@@ -466,7 +469,8 @@
 
                         // Update the displayed price to match the variant's designated price.
                         const variantPrice = parseFloat(this.dataset.variantPrice);
-                        document.getElementById('current-price').innerText = '₱ ' + variantPrice.toFixed(2);
+                        document.getElementById('current-price').innerText = '₱ ' + variantPrice
+                            .toFixed(2);
                         document.getElementById('selected-price').value = variantPrice;
 
                         // Update available quantity.

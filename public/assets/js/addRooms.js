@@ -1,282 +1,139 @@
-// const $roomList = $("#roomList");
-// const $hiddenRooms = $("#hiddenRooms");
-// const $multipleRoomsTable = $("#multipleRoomsTable tbody");
-// const $addRoomModal = $("#addRoom");
+"use strict";
 
-
-// renderRoomList();
-
-// // Save single room entry
-// $("#saveRoomChanges").on("click", function (event) {
-//     event.preventDefault();
-//     saveRoom();
-// });
-
-// function saveRoom() {
-//     const roomName = $("#roomName").val().trim();
-//     const roomCapacity = $("#roomCapacity").val().trim();
-//     const roomSexRestriction = $("#roomSexRestriction").val();
-
-//     if (!roomName || !roomCapacity || isNaN(roomCapacity) || roomCapacity <= 0) {
-//         alert("Please enter a valid room name and positive capacity.");
-//         return;
-//     }
-
-//     rooms.push({
-//         room_name: roomName,
-//         capacity: parseInt(roomCapacity),
-//         sex_restriction: roomSexRestriction,
-//     });
-
-//     updateUI();
-// }
-
-// function renderRoomList() {
-//     $roomList.empty();
-//     rooms.forEach((room, index) => {
-//         $roomList.append(createRoomCard(room, index));
-//     });
-// }
-
-// function createRoomCard(room, index) {
-//     return `
-//         <div class="card p-3 mb-3">
-//             <div class="card-body d-flex justify-content-between align-items-center">
-//                 <div>
-//                     <h4 class="pe-2">${room.room_name}</h4>
-//                     <span class="badge bg-info">${room.sex_restriction}</span>
-//                     <p class="fw-bold">Capacity: <span class="badge bg-warning">${room.capacity}</span></p>
-//                 </div>
-//                 <div class="d-flex">
-//                     <button type="button" class="btn btn-lg btn-outline-warning me-2 edit-room" data-index="${index}">
-//                         <i class="icon-pen">Edit</i>
-//                     </button>
-//                     <button type="button" class="btn btn-lg btn-outline-danger delete-room" data-index="${index}">
-//                         <i class="icon-trash"></i>
-//                     </button>
-//                 </div>
-//             </div>
-//         </div>`;
-// }
-
-// function updateUI() {
-//     renderRoomList();
-//     updateHiddenRooms();
-//     $addRoomModal.modal("hide");
-//     clearRoomForm();
-// }
-
-// function clearRoomForm() {
-//     $("#roomName, #roomCapacity").val("");
-//     $("#roomSexRestriction").val("");
-// }
-
-// $roomList.on("click", ".edit-room", function () {
-//     const index = $(this).data("index");
-//     editRoom(index);
-// });
-
-// function editRoom(index) {
-//     const room = rooms[index];
-//     $("#roomName").val(room.room_name);
-//     $("#roomCapacity").val(room.capacity);
-//     $("#roomSexRestriction").val(room.sex_restriction);
-
-//     $("#saveRoomChanges").off("click").on("click", function () {
-//         rooms[index] = {
-//             room_name: $("#roomName").val(),
-//             capacity: parseInt($("#roomCapacity").val()),
-//             sex_restriction: $("#roomSexRestriction").val(),
-//         };
-//         updateUI();
-//     });
-
-//     $addRoomModal.modal("show");
-// }
-
-// $roomList.on("click", ".delete-room", function () {
-//     const index = $(this).data("index");
-//     rooms.splice(index, 1);
-//     updateUI();
-// });
-
-// function updateHiddenRooms() {
-//     $hiddenRooms.empty();
-//     rooms.forEach((room, index) => {
-//         $hiddenRooms.append(createHiddenInput(`facility_attributes[${index}][room_name]`, room.room_name));
-//         $hiddenRooms.append(createHiddenInput(`facility_attributes[${index}][sex_restriction]`, room.sex_restriction));
-//         $hiddenRooms.append(createHiddenInput(`facility_attributes[${index}][capacity]`, room.capacity));
-//     });
-// }
-
-// function createHiddenInput(name, value) {
-//     return `<input type="hidden" name="${name}" value="${value}">`;
-// }
-
-// // Add multiple rooms
-// $("#addMultipleRoomsRowBtn").on("click", function (e) {
-//     e.preventDefault();
-//     $multipleRoomsTable.append(createRoomRow());
-// });
-
-// function createRoomRow() {
-//     return `
-//         <tr>
-//             <td><input type="text" class="form-control room-name" placeholder="Enter room name"></td>
-//             <td><input type="number" class="form-control room-capacity" min="1" placeholder="Enter capacity"></td>
-//             <td>
-//                 <select class="form-control room-sex-restriction">
-//                     <option value="">Choose Sex Restriction...</option>
-//                     <option value="male">Male</option>
-//                     <option value="female">Female</option>
-//                 </select>
-//             </td>
-//             <td><button type="button" class="btn btn-danger removeRowBtn">Remove</button></td>
-//         </tr>`;
-// }
-
-// // Remove multiple room row
-// $multipleRoomsTable.on("click", ".removeRowBtn", function () {
-//     $(this).closest("tr").remove();
-// });
-
-// // Save multiple rooms
-// $("#saveMultipleRoomsBtn").on("click", function (e) {
-//     e.preventDefault();
-//     saveMultipleRooms();
-// });
-
-// function saveMultipleRooms() {
-//     let valid = true;
-//     let newRooms = [];
-
-//     $multipleRoomsTable.find("tr").each(function () {
-//         const roomName = $(this).find(".room-name").val().trim();
-//         const roomCapacity = $(this).find(".room-capacity").val().trim();
-//         const roomSexRestriction = $(this).find(".room-sex-restriction").val();
-
-//         if (!roomName || !roomCapacity || isNaN(roomCapacity) || parseInt(roomCapacity) <= 0) {
-//             valid = false;
-//             return false;
-//         }
-
-//         newRooms.push({ room_name: roomName, capacity: parseInt(roomCapacity), sex_restriction: roomSexRestriction });
-//     });
-
-//     if (!valid) {
-//         alert("Please ensure all rows have valid inputs.");
-//         return;
-//     }
-
-//     rooms = rooms.concat(newRooms);
-//     updateUI();
-//     $multipleRoomsTable.empty();
-//     $("#addMultipleRoomsModal").modal("hide");
-// }
-
-
+// Define key elements as constants for better access
 const $roomList = $("#roomList");
 const $hiddenRooms = $("#hiddenRooms");
 const $addRoomModal = $("#addMultipleRoomsModal");
 const $roomCardsContainer = $("#roomCardsContainer");
+const $roomFormContainer = $("#roomFormContainer");
 
-// // Initialize rooms array if it doesn't exist
-// const rooms = window.rooms || [];
+// Flag to track whether we're in edit mode or add mode
+let isEditMode = false;
+let editingIndices = [];
 
-renderRoomList();
+$(document).ready(function () {
+    renderRoomList(); // Initial render of room list
 
-// Add room row in the modal
-$("#addMultipleRoomsRowBtn").on("click", function (e) {
-    e.preventDefault();
-    $("#roomFormContainer").append(createRoomFormCard());
-});
-
-function createRoomFormCard() {
-    return `
-    <div class="room-form-card mb-3 p-3 border rounded">
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">Room Name</label>
-                <input type="text" class="form-control room-name" placeholder="Enter room name">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Capacity</label>
-                <input type="number" class="form-control room-capacity" min="1" placeholder="Enter capacity">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Sex Restriction</label>
-                  <div class="select">
-                  <select class="room-sex-restriction">
-                      <option value="">No Restriction</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                  </select>
-                </div>
-            </div>
-            <div class="col-md-1 d-flex align-items-center">
-                <button type="button" class="btn btn-lg btn-outline-danger removeRoomBtn">
-                   <i class="fa-solid fa-trash"></i>
-                </button>
-            </div>
-        </div>
-    </div>`;
-}
-
-// Remove room form
-$(document).on("click", ".removeRoomBtn", function () {
-    $(this).closest(".room-form-card").remove();
-});
-
-// Save multiple rooms
-$("#saveMultipleRoomsBtn").on("click", function (e) {
-    e.preventDefault();
-    saveMultipleRooms();
-});
-
-function saveMultipleRooms() {
-    let valid = true;
-    let newRooms = [];
-
-    $(".room-form-card").each(function () {
-        const roomName = $(this).find(".room-name").val().trim();
-        const roomCapacity = $(this).find(".room-capacity").val().trim();
-        const roomSexRestriction = $(this).find(".room-sex-restriction").val();
-
-        if (!roomName || !roomCapacity || isNaN(roomCapacity) || parseInt(roomCapacity) <= 0) {
-            valid = false;
-            return false;
+    // Adding a new room row in the modal when in "add new" mode
+    $("#addMultipleRoomsRowBtn").on("click", function (e) {
+        e.preventDefault();
+        if (!isEditMode) {
+            // In add mode, we append empty form cards
+            $roomFormContainer.append(createRoomFormCard());
+        } else {
+            // In edit mode, we add a new empty form with a unique identifier
+            const newIndex = rooms.length;
+            const $newForm = $(createRoomFormCard(null, "new-" + newIndex));
+            $newForm.addClass("new-room");
+            $roomFormContainer.append($newForm);
         }
-
-        newRooms.push({
-            room_name: roomName,
-            capacity: parseInt(roomCapacity),
-            sex_restriction: roomSexRestriction
-        });
     });
 
-    if (!valid) {
-        alert("Please ensure all rooms have valid inputs.");
-        return;
-    }
+    // Save button functionality
+    $("#saveMultipleRoomsBtn").on("click", function (e) {
+        e.preventDefault();
+        if (isEditMode) {
+            updateRooms();
+        } else {
+            addNewRooms();
+        }
+    });
 
-    rooms.push(...newRooms);
-    updateUI();
-    $("#roomFormContainer").empty();
-    $addRoomModal.modal("hide");
+    // Handle room edit functionality
+    $(document).on("click", ".edit-room", function () {
+        const index = $(this).data("index");
+        // Get all indices to show all rooms, but highlight this one
+        const allIndices = Array.from({ length: rooms.length }, (_, i) => i);
+        openEditModal(allIndices, index); // Show all, highlight the one clicked
+    });
+
+    // Handle edit all rooms functionality
+    $("#editAllRoomsBtn").on("click", function (e) {
+        e.preventDefault();
+        // Get all indices of existing rooms
+        const allIndices = Array.from({ length: rooms.length }, (_, i) => i);
+        openEditModal(allIndices); // Edit all rooms
+    });
+
+    // Handle deleting a room
+    $(document).on("click", ".delete-room", function () {
+        const index = $(this).data("index");
+        deleteRoom(index);
+    });
+
+    // Remove room form
+    $(document).on("click", ".removeRoomBtn", function () {
+        const $form = $(this).closest(".room-form-card");
+        const index = $form.attr("data-room-index");
+
+        // If this is an existing room in edit mode, confirm before removing
+        if (isEditMode && !$form.hasClass("new-room") && index !== undefined) {
+            if (confirm("Are you sure you want to delete this room?")) {
+                $form.remove();
+            }
+        } else {
+            // This is a new room form, just remove it
+            $form.remove();
+        }
+    });
+
+    // Reset modal state when it's closed
+    $addRoomModal.on("hidden.bs.modal", function () {
+        resetModalState();
+    });
+
+    // Initialize modal properly depending on the entry point
+    $addRoomModal.on("show.bs.modal", function (e) {
+        // If it's being opened directly (not from an edit button) and empty
+        if (
+            !$(e.relatedTarget).hasClass("edit-room") &&
+            !$(e.relatedTarget).attr("id") === "editAllRoomsBtn" &&
+            $roomFormContainer.children().length === 0
+        ) {
+            // This is "add new" mode
+            isEditMode = false;
+            $roomFormContainer.append(createRoomFormCard());
+            $("#saveMultipleRoomsBtn").text("Save All");
+        }
+    });
+
+    // Add styles for highlighted rooms being edited
+    $("<style>")
+        .prop("type", "text/css")
+        .html(
+            `
+            .room-form-card.editing-highlight {
+                border-color: #ffc107 !important;
+                box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+            }
+            .room-form-card.new-room {
+                border-color: #28a745 !important;
+                box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+            }
+        `
+        )
+        .appendTo("head");
+});
+
+function resetModalState() {
+    isEditMode = false;
+    editingIndices = [];
+    $roomFormContainer.empty();
+    $("#saveMultipleRoomsBtn").text("Save All");
 }
 
 function renderRoomList() {
-    $roomList.empty();
-
     // Show/hide the "No rooms" message
     if (rooms.length === 0) {
         $("#noRoomsMessage").show();
         $("#roomContainer").hide();
+        $("#editAllRoomsBtn").hide(); // Hide edit all button when no rooms
     } else {
         $("#noRoomsMessage").hide();
         $("#roomContainer").show();
+        $("#editAllRoomsBtn").show(); // Show edit all button when rooms exist
 
-        // Update room cards
+        // Clear and rebuild room cards
         $roomCardsContainer.empty();
         rooms.forEach((room, index) => {
             $roomCardsContainer.append(createRoomCard(room, index));
@@ -294,122 +151,237 @@ function createRoomCard(room, index) {
     }
 
     return `
-
     <div class="card p-3 mb-3">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h4 class="pe-2">${room.room_name}</h4>
-                    <span class="badge bg-info">${room.sex_restriction}</span>
-                    <p class="fw-bold">Capacity: <span class="badge bg-warning">${room.capacity}</span></p>
-                </div>
-                <div class="d-flex">
-                    <button type="button" class="btn btn-lg btn-outline-warning me-2 edit-room" data-index="${index}">
-                        <i class="icon-pen">Edit</i>
-                    </button>
-                    <button type="button" class="btn btn-lg btn-outline-danger delete-room" data-index="${index}">
-                        <i class="icon-trash"></i>
-                    </button>
-                </div>
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="pe-2">${room.room_name}</h4>
+                <span class="badge ${badgeClass}">${
+        room.sex_restriction || "No Restriction"
+    }</span>
+                <p class="fw-bold">Capacity: <span class="badge bg-warning">${
+                    room.capacity
+                }</span></p>
             </div>
+            <div class="d-flex">
+                <button type="button" class="btn btn-lg btn-outline-warning me-2 edit-room" data-index="${index}">
+                    <i class="icon-pen">Edit</i>
+                </button>
+                <button type="button" class="btn btn-lg btn-outline-danger delete-room" data-index="${index}">
+                    <i class="icon-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
     `;
 }
 
-function updateUI() {
-    renderRoomList();
-    updateHiddenRooms();
-    calculateTotalCapacity();
+function createRoomFormCard(room = null, index = null) {
+    // Pre-fill values if room is provided
+    const roomName = room ? room.room_name : "";
+    const capacity = room ? room.capacity : "";
+    const sexRestriction = room ? room.sex_restriction : "";
+
+    // Add data-index attribute if index is provided
+    const indexAttr = index !== null ? `data-room-index="${index}"` : "";
+
+    return `
+    <div class="room-form-card mb-3 p-3 border rounded" ${indexAttr}>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Room Name</label>
+                <input type="text" class="form-control room-name" placeholder="Enter room name" value="${roomName}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Capacity</label>
+                <input type="number" class="form-control room-capacity" min="1" placeholder="Enter capacity" value="${capacity}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Sex Restriction</label>
+                <div class="select">
+                    <select class="room-sex-restriction">
+                        <option value="" ${
+                            sexRestriction === "" ? "selected" : ""
+                        }>No Restriction</option>
+                        <option value="male" ${
+                            sexRestriction === "male" ? "selected" : ""
+                        }>Male</option>
+                        <option value="female" ${
+                            sexRestriction === "female" ? "selected" : ""
+                        }>Female</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-1 d-flex align-items-center">
+                <button type="button" class="btn btn-lg btn-outline-danger removeRoomBtn">
+                   <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>`;
 }
 
-function calculateTotalCapacity() {
-    const totalCapacity = rooms.reduce((sum, room) => sum + room.capacity, 0);
-    $("#roomCapacityWhole").val(totalCapacity);
-}
+function openEditModal(indices, highlightIndex = null) {
+    // Set edit mode flag
+    isEditMode = true;
+    editingIndices = indices;
 
-// Edit room
-$(document).on("click", ".edit-room", function () {
-    const index = $(this).data("index");
-    editRoom(index);
-});
+    // Clear existing forms
+    $roomFormContainer.empty();
 
-function editRoom(index) {
-    const room = rooms[index];
+    // Add form for all rooms
+    rooms.forEach((room, index) => {
+        const roomForm = createRoomFormCard(room, index);
+        const $form = $(roomForm);
 
-    // Clear existing forms and add a single form with the room's data
-    $("#roomFormContainer").empty().append(createRoomFormCard());
-
-    // Fill the form with room data
-    const $form = $(".room-form-card").first();
-    $form.find(".room-name").val(room.room_name);
-    $form.find(".room-capacity").val(room.capacity);
-    $form.find(".room-sex-restriction").val(room.sex_restriction);
-
-    // Change the save button to update mode
-    $("#saveMultipleRoomsBtn").text("Update Room").off("click").on("click", function () {
-        const updatedRoom = {
-            room_name: $form.find(".room-name").val().trim(),
-            capacity: parseInt($form.find(".room-capacity").val().trim()),
-            sex_restriction: $form.find(".room-sex-restriction").val()
-        };
-
-        // Validate
-        if (!updatedRoom.room_name || isNaN(updatedRoom.capacity) || updatedRoom.capacity <= 0) {
-            alert("Please enter valid room details.");
-            return;
+        // Highlight the specific room being edited if specified
+        if (highlightIndex !== null && index === highlightIndex) {
+            $form.addClass("editing-highlight");
         }
 
-        // Update the room
-        rooms[index] = updatedRoom;
-        updateUI();
-        $("#roomFormContainer").empty();
-        $addRoomModal.modal("hide");
-
-        // Reset the button
-        $("#saveMultipleRoomsBtn").text("Save All").off("click").on("click", saveMultipleRooms);
+        $roomFormContainer.append($form);
     });
+
+    // Update button text
+    $("#saveMultipleRoomsBtn").text("Update Rooms");
 
     // Show the modal
     $addRoomModal.modal("show");
 }
 
-// Delete room
-$(document).on("click", ".delete-room", function () {
-    const index = $(this).data("index");
+function addNewRooms() {
+    let valid = true;
+    let newRooms = [];
+
+    // Collect data from all form cards
+    $(".room-form-card").each(function () {
+        const roomName = $(this).find(".room-name").val().trim();
+        const roomCapacity = $(this).find(".room-capacity").val().trim();
+        const roomSexRestriction = $(this).find(".room-sex-restriction").val();
+
+        if (
+            !roomName ||
+            !roomCapacity ||
+            isNaN(roomCapacity) ||
+            parseInt(roomCapacity) <= 0
+        ) {
+            valid = false;
+            return false;
+        }
+
+        newRooms.push({
+            room_name: roomName,
+            capacity: parseInt(roomCapacity),
+            sex_restriction: roomSexRestriction,
+        });
+    });
+
+    if (!valid) {
+        alert("Please ensure all rooms have valid inputs.");
+        return;
+    }
+
+    // Add these as new rooms
+    rooms.push(...newRooms);
+
+    // Update UI and close modal
+    updateUI();
+    $roomFormContainer.empty();
+    $addRoomModal.modal("hide");
+}
+
+function updateRooms() {
+    let valid = true;
+    let newRoomsList = [];
+
+    // Collect updated data from all form cards
+    $(".room-form-card").each(function () {
+        const $form = $(this);
+        const index =
+            $form.attr("data-room-index") !== undefined
+                ? parseInt($form.attr("data-room-index"))
+                : null;
+
+        const roomName = $form.find(".room-name").val().trim();
+        const roomCapacity = $form.find(".room-capacity").val().trim();
+        const roomSexRestriction = $form.find(".room-sex-restriction").val();
+
+        if (
+            !roomName ||
+            !roomCapacity ||
+            isNaN(roomCapacity) ||
+            parseInt(roomCapacity) <= 0
+        ) {
+            valid = false;
+            return false;
+        }
+
+        // Create the updated room object
+        const updatedRoom = {
+            room_name: roomName,
+            capacity: parseInt(roomCapacity),
+            sex_restriction: roomSexRestriction,
+        };
+
+        // Add to our temporary list with its position
+        newRoomsList.push({
+            index: index,
+            room: updatedRoom,
+        });
+    });
+
+    if (!valid) {
+        alert("Please ensure all rooms have valid inputs.");
+        return;
+    }
+
+    // Sort by index to maintain order
+    newRoomsList.sort((a, b) => a.index - b.index);
+
+    // Replace the entire rooms array with the new list (maintaining existing IDs)
+    rooms = newRoomsList.map((item) => item.room);
+
+    // Update UI and close modal
+    updateUI();
+    $roomFormContainer.empty();
+    $addRoomModal.modal("hide");
+}
+
+function deleteRoom(index) {
     if (confirm("Are you sure you want to delete this room?")) {
         rooms.splice(index, 1);
         updateUI();
     }
-});
+}
+
+function updateUI() {
+    renderRoomList();
+    updateHiddenRooms();
+}
 
 function updateHiddenRooms() {
     $hiddenRooms.empty();
     rooms.forEach((room, index) => {
-        $hiddenRooms.append(createHiddenInput(`facility_attributes[${index}][room_name]`, room.room_name));
-        $hiddenRooms.append(createHiddenInput(`facility_attributes[${index}][sex_restriction]`, room.sex_restriction));
-        $hiddenRooms.append(createHiddenInput(`facility_attributes[${index}][capacity]`, room.capacity));
+        $hiddenRooms.append(
+            createHiddenInput(
+                `facility_attributes[${index}][room_name]`,
+                room.room_name
+            )
+        );
+        $hiddenRooms.append(
+            createHiddenInput(
+                `facility_attributes[${index}][capacity]`,
+                room.capacity
+            )
+        );
+        $hiddenRooms.append(
+            createHiddenInput(
+                `facility_attributes[${index}][sex_restriction]`,
+                room.sex_restriction
+            )
+        );
     });
 }
 
 function createHiddenInput(name, value) {
     return `<input type="hidden" name="${name}" value="${value}">`;
 }
-
-// Initialize on document ready
-$(document).ready(function () {
-    // Add at least one form card when opening the modal
-    $("#addMultipleRoomsModal").on("show.bs.modal", function () {
-        if ($("#roomFormContainer").children().length === 0) {
-            $("#roomFormContainer").append(createRoomFormCard());
-        }
-    });
-
-    // Reset the save button when opening the modal for new rooms
-    $("#addMultipleRoomsModal").on("show.bs.modal", function (e) {
-        // If not triggered by an edit button
-        if (!$(e.relatedTarget).hasClass("edit-room")) {
-            $("#saveMultipleRoomsBtn").text("Save All").off("click").on("click", saveMultipleRooms);
-        }
-    });
-
-    // Calculate total capacity initially
-    calculateTotalCapacity();
-});

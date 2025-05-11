@@ -11,12 +11,17 @@ class TransactionReservation extends Model
 
     protected $fillable = [
         'availability_id',
+        'facility_attribute_id',
         'price_id',
         'quantity',
         'user_id',
         'status',
     ];
 
+    public function facility()
+    {   
+        return $this->belongsTo(Facility::class);
+    }
     public function availability()
     {
         return $this->belongsTo(Availability::class);

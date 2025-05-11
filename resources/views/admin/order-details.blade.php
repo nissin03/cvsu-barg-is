@@ -86,7 +86,7 @@
                                 </td>
                             </tr>
                         </tbody>
-                        
+
                     </table>
                 </div>
             </div>
@@ -176,12 +176,16 @@
                                 <td>{{ $order->total }}</td>
                                 <th>Status</th>
                                 <td>
-                                    @if ($transaction->status == 'approved')
-                                        <span class="badge bg-success">Approved</span>
-                                    @elseif ($transaction->status == 'decline')
-                                        <span class="badge bg-danger">Declined</span>
+                                    @if ($transaction)
+                                        @if ($transaction->status == 'approved')
+                                            <span class="badge bg-success">Approved</span>
+                                        @elseif ($transaction->status == 'decline')
+                                            <span class="badge bg-danger">Declined</span>
+                                        @else
+                                            <span class="badge bg-warning">Pending</span>
+                                        @endif
                                     @else
-                                        <span class="badge bg-warning">Pending</span>
+                                        <span class="badge bg-secondary">No Transaction</span>
                                     @endif
                                 </td>
                             </tr>
@@ -195,26 +199,30 @@
                     <form action="{{ route('admin.order.status.update') }}" method="POST">
                         @csrf
                         @method('PUT')
-                    
+
                         <input type="hidden" name="order_id" value="{{ $order->id }}" />
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="select">
-                                    <select name="order_status" id="order_status" onchange="checkStatus()" {{ session('disabled') ? 'disabled' : '' }}>
-                                        <option value="reserved" {{ $order->status == 'reserved' ? 'selected' : '' }}>Reserve</option>
-                                        <option value="pickedup" {{ $order->status == 'pickedup' ? 'selected' : '' }}>Picked up</option>
-                                        <option value="canceled" {{ $order->status == 'canceled' ? 'selected' : '' }}>Canceled</option>
+                                    <select name="order_status" id="order_status" onchange="checkStatus()"
+                                        {{ session('disabled') ? 'disabled' : '' }}>
+                                        <option value="reserved" {{ $order->status == 'reserved' ? 'selected' : '' }}>
+                                            Reserve</option>
+                                        <option value="pickedup" {{ $order->status == 'pickedup' ? 'selected' : '' }}>
+                                            Picked up</option>
+                                        <option value="canceled" {{ $order->status == 'canceled' ? 'selected' : '' }}>
+                                            Canceled</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <button type="submit" class="btn btn-primary tf-button w208" id="submit-button" 
+                                <button type="submit" class="btn btn-primary tf-button w208" id="submit-button"
                                     {{ session('disabled') ? 'disabled' : '' }}>
                                     Update Status
                                 </button>
                             </div>
                         </div>
-                    </form>       
+                    </form>
                 </div>
             </div>
         </div>
@@ -222,16 +230,15 @@
 @endsection
 @push('scripts')
     <script>
-          function checkStatus() {
-        var status = document.getElementById('order_status').value;
-        var submitButton = document.getElementById('submit-button');
+        function checkStatus() {
+            var status = document.getElementById('order_status').value;
+            var submitButton = document.getElementById('submit-button');
 
-        if (status === 'pickedup' || status === 'canceled') {
-            submitButton.disabled = false;
-        } else {
-            submitButton.disabled = false;
+            if (status === 'pickedup' || status === 'canceled') {
+                submitButton.disabled = false;
+            } else {
+                submitButton.disabled = false;
+            }
         }
-    }
     </script>
 @endpush
-

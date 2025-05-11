@@ -4,12 +4,7 @@ const $hideRoomBox = $("#hideRoomBox");
 const $dormitoryRooms = $("#dormitoryRooms");
 const $quantityChecked = $("#QuantityChecked");
 const $pIndividual = $("#pIndividual");
-const $pWhole = $("#pWhole");
-// const $roomList = $("#roomList");
-// const $hiddenRooms = $("#hiddenRooms");
-// const $multipleRoomsTable = $("#multipleRoomsTable tbody");
-// const $addRoomModal = $("#addRoom");
-
+const $priceBox = $("#priceBox");
 
 $rentalType.on("change", function () {
     handleRentalTypeChange($(this).val());
@@ -18,9 +13,18 @@ $rentalType.on("change", function () {
 function handleRentalTypeChange(rentalType) {
     console.log("Facility Type:", rentalType);
 
-    // Reset visibility
-    $pIndividual.add($pWhole).attr("hidden", true).prop("disabled", true);
-    $roomBox.add($hideRoomBox).add($dormitoryRooms).add($quantityChecked).hide();
+    $pIndividual.attr("hidden", true).prop("disabled", true);
+    $roomBox
+        .add($hideRoomBox)
+        .add($dormitoryRooms)
+        .add($quantityChecked)
+        .hide();
+
+    if (rentalType) {
+        $priceBox.removeAttr("hidden").prop("disabled", false);
+    } else {
+        $priceBox.attr("hidden", true).prop("disabled", true);
+    }
 
     switch (rentalType) {
         case "individual":
@@ -33,7 +37,6 @@ function handleRentalTypeChange(rentalType) {
         case "whole_place":
             $roomBox.show();
             $hideRoomBox.show();
-            $pWhole.removeAttr("hidden").prop("disabled", false);
             break;
 
         case "both":
@@ -41,10 +44,9 @@ function handleRentalTypeChange(rentalType) {
             $hideRoomBox.show();
             $dormitoryRooms.show();
             $quantityChecked.show();
-            $pIndividual.add($pWhole).removeAttr("hidden").prop("disabled", false);
+            $pIndividual.removeAttr("hidden").prop("disabled", false);
             break;
     }
 }
 
-// Trigger initial change event
 $rentalType.trigger("change");

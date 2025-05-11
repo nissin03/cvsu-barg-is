@@ -362,9 +362,6 @@
                 <div class="col-lg-7">
                     <div class="facility-gallery">
                         <div class="gallery-wrapper">
-                            <!-- Thumbnails -->
-
-
                             <div class="thumbnails">
                                 <div class="swiper-container thumbnail-swiper">
                                     <div class="swiper-wrapper">
@@ -385,9 +382,6 @@
                                     </div>
                                 </div>
                             </div>
-
-
-
                             <!-- Main Image -->
                             <div class="main-image">
                                 <div class="swiper-container main-swiper">
@@ -439,13 +433,14 @@
                         <input type="hidden" name="total_price" id="total-price-field" value="0">
                         <input type="hidden" name="facility_type" value="{{ $facility->facility_type }}">
 
+                        @if ($facility->facility_type === 'individual')
+                            @include('components.facility_individual')
+                        @endif
+
                         @if ($facility->facility_type == 'whole_place')
                             @include('components.facility_whole_place')
                         @endif
 
-                        @if ($facility->facility_type === 'individual')
-                            @include('components.facility_individual')
-                        @endif
 
                         @if ($facility->facility_type == 'both')
                             <div id="dynamic_prices_container">
@@ -952,8 +947,27 @@
         });
     </script>
 
+    @if ($facility->facility_type == 'individual')
+        <script>
+            let $internalLink = document.getElementById('internal_quantity');
+            let $externalLink = document.getElementById('external_quantity');
 
+            $internalLink.addEventListener('input', calculateTotal);
+            $externalLink.addEventListener('input', calculateTotal);
 
+            function calculateTotal() {
+                let internalQuantity = parseFloat($internalLink.value) || 0;
+                let externalQuantity = parseFloat($externalLink.value) || 0;
+
+                let individualPrice = @json($individualPrice);
+                let total = (internalQuantity + externalQuantity) * individualPrice;
+
+                document.getElementById('computed-total').textContent = `₱${total.toFixed(2)}`;
+                document.getElementById('total-price-field').value = total.toFixed(2);
+            }
+            calculateTotal();
+        </script>
+    @endif
 
     @if ($facility->facility_type == 'both')
         @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->capacity)
@@ -971,8 +985,10 @@
                     @if ($facility->prices->where('is_there_a_quantity', true)->count() > 0)
                         const individualInputs = document.getElementById('individual_inputs');
                     @endif
-                    const totalPriceEl = document.getElementById('total_price');
+
                     const soloTypeDropdown = document.getElementById('solo_type_dropdown');
+
+                    const totalPriceEl = document.getElementById('total_price');
                     const sharedTypeDropdown = document.getElementById('shared_type_dropdown');
                     const soloDropdown = document.getElementById('solo_dropdown');
                     const roomsDisplay = document.getElementById('rooms_display');

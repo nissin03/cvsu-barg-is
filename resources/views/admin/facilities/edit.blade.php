@@ -310,24 +310,18 @@
 
                 <div class="wg-box" id="roomBox">
                     @if ($facilityAttributes && $facilityAttributes->whole_capacity)
-                        @foreach ($facility->facilityAttributes as $facilityAttribute)
-                            <fieldset class="name" id="hideRoomBox">
-                                <div class="body-title mb-10">Capacity <span class="tf-color-1"
-                                        id="option">(optional)</span></div>
-                                <input type="number" id="roomCapacityWhole" min="0" name="whole_capacity"
-                                    placeholder="Enter capacity"
-                                    value="{{ old('whole_capacity', $facility->facilityAttributes->first()->whole_capacity) }}">
-                            </fieldset>
-                        @endforeach
+                        <fieldset class="name" id="hideRoomBox">
+                            <div class="body-title mb-10">Capacity <span class="tf-color-1"
+                                    id="option">(optional)</span></div>
+                            <input type="number" id="roomCapacityWhole" min="0" name="whole_capacity"
+                                placeholder="Enter capacity"
+                                value="{{ old('whole_capacity', $facility->facilityAttributes->first()->whole_capacity) }}">
+                        </fieldset>
                     @endif
 
 
-
-                    <!-- Hidden inputs for form submission -->
                     <div id="hiddenRooms"></div>
 
-                    <!-- Capacity Section -->
-                    <!-- Rooms Section -->
                     <div id="dormitoryRooms" class="mt-4">
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
                             <h4>Room Management</h4>
@@ -393,47 +387,47 @@
                         <button type="button" data-bs-toggle="modal" data-bs-target="#addPrice">Add Price</button>
                     </div>
 
+                    <div id="hiddenPrices"></div>
                     <div id="priceContainer" class="mt-4">
-                        <ul class="list-group container-sm" id="priceList">
-                            @foreach ($prices as $index => $price)
-                                <div class="card p-3 mb-3">
-                                    <div class="card-body d-flex justify-content-between align-items-center">
-                                        <div class="text-start">
-                                            <h4>{{ $price->name }}</h4>
-                                            <p>Type: <span class="badge bg-success">{{ $price->price_type }}</span></p>
-                                            <p>Price: PHP {{ $price->value }}</p>
-                                            <p>
-                                                Is based on days?:
-                                                <span
-                                                    class="badge {{ $price->is_based_on_days ? 'bg-success' : 'bg-danger' }}">
-                                                    {{ $price->is_based_on_days ?: 'N/A' }}
-                                                </span>
-                                            </p>
-                                            <p>
-                                                Is there a quantity?:
-                                                <span
-                                                    class="badge {{ $price->is_there_a_quantity ? 'bg-success' : 'bg-danger' }}">
-                                                    {{ $price->is_there_a_quantity ?: 'N/A' }}
-                                                </span>
-                                            </p>
+                        <div class="row" id="priceCardsContainer">
+                            <!-- The price cards will be inserted here dynamically -->
 
-                                        </div>
-                                        <button type="button" class="btn btn-lg btn-outline-danger delete-btn"
-                                            onclick="deletePrice(${index})">
-                                            <i class="icon-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </ul>
+                        </div>
                     </div>
-
 
                     <div class="cols gap10">
                         <button class="tf-button w-full" type="submit">Update facility</button>
                     </div>
                 </div>
+
                 <div class="modal fade" id="addPrice" tabindex="-1" aria-labelledby="addPriceLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="addPriceLabel">Add Price</h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="priceFormContainer">
+                                    <!-- Dynamic price form cards will be appended here -->
+                                </div>
+
+                                <button type="button" id="addMultiplePricesRowBtn" class="mt-3">
+                                    <i class="fa-solid fa-plus"></i> Add Another Price
+                                </button>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="saveMultiplePricesBtn">Save
+                                    All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- <div class="modal fade" id="addPrice" tabindex="-1" aria-labelledby="addPriceLabel"
                     aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
@@ -446,7 +440,7 @@
                                 <div class="input-group">
                                     <label for="user-type">Name<span class="tf-color-1">*</span></label>
                                     <input type="text" id="priceName" name="prices[{{ $index }}][name]"
-                                        value="{{ old('prices.' . $index . '.name', $price->name ?? '') }}">
+                                        value="{{ old('prices.' . $index . '.name') }}">
                                 </div>
                                 @error('name')
                                     <span class="alert alert-danger text-center">{{ $message }} </span>
@@ -460,11 +454,11 @@
                                                 <!-- Notice the change here -->
                                                 <option value="" selected disabled>Choose Price Type...</option>
                                                 <option value="individual"
-                                                    {{ old('prices.' . $index . '.price_type', $price->price_type ?? '') === 'individual' ? 'selected' : '' }}>
+                                                    {{ old('prices.' . $index . '.price_type') === 'individual' ? 'selected' : '' }}>
                                                     Individual
                                                 </option>
                                                 <option value="whole"
-                                                    {{ old('prices.' . $index . '.price_type', $price->price_type ?? '') === 'whole' ? 'selected' : '' }}>
+                                                    {{ old('prices.' . $index . '.price_type') === 'whole' ? 'selected' : '' }}>
                                                     Whole Place
                                                 </option>
                                             </select>
@@ -528,7 +522,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> --}}
 
 
             </form>
@@ -540,62 +534,75 @@
     <script>
         // window.rooms = @json($facilityAttributes ?? []);
         window.rooms = @json($facility->facilityAttributes->filter(fn($attr) => $attr->facility_id == $facility->id)->toArray());
-        window.prices = @json($prices ?? []);
+        const initialPrices = @json($prices ?? []);
+        console.log(window.prices);
     </script>
 
     {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
     <script src="{{ asset('assets/js/formSubmitUpdate.js') }}"></script>
     <script src="{{ asset('assets/js/hideFields.js') }}"></script>
-    <script type="module" src="{{ asset('assets/js/updateRoom.js') }}"></script>
-    <script type="module" src="{{ asset('assets/js/addPrice.js') }}"></script>
+    <script type="module" src="{{ asset('assets/js/addRooms.js') }}"></script>
+    {{-- <script type="module" src="{{ asset('assets/js/addPrice.js') }}"></script> --}}
+    <script type="module" src="{{ asset('assets/js/updatePrice.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
-            const dateFieldsDiv = document.getElementById('dateFields');
-            const dateFromInput = document.getElementById('date_from');
-            const dateToInput = document.getElementById('date_to');
+        // document.addEventListener("DOMContentLoaded", function() {
+        //     const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
+        //     const dateFieldsDiv = document.getElementById('dateFields');
+        //     const dateFromInput = document.getElementById('date_from');
+        //     const dateToInput = document.getElementById('date_to');
+
+        //     function toggleDateFields() {
+        //         if (isBasedOnDaysCheckbox.checked) {
+        //             dateFieldsDiv.style.display = 'block';
+        //             dateFromInput.removeAttribute('disabled');
+        //             dateToInput.removeAttribute('disabled');
+        //             dateFromInput.setAttribute('required', 'required');
+        //             dateToInput.setAttribute('required', 'required');
+        //         } else {
+        //             dateFieldsDiv.style.display = 'none';
+        //             dateFromInput.setAttribute('disabled', 'disabled');
+        //             dateToInput.setAttribute('disabled', 'disabled');
+        //             dateFromInput.removeAttribute('required');
+        //             dateToInput.removeAttribute('required');
+        //         }
+        //     }
 
 
-            function disablePastDates() {
-                const today = new Date().toISOString().split('T')[0];
-                dateFromInput.setAttribute('min', today);
-                dateToInput.setAttribute('min', today);
-            }
+        //     dateFromInput.addEventListener('change', function() {
+        //         if (dateFromInput.value) {
+        //             dateToInput.setAttribute('min', dateFromInput.value);
+        //         }
+        //     });
 
 
-            dateFromInput.addEventListener('change', function() {
-                if (dateFromInput.value) {
-                    dateToInput.value = dateFromInput.value;
-                }
-            });
+        //     isBasedOnDaysCheckbox.addEventListener('change', toggleDateFields);
 
-            // Handle the checkbox state to show/hide the date fields
-            isBasedOnDaysCheckbox.addEventListener('change', function() {
-                if (isBasedOnDaysCheckbox.checked) {
-                    dateFieldsDiv.style.display = 'block';
-                } else {
-                    dateFieldsDiv.style.display = 'none';
-                }
-            });
 
-            // Disable past dates initially
-            disablePastDates();
-        });
+        //     toggleDateFields();
+
+
+        //     $('#addPrice').on('hidden.bs.modal', function() {
+        //         $("#date_from").val('');
+        //         $("#date_to").val('');
+        //     });
+        // });
+
 
         function removeUpload(previewId, inputId) {
-            $('#' + previewId).hide(); // Hide the preview
+            // Hide the preview block
+            $('#' + previewId).hide();
             $('#' + previewId + ' img').attr('src', '{{ asset('images/upload/upload-1.png') }}');
             $('#' + previewId + ' p.file-name-overlay').remove();
             $('#' + previewId + ' .remove-upload').hide();
             $('#' + inputId).val('');
+            $('#upload-file').show();
         }
-
 
         function removeGalleryImage(button, inputId) {
             $(button).parent('.gitems').remove();
-            $('#' + inputId).val('');
             if ($('.gitems').length === 0) {
+                $('#' + inputId).val('');
                 $('#galUpload').addClass('up-load');
             }
         }

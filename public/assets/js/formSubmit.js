@@ -2,9 +2,9 @@ $("#facilityForm").on("submit", function (event) {
     event.preventDefault();
 
     var formData = new FormData(this);
-    const facilityType = $("#rentalType").val();  // Get the facility type
+    const facilityType = $("#rentalType").val();
 
-    // Add price data to formData
+
     prices.forEach((price, index) => {
         formData.append(`prices[${index}][name]`, price.name);
         formData.append(`prices[${index}][price_type]`, price.price_type);
@@ -13,12 +13,12 @@ $("#facilityForm").on("submit", function (event) {
         formData.append(`prices[${index}][is_there_a_quantity]`, price.is_there_a_quantity);
     });
 
-    // Check for facility type and append appropriate data
+
     if (facilityType === "whole_place") {
         const wholeCapacity = $("#roomCapacityWhole").val();
         formData.append("whole_capacity", wholeCapacity);
     } else {
-        // Append rooms data for individual or both facility types
+
         rooms.forEach((room, index) => {
             formData.append(`facility_attributes[${index}][room_name]`, room.room_name);
             formData.append(`facility_attributes[${index}][capacity]`, room.capacity);
