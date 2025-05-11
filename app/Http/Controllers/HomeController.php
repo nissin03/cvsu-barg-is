@@ -8,6 +8,7 @@ use App\Models\Rental;
 use App\Models\Contact;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Facility;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Routing\Controller;
@@ -21,19 +22,17 @@ class HomeController extends Controller
     {
         $slides = Slide::where('status', 1)->get()->take(3);
         $categories = Category::orderBy('name')->get();
-        $fproducts = Product::where('featured',1)->get()->take(8);
-        $frentals = Rental::where('featured',1)->get()->take(8);
-        return view('index', compact('slides', 'categories','fproducts','frentals'));
-
+        $fproducts = Product::where('featured', 1)->get()->take(8);
+        // $frentals = Facility::with(['prices', 'facilityAttributes'])
+        // ->where('featured', 1)
+        // ->take(8)
+        // ->get();
+        return view('index', compact('slides', 'categories', 'fproducts'));
     }
     public function contact()
     {
-        return view ('contact');
-
+        return view('contact');
     }
-
-
-
     public function contact_store(Request $request)
     {
         $user = Auth::user();
@@ -56,8 +55,8 @@ class HomeController extends Controller
         ]);
 
         // $lastContact = Contact::where('user_id', $user->id)
-        //                     ->latest()
-        //                     ->first();
+        //     ->latest()
+        //     ->first();
         // $timeWindow = 60;
 
         // if ($lastContact && Carbon::parse($lastContact->created_at)->diffInMinutes(Carbon::now()) < $timeWindow) {
@@ -70,29 +69,17 @@ class HomeController extends Controller
         $contact->message = $request->message;
         $contact->user_id = $user->id;
         $contact->save();
-
         // $admin = User::where('utype', 'ADM')->first();
         // if ($admin) {
         //     $admin->notify(new ContactMessageNotification($contact));
         // }
-
         broadcast(new ContactMessageReceived($contact));
         return redirect()->back()->with('success', 'Your message has been sent successfully.');
     }
-
-
-
-
-
-
-
-
-
-
     public function search(Request  $request)
     {
         $query = $request->input('query');
-        $results = Product::where('name','LIKE',"%{$query}%")->get()->take(8);
+        $results = Product::where('name', 'LIKE', "%{$query}%")->get()->take(8);
         return response()->json($results);
     }
 }
