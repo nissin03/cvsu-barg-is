@@ -136,6 +136,10 @@ class ProductSeeder extends Seeder
             ],
         ];
 
+        // Define product data.
+        // Note: For products with variants, the category string includes a subcategory.
+        // For example, products that should be grouped under PE have a category "Apparel > PE".
+        // (Your CategorySeeder must have created both "Apparel" and its children "PE" and "Cspear", etc.)
         $products = [
             [
                 'name'       => 'Umbrella',
@@ -463,7 +467,7 @@ class ProductSeeder extends Seeder
                 'stock_status'          => 'instock',
                 'reorder_quantity'      => 10,
                 'outofstock_quantity'   => 0,
-                'featured'              => true,
+                'featured'              => false,
                 'image'                 => $images['image'],
                 'images'                => implode(',', $images['images']),
                 'sex'                   => 'all',
