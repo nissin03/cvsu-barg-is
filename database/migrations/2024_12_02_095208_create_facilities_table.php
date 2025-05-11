@@ -17,7 +17,7 @@ return new class extends Migration
                 $table->enum('facility_type', ['individual', 'whole_place', 'both']);
                 $table->string('slug')->unique();
                 $table->text('description');
-                $table->text('rules_and_regulations'); 
+                $table->text('rules_and_regulations');
                 $table->string('requirements');
                 $table->boolean('featured')->default(false);
                 $table->string('image')->nullable();

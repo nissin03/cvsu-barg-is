@@ -5,9 +5,9 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Product;
+use App\Models\Transaction;
 use Carbon\Carbon;
 use Faker\Factory as Faker;
 
@@ -19,7 +19,20 @@ class OrderSeeder extends Seeder
         $userIds = User::pluck('id')->toArray();
         $products = Product::all();
 
-        for ($i = 0; $i < 20; $i++) {
+        // Courses by department
+        $courses = [
+            'CEIT'   => ['BS Agricultural and Biosystems Engineering', 'BS Architecture', 'BS Civil Engineering', 'BS Computer Science', 'BS Information Technology'],
+            'GSOLC'  => ['PhD in Agriculture', 'PhD in Management', 'Master of Arts in Education', 'MS Agriculture'],
+            'CAFENR' => ['BS Agriculture', 'BS Environmental Science', 'BS Food Technology'],
+            'CAS'    => ['BA Political Science', 'BS Psychology', 'BS Biology'],
+            'CCJ'    => ['BS Criminology'],
+            'CEMDS'  => ['BS Accountancy', 'BS Business Management'],
+            'CED'    => ['Bachelor of Elementary Education', 'Bachelor of Secondary Education'],
+            'CON'    => ['BS Nursing'],
+            'CVMBS'  => ['Doctor of Veterinary Medicine'],
+        ];
+
+        for ($i = 0; $i < 50; $i++) {
             $createdAt = $faker->dateTimeBetween('2024-01-01', '2025-12-31');
             $reservationStart = Carbon::now()->greaterThan(Carbon::create(2025, 1, 1))
                 ? Carbon::now()
@@ -30,16 +43,31 @@ class OrderSeeder extends Seeder
             $userId = $faker->randomElement($userIds);
             $user = User::find($userId);
 
+            // Get a random department and course from the courses list
+            $department = $faker->randomElement(array_keys($courses));
+            $course = $faker->randomElement($courses[$department]);
+
+            // Generate a PH phone number
+            $phoneNumber = '+63' . $faker->numerify('9#########');
+
+            // Time slot between 7:00 AM and 5:00 PM
+            $startHour = 7;
+            $endHour = 17;
+            $timeSlot = $faker->dateTimeBetween(
+                Carbon::create(null, null, null, $startHour, 0, 0),
+                Carbon::create(null, null, null, $endHour, 0, 0)
+            )->format('H:i');
+
             $orderData = [
                 'user_id'          => $userId,
                 'name'             => $user ? $user->name : $faker->name,
                 'email'            => $user ? $user->email : $faker->email,
-                'phone_number'     => $faker->phoneNumber,
-                'year_level'       => $faker->optional()->randomElement(['1st', '2nd', '3rd', '4th']),
-                'department'       => $faker->optional()->word,
-                'course'           => $faker->optional()->word,
+                'phone_number'     => $phoneNumber,
+                'year_level'       => $faker->randomElement(['1st', '2nd', '3rd', '4th']),
+                'department'       => $department,
+                'course'           => $course,
                 'reservation_date' => $reservationDate,
-                'time_slot'        => $faker->time('H:i'),
+                'time_slot'        => $timeSlot,
                 'picked_up_date'   => $faker->date(),
                 'canceled_date'    => null,
                 'status'           => $faker->randomElement(['reserved', 'pickedup', 'canceled']),
@@ -81,15 +109,16 @@ class OrderSeeder extends Seeder
             $order->total = $orderSubtotal;
             $order->save();
 
+            // Create the transaction
             Transaction::create([
-                'user_id'    => $order->user_id,
-                'order_id'   => $order->id,
-                'status'     => $faker->randomElement(['pending', 'approved', 'decline']),
+                'user_id' => $userId,
+                'order_id' => $order->id,
+                'status' => 'pending', 
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ]);
         }
 
-        $this->command->info('20 orders seeded successfully.');
+        $this->command->info('50 orders and transactions seeded successfully.');
     }
 }
