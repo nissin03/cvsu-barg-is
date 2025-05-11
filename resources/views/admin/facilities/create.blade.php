@@ -66,7 +66,6 @@
             display: block;
         }
 
-
         /* Room Field Container */
         .room-field-container {
             border: 1px solid #ddd;
@@ -248,6 +247,7 @@
                                     <input type="file" id="gFile" name="images[]" accept="image/*" multiple>
                                 </label>
                             </div>
+                            <div id="image-preview-container"></div>
                         </div>
                     </fieldset>
 
@@ -296,9 +296,11 @@
                     <!-- Hidden inputs for form submission -->
                     <div id="hiddenRooms"></div>
 
+                    <!-- Capacity Section -->
+                    <!-- Rooms Section -->
                     <div id="dormitoryRooms" class="mt-4">
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
-                            <h4>Rooms</h4>
+                            <h4>Room Management</h4>
                             <button type="button" class="" data-bs-toggle="modal"
                                 data-bs-target="#addMultipleRoomsModal">
                                 <i class="bi bi-plus-circle"></i> Add Rooms
@@ -312,6 +314,7 @@
 
 
                         <div id="roomContainer" class="mt-4">
+                            <h4 class="mb-3">Rooms</h4>
                             <div class="row" id="roomCardsContainer">
 
                             </div>
@@ -433,19 +436,17 @@
 
     <script>
         function removeUpload(previewId, inputId) {
-            // Hide the preview block
             $('#' + previewId).hide();
             $('#' + previewId + ' img').attr('src', '{{ asset('images/upload/upload-1.png') }}');
             $('#' + previewId + ' p.file-name-overlay').remove();
             $('#' + previewId + ' .remove-upload').hide();
             $('#' + inputId).val('');
-            $('#upload-file').show();
         }
 
         function removeGalleryImage(button, inputId) {
             $(button).parent('.gitems').remove();
+            $('#' + inputId).val('');
             if ($('.gitems').length === 0) {
-                $('#' + inputId).val('');
                 $('#galUpload').addClass('up-load');
             }
         }
