@@ -337,7 +337,7 @@ class ReportController extends Controller
         $TotalCanceledAmountD = $sortedDailyDatas->sum('TotalCanceledAmount');
 
         $pageTitle = 'Reports';
-        return view('admin.reports.reports', compact(
+        return view('admin.reports.product-reports', compact(
             'orders',
             'dashboardDatas',
             'AmountM',
@@ -407,7 +407,7 @@ class ReportController extends Controller
         $availableMonths = DB::table('month_names')->get();
         $yearRange = range($currentYear, $currentYear - 10);
 
-        return view('admin.reports.report-product', compact(
+        return view('admin.reports.product', compact(
             'mostFrequentLabels',
             'mostFrequentData',
             'leastBoughtLabels',
@@ -551,7 +551,7 @@ class ReportController extends Controller
 
         $pageTitle = 'User Registrations Report';
 
-        return view('admin.reports.report-user', compact(
+        return view('admin.reports.product-user', compact(
             'totalUsers',
             'newUsersThisMonth',
             'activeUsers',
@@ -643,13 +643,13 @@ class ReportController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
-        return view('admin.reports.report-inventory', compact('products', 'startDate', 'endDate'));
+        return view('admin.reports.product-inventory', compact('products', 'startDate', 'endDate'));
     }
 
     public function generateBillingStatement($orderId)
     {
         $order = Order::with(['user', 'orderItems.product'])->findOrFail($orderId);
-        return view('admin.reports.report-statement', compact('order'));
+        return view('admin.reports.product-statement', compact('order'));
     }
 
     public function listBillingStatements(Request $request)
@@ -695,7 +695,7 @@ class ReportController extends Controller
 
         $orders = $ordersQuery->orderBy('created_at', 'desc')->paginate(20);
 
-        return view('admin.reports.report-statements', compact('orders', 'startDate', 'endDate'));
+        return view('admin.reports.product-statements', compact('orders', 'startDate', 'endDate'));
     }
 
 
@@ -728,7 +728,7 @@ class ReportController extends Controller
 
         $recentUsers = User::orderBy('created_at', 'desc')->take(5)->get();
 
-        return view('admin.report-user')
+        return view('admin.product-user')
             ->with('availableMonths', $availableMonths)
             ->with('selectedYear', $selectedYear)
             ->with('selectedMonth', $selectedMonth)
@@ -785,7 +785,7 @@ class ReportController extends Controller
             'canceled_sales_total' => $canceledSalesTotal,
         ];
 
-        return view('admin.reports.input-sales', compact('chartData', 'startDate', 'endDate'));
+        return view('admin.reports.product-input-sales', compact('chartData', 'startDate', 'endDate'));
     }
 
     public function generateInputUsers(Request $request)
@@ -827,8 +827,64 @@ class ReportController extends Controller
             'total_non_employees_count' => $totalNonEmployees,
         ];
 
-        return view('admin.reports.input-user', compact('chartData', 'startDate', 'endDate'));
+        return view('admin.reports.product-input-user', compact('chartData', 'startDate', 'endDate'));
     }
 
+
+
+
+    // Facilities Reports
+    public function listSalesFacilities(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+            'today' => 'nullable|boolean',
+            'search' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        if ($request->has('today') && $request->input('today') == '1') {
+            $startDate = Carbon::today()->toDateString();
+            $endDate = Carbon::today()->toDateString();
+        } else {
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
+        }
+
+        if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
+            return redirect()->back()->withErrors(['end_date' => 'The end date must be after or equal to the start date.'])->withInput();
+        }
+
+        $paymentsQuery = DB::table('payments')
+            ->join('users', 'payments.user_id', '=', 'users.id')
+            ->select('payments.*', 'users.name', 'users.email')
+            ->whereBetween('payments.created_at', [$startDate, $endDate]);
+
+        if ($request->has('search') && $request->input('search')) {
+            $searchTerm = $request->input('search');
+            $paymentsQuery->where(function($query) use ($searchTerm) {
+                $query->where('users.name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('users.email', 'like', '%' . $searchTerm . '%');
+            });
+        }
+
+        $payments = $paymentsQuery->orderBy('payments.created_at', 'desc')->paginate(20);
+
+        return view('admin.reports.facilities-sales', compact('payments', 'startDate', 'endDate'));
+    }
+    public function showPaymentDetails($paymentId)
+    {
+        $paymentDetails = PaymentDetail::with('facility')
+                                        ->where('payment_id', $paymentId)
+                                        ->get();
+
+        $totalPayment = $paymentDetails->sum('total_price');
+
+        return view('admin.reports.facilities-payment-details', compact('paymentDetails', 'totalPayment'));
+    }
 
 }

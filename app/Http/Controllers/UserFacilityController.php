@@ -36,11 +36,12 @@ class UserFacilityController extends Controller
         }
     }
 
-    public function show($slug)
+     public function show(Request $request, $slug)
     {
         $facility = Facility::with('facilityAttributes', 'prices')->where('slug', $slug)->firstOrFail();
         $pricesWithAttributes = $facility->prices()->whereHas('facility.facilityAttributes')->get();
         $pricesWithoutAttributes = $facility->prices()->whereDoesntHave('facility.facilityAttributes')->get();
+        $dates = explode(',', $request->input('selected_dates', ''));
 
         foreach ($facility->facilityAttributes as $attribute) {
             $reserved = TransactionReservation::whereHas('availability', function ($query) use ($attribute) {

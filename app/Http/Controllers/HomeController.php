@@ -17,13 +17,15 @@ use App\Notifications\ContactMessageNotification;
 
 class HomeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $slides = Slide::where('status', 1)->get()->take(3);
-        $categories = Category::orderBy('name')->get();
-        $fproducts = Product::where('featured',1)->get()->take(8);
-        $frentals = Rental::where('featured',1)->get()->take(8);
-        return view('index', compact('slides', 'categories','fproducts','frentals'));  
+        $slides = Slide::where('status', 1)->take(3)->get();
+         
+        $categories = Category::whereNotNull('parent_id')->take(3)->get();
+        
+       $fproducts = Product::where('featured', 1) ->take(8) ->get();
+
+        return view('index', compact('slides', 'categories','fproducts'));  
 
     }
     public function contact()

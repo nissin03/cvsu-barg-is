@@ -242,84 +242,68 @@
         </div>
 
 
-            <div class="tf-section mb-30">
-
-                <div class="wg-box">
-                    <div class="flex items-center justify-between">
-                        <h5>Recent orders</h5>
-                        <div class="dropdown default">
-                            <a class="btn btn-secondary dropdown-toggle" href="{{route('admin.orders')}}">
-                                <span class="view-all">View all</span>
+<div class="tf-section mb-30">
+    <div class="wg-box shadow">
+        <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
+            <h5 class="m-0">Recent Orders</h5>
+            <a class="btn btn-secondary" href="{{route('admin.orders')}}">
+                <span>View all</span>
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Course</th>
+                        <th>Reservation</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Items</th>
+                        <th>Pickup Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($orders as $order)
+                    <tr>
+                        <td>
+                            <div>
+                                <div>{{$order->name}}</div>
+                                <div class="text-muted" style="font-size: 15px;">{{$order->phone_number}}</div>
+                            </div>
+                        </td>
+                        <td>{{$order->course}}</td>
+                        <td>
+                            <div>
+                                <div>{{$order->reservation_date}}</div>
+                                <div class="text-muted"  style="font-size: 15px;">{{$order->time_slot}}</div>
+                            </div>
+                        </td>
+                        <td>{{$order->total}}</td>
+                        <td>
+                            <span class="badge 
+                                @if ($order->status == 'pickedup') bg-success 
+                                @elseif($order->status == 'canceled') bg-danger 
+                                @else bg-warning @endif">
+                                {{ ucfirst($order->status) }}
+                            </span>
+                        </td>
+                        <td class="text-center">{{$order->orderItems->count()}}</td>
+                        <td>{{$order->picked_up_date}}</td>
+                        <td>
+                            <a href="{{route('admin.order.details', ['order_id' => $order->id]) }}">
+                                <i class="icon-eye"></i>
                             </a>
-                        </div>
-                    </div>
-                    <div class="wg-table table-all-user">
-                        <div class="table-responsive">
-                        <table class="table table-striped table-bordered" style="table-layout: auto;">
-                    <thead>
-                        <tr>
-                            <th>OrderNo</th>
-                            <th class="text-center">Name</th>
-                            <th class="text-center">Phone</th>
-                            <th class="text-center">Year Level</th>
-                            <th class="text-center">Department</th>
-                            <th class="text-center">Course</th>
-                            <th class="text-center">Reservation Date</th>
-                            <th class="text-center">Time Slot</th>
-                            <th class="text-center">Course</th>
-                            <th class="text-center">Subtotal</th>
-                            <th class="text-center">Total</th>
-                            <th class="text-center">Status</th>
-                            <th class="text-center">Order Date</th>
-                            <th class="text-center">Total Items</th>
-                            <th class="text-center">Picked up on</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($orders as $order)
-                        <tr>
-                            <td class="text-center">{{$order->id}}</td>
-                            <td class="text-center">{{$order->name}}</td>
-                            <td class="text-center">{{$order->phone_number}}</td>
-                            <td class="text-center">{{$order->year_level}}</td>
-                            <td class="text-center">{{$order->department}}</td>
-                            <td class="text-center">{{$order->course}}</td>
-                            <td class="text-center">{{$order->reservation_date}}</td>
-                            <td class="text-center">{{$order->time_slot}}</td>
-                            <td class="text-center">{{$order->course}}</td>
-                            <td class="text-center">{{$order->subtotal}}</td>
-                            <td class="text-center">{{$order->total}}</td>
-                            <td class="text-center">
-                                @if ($order->status == 'pickedup')
-                                <span class="badge bg-success">Picked Up</span>
-                                @elseif($order->status == 'canceled')
-                                    <span class="badge bg-danger">Canceled</span>
-                                @else
-                                    <span class="badge bg-warning">Reserved</span>
-                                @endif
-                            </td>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
-                            <td class="text-center">{{$order->created_at}}</td>
-                            <td class="text-center">{{$order->orderItems->count()}}</td>
-                            <td class="text-center">{{$order->picked_up_date}}</td>
-                            <td class="text-center">
-                                <a href="{{route('admin.order.details', ['order_id' => $order->id]) }}">
-                                    <div class="list-icon-function view-icon">
-                                        <div class="item eye">
-                                            <i class="icon-eye"></i>
-                                        </div>
-                                    </div>
-                                </a>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
         </div>
 
     </main>
@@ -328,6 +312,7 @@
 
 @push('styles')
 <style>
+
     .table {
         width: 100%;
         border-collapse: collapse;

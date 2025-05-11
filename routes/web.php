@@ -277,6 +277,10 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::get('/admin/report-statement/{orderId}', [ReportController::class, 'generateBillingStatement'])->name('admin.report-statement');
     // Route::get('/admin/report-statement/{orderId}', [ReportController::class, 'generateBillingStatement'])->name('admin.report-statement');
 
+     Route::get('/admin/facilities-sales', [ReportController::class, 'listSalesFacilities'])->name('admin.facilties.stataments');
+     Route::get('admin/payment-details/{paymentId}', [ReportController::class, 'showPaymentDetails'])->name('admin.sales-report-details');
+
+
 
 
     // Route::get('/user-reports', [ReportController::class, 'showUserReports'])->name('admin.user-reports');
