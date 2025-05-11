@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use App\Models\User;
@@ -490,17 +491,17 @@ class AdminController extends Controller
             'attributes',
             'attributeValues.productAttribute'
         ])
-        ->where('archived', $archived);
+            ->where('archived', $archived);
         $isNumeric = is_numeric($search);
 
         if ($search) {
             $query->where(function ($q) use ($search, $isNumeric) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
 
                 if ($isNumeric) {
                     $q->orWhere('quantity', 'like', "%{$search}%")
-                      ->orWhere('price', 'like', "%{$search}%");
+                        ->orWhere('price', 'like', "%{$search}%");
                 }
             });
             if ($isNumeric) {
@@ -1170,6 +1171,7 @@ class AdminController extends Controller
 
 
 
+
     public function markAsRead($id)
     {
         $notification = Auth::user()->notifications()->findOrFail($id);
@@ -1255,7 +1257,6 @@ class AdminController extends Controller
 
 
 
-
     // Delete multiple notifications
     public function deleteMultipleNotifications(Request $request)
     {
@@ -1266,6 +1267,7 @@ class AdminController extends Controller
             'status' => 'success',
         ]);
     }
+
 
     // Reports Page
     public function generateReport(Request $request)
@@ -3877,12 +3879,48 @@ class AdminController extends Controller
 
         // Return View with all data
         return view('admin.report-facilities', compact(
-            'AmountM', 'ReservedAmountM', 'CompletedAmountM', 'CanceledAmountM',
-            'TotalAmount', 'TotalReservedAmount', 'TotalCompletedAmount', 'TotalCanceledAmount',
-            'AmountW', 'ReservedAmountW', 'CompletedAmountW', 'CanceledAmountW',
-            'TotalAmountW', 'TotalReservedAmountW', 'TotalCompletedAmountW', 'TotalCanceledAmountW',
-            'selectedMonth', 'selectedYear', 'availableMonths', 'yearRange'
+            'AmountM',
+            'ReservedAmountM',
+            'CompletedAmountM',
+            'CanceledAmountM',
+            'TotalAmount',
+            'TotalReservedAmount',
+            'TotalCompletedAmount',
+            'TotalCanceledAmount',
+            'AmountW',
+            'ReservedAmountW',
+            'CompletedAmountW',
+            'CanceledAmountW',
+            'TotalAmountW',
+            'TotalReservedAmountW',
+            'TotalCompletedAmountW',
+            'TotalCanceledAmountW',
+            'selectedMonth',
+            'selectedYear',
+            'availableMonths',
+            'yearRange'
         ));
     }
+    public function archiveContacts($id)
+    {
+        $contact = Contact::findOrFail($id);
+        $contact->delete();
 
+        return back()->with('status', 'Message archived successfully.');
+    }
+
+    public function restoreContacts($id)
+    {
+        $contact = Contact::onlyTrashed()->findOrFail($id);
+        $contact->restore();
+
+        return back()->with('status', 'Message restored successfully.');
+    }
+
+    public function archivedContacts()
+    {
+        $contacts = Contact::onlyTrashed()->paginate(10);
+
+        return view('admin.archived-contacts', compact('contacts'));
+    }
 }

@@ -112,7 +112,7 @@
                 <div class="col-lg-5">
                     <h1 class="product-single__name">{{ $product->name }}</h1>
                     <div class="product-single__price">
-                        <span class="current-price" id="current-price">&#8369;
+                        <span class="current-price text-success h2" id="current-price">&#8369;
                             @if ($product->attributeValues->isNotEmpty() && isset($product->attributeValues[0]->price))
                                 {{ number_format($product->attributeValues[0]->price, 2) }}
                             @else
