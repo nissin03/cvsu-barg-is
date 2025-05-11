@@ -37,7 +37,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home.index');
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 Route::get('/shop/{product_slug}', [ShopController::class, 'product_details'])->name('shop.product.details');
 
-Route::get('/broadcasting', function () {
+Route::get('/broadcasting', function() {
     broadcast(new Example());
     return 'It was broadcasted';
 });
@@ -234,14 +234,13 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::get('/admin/contact', [AdminController::class, 'contacts'])->name('admin.contacts');
     Route::delete('/admin/contact/{id}/delete', [AdminController::class, 'contact_delete'])->name('admin.contact.delete');
     Route::post('/admin/contact/{id}/reply', [AdminController::class, 'contact_reply'])->name('admin.contact.reply');
-    Route::get('/notifications', [AdminController::class, 'getNotifications']);
-    Route::get('/notifications/unread-count', [AdminController::class, 'unreadCount']);
-    Route::post('/notifications/mark-read/{id}', [AdminController::class, 'markAsRead']);
-    Route::post('/notifications/mark-read-all', [AdminController::class, 'markAllAsRead']);
+    Route::get('/notifications/count', [AdminController::class, 'getUnreadNotificationCount']);
     Route::post('/notifications/mark-read-multiple', [AdminController::class, 'markMultipleAsRead']);
-    Route::delete('/notifications/delete/{id}', [AdminController::class, 'delete']);
-    Route::delete('/notifications/delete-all', [AdminController::class, 'deleteAll']);
-    Route::delete('/notifications/delete-multiple', [AdminController::class, 'deleteMultipleNotifications']);
+    Route::post('/notifications/mark-read/{id}', [AdminController::class, 'markAsRead']);
+    Route::get('/notifications/unread-count', [AdminController::class, 'unreadCount']);
+    Route::post('/notifications/delete-multiple', [AdminController::class, 'deleteMultipleNotifications']);
+    Route::get('/notifications/latest', [AdminController::class, 'latest']);
+
 
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::get('/user/filter', [AdminController::class, 'filter'])->name('admin.users.filter');
@@ -280,9 +279,6 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::post('/admin/sales-report/download', [AdminController::class, 'downloadInputSales'])->name('admin.download-input-sales');
     Route::post('/admin/user-report/download', [AdminController::class, 'downloadInputUsers'])->name('admin.download-input-users');
 
-    Route::delete('/admin/contact/archive/{id}', [AdminController::class, 'archiveContacts'])->name('admin.contact.archive');
-    Route::post('/admin/contact/restore/{id}', [AdminController::class, 'restoreContacts'])->name('admin.contact.restore');
-    Route::get('/admin/contacts/archived', [AdminController::class, 'archivedContacts'])->name('admin.contact.archived');
 
     Route::post('/rentals-reports/generate', [AdminController::class, 'generateInputRentalReports'])->name('admin.generate-input-rentals-reports');
     Route::get('/rentals-reports', function () {
@@ -311,4 +307,5 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
 
 
     Route::get('admin/report/facilities', [AdminController::class, 'generateFacilitespayment'])->name('admin.report.facilities');
+
 });

@@ -82,8 +82,10 @@ class FacilityController extends Controller
         $this->save($facility, $request);
         $this->handleImage($facility, $request);
         $facility->save();
+
         $this->handleFacilityAttributes($facility, $request);
         $this->handlePrices($facility, $request);
+
         // dd($request->all());
         return response()->json(['message' => 'Facility created successfully!', 'action' => 'create']);
     }
@@ -185,24 +187,24 @@ class FacilityController extends Controller
         $request->validate([
             'name' => 'required|unique:facilities,name,' . $id,
         ]);
-
+        
         $facility = Facility::findOrFail($id);
         $request->merge([
             'sex_restriction' => $request->sex_restriction ?? '',
             'name' => $request->name ?: $facility->name,
         ]);
-
+    
         $this->save($facility, $request);
         $this->handleImage($facility, $request);
         $facility->save();
-
+    
         // Get facility attributes from request
         $facilityAttributes = $request->input('facility_attributes', []);
-
+    
         if ($request->facility_type === 'whole_place') {
             // Delete attributes only if facility_type has changed to "whole_place"
             FacilityAttribute::where('facility_id', $facility->id)->delete();
-
+    
             FacilityAttribute::create([
                 'facility_id' => $facility->id,
                 'room_name' => null,
@@ -214,15 +216,15 @@ class FacilityController extends Controller
             // Only delete existing attributes if new ones are being provided
             if (!empty($facilityAttributes)) {
                 FacilityAttribute::where('facility_id', $facility->id)->delete();
-
+    
                 $validAttributes = array_filter($facilityAttributes, function ($attr) {
                     return isset($attr['room_name']) && isset($attr['capacity']);
                 });
-
+    
                 $this->createFacilityAttributes($facility, $validAttributes);
             }
         }
-
+    
         if (is_array($request->prices)) {
             $pricesData = [];
             foreach ($request->prices as $price) {
@@ -240,14 +242,14 @@ class FacilityController extends Controller
                     'updated_at' => now(),
                 ];
             }
-
+    
             Price::where('facility_id', $facility->id)->delete();
             Price::insert($pricesData);
         }
-
+    
         return response()->json(['message' => 'Facility updated successfully!', 'action' => 'update']);
     }
-
+    
 
     private function createFacilityAttributes($facility, $facilityAttributes)
     {
@@ -332,7 +334,7 @@ class FacilityController extends Controller
         $facility->save();
     }
 
-    // archive codes
+    // archive codes  
     public function archivedFacilities($id)
     {
         try {
@@ -360,6 +362,8 @@ class FacilityController extends Controller
         ]);
     }
 
+
+
     public function showFacilities()
     {
         // Fetch only facilities that are archived
@@ -373,6 +377,8 @@ class FacilityController extends Controller
         // Pass both variables to the view
         return view('admin.facilities.archive.index', compact('archivedFacilities', 'facilities'));
     }
+
+
 
     public function GenerateFacilityThumbnailsImage($image, $imageName)
     {
@@ -399,6 +405,53 @@ class FacilityController extends Controller
             Log::error('Image processing failed: ' . $e->getMessage());
         }
     }
+
+ 
+    public function updateStatus(Request $request, $id)
+    {
+        // Fetch the availability record
+        $availability = Availability::findOrFail($id);
+
+        // Capture the old values for history
+        $oldPaymentStatus = $availability->payment_status;
+        $oldStatus = $availability->status;
+
+        // Update the payment and rent status
+        $availability->update([
+            'payment_status' => $request->payment_status,
+            'status' => $request->rent_status,
+        ]);
+
+        // Record the history of changes in the ReservationHistory table
+        Facility::create([
+            'availability_id' => $availability->id,
+            'old_payment_status' => $oldPaymentStatus,
+            'new_payment_status' => $request->payment_status,
+            'old_rent_status' => $oldStatus,
+            'new_rent_status' => $request->rent_status,
+            'updated_at' => now(),
+            'user_email' => $availability->user->email,
+            // 'admin_email' => auth()->admin()->email,
+        ]);
+
+        // Redirect back with a success message
+        return redirect()->route('admin.facilities.reservations')
+            ->with('success', 'Reservation status updated and history saved.');
+    }
+
+    // public function showHistory($id)
+    // {
+    //     // Fetch the availability object based on the reservation ID
+    //     $availability = Availability::findOrFail($id);
+
+    //     // Fetch the reservation history for this availability
+    //     $history = ReseHistory::where('availability_id', $id)->get();
+
+    //     // Pass both availability and history data to the view
+    //     return view('admin.reservation-history', compact('availability', 'history'));
+    // }
+
+
 
 
 }
