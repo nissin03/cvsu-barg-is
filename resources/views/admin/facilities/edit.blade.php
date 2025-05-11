@@ -541,7 +541,7 @@
     {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
     <script src="{{ asset('assets/js/formSubmitUpdate.js') }}"></script>
     <script src="{{ asset('assets/js/hideFields.js') }}"></script>
-    <script type="module" src="{{ asset('assets/js/updateRoom.js') }}"></script>
+    <script type="module" src="{{ asset('assets/js/addRooms.js') }}"></script>
     {{-- <script type="module" src="{{ asset('assets/js/addPrice.js') }}"></script> --}}
     <script type="module" src="{{ asset('assets/js/updatePrice.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
