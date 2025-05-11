@@ -482,17 +482,17 @@
                                                     <div class="text">Statements</div>
                                                 </a>
                                             </li>
-                                            {{-- <li class="sub-menu-item">
+                                            <li class="sub-menu-item">
                                                 <a href="{{ route('admin.generate-input-users') }}">
                                                     <div class="text">Input User</div>
                                                 </a>
-                                            </li> --}}
+                                            </li>
 
-                                            {{-- <li class="sub-menu-item">
+                                            <li class="sub-menu-item">
                                                 <a href="{{ route('admin.generate-input-sales') }}">
                                                     <div class="text">Input Sales</div>
                                                 </a>
-                                            </li> --}}
+                                            </li>
                                         </ul>
                                     </li>
 
@@ -502,11 +502,11 @@
                                             <div class="text">Facilties Reports</div>
                                         </a>
                                         <ul class="sub-menu">
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.facilties.stataments') }}">
-                                                    <div class="text">Statement</div>
+                                            {{-- <li class="sub-menu-item">
+                                                <a href="{{ route('admin.report.facilities') }}">
+                                                    <div class="text">Sales Reports</div>
                                                 </a>
-                                            </li>
+                                            </li> --}}
 
 
                                         </ul>

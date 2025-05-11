@@ -18,13 +18,10 @@ class DatabaseSeeder extends Seeder
             WeekSeeder::class,
             DailySeeder::class,
             UserSeeder::class,
-            ContactSeeder::class,
-            CategorySeeder:: class,
+            // ContactSeeder::class,
+            CategorySeeder::class,
             ProductSeeder::class,
-            OrderSeeder::class,
-            SlidesSeeder::class,
-            // FacilityAndRelationsSeeder::class,
+            // OrderSeeder::class,
         ]);
-
     }
 }
