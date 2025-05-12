@@ -575,28 +575,46 @@
                                             </div>
 
                                             <div id="notification-list">
-                                                <div class="notification-item">
-                                                    <div class="notification-content">
-                                                        <p class="notification-text text-center">No notifications
-                                                        </p>
+                                                @if (Auth::user()->unreadNotifications->isEmpty())
+                                                    <div class="notification-item">
+                                                        <div class="notification-content">
+                                                            <p class="notification-text text-center">No notifications
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                @else
+                                                    @foreach (Auth::user()->unreadNotifications->take(5) as $notification)
+                                                        <div class="notification-item"
+                                                            data-notification-id="{{ $notification->id }}">
+                                                            <div class="badge-icon h5">
+                                                                <i class="fas fa-envelope text-dark"></i>
+                                                            </div>
+                                                            <div class="notification-content">
+                                                                <p class="notification-text fw-bold">
+                                                                    {{ $notification->data['name'] }}</p>
+                                                                <p class="notification-subtext">
+                                                                    {{ Str::limit($notification->data['message'], 30) }}
+                                                                </p>
+                                                            </div>
+                                                            <div class="unread-indicator"></div>
+                                                            <div class="remove-notification"
+                                                                data-id="{{ $notification->id }}">
+                                                                <i class="fas fa-times"></i>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                @endif
                                             </div>
 
                                             <div id="all-notification-list"
                                                 class="notification-list-container all-notifications"
                                                 style="display: none;">
-                                                <!-- All notifications will be loaded here -->
+                                                <!-- All notifications will be loaded here dynamically -->
                                             </div>
                                             <div class="dropdown-footer">
                                                 <button id="toggle-notifications" class="btn">See all
                                                     notifications</button>
                                             </div>
-                                            {{-- <div class="dropdown-footer">
-                                                <button class="btn" data-bs-toggle="modal"
-                                                    data-bs-target="#notificationsModal">See previous
-                                                    notifications</button>
-                                            </div> --}}
                                         </div>
                                     </div>
                                 </div>

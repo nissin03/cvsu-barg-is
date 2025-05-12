@@ -14,6 +14,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Events\ContactMessageReceived;
+use App\Notifications\NewContactMessage;
+use Illuminate\Support\Facades\Notification;
 use App\Notifications\ContactMessageNotification;
 
 class HomeController extends Controller
@@ -54,14 +56,6 @@ class HomeController extends Controller
             'message.max' => 'The message must not exceed 65535 characters.'
         ]);
 
-        // $lastContact = Contact::where('user_id', $user->id)
-        //     ->latest()
-        //     ->first();
-        // $timeWindow = 60;
-
-        // if ($lastContact && Carbon::parse($lastContact->created_at)->diffInMinutes(Carbon::now()) < $timeWindow) {
-        //     return redirect()->back()->with('error', 'You can only send one message every ' . $timeWindow . ' minutes.');
-        // }
         $contact = new Contact();
         $contact->name = $user->name;
         $contact->email = $user->email;
@@ -69,11 +63,8 @@ class HomeController extends Controller
         $contact->message = $request->message;
         $contact->user_id = $user->id;
         $contact->save();
-        // $admin = User::where('utype', 'ADM')->first();
-        // if ($admin) {
-        //     $admin->notify(new ContactMessageNotification($contact));
-        // }
-        broadcast(new ContactMessageReceived($contact));
+
+        event(new ContactMessageReceived($contact));
         return redirect()->back()->with('success', 'Your message has been sent successfully.');
     }
     public function search(Request  $request)

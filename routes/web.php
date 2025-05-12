@@ -1,10 +1,10 @@
 <?php
 
-use App\Events\TestEvent;
 use Livewire\Livewire;
 use App\Events\Example;
 use App\Models\Contact;
 use App\Models\Product;
+use App\Events\TestEvent;
 use App\Events\LowStockEvent;
 use App\Http\Middleware\AuthAdmin;
 use Illuminate\Support\Facades\Log;
@@ -26,6 +26,7 @@ use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\AdminProfileController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserFacilityController;
 
 Auth::routes(['reset' => true]);
@@ -198,6 +199,17 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::get('/facility/{facilityId}/rooms', [FacilityController::class, 'getRooms'])
         ->name('facility.rooms.get');
 
+    Route::middleware(['auth'])->prefix('notifications')->group(function () {
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/unread', [NotificationController::class, 'unread'])->name('notifications.unread');
+        Route::post('/mark-as-read/{id}', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+        Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
+        Route::post('/mark-multiple-as-read', [NotificationController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-as-read');
+        Route::delete('/destroy/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+        Route::delete('/destroy-all', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    });
+
     Route::get('/admin/products', [AdminController::class, 'products'])->name('admin.products');
     Route::get('/admin/product/add', [AdminController::class, 'product_add'])->name('admin.product.add');
     Route::post('/admin/product/store', [AdminController::class, 'product_store'])->name('admin.product.store');
@@ -234,14 +246,6 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::get('/admin/contact', [AdminController::class, 'contacts'])->name('admin.contacts');
     Route::delete('/admin/contact/{id}/delete', [AdminController::class, 'contact_delete'])->name('admin.contact.delete');
     Route::post('/admin/contact/{id}/reply', [AdminController::class, 'contact_reply'])->name('admin.contact.reply');
-    Route::get('/notifications', [AdminController::class, 'getNotifications']);
-    Route::get('/notifications/unread-count', [AdminController::class, 'unreadCount']);
-    Route::post('/notifications/mark-read/{id}', [AdminController::class, 'markAsRead']);
-    Route::post('/notifications/mark-read-all', [AdminController::class, 'markAllAsRead']);
-    Route::post('/notifications/mark-read-multiple', [AdminController::class, 'markMultipleAsRead']);
-    Route::delete('/notifications/delete/{id}', [AdminController::class, 'delete']);
-    Route::delete('/notifications/delete-all', [AdminController::class, 'deleteAll']);
-    Route::delete('/notifications/delete-multiple', [AdminController::class, 'deleteMultipleNotifications']);
 
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::get('/user/filter', [AdminController::class, 'filter'])->name('admin.users.filter');
