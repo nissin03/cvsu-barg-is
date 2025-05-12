@@ -12,5 +12,3 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 Broadcast::channel('admin-notification', function ($user) {
     return $user->utype === 'ADM';
 });
-
-
