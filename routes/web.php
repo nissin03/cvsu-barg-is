@@ -38,7 +38,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home.index');
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 Route::get('/shop/{product_slug}', [ShopController::class, 'product_details'])->name('shop.product.details');
 
-Route::get('/broadcasting', function () {
+Route::get('/broadcasting', function() {
     broadcast(new Example());
     return 'It was broadcasted';
 });
@@ -284,9 +284,6 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::post('/admin/sales-report/download', [AdminController::class, 'downloadInputSales'])->name('admin.download-input-sales');
     Route::post('/admin/user-report/download', [AdminController::class, 'downloadInputUsers'])->name('admin.download-input-users');
 
-    Route::delete('/admin/contact/archive/{id}', [AdminController::class, 'archiveContacts'])->name('admin.contact.archive');
-    Route::post('/admin/contact/restore/{id}', [AdminController::class, 'restoreContacts'])->name('admin.contact.restore');
-    Route::get('/admin/contacts/archived', [AdminController::class, 'archivedContacts'])->name('admin.contact.archived');
 
     Route::post('/rentals-reports/generate', [AdminController::class, 'generateInputRentalReports'])->name('admin.generate-input-rentals-reports');
     Route::get('/rentals-reports', function () {
@@ -315,4 +312,5 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
 
 
     Route::get('admin/report/facilities', [AdminController::class, 'generateFacilitespayment'])->name('admin.report.facilities');
+
 });

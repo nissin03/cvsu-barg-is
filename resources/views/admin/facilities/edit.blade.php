@@ -395,6 +395,7 @@
                         </div>
                     </div>
 
+
                     <div class="cols gap10">
                         <button class="tf-button w-full" type="submit">Update facility</button>
                     </div>
@@ -541,7 +542,7 @@
     {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
     <script src="{{ asset('assets/js/formSubmitUpdate.js') }}"></script>
     <script src="{{ asset('assets/js/hideFields.js') }}"></script>
-    <script type="module" src="{{ asset('assets/js/addRooms.js') }}"></script>
+    <script type="module" src="{{ asset('assets/js/updateRoom.js') }}"></script>
     {{-- <script type="module" src="{{ asset('assets/js/addPrice.js') }}"></script> --}}
     <script type="module" src="{{ asset('assets/js/updatePrice.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
@@ -590,19 +591,18 @@
 
 
         function removeUpload(previewId, inputId) {
-            // Hide the preview block
-            $('#' + previewId).hide();
+            $('#' + previewId).hide(); // Hide the preview
             $('#' + previewId + ' img').attr('src', '{{ asset('images/upload/upload-1.png') }}');
             $('#' + previewId + ' p.file-name-overlay').remove();
             $('#' + previewId + ' .remove-upload').hide();
             $('#' + inputId).val('');
-            $('#upload-file').show();
         }
+
 
         function removeGalleryImage(button, inputId) {
             $(button).parent('.gitems').remove();
+            $('#' + inputId).val('');
             if ($('.gitems').length === 0) {
-                $('#' + inputId).val('');
                 $('#galUpload').addClass('up-load');
             }
         }
