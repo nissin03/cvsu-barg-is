@@ -18,11 +18,10 @@ class LowStockNotification extends Notification
     /**
      * Create a new notification instance.
      */
-    public function __construct($product, $quantity)
+    public function __construct($product)
     {
         $this->product = $product;
-        $this->quantity = $quantity;
-      
+        $this->quantity = $product->quantity;
     }
     /**
      * Get the notification's delivery channels.
@@ -35,27 +34,6 @@ class LowStockNotification extends Notification
     }
 
     /**
-     * Get the mail representation of the notification.
-     */
-    
-     public function toDatabase($notifiable): array
-     {
-         return [
-             'product_name' => $this->product->name,
-             'quantity' => $this->quantity,
-             'message' => "{$this->product->name} stock is low. Only {$this->quantity} left in stock.",
-         ];
-     }
-
-     public function toBroadcast($notifiable)
-    {
-        return new BroadcastMessage([
-            'product_name' => $this->product->name,
-            'quantity' => $this->quantity,
-            'message' => "{$this->product->name} stock is low. Only {$this->quantity} left in stock.",
-        ]);
-    }
-    /**
      * Get the array representation of the notification.
      *
      * @return array<string, mixed>
@@ -63,9 +41,26 @@ class LowStockNotification extends Notification
     public function toArray($notifiable): array
     {
         return [
-            'product_name' => $this->product->name,
+            'product_id' => $this->product->id,
+            'name' => $this->product->name,
             'quantity' => $this->quantity,
             'message' => "{$this->product->name} stock is low. Only {$this->quantity} left in stock.",
         ];
+    }
+
+    /**
+     * Get the broadcastable representation of the notification.
+     *
+     * @param  mixed  $notifiable
+     * @return BroadcastMessage
+     */
+    public function toBroadcast($notifiable)
+    {
+        return new BroadcastMessage([
+            'product_id' => $this->product->id,
+            'name' => $this->product->name,
+            'quantity' => $this->quantity,
+            'message' => "{$this->product->name} stock is low. Only {$this->quantity} left in stock.",
+        ]);
     }
 }
