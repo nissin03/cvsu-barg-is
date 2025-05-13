@@ -123,6 +123,17 @@
             font-size: 18px;
         }
 
+
+        /* Add this to your CSS file */
+        .notification-item.read {
+            background-color: #f8f9fa;
+            opacity: 0.8;
+        }
+
+        .notification-item.read .notification-text {
+            font-weight: normal !important;
+        }
+
         .mark-read {
             background: none;
             border: none;
@@ -593,10 +604,10 @@
                                                                 <p class="notification-text fw-bold">
                                                                     {{ $notification->data['name'] }}</p>
                                                                 <p class="notification-subtext">
-                                                                    {{ Str::limit($notification->data['message'], 30) }}
+                                                                <div class="unread-indicator"></div>
+                                                                {{ Str::limit($notification->data['message'], 30) }}
                                                                 </p>
                                                             </div>
-                                                            <div class="unread-indicator"></div>
                                                             <div class="remove-notification"
                                                                 data-id="{{ $notification->id }}">
                                                                 <i class="fas fa-times"></i>
