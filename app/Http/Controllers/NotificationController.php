@@ -7,10 +7,9 @@ use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    public function index()
+    public function allNotifications()
     {
-        $notifications = Auth::user()->notifications;
-        return view('admin.index', compact('notifications'));
+        return response()->json(Auth::user()->notifications);
     }
 
     public function unread()
@@ -68,15 +67,31 @@ class NotificationController extends Controller
         ]);
     }
 
+    // Add this to your NotificationController or create a new controller
+
     public function destroy($id)
     {
-        $notification = Auth::user()->notifications()->findOrFail($id);
-        $notification->delete();
+        try {
+            $notification = Auth::user()->notifications()->where('id', $id)->first();
 
-        return response()->json([
-            'status' => 'success',
-            'unreadCount' => Auth::user()->unreadNotifications->count(),
-        ]);
+            if (!$notification) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Notification not found'
+                ], 404);
+            }
+            $notification->delete();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Notification removed successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error deleting notification: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Could not delete notification'
+            ], 500);
+        }
     }
 
     public function destroyAll()
@@ -92,7 +107,7 @@ class NotificationController extends Controller
     public function unreadCount()
     {
         return response()->json([
-            'unreadCount' => Auth::user()->unreadNotifications->count(),
+            'count' => Auth::user()->unreadNotifications->count(),
         ]);
     }
 }

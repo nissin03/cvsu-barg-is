@@ -200,14 +200,14 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
         ->name('facility.rooms.get');
 
     Route::middleware(['auth'])->prefix('notifications')->group(function () {
-        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/', [NotificationController::class, 'allNotifications'])->name('notifications.all');
         Route::get('/unread', [NotificationController::class, 'unread'])->name('notifications.unread');
         Route::post('/mark-as-read/{id}', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
         Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
         Route::post('/mark-multiple-as-read', [NotificationController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-as-read');
         Route::delete('/destroy/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
         Route::delete('/destroy-all', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
-        Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+        Route::get('/count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
     });
 
     Route::get('/admin/products', [AdminController::class, 'products'])->name('admin.products');

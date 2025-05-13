@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'name',
         'slug',
@@ -29,8 +29,8 @@ class Product extends Model
         'instock_quantity',
         'reorder_quantity',
         'outofstock_quantity',
-    
-    ];  
+
+    ];
 
     protected $casts = [
         'images' => 'array',
@@ -61,7 +61,7 @@ class Product extends Model
     public function attributes()
     {
         return $this->belongsToMany(ProductAttribute::class, 'product_attribute_values', 'product_id', 'product_attribute_id')
-                    ->withPivot('value', 'price', 'quantity', 'stock_status');
+            ->withPivot('value', 'price', 'quantity', 'stock_status');
     }
 
     public function attributeValues()
@@ -107,24 +107,15 @@ class Product extends Model
         if ($sex === 'male') {
             return $query->where(function ($q) {
                 $q->where('sex', 'male')
-                  ->orWhere('sex', 'all');
+                    ->orWhere('sex', 'all');
             });
         } elseif ($sex === 'female') {
             return $query->where(function ($q) {
                 $q->where('sex', 'female')
-                  ->orWhere('sex', 'all');
+                    ->orWhere('sex', 'all');
             });
         }
 
-        return $query; 
+        return $query;
     }
-
-    
-    // public function notifyLowStock()
-    // {
-    //     $admins = User::where('utype', 'ADM')->get();
-    //     if ($admins->isNotEmpty()) {
-    //         Notification::send($admins, new LowStockNotification($this));
-    //     }
-    // }
 }

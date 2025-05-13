@@ -88,13 +88,13 @@ class CartController extends Controller
             $attributeValues = array_values($variantAttributes);
             $variantNameSuffix = ' - ' . implode(', ', $attributeValues);
 
-                 // Log variant details
-        Log::info('Adding variant to cart', [
-            'product_id' => $product->id,
-            'variant_id' => $variant->id,
-            'variant_attributes' => $variantAttributes,
-            'price' => $variant->price
-        ]);
+            // Log variant details
+            Log::info('Adding variant to cart', [
+                'product_id' => $product->id,
+                'variant_id' => $variant->id,
+                'variant_attributes' => $variantAttributes,
+                'price' => $variant->price
+            ]);
 
             // Add variant to the cart
             Cart::instance('cart')->add([
@@ -191,7 +191,7 @@ class CartController extends Controller
 
         $newQty = $cartItem->qty - 1;
 
-    if ($newQty < 1) {
+        if ($newQty < 1) {
             return response()->json(['error' => 'Quantity cannot be less than 1.']);
         }
 
@@ -401,12 +401,7 @@ class CartController extends Controller
 
                     if ($product->quantity <= 20) {
                         $quantity = $product->quantity;
-                        \Log::info('LowStockNotification triggered for product', ['product' => $product, 'quantity' => $product->quantity]);
-                        $admin = User::where('utype', 'ADM')->first();
-                        if ($admin) {
-                            $admin->notify(new LowStockNotification($product, $quantity));
-                        }
-                        broadcast(new LowStockEvent($product, $product->quantity));
+                        event(new LowStockEvent($product, $product->quantity));
                     }
                 }
 
