@@ -8,20 +8,7 @@
     @else
         <p>No prices available for this facility.</p>
     @endif
-    {{-- @php
-        // Extract room numbers for the overall range
-        $roomNumbers = $facility->facilityAttributes
-            ->pluck('room_name')
-            ->filter()
-            ->map(function ($name) {
-                return preg_replace('/[^0-9]/', '', $name);
-            })
-            ->sort()
-            ->values();
 
-        // Extract sex restriction
-        $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first(); // Get the first non-null value
-    @endphp --}}
 
     @if ($roomNumbers->isNotEmpty())
         @php

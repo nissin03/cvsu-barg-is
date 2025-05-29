@@ -942,7 +942,6 @@ class AdminController extends Controller
 
         $query = Order::query();
 
-        // Apply filters if they exist
         if ($status) {
             $query->where('status', $status);
         }
@@ -972,7 +971,6 @@ class AdminController extends Controller
 
         $query = Order::query();
 
-        // Apply filters if they exist
         if ($status) {
             $query->where('status', $status);
         }
