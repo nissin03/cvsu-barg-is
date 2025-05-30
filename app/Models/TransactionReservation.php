@@ -12,6 +12,7 @@ class TransactionReservation extends Model
     protected $fillable = [
         'availability_id',
         'facility_attribute_id',
+        'payment_id',
         'price_id',
         'quantity',
         'user_id',
@@ -19,7 +20,7 @@ class TransactionReservation extends Model
     ];
 
     public function facility()
-    {   
+    {
         return $this->belongsTo(Facility::class);
     }
     public function availability()
@@ -40,5 +41,10 @@ class TransactionReservation extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function payment()
+    {
+        return $this->belongsTo(Payment::class);
     }
 }

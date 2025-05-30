@@ -28,6 +28,7 @@ use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserFacilityController;
+use App\Http\Controllers\FacilityReservationController;
 
 Auth::routes(['reset' => true]);
 
@@ -165,7 +166,7 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::get('/admin/facility/edit/{id}', [FacilityController::class, 'edit'])->name('admin.facilities.edit');
     // Route::put('/admin/facility/update', [FacilityController::class, 'update'])->name('admin.facilities.update');
     Route::put('/admin/facility/update/{id}', [FacilityController::class, 'update'])->name('admin.facilities.update');
-    Route::get('/admin/facility/reservation', [FacilityController::class, 'reservations'])->name('admin.facilities.reservations');
+    // Route::get('/admin/facility/reservation', [FacilityController::class, 'reservations'])->name('admin.facilities.reservations');
     Route::get('/admin/reservation/events/{availability_id}', [FacilityController::class, 'events'])->name('admin.facilities.reservations-events');
     Route::get('/admin/{availability_id}/reservation-history', [FacilityController::class, 'reservationHistory'])->name('admin.facilities.reservations-history');
 
@@ -234,6 +235,10 @@ Route::middleware(['auth', AuthAdmin::class])->group(function () {
     Route::get('/admin/orders/filters', [AdminController::class, 'filterOrders'])->name('admin.orders.filter');
     Route::get('/admin/order/{order_id}/details', [AdminController::class, 'order_details'])->name('admin.order.details');
     Route::put('/admin/order/update-status', [AdminController::class, 'update_order_status'])->name('admin.order.status.update');
+
+
+    Route::get('/admin/facilities/reservations', [FacilityReservationController::class, 'index'])->name('admin.facilities.reservations');
+    Route::patch('/admin/reservations/{reservation}/status', [FacilityReservationController::class, 'update']);
 
 
     Route::get('/admin/slide', [AdminController::class, 'slides'])->name('admin.slides');

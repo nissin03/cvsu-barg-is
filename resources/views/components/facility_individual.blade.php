@@ -8,20 +8,7 @@
     @else
         <p>No prices available for this facility.</p>
     @endif
-    {{-- @php
-        // Extract room numbers for the overall range
-        $roomNumbers = $facility->facilityAttributes
-            ->pluck('room_name')
-            ->filter()
-            ->map(function ($name) {
-                return preg_replace('/[^0-9]/', '', $name);
-            })
-            ->sort()
-            ->values();
 
-        // Extract sex restriction
-        $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first(); // Get the first non-null value
-    @endphp --}}
 
     @if ($roomNumbers->isNotEmpty())
         @php
@@ -62,28 +49,21 @@
         </ul>
     @endif
 
-    @if ($pricesWithAttributes->where('is_there_a_quantity', true)->count() > 0)
-        <div id="individual_inputs">
-            <label><strong>Set Quantity:</strong></label>
-            <div class="form-floating mb-3">
-                <input id="internal_quantity" type="number"
-                    class="form-control form-control_gray @error('internal_quantity') is-invalid @enderror"
-                    name="internal_quantity" value="{{ old('internal_quantity') }}" min="0" step="1">
-                <label for="internal_quantity">
-                    Enter Internal Quantity
-                </label>
-            </div>
+    @if ($facility->prices->where('is_there_a_quantity', true)->isNotEmpty())
+        <div id="dynamic_quantity_inputs" class="mb-3">
+            <label class="mb-2"><strong>Set Quantity:</strong></label>
 
-            <div class="form-floating mb-3">
-                <input id="external_quantity" type="number"
-                    class="form-control form-control_gray @error('external_quantity') is-invalid @enderror"
-                    name="external_quantity" value="{{ old('external_quantity') }}" min="0" step="1">
-                <label for="external_quantity">
-                    Enter External Quantity
-                </label>
-            </div>
+            @foreach ($facility->prices->where('is_there_a_quantity', true) as $price)
+                <div class="form-floating mb-3">
+                    <input type="number" name="quantities[{{ $price->id }}]" id="quantity_{{ $price->id }}"
+                        class="form-control form-control_gray quantity-input" data-price="{{ $price->value }}"
+                        min="0" value="{{ old('quantities.' . $price->id, 0) }}">
+                    <label for="quantity_{{ $price->id }}">Enter Quantity for {{ $price->name }}</label>
+                </div>
+            @endforeach
         </div>
     @endif
+
 
     <div class="alert alert-warning " role="alert" style="margin-top: ">
         <p><strong>Note: </strong>Rooms selection is not available in this facility.</p>
@@ -91,15 +71,10 @@
 
     <input type="hidden" name="date_from" value="{{ $price->date_from }}">
     <input type="hidden" name="date_to" value="{{ $price->date_to }}">
-    <input type="hidden" name="total_price" id="total-price-field" value="{{ $individualPrice }}">
 
 
     <div id="total-price" style="margin-top: 20px;">
         <strong>Total Price: </strong><span id="computed-total">&#8369;{{ number_format($individualPrice, 2) }}</span>
     </div>
 
-    {{-- <div id="total-price" style="margin-top: 20px;">
-        <strong>Total Price: </strong><span>&#8369;
-            {{ number_format($facility->prices->first()->value, 2) }}</span>
-    </div> --}}
 </div>
