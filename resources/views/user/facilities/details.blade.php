@@ -949,23 +949,55 @@
 
     @if ($facility->facility_type == 'individual')
         <script>
-            let $internalLink = document.getElementById('internal_quantity');
-            let $externalLink = document.getElementById('external_quantity');
+            document.addEventListener('DOMContentLoaded', function() {
+                const hasQuantityPricing = @json($facility->prices->where('is_there_a_quantity', true)->isNotEmpty());
+                const reserveBtn = document.getElementById('reserve-btn');
 
-            $internalLink.addEventListener('input', calculateTotal);
-            $externalLink.addEventListener('input', calculateTotal);
+                function toggleReserveButton() {
+                    let hasValidInput = false;
 
-            function calculateTotal() {
-                let internalQuantity = parseFloat($internalLink.value) || 0;
-                let externalQuantity = parseFloat($externalLink.value) || 0;
+                    document.querySelectorAll('.quantity-input').forEach(input => {
+                        const qty = parseInt(input.value || 0);
+                        if (qty > 0) {
+                            hasValidInput = true;
+                        }
+                    });
 
-                let individualPrice = @json($individualPrice);
-                let total = (internalQuantity + externalQuantity) * individualPrice;
+                    reserveBtn.disabled = !hasValidInput;
+                }
 
-                document.getElementById('computed-total').textContent = `₱${total.toFixed(2)}`;
-                document.getElementById('total-price-field').value = total.toFixed(2);
-            }
-            calculateTotal();
+                if (hasQuantityPricing) {
+                    function computeDynamicTotal() {
+                        let total = 0;
+
+                        document.querySelectorAll('.quantity-input').forEach(input => {
+                            const qty = parseInt(input.value || 0);
+                            const price = parseFloat(input.dataset.price || 0);
+                            total += qty * price;
+                        });
+
+                        document.getElementById('total-price-field').value = total.toFixed(2);
+                        document.getElementById('computed-total').innerHTML = '₱' + total.toLocaleString(undefined, {
+                            minimumFractionDigits: 2
+                        });
+                        toggleReserveButton();
+                    }
+
+                    document.querySelectorAll('.quantity-input').forEach(input => {
+                        input.addEventListener('input', computeDynamicTotal);
+                    });
+
+                    computeDynamicTotal();
+
+                } else {
+                    const individualPrice = @json($individualPrice);
+                    document.getElementById('computed-total').textContent = `₱${individualPrice.toLocaleString(undefined, {
+                        minimumFractionDigits: 2
+                        })}`;
+                    document.getElementById('total-price-field').value = individualPrice.toFixed(2);
+                    reserveBtn.disabled = false;
+                }
+            });
         </script>
     @endif
 

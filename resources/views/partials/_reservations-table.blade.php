@@ -91,9 +91,7 @@
         </tr>
     @endforeach
 @else
-    <tr id="no-results-message">
-        <td colspan="8" class="text-center p-3">
-            <div class="alert alert-info">No reservations found matching your filters. Try different criteria.</div>
-        </td>
+    <tr>
+        <td colspan="11" class="text-center">No reservations found matching your filters. Try different criteria.</td>
     </tr>
 @endif
