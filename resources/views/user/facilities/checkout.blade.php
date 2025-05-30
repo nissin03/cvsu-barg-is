@@ -204,6 +204,14 @@
                                     </tr>
                                 @endif
                             @endif
+                            {{-- @if (($reservationData['total_quantity'] ?? 0) > 0) --}}
+                            @if ($hasQuantity)
+                                <tr>
+                                    <td><strong>Total Quantity</strong></td>
+                                    <td class="text-end"><strong>{{ $reservationData['total_quantity'] ?? 'N/A' }}</strong>
+                                    </td>
+                                </tr>
+                            @endif
                             <tr>
                                 <td><strong>Total Price</strong></td>
                                 <td class="text-end"><strong>{{ $reservationData['total_price'] ?? 'N/A' }}</strong></td>
@@ -214,7 +222,8 @@
 
                 {{-- <button type="submit" class="btn btn-warning w-100">Place Reservation</button> --}}
 
-                <button type="submit" class="btn btn-warning w-100">Place Reservation</button>
+                <button type="submit" class="btn btn-warning w-100" onclick="this.disabled=true; this.form.submit();">Place
+                    Reservation</button>
 
             </form>
 

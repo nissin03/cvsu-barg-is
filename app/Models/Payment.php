@@ -31,4 +31,9 @@ class Payment extends Model
     {
         return $this->hasMany(PaymentDetail::class);
     }
+
+    public function transactionReservation()
+    {
+        return $this->hasMany(TransactionReservation::class);
+    }
 }
