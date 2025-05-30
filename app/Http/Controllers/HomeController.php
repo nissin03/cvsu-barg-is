@@ -8,7 +8,6 @@ use App\Models\Rental;
 use App\Models\Contact;
 use App\Models\Product;
 use App\Models\Category;
-use App\Models\Facility;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Routing\Controller;
@@ -24,17 +23,19 @@ class HomeController extends Controller
     {
         $slides = Slide::where('status', 1)->get()->take(3);
         $categories = Category::orderBy('name')->get();
-        $fproducts = Product::where('featured', 1)->get()->take(8);
-        // $frentals = Facility::with(['prices', 'facilityAttributes'])
-        // ->where('featured', 1)
-        // ->take(8)
-        // ->get();
-        return view('index', compact('slides', 'categories', 'fproducts'));
+        $fproducts = Product::where('featured',1)->get()->take(8);
+        $frentals = Rental::where('featured',1)->get()->take(8);
+        return view('index', compact('slides', 'categories','fproducts','frentals'));
+
     }
     public function contact()
     {
-        return view('contact');
+        return view ('contact');
+
     }
+
+
+
     public function contact_store(Request $request)
     {
         $user = Auth::user();
@@ -67,10 +68,12 @@ class HomeController extends Controller
         event(new ContactMessageReceived($contact));
         return redirect()->back()->with('success', 'Your message has been sent successfully.');
     }
+  
+
     public function search(Request  $request)
     {
         $query = $request->input('query');
-        $results = Product::where('name', 'LIKE', "%{$query}%")->get()->take(8);
+        $results = Product::where('name','LIKE',"%{$query}%")->get()->take(8);
         return response()->json($results);
     }
 }

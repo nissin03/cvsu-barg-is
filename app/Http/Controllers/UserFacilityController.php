@@ -37,7 +37,6 @@ class UserFacilityController extends Controller
 
     public function show($slug)
     {
-
         $facility = Facility::with('facilityAttributes', 'prices')
             ->where('slug', $slug)
             ->firstOrFail();

@@ -37,8 +37,8 @@ ol[role="list"] {
 a, a:hover, a:focus, a:active {
     text-decoration: none !important;
   }
-
-
+  
+ 
 /* Set core root defaults */
 html:focus-within {
     scroll-behavior: smooth;
@@ -107,8 +107,8 @@ select {
   .fa-times {
     color: black !important;
   }
-
-
+  
+  
   .js-hidden-content {
     display: none;
   }
@@ -117,7 +117,7 @@ select {
     .d-none {
         display: none;
     }
-
+    
     #searchIcon, #closeIcon {
     display: inline-block;
     }
@@ -125,7 +125,7 @@ select {
     #searchIcon.d-none, #closeIcon.d-none {
     display: none;
     }
-
+  
 
   .search-popup__submit
   {
@@ -136,7 +136,7 @@ select {
     border: none;
     cursor: pointer;
   }
-
+  
   .search-popup__submit {
     right: 10px;
   }
@@ -145,7 +145,7 @@ select {
     margin-right: 15px;
     position: relative;
   }
-
+  
 
   .search-popup__input {
     padding: 10px;
@@ -156,10 +156,10 @@ select {
     margin-bottom: 10px;
     transition: border-bottom 0.3s ease;
   }
-
+  
   .search-popup__input:focus {
     border-bottom: 1px solid #333;
-    outline: none;
+    outline: none; 
   }
 
 
@@ -171,13 +171,13 @@ select {
     mask-image: linear-gradient(
         to right,
         transparent,
-        #000 10% 90%,
+        #000 10% 90%, 
         transparent
     );
 }
 
 .slider-category .list {
-    display: flex;
+    display: flex; 
     width: 100%;
     min-width: calc(var(--width) * var(--quantity));
     position: relative;
@@ -204,7 +204,7 @@ select {
 }
 
 .slider-category .list .item a {
-    text-decoration: none;
+    text-decoration: none; 
 }
 
 @keyframes autoRun {
@@ -225,8 +225,8 @@ select {
     filter: grayscale(0);
 }
 
-
-
+  
+  
 
 .available-date a {
     background-color: green !important;
@@ -337,12 +337,12 @@ body .text-primary {
 .swiper-scrollbar {
         height: 4px;
 }
-
+    
     .col-lg-7 {
     flex: 0 0 auto;
     width: 58.3333333333%;
 }
-
+   
 .btn-shop {
     text-decoration: none;
     color: #333;
@@ -687,7 +687,7 @@ ol.breadcrumb li a:hover {
 }
 
 ol.breadcrumb li + li::before {
-    content: " / ";
+    content: " / "; 
     padding: 0 0.5rem;
     color: #e4e4e4 !important;
 }
@@ -861,7 +861,7 @@ ol.breadcrumb li + li::before {
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 12px;
     background: white;
-    box-shadow:
+    box-shadow: 
         rgba(50, 50, 93, 0.25) 0px 50px 100px -20px,
         rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
     overflow: hidden;
@@ -870,7 +870,7 @@ ol.breadcrumb li + li::before {
 
 .product-item:hover {
     transform: translateY(-5px);
-    box-shadow:
+    box-shadow: 
         rgba(0, 0, 0, 0.1) 0px 10px 15px -3px,
         rgba(0, 0, 0, 0.05) 0px 4px 6px -2px;
 }
@@ -957,18 +957,18 @@ ol.breadcrumb li + li::before {
     width: 100%;
     transition: all 0.3s ease-in-out;
     text-align: center;
-    z-index: 3;
+    z-index: 3; 
 } */
 
 .go-to-cart.go-to-cart {
     background-color: #ffc107 !important;
-    color: #212529 !important;
+    color: #212529 !important; 
     border: 0 !important;
 }
 
 
 /* .btns button {
-    border-radius: 0;
+    border-radius: 0; 
     border: none;
     background-color: rgb(39, 39, 39);
     color: #fff;
@@ -1025,10 +1025,10 @@ ol.breadcrumb li + li::before {
 }
 .title-cards {
     font-size: 1.2rem;
-    white-space: nowrap;
+    white-space: nowrap; 
     overflow: hidden;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    text-overflow: ellipsis; 
+    overflow: hidden; 
     width: 100%;
     color: #000000;
     max-height: 1.2em; /* Limit height */
@@ -1292,11 +1292,11 @@ ol.breadcrumb li + li::before {
 
   /* button styling   */
 .btn-bd-primary {
-    --bs-btn-padding-x: 20px !important;
-    --bs-btn-padding-y: 5px !important;
-    --bs-btn-border-radius: 2px !important;
-    --bs-btn-border-color: 0px white !important;
-    --bs-btn-active-bg: var(--btn-light-col) !important;
+    --bs-btn-padding-x: 20px !important; 
+    --bs-btn-padding-y: 5px !important; 
+    --bs-btn-border-radius: 2px !important; 
+    --bs-btn-border-color: 0px white !important; 
+    --bs-btn-active-bg: var(--btn-light-col) !important; 
     letter-spacing: 2px;
     font-weight: bold !important;
 }
@@ -1322,18 +1322,18 @@ ol.breadcrumb li + li::before {
 	}
 }
 
-/* .form-control.form-control:focus,
+/* .form-control.form-control:focus, 
 .form-control.form-control:active {
   outline: none !important;
   box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-  border-color: #333 !important;
+  border-color: #333 !important;  
 } */
 
 /* .form-control.form-control {
     display: block !important;
     width: 100% !important;
     padding: 0.9375rem 0.9375rem 0.75rem !important;
-    font-size: 0.875rem !important;
+    font-size: 0.875rem !important; 
     font-weight: 400 !important;
     line-height: 1.7143 !important;
     color: #222222 !important;
@@ -1390,7 +1390,7 @@ ol.breadcrumb li + li::before {
 color: var(--text-light);
 }
 
-
+  
 .total-prod {
     color: var(--text-light);
     font-size: 14px;
@@ -1399,7 +1399,7 @@ color: var(--text-light);
 .totals {
     color: #0c0c0c;
 }
-
+    
 
 /* header  */
 
@@ -1475,7 +1475,7 @@ ol.breadcrumb li a:hover {
 }
 
 ol.breadcrumb li + li::before {
-    content: " / ";
+    content: " / "; 
     padding: 0 0.5rem;
     color: #e4e4e4 !important;
 }
@@ -1512,20 +1512,20 @@ ol.breadcrumb li + li::before {
 .swiper-button-next,
 .swiper-button-prev {
     color: white!important;
-    font-size: 40px!important;
+    font-size: 40px!important;  
     position: absolute!important;
-    top: 60%!important;
+    top: 60%!important; 
     transform: translateY(-50%)!important;
-    width: 24px!important;
-    height: 24px!important;
-    opacity: 1!important;
-    visibility: hidden!important;
+    width: 24px!important; 
+    height: 24px!important; 
+    opacity: 1!important;  
+    visibility: hidden!important; 
     transition: all 0.3s ease-in-out!important;
 }
 
 /* Position adjustments */
 .swiper-button-next {
-    right: -24px!important;
+    right: -24px!important; 
 }
 
 .swiper-button-prev {
@@ -1534,13 +1534,13 @@ ol.breadcrumb li + li::before {
 
 
 .product-item:hover .swiper-button-next {
-    right: 10px!important;
+    right: 10px!important; 
     opacity: 1!important;
     visibility: visible!important;
 }
 
 .product-item:hover .swiper-button-prev {
-    left: 10px!important;
+    left: 10px!important; 
     opacity: 1!important;
     visibility: visible!important;
 }
@@ -1548,7 +1548,7 @@ ol.breadcrumb li + li::before {
 /* Button Icons */
 .swiper-button-next::after,
 .swiper-button-prev::after {
-    font-size: 14px !important;
+    font-size: 14px !important; 
     font-weight: bold!important;
 }
 
@@ -1561,7 +1561,7 @@ ol.breadcrumb li + li::before {
     color: var(--text-green);
     position: relative;
 }
-/*
+/* 
 .product-type::before {
     position: absolute;
     content: "";
@@ -1634,13 +1634,13 @@ ol.breadcrumb li + li::before {
 }
 
 .swiper-container {
-    height: auto;
+    height: auto; 
     overflow: hidden;
 }
 
 
 .thumbnail-swiper .swiper-slide {
-    height: auto;
+    height: auto; 
 }
 
 .product-navigation {
@@ -1743,7 +1743,7 @@ ol.breadcrumb li + li::before {
 	margin-bottom: 0.625rem;
 }
 .product-single__price {
-	font-size: 2rem;
+	font-size: 1.375rem;
 	font-weight: 500;
 	margin-bottom: 1.6875rem;
 }
@@ -1821,7 +1821,7 @@ ol.breadcrumb li + li::before {
 	width: 100%;
 	background-color: #ffffff;
 	outline: none;
-
+	
 }
 
 .qty-control__reduce,
@@ -1843,7 +1843,7 @@ ol.breadcrumb li + li::before {
 	right: 0;
 }
 
-
+  
 .product-single__qtytocart   .qty-control__number{
   border: 2px solid #e4e4e4;
   height: 3.75rem;
@@ -2714,12 +2714,12 @@ ol.breadcrumb li + li::before {
 }
 
 .custom-checkbox:checked {
-    background-color: #0e0e0e;
+    background-color: #0e0e0e; 
     border-color: #0e0e0e;
 }
 
 .custom-checkbox:focus {
-    box-shadow: none !important;
+    box-shadow: none !important; 
     border-color: #0e0e0e;
 }
 
@@ -2728,11 +2728,11 @@ ol.breadcrumb li + li::before {
     color: #0e0e0e;
     font-weight: normal;
     text-decoration: none;
-    font-size: 0.9rem;
+    font-size: 0.9rem; 
     }
 
     .forgot-password-link:hover {
-        text-decoration: underline !important;
+        text-decoration: underline !important; 
         color: #1c1b1b;
     }
 
@@ -2750,7 +2750,7 @@ ol.breadcrumb li + li::before {
   }
 
   .btn-yellow {
-    background-color: #f3e5ab;
+    background-color: #f3e5ab; 
     border: 1px solid #ffe69c;
     color: #333333;
     padding: 10px 20px;
@@ -2762,7 +2762,7 @@ ol.breadcrumb li + li::before {
     background-color: #f0c93c;
   }
 
-
+ 
 
   .btn-red {
     background-color:  #ff6f6f;
@@ -2774,7 +2774,7 @@ ol.breadcrumb li + li::before {
   }
 
   .btn-red:hover   {
-    background-color:  #e03e3e;
+    background-color:  #e03e3e; 
     color: #ffffff !important;
   }
 
