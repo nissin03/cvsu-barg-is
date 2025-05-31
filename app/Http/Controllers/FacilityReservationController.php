@@ -7,21 +7,6 @@ use Illuminate\Http\Request;
 
 class FacilityReservationController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    // public function index()
-    // {
-    //     $reservations = Payment::with([
-    //         'user',
-    //         'availability.facility',
-    //         'availability.facilityAttribute',
-    //     ])
-    //         ->latest()
-    //         ->get();
-
-    //     return view('admin.facilities.reservations.index', compact('reservations'));
-    // }
 
 
     public function index(Request $request)

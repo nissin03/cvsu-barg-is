@@ -373,7 +373,6 @@
                     <div id="priceContainer" class="mt-4">
                         <h4>Price List</h4>
                         <div class="row" id="priceCardsContainer">
-                            <!-- Price cards will be inserted here dynamically -->
                         </div>
                         <ul class="list-group d-none" id="priceList"></ul>
                     </div>

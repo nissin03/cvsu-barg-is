@@ -57,7 +57,7 @@
                 <div class="form-floating mb-3">
                     <input type="number" name="quantities[{{ $price->id }}]" id="quantity_{{ $price->id }}"
                         class="form-control form-control_gray quantity-input" data-price="{{ $price->value }}"
-                        min="0" value="{{ old('quantities.' . $price->id, 0) }}">
+                        value="{{ old('quantities.' . $price->id) }}">
                     <label for="quantity_{{ $price->id }}">Enter Quantity for {{ $price->name }}</label>
                 </div>
             @endforeach

@@ -13,7 +13,9 @@ $rentalType.on("change", function () {
 function handleRentalTypeChange(rentalType) {
     console.log("Facility Type:", rentalType);
 
-    $pIndividual.attr("hidden", true).prop("disabled", true);
+    // $pIndividual.attr("hidden", true).prop("disabled", true);
+    $pIndividual.hide().prop("disabled", true);
+
     $roomBox
         .add($hideRoomBox)
         .add($dormitoryRooms)
@@ -50,3 +52,42 @@ function handleRentalTypeChange(rentalType) {
 }
 
 $rentalType.trigger("change");
+window.updatePriceFieldVisibility = function (rentalType) {
+    $(".price-form-card").each(function () {
+        const $card = $(this);
+        const $checksRow = $card.find(".price-checks");
+        const $priceTypeSelect = $card.find(".price-type");
+
+        if (rentalType === "whole_place") {
+            $checksRow.hide();
+            $priceTypeSelect.find("option[value='individual']").hide();
+            $checksRow
+                .find("input[type='checkbox']")
+                .prop("checked", false)
+                .prop("disabled", true);
+            $card.find(".date-fields").hide();
+
+            if ($priceTypeSelect.val() === "individual") {
+                $priceTypeSelect.val("");
+            }
+        } else if (rentalType === "both") {
+            $checksRow.show();
+            $priceTypeSelect.find("option[value='individual']").show();
+
+            const $wholeCapacity = $("#wholeCapacity");
+            if ($wholeCapacity.length && $wholeCapacity.val()) {
+                $card.find(".is-based-on-days").closest(".d-flex").hide();
+            }
+        } else {
+            $checksRow.show();
+            $checksRow.find("input[type='checkbox']").prop("disabled", false);
+            $priceTypeSelect.find("option[value='individual']").show();
+        }
+    });
+};
+
+$rentalType.on("change", function () {
+    const selectedType = $(this).val();
+    handleRentalTypeChange(selectedType);
+    window.updatePriceFieldVisibility(selectedType);
+});

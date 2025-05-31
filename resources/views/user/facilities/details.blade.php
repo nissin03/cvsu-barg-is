@@ -427,7 +427,7 @@
                     @endif
                     <h1 class="facilities-single__name">{{ $facility->name }}</h1>
 
-                    <form action="{{ route('facility.reserve') }}" method="POST" style="margin: 0">
+                    <form action="{{ route('facility.reserve') }}" method="POST" style="margin: 0" id="reservation-form">
                         @csrf
                         <input type="hidden" name="facility_id" value="{{ $facility->id }}">
                         <input type="hidden" name="total_price" id="total-price-field" value="0">
@@ -1623,65 +1623,63 @@
         @endif
     @endif
 
-
-
-
     @if ($facility->facility_type === 'whole_place')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                var calendarEl = document.getElementById('calendar');
-                var submitButton = document.getElementById('submit-button');
-                var selectedDateEl = document.getElementById('selected-date');
+                const calendarEl = document.getElementById('calendar');
+                const submitButton = document.getElementById('submit-button');
+                const selectedDateEl = document.getElementById('selected-date');
+                const reserveBtn = document.getElementById('reserve-btn');
+                const clientTypeDropdown = document.getElementById('client_type');
+                const totalPriceElement = document.getElementById('total-price').querySelector('span');
+                const reservationForm = document.getElementById('reservation-form');
+                const totalPriceField = document.getElementById('total-price-field');
 
-                // Calculate the start date (3 days from today)
-                var today = new Date();
-                var startDate = new Date();
+
+                const errorContainer = document.createElement('div');
+                errorContainer.id = 'form-errors';
+                errorContainer.style.color = 'red';
+                reservationForm.insertBefore(errorContainer, reserveBtn);
+
+
+                let today = new Date();
+                let startDate = new Date();
                 startDate.setDate(today.getDate() + 3);
 
-                // Initialize FullCalendar
-                var calendar = new FullCalendar.Calendar(calendarEl, {
+                const calendar = new FullCalendar.Calendar(calendarEl, {
                     initialView: 'dayGridMonth',
                     selectable: true,
                     selectMirror: true,
                     timeZone: 'local',
                     select: function(info) {
-                        // Ensure the selected date is valid
-                        var selectedDate = info.start;
-
-                        // Compare dates (ignoring time)
-                        var selected = new Date(selectedDate.getFullYear(), selectedDate.getMonth(),
+                        const selectedDate = info.start;
+                        const selected = new Date(selectedDate.getFullYear(), selectedDate.getMonth(),
                             selectedDate.getDate());
-                        var minDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate
+                        const minDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate
                             .getDate());
 
                         if (selected >= minDate) {
-                            var year = selected.getFullYear();
-                            var month = String(selected.getMonth() + 1).padStart(2,
-                                '0'); // Months are zero-based
-                            var day = String(selected.getDate()).padStart(2, '0');
-                            var formattedDate = `${year}-${month}-${day}`;
+                            const year = selected.getFullYear();
+                            const month = String(selected.getMonth() + 1).padStart(2, '0');
+                            const day = String(selected.getDate()).padStart(2, '0');
+                            const formattedDate = `${year}-${month}-${day}`;
 
-                            // Automatically set date_to
                             document.getElementById('date_from').value = formattedDate;
                             document.getElementById('date_to').value = formattedDate;
 
-                            // Update the displayed selected date
                             if (selectedDateEl) {
                                 selectedDateEl.innerText = 'Selected Date: ' + formattedDate;
                             }
 
-                            // Enable the submit button
                             if (submitButton) {
                                 submitButton.disabled = false;
                             }
 
-                            // Remove existing background events
                             calendar.getEvents().forEach(function(event) {
                                 if (event.display === 'background') {
                                     event.remove();
                                 }
                             });
-
 
                             calendar.addEvent({
                                 title: 'Selected',
@@ -1704,42 +1702,62 @@
                         center: 'title',
                         right: ''
                     },
-
-                    dateClick: function(info) {
-                        // Do nothing
-                    },
+                    dateClick: function(info) {}
                 });
 
                 calendar.render();
 
-                // Ensure the submit button is disabled initially
                 if (submitButton) {
                     submitButton.disabled = true;
                 }
-                const clientTypeDropdown = document.getElementById('client_type');
-                const totalPriceElement = document.getElementById('total-price').querySelector('span');
 
-                // Set initial total price to 0
                 totalPriceElement.textContent = '₱0.00';
 
-                // Function to update the total price based on selection
                 clientTypeDropdown.addEventListener('change', function() {
                     const selectedOption = clientTypeDropdown.options[clientTypeDropdown.selectedIndex];
                     const priceValue = selectedOption.value;
                     totalPriceElement.textContent = `₱` + `${parseFloat(priceValue).toFixed(2)}`;
-                });
 
-                document.getElementById('client_type').addEventListener('change', function() {
-                    var selectedPrice = this.value;
-                    document.getElementById('total-price-field').value = selectedPrice;
+                    totalPriceField.value = priceValue;
                     document.getElementById('total-price').innerHTML =
-                        '<strong>Total Price: </strong>&#8369; ' + new Intl.NumberFormat().format(
-                            selectedPrice);
+                        '<strong>Total Price: </strong>&#8369; ' + new Intl.NumberFormat().format(priceValue);
                 });
 
+                reservationForm.addEventListener('submit', function(e) {
+                    const selectedClientType = clientTypeDropdown.value;
+                    const rawPrice = totalPriceElement.textContent.replace(/[^\d.]/g, '');
+                    const parsedPrice = parseFloat(rawPrice) || 0;
+                    const dateFrom = document.getElementById('date_from').value;
+                    const dateTo = document.getElementById('date_to').value;
+
+                    let hasError = false;
+                    let errorMessages = [];
+
+                    if (!selectedClientType || parsedPrice <= 0) {
+                        e.preventDefault();
+                        clientTypeDropdown.classList.add('is-invalid');
+                        alert('Please select a valid client type before submitting the reservation.');
+                    } else {
+                        clientTypeDropdown.classList.remove('is-invalid');
+                    }
+
+                    if (!dateFrom || !dateTo) {
+                        errorMessages.push('Please select a valid reservation date.');
+                        hasError = true;
+                    }
+
+                    if (hasError) {
+                        e.preventDefault();
+                        errorContainer.innerHTML = errorMessages.map(msg => `<div>${msg}</div>`).join('');
+                    } else {
+                        errorContainer.innerHTML = '';
+                    }
+
+                });
             });
         </script>
     @endif
+
 
 
 

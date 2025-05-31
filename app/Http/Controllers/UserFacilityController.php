@@ -59,14 +59,12 @@ class UserFacilityController extends Controller
         $individualPrice = $facility->individualPrice();
         $selectedRoom = $this->findRoomWithLeastCapacity($facility);
 
-
         return view('user.facilities.details', compact('facility', 'pricesWithAttributes', 'pricesWithoutAttributes', 'individualPrice', 'selectedRoom', 'roomNumbers', 'sexRestriction'));
     }
 
 
     public function reserve(Request $request)
     {
-        // dd($request->all());
         $request->validate([
             'facility_id' => 'required|exists:facilities,id',
             'total_price' => 'required|numeric|min:0',
@@ -142,25 +140,38 @@ class UserFacilityController extends Controller
 
             Session::put('reservation_data', $reservationData);
         } elseif ($facility->facility_type === 'whole_place') {
+
+            $request->validate([
+                'date_from' => 'required|date|after_or_equal:today',
+                'date_to' => 'required|date|after_or_equal:date_from',
+            ], [
+                'date_from.required' => 'Please select a valid reservation date.',
+                'date_to.required' => 'Please select a valid reservation date.',
+                'date_from.after_or_equal' => 'Please select a valid reservation date.',
+                'date_to.after_or_equal' => 'Please select a valid reservation date.',
+            ]);
+
+
+            $wholeCapacity = $facility->facilityAttributes()->sum('whole_capacity');
             $selectedPrice = $request->total_price;
 
             $selectedDateFrom = $request->date_from;
             $selectedDateTo = $request->date_to;
             $price = $facility->prices()->where('value', $selectedPrice)->first();
 
+
+
             $reservationData = [
                 'facility_id' => $facility->id,
                 'facility_name' => $facility->name,
+                'quantity' => $wholeCapacity,
                 'facility_slug' => $facility->slug,
                 'total_price' => $selectedPrice,
                 'facility_type' => $facility->facility_type,
                 'facility_attribute_id' => null,
                 'date_from' => $selectedDateFrom,
                 'date_to' => $selectedDateTo,
-                // 'price' => $price,
-
             ];
-
             Session::put('reservation_data', $reservationData);
         } elseif ($facility->facility_type === 'both') {
 
@@ -423,7 +434,6 @@ class UserFacilityController extends Controller
         $price = Price::where('facility_id', $facility->id)
             ->whereIn('price_type', ['individual', 'whole'])
             ->first();
-
         return view('user.facilities.checkout', compact('user', 'reservationData', 'facilityAttribute', 'facility',  'date_from', 'date_to', 'price', 'roomName', 'hasQuantity'));
     }
 
@@ -636,7 +646,7 @@ class UserFacilityController extends Controller
                     PaymentDetail::create([
                         'payment_id' => $payment->id,
                         'facility_id' => $facility->id,
-                        'quantity' => 0,
+                        'quantity' => $reservationData['quantity'] ?? 0,
                         'total_price' => $reservationData['total_price'],
                     ]);
 
@@ -644,7 +654,7 @@ class UserFacilityController extends Controller
                         'availability_id' => $availability->id,
                         'payment_id' => $payment->id,
                         'price_id' => $price->id,
-                        'quantity' => 0,
+                        'quantity' => $reservationData['quantity'] ?? 0,
                         'user_id' => $user->id,
                         'status' => 'pending',
                     ]);

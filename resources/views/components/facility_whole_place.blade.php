@@ -32,10 +32,7 @@
             </div>
 
             @error('date_from')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-            @error('date_to')
-                <span class="text-danger">{{ $message }}</span>
+                <span class="text-danger alert alert-warning " role="alert"> <strong> {{ $message }}</strong></span>
             @enderror
         </div>
     </div>

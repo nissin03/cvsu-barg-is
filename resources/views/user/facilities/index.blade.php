@@ -203,10 +203,6 @@
                         @endif
 
                     </div>
-                    <button type="submit" class="btn btn-shop btn-addtocart" id="reserve-btn"
-                        style="padding: 15px 30px; font-size: 18px; margin-top: 15px; margin-left: 50px;">
-                        Show Available Dates
-                    </button>
                 </div>
             </div>
         @endforeach
