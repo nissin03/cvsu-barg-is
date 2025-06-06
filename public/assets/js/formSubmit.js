@@ -2,27 +2,42 @@ $("#facilityForm").on("submit", function (event) {
     event.preventDefault();
 
     var formData = new FormData(this);
-    const facilityType = $("#rentalType").val();
+    const facilityType = $("#rentalType").val(); // Get the facility type
 
-
+    // Add price data to formData
     prices.forEach((price, index) => {
         formData.append(`prices[${index}][name]`, price.name);
         formData.append(`prices[${index}][price_type]`, price.price_type);
         formData.append(`prices[${index}][value]`, price.value);
-        formData.append(`prices[${index}][is_based_on_days]`, price.is_based_on_days);
-        formData.append(`prices[${index}][is_there_a_quantity]`, price.is_there_a_quantity);
+        formData.append(
+            `prices[${index}][is_based_on_days]`,
+            price.is_based_on_days
+        );
+        formData.append(
+            `prices[${index}][is_there_a_quantity]`,
+            price.is_there_a_quantity
+        );
     });
 
-
+    // Check for facility type and append appropriate data
     if (facilityType === "whole_place") {
         const wholeCapacity = $("#roomCapacityWhole").val();
         formData.append("whole_capacity", wholeCapacity);
     } else {
-
+        // Append rooms data for individual or both facility types
         rooms.forEach((room, index) => {
-            formData.append(`facility_attributes[${index}][room_name]`, room.room_name);
-            formData.append(`facility_attributes[${index}][capacity]`, room.capacity);
-            formData.append(`facility_attributes[${index}][sex_restriction]`, room.sex_restriction);
+            formData.append(
+                `facility_attributes[${index}][room_name]`,
+                room.room_name
+            );
+            formData.append(
+                `facility_attributes[${index}][capacity]`,
+                room.capacity
+            );
+            formData.append(
+                `facility_attributes[${index}][sex_restriction]`,
+                room.sex_restriction
+            );
         });
     }
 
@@ -58,9 +73,12 @@ $("#facilityForm").on("submit", function (event) {
             if (xhr.status === 422) {
                 displayValidationErrors(xhr.responseJSON.errors);
             } else {
-                showAlert("An unexpected error occurred. Please try again.", "danger");
+                showAlert(
+                    "An unexpected error occurred. Please try again.",
+                    "danger"
+                );
             }
-        }
+        },
     });
 
     console.log("Hidden form data", $("#hiddenRooms").html());

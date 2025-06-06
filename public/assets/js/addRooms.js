@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 const $roomList = $("#roomList");
 const $hiddenRooms = $("#hiddenRooms");
@@ -67,7 +67,12 @@ function saveMultipleRooms() {
         const roomCapacity = $(this).find(".room-capacity").val().trim();
         const roomSexRestriction = $(this).find(".room-sex-restriction").val();
 
-        if (!roomName || !roomCapacity || isNaN(roomCapacity) || parseInt(roomCapacity) <= 0) {
+        if (
+            !roomName ||
+            !roomCapacity ||
+            isNaN(roomCapacity) ||
+            parseInt(roomCapacity) <= 0
+        ) {
             valid = false;
             return false;
         }
@@ -75,7 +80,7 @@ function saveMultipleRooms() {
         newRooms.push({
             room_name: roomName,
             capacity: parseInt(roomCapacity),
-            sex_restriction: roomSexRestriction
+            sex_restriction: roomSexRestriction,
         });
     });
 
@@ -145,7 +150,6 @@ function updateUI() {
     // calculateTotalCapacity();
 }
 
-
 // Edit room
 $(document).on("click", ".edit-room", function () {
     const index = $(this).data("index");
@@ -165,28 +169,38 @@ function editRoom(index) {
     $form.find(".room-sex-restriction").val(room.sex_restriction);
 
     // Change the save button to update mode
-    $("#saveMultipleRoomsBtn").text("Update Room").off("click").on("click", function () {
-        const updatedRoom = {
-            room_name: $form.find(".room-name").val().trim(),
-            capacity: parseInt($form.find(".room-capacity").val().trim()),
-            sex_restriction: $form.find(".room-sex-restriction").val()
-        };
+    $("#saveMultipleRoomsBtn")
+        .text("Update Room")
+        .off("click")
+        .on("click", function () {
+            const updatedRoom = {
+                room_name: $form.find(".room-name").val().trim(),
+                capacity: parseInt($form.find(".room-capacity").val().trim()),
+                sex_restriction: $form.find(".room-sex-restriction").val(),
+            };
 
-        // Validate
-        if (!updatedRoom.room_name || isNaN(updatedRoom.capacity) || updatedRoom.capacity <= 0) {
-            alert("Please enter valid room details.");
-            return;
-        }
+            // Validate
+            if (
+                !updatedRoom.room_name ||
+                isNaN(updatedRoom.capacity) ||
+                updatedRoom.capacity <= 0
+            ) {
+                alert("Please enter valid room details.");
+                return;
+            }
 
-        // Update the room
-        rooms[index] = updatedRoom;
-        updateUI();
-        $("#roomFormContainer").empty();
-        $addRoomModal.modal("hide");
+            // Update the room
+            rooms[index] = updatedRoom;
+            updateUI();
+            $("#roomFormContainer").empty();
+            $addRoomModal.modal("hide");
 
-        // Reset the button
-        $("#saveMultipleRoomsBtn").text("Save All").off("click").on("click", saveMultipleRooms);
-    });
+            // Reset the button
+            $("#saveMultipleRoomsBtn")
+                .text("Save All")
+                .off("click")
+                .on("click", saveMultipleRooms);
+        });
 
     // Show the modal
     $addRoomModal.modal("show");
@@ -204,9 +218,24 @@ $(document).on("click", ".delete-room", function () {
 function updateHiddenRooms() {
     $hiddenRooms.empty();
     rooms.forEach((room, index) => {
-        $hiddenRooms.append(createHiddenInput(`facility_attributes[${index}][room_name]`, room.room_name));
-        $hiddenRooms.append(createHiddenInput(`facility_attributes[${index}][sex_restriction]`, room.sex_restriction));
-        $hiddenRooms.append(createHiddenInput(`facility_attributes[${index}][capacity]`, room.capacity));
+        $hiddenRooms.append(
+            createHiddenInput(
+                `facility_attributes[${index}][room_name]`,
+                room.room_name
+            )
+        );
+        $hiddenRooms.append(
+            createHiddenInput(
+                `facility_attributes[${index}][sex_restriction]`,
+                room.sex_restriction
+            )
+        );
+        $hiddenRooms.append(
+            createHiddenInput(
+                `facility_attributes[${index}][capacity]`,
+                room.capacity
+            )
+        );
     });
 }
 
@@ -227,9 +256,10 @@ $(document).ready(function () {
     $("#addMultipleRoomsModal").on("show.bs.modal", function (e) {
         // If not triggered by an edit button
         if (!$(e.relatedTarget).hasClass("edit-room")) {
-            $("#saveMultipleRoomsBtn").text("Save All").off("click").on("click", saveMultipleRooms);
+            $("#saveMultipleRoomsBtn")
+                .text("Save All")
+                .off("click")
+                .on("click", saveMultipleRooms);
         }
     });
-
-
 });

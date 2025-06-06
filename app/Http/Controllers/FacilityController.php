@@ -399,6 +399,4 @@ class FacilityController extends Controller
             Log::error('Image processing failed: ' . $e->getMessage());
         }
     }
-
-
 }
