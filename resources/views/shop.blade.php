@@ -72,8 +72,8 @@
                                             <li
                                                 class="d-flex justify-content-between align-items-center py-2 border-bottom hover-bg-light">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox"
-                                                        name="categories" value="{{ $category->id }}"
+                                                    <input class="form-check-input" type="checkbox" name="categories"
+                                                        value="{{ $category->id }}"
                                                         @if (in_array($category->id, explode(',', $f_categories))) checked @endif
                                                         aria-label="Select {{ $category->name }}">
                                                     <label class="form-check-label ms-2">
@@ -114,9 +114,8 @@
                         <div class="accordion-item border-0 mb-3 rounded-3">
                             <h5 class="accordion-header" id="accordion-gender-heading">
                                 <button class="accordion-button py-3 border-0 text-uppercase fw-bold text-primary"
-                                    type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#accordion-gender-filter" aria-expanded="true"
-                                    aria-controls="accordion-gender-filter">
+                                    type="button" data-bs-toggle="collapse" data-bs-target="#accordion-gender-filter"
+                                    aria-expanded="true" aria-controls="accordion-gender-filter">
                                     Product Type
                                 </button>
                             </h5>
@@ -127,9 +126,8 @@
                                         <li
                                             class="d-flex justify-content-between align-items-center py-2 border-bottom hover-bg-light">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="sex"
-                                                    id="sex-all" value=""
-                                                    {{ request('sex') == '' ? 'checked' : '' }}
+                                                <input class="form-check-input" type="radio" name="sex" id="sex-all"
+                                                    value="" {{ request('sex') == '' ? 'checked' : '' }}
                                                     aria-label="Select all genders">
                                                 <label class="form-check-label ms-2" for="sex-all">
                                                     All
@@ -139,9 +137,8 @@
                                         <li
                                             class="d-flex justify-content-between align-items-center py-2 border-bottom hover-bg-light">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="sex"
-                                                    id="sex-male" value="male"
-                                                    {{ request('sex') == 'male' ? 'checked' : '' }}
+                                                <input class="form-check-input" type="radio" name="sex" id="sex-male"
+                                                    value="male" {{ request('sex') == 'male' ? 'checked' : '' }}
                                                     aria-label="Select male">
                                                 <label class="form-check-label ms-2" for="sex-male">
                                                     Men
@@ -188,12 +185,12 @@
                 <div id="product-list">
                     @include('partials.products-list', ['products' => $products])
                 </div>
+                <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination mt-3">
+                    {{ $products->withQueryString()->links('pagination::bootstrap-5') }}
+                </div>
             </div>
         </div>
 
-        <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-            {{ $products->withQueryString()->links('pagination::bootstrap-5') }}
-        </div>
         </div>
         </div>
     </main>

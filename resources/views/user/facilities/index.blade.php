@@ -40,6 +40,11 @@
                 {{ session('message') }}
             </div>
         @endif
+        @if (Session::has('status'))
+            <p class="alert alert-success">{{ Session::get('status') }}</p>
+        @elseif (Session::has('error'))
+            <p class="alert alert-danger">{{ Session::get('error') }}</p>
+        @endif
 
 
         @foreach ($facilities as $facility)
@@ -203,18 +208,10 @@
                         @endif
 
                     </div>
-                    <button type="submit" class="btn btn-shop btn-addtocart" id="reserve-btn"
-                        style="padding: 15px 30px; font-size: 18px; margin-top: 15px; margin-left: 50px;">
-                        Show Available Dates
-                    </button>
                 </div>
             </div>
         @endforeach
     </main>
-
-
-
-
 @endsection
 
 @push('scripts')
