@@ -37,16 +37,9 @@ class UserFacilityController extends Controller
 
     public function show($slug)
     {
-<<<<<<< HEAD
         $facility = Facility::with('facilityAttributes', 'prices')
             ->where('slug', $slug)
             ->firstOrFail();
-=======
-
-        $facility = Facility::with('facilityAttributes', 'prices')
-        ->where('slug', $slug)
-        ->firstOrFail();
->>>>>>> 13fb758 (Small changes (Remove image and images in facilities and showing images in index))
         $roomNumbers = $facility->facilityAttributes->pluck('room_name')
             ->filter()
             ->map(fn($name) => preg_replace('/[^0-9]/', '', $name))
@@ -62,11 +55,26 @@ class UserFacilityController extends Controller
                 ->where('status', 'reserved')
                 ->sum('quantity');
         });
-
+        $reservations = TransactionReservation::with('availability')
+            ->where('status', 'pending')
+            ->whereHas('availability', function ($query) use ($facility) {
+                $query->where('facility_id', $facility->id);
+            })
+            ->get()
+            ->map(function ($res) {
+                return [
+                    'title' => 'Pending',
+                    'start' => $res->availability->date_from,
+                    'end' => \Carbon\Carbon::parse($res->availability->date_to)->addDay()->toDateString(),
+                    'allDay' => true,
+                    'color' => '#f39c12',
+                    'status' => 'pending'
+                ];
+            });
         $individualPrice = $facility->individualPrice();
         $selectedRoom = $this->findRoomWithLeastCapacity($facility);
 
-        return view('user.facilities.details', compact('facility', 'pricesWithAttributes', 'pricesWithoutAttributes', 'individualPrice', 'selectedRoom', 'roomNumbers', 'sexRestriction'));
+        return view('user.facilities.details', compact('facility', 'pricesWithAttributes', 'pricesWithoutAttributes', 'individualPrice', 'selectedRoom', 'roomNumbers', 'sexRestriction', 'reservations'));
     }
 
 
@@ -80,6 +88,15 @@ class UserFacilityController extends Controller
 
         $facility = Facility::with(['facilityAttributes', 'prices'])->find($request->facility_id);
         $userSex = Auth::user()->sex;
+        $hasPendingReservation = TransactionReservation::where('user_id', Auth::id())
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($hasPendingReservation) {
+            Session::flash('error', "You already have a pending reservation. Please complete or cancel it before making a new one.");
+            return redirect()->route('user.facilities.details', ['slug' => $facility->slug]);
+        }
+
         // Facility Individual Logic
         if ($facility->facility_type === 'individual') {
 
@@ -165,8 +182,6 @@ class UserFacilityController extends Controller
             $selectedDateFrom = $request->date_from;
             $selectedDateTo = $request->date_to;
             $price = $facility->prices()->where('value', $selectedPrice)->first();
-
-
 
             $reservationData = [
                 'facility_id' => $facility->id,
@@ -395,6 +410,9 @@ class UserFacilityController extends Controller
 
     public function checkout(Request $request)
     {
+        if (!Session::has('reservation_data')) {
+            abort(404);
+        }
         $user = Auth::user();
         $reservationData = session('reservation_data');
         if (!$reservationData || !isset($reservationData['facility_slug'])) {
@@ -446,13 +464,14 @@ class UserFacilityController extends Controller
 
     public function place_reservation(Request $request)
     {
+
         $reservationData = Session::get('reservation_data');
         if (!$reservationData) {
             return redirect()->route('user.facilities.index')->with('error', 'No reservation data found.');
         }
         $facilityType = $reservationData['facility_type'] ?? null;
         $rules = [
-            'qualification' => 'nullable|file|max:10240|mimes:pdf,doc,docx',
+            'qualification' => 'required|file|max:10240|mimes:pdf,doc,docx',
         ];
 
         if ($facilityType === 'individual') {
@@ -629,7 +648,6 @@ class UserFacilityController extends Controller
 
 
                     $availability = Availability::create([
-                        // 'user_id' => $user->id,
                         'facility_id' => $facility->id,
                         'facility_attribute_id' => null,
                         'date_from' => $selectedDate,
@@ -891,33 +909,4 @@ class UserFacilityController extends Controller
         $qualification_r->save();
         Log::info('Qualification approval record created', ['qualification_id' => $qualification_r->id]);
     }
-
-    // public function account_reservation()
-    // {
-    //     $user = Auth::user()->id;
-
-    //     // Fetch only reservations belonging to the user
-    //     $availabilities = Availability::where('user_id', $user)->get();
-
-    //     return view('user.reservations', compact('availabilities'));
-    // }
-
-    // public function reservation_history()
-    // {
-    //     $user = Auth::user()->id;
-
-    //     // Fetch only reservations that belong to the current user
-    //     $availabilities = Availability::where('user_id', $user)->get();
-    //     return view('user.reservations_history', compact('availabilities'));
-    // }
-
-    // public function account_reservation_details()
-    // {
-    //     $user = Auth::user()->id;
-
-    //     // Fetch only reservations that belong to the current user
-    //     $availabilities = Availability::where('user_id', $user)->get();
-
-    //     return view('user.reservation_details', compact('availabilities'));
-    // }
 }

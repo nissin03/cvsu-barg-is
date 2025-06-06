@@ -40,6 +40,11 @@
                 {{ session('message') }}
             </div>
         @endif
+        @if (Session::has('status'))
+            <p class="alert alert-success">{{ Session::get('status') }}</p>
+        @elseif (Session::has('error'))
+            <p class="alert alert-danger">{{ Session::get('error') }}</p>
+        @endif
 
 
         @foreach ($facilities as $facility)
@@ -207,10 +212,6 @@
             </div>
         @endforeach
     </main>
-
-
-
-
 @endsection
 
 @push('scripts')

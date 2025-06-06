@@ -24,18 +24,16 @@ class HomeController extends Controller
     {
         $slides = Slide::where('status', 1)->get()->take(3);
         $categories = Category::orderBy('name')->get();
-        $fproducts = Product::where('featured',1)->get()->take(8);
+        $fproducts = Product::where('featured', 1)->get()->take(8);
         // $frentals = Facility::with(['prices', 'facilityAttributes'])
         // ->where('featured', 1)
         // ->take(8)
         // ->get();
-        return view('index', compact('slides', 'categories','fproducts'));
-
+        return view('index', compact('slides', 'categories', 'fproducts'));
     }
     public function contact()
     {
-        return view ('contact');
-
+        return view('contact');
     }
     public function contact_store(Request $request)
     {
@@ -58,17 +56,15 @@ class HomeController extends Controller
             'message.max' => 'The message must not exceed 65535 characters.'
         ]);
 
-<<<<<<< HEAD
-=======
         $lastContact = Contact::where('user_id', $user->id)
-                            ->latest()
-                            ->first();
+            ->latest()
+            ->first();
         $timeWindow = 60;
 
         if ($lastContact && Carbon::parse($lastContact->created_at)->diffInMinutes(Carbon::now()) < $timeWindow) {
             return redirect()->back()->with('error', 'You can only send one message every ' . $timeWindow . ' minutes.');
         }
->>>>>>> 13fb758 (Small changes (Remove image and images in facilities and showing images in index))
+
         $contact = new Contact();
         $contact->name = $user->name;
         $contact->email = $user->email;
@@ -76,26 +72,15 @@ class HomeController extends Controller
         $contact->message = $request->message;
         $contact->user_id = $user->id;
         $contact->save();
-<<<<<<< HEAD
 
         event(new ContactMessageReceived($contact));
         return redirect()->back()->with('success', 'Your message has been sent successfully.');
     }
-  
 
-=======
-        // $admin = User::where('utype', 'ADM')->first();
-        // if ($admin) {
-        //     $admin->notify(new ContactMessageNotification($contact));
-        // }
-        broadcast(new ContactMessageReceived($contact));
-        return redirect()->back()->with('success', 'Your message has been sent successfully.');
-    }
->>>>>>> 13fb758 (Small changes (Remove image and images in facilities and showing images in index))
     public function search(Request  $request)
     {
         $query = $request->input('query');
-        $results = Product::where('name','LIKE',"%{$query}%")->get()->take(8);
+        $results = Product::where('name', 'LIKE', "%{$query}%")->get()->take(8);
         return response()->json($results);
     }
 }

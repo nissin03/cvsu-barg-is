@@ -1626,6 +1626,9 @@
     @if ($facility->facility_type === 'whole_place')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
+                const reservationEvents = @json($reservations);
+                const pendingDates = reservationEvents.map(event => event.start);
+
                 const calendarEl = document.getElementById('calendar');
                 const submitButton = document.getElementById('submit-button');
                 const selectedDateEl = document.getElementById('selected-date');
@@ -1643,20 +1646,40 @@
 
 
                 let today = new Date();
-                let startDate = new Date();
-                startDate.setDate(today.getDate() + 3);
+                // let startDate = new Date();
+                let startDate = new Date(today);
+                // startDate.setDate(today.getDate() + 4);
+                startDate.setDate(today.getDate() + 4);
 
+                let maxMonthDate = new Date(today.getFullYear(), today.getMonth() + 4, 0)
+                const formatDate = (date) => date.toISOString().split('T')[0];
                 const calendar = new FullCalendar.Calendar(calendarEl, {
                     initialView: 'dayGridMonth',
                     selectable: true,
                     selectMirror: true,
                     timeZone: 'local',
+
+                    events: reservationEvents,
+
+                    eventContent: function(arg) {
+                        return {
+                            html: `<div style="color: white; background: ${arg.event.backgroundColor}; padding: 2px; border-radius: 3px; font-size: 11px;">${arg.event.title}</div>`
+                        };
+                    },
+
                     select: function(info) {
-                        const selectedDate = info.start;
-                        const selected = new Date(selectedDate.getFullYear(), selectedDate.getMonth(),
-                            selectedDate.getDate());
-                        const minDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate
-                            .getDate());
+                        const selectedDateStr = info.startStr;
+
+                        if (pendingDates.includes(selectedDateStr)) {
+                            alert(
+                                "There's a pending reservation for this date. Please select another date."
+                            );
+                            calendar.unselect();
+                            return;
+                        }
+
+                        const selected = new Date(selectedDateStr);
+                        const minDate = new Date(startDate);
 
                         if (selected >= minDate) {
                             const year = selected.getFullYear();
@@ -1674,7 +1697,6 @@
                             if (submitButton) {
                                 submitButton.disabled = false;
                             }
-
                             calendar.getEvents().forEach(function(event) {
                                 if (event.display === 'background') {
                                     event.remove();
@@ -1683,7 +1705,7 @@
 
                             calendar.addEvent({
                                 title: 'Selected',
-                                start: selectedDate,
+                                start: selectedDateStr,
                                 allDay: true,
                                 display: 'background',
                                 backgroundColor: '#B0E0E6'
@@ -1694,15 +1716,44 @@
                             calendar.unselect();
                         }
                     },
+
                     validRange: {
-                        start: startDate.toISOString().split('T')[0],
+                        // start: startDate.toISOString().split('T')[0],
+                        start: formatDate(startDate),
+                        end: formatDate(maxMonthDate),
                     },
+
                     headerToolbar: {
                         left: 'prev,next',
                         center: 'title',
                         right: ''
                     },
-                    dateClick: function(info) {}
+
+                    datesSet: function(view) {
+                        const currentDate = view.start;
+
+                        const earliestMonth = new Date(today.getFullYear(), today.getMonth(),
+                            1); // 1st of this month
+                        const latestMonth = new Date(today.getFullYear(), today.getMonth() + 2,
+                            1); // 1st of last allowed month
+
+                        const prevButton = document.querySelector('.fc-prev-button');
+                        const nextButton = document.querySelector('.fc-next-button');
+
+                        // Disable prev if current view is at or before start
+                        if (currentDate <= earliestMonth) {
+                            prevButton.setAttribute('disabled', 'disabled');
+                        } else {
+                            prevButton.removeAttribute('disabled');
+                        }
+
+                        // Disable next if current view is at or after end
+                        if (currentDate >= latestMonth) {
+                            nextButton.setAttribute('disabled', 'disabled');
+                        } else {
+                            nextButton.removeAttribute('disabled');
+                        }
+                    },
                 });
 
                 calendar.render();
