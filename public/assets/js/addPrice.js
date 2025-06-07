@@ -14,23 +14,27 @@ $(document).ready(function () {
     $("#addPrice").on("show.bs.modal", function () {
         if ($priceFormContainer.children().length === 0) {
             $priceFormContainer.append(createPriceFormCard());
+            if (typeof window.updatePriceFieldVisibility === "function") {
+                window.updatePriceFieldVisibility($("#rentalType").val());
+            }
         }
     });
 
-    // Add new price form when the "Add Another Price" button is clicked
     $("#addMultiplePricesRowBtn").on("click", function (e) {
         e.preventDefault();
         $priceFormContainer.append(createPriceFormCard());
+
+        if (typeof window.updatePriceFieldVisibility === "function") {
+            window.updatePriceFieldVisibility($("#rentalType").val());
+        }
     });
 
-    // Dynamically disable past dates for all price forms
     function disablePastDates($form) {
         const today = new Date().toISOString().split("T")[0];
         $form.find(".date-from").attr("min", today);
         $form.find(".date-to").attr("min", today);
     }
 
-    // Ensure that date-to is never earlier than date-from
     $(document).on("change", ".date-from", function () {
         const $dateFrom = $(this);
         const $dateTo = $dateFrom.closest(".price-form-card").find(".date-to");
@@ -61,8 +65,8 @@ $(document).ready(function () {
                     </select>
                 </div>
             </div>
-    
-            <div class="d-flex justify-content-between align-items-center my-4 mx-auto">
+
+            <div class="d-flex justify-content-between align-items-center my-4 mx-auto price-checks">
                 <div class="d-flex align-items-center">
                     <input type="checkbox" class="form-check-input is-based-on-days">
                     <label class="form-check-label ms-2 pt-2">Is based on days?</label>
@@ -72,7 +76,7 @@ $(document).ready(function () {
                     <label class="form-check-label ms-2 pt-2">Is there a quantity?</label>
                 </div>
             </div>
-    
+
             <div class="row g-3 mt-2 date-fields" style="display: none;">
                 <div class="col-md-6">
                     <label class="form-label">Date From</label>
@@ -213,6 +217,7 @@ $(document).ready(function () {
         }
         prices.forEach((price, index) => {
             $priceCardsContainer.append(createPriceCard(price, index));
+            window.updatePriceFieldVisibility($("#rentalType").val());
         });
     }
 
@@ -274,6 +279,7 @@ $(document).ready(function () {
 
         // Create and populate a form with the price data
         $priceFormContainer.append(createPriceFormCard());
+        window.updatePriceFieldVisibility($("#rentalType").val());
         const $form = $priceFormContainer.find(".price-form-card:last");
 
         $form.find(".price-name").val(price.name);
@@ -348,6 +354,7 @@ $(document).ready(function () {
     function resetModal() {
         $priceFormContainer.empty();
         $priceFormContainer.append(createPriceFormCard());
+        window.updatePriceFieldVisibility($("#rentalType").val());
         editMode = false;
         editIndex = -1;
         $("#saveMultiplePricesBtn").text("Save All");

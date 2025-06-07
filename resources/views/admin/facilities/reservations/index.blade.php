@@ -228,7 +228,7 @@
                         <table class="table table-striped table-bordered" style="table-layout: auto;">
                             <thead>
                                 <tr>
-                                    <th class="text-center" scope="col" style="width: 30%">Facility</th>
+                                    <th class="text-center" scope="col" style="width: 20%">Facility</th>
                                     <th class="text-center" scope="col">Dates (From - To)</th>
                                     <th class="text-center" scope="col">User</th>
                                     <th class="text-center" scope="col">Price</th>
@@ -344,7 +344,9 @@
                     });
                 });
             }
-
+            $('#status').on('change', function() {
+                performFilter();
+            });
 
             $(document).on('change', '.status-select', function() {
                 const reservationId = $(this).data('reservation-id');
@@ -406,11 +408,6 @@
                         });
                     }, 3000);
                 }
-
-                // Initialize filters
-                $('#status').on('change', function() {
-                    performFilter();
-                });
 
                 initTooltips();
                 initPaginationEvents();

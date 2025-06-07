@@ -68,7 +68,7 @@
                                 <p class="select-date"><strong>Selected Date:</strong> {{ $reservationData['date_from'] }}
                                 </p>
                             @endif
-                        </div>A
+                        </div>
                     </div>
                 @elseif($facility->facility_type === 'both')
                     <div class="my-2">
@@ -134,8 +134,11 @@
 
                 <div class="mb-3">
                     <label for="qualification">Qualification Document (PDF/DOC) <small>(Optional)</small></label>
-                    <input type="file" id="qualification" name="qualification" class="form-control"
-                        accept=".pdf,.doc,.docx" required>
+                    {{-- <input type="file" id="qualification" name="qualification" class="form-control"
+                        accept=".pdf,.doc,.docx" required> --}}
+                    <input type="file" name="qualification" class="form-control accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        onchange="if(this.files[0].size > 10485760) { alert('File must be less than 10MB'); this.value=''; }" />
+
 
                     @error('qualification')
                         <span class="text-danger">{{ $message }}</span>
@@ -219,9 +222,7 @@
                         </tbody>
                     </table>
                 </div>
-
                 {{-- <button type="submit" class="btn btn-warning w-100">Place Reservation</button> --}}
-
                 <button type="submit" class="btn btn-warning w-100" onclick="this.disabled=true; this.form.submit();">Place
                     Reservation</button>
 
@@ -230,103 +231,3 @@
         </div>
     </div>
 @endsection
-
-@push('scripts')
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' rel='stylesheet' />
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            @if ($facility->facility_type === 'whole_place')
-                var calendarEl = document.getElementById('calendar');
-                var submitButton = document.getElementById('submit-button');
-                var selectedDateEl = document.getElementById('selected-date');
-
-                // Calculate the start date (3 days from today)
-                var today = new Date();
-                var startDate = new Date();
-                startDate.setDate(today.getDate() + 3);
-
-                // Initialize FullCalendar
-                var calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'dayGridMonth',
-                    selectable: true,
-                    selectMirror: true,
-                    timeZone: 'local',
-                    select: function(info) {
-                        // Ensure the selected date is valid
-                        var selectedDate = info.start;
-
-                        // Compare dates (ignoring time)
-                        var selected = new Date(selectedDate.getFullYear(), selectedDate.getMonth(),
-                            selectedDate.getDate());
-                        var minDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate
-                            .getDate());
-
-                        if (selected >= minDate) {
-                            var year = selected.getFullYear();
-                            var month = String(selected.getMonth() + 1).padStart(2,
-                                '0'); // Months are zero-based
-                            var day = String(selected.getDate()).padStart(2, '0');
-                            var formattedDate = `${year}-${month}-${day}`;
-
-                            // var formattedDate = selected.toISOString().split('T')[0];
-                            document.getElementById('date_from').value = formattedDate;
-                            document.getElementById('date_to').value =
-                                formattedDate; // Automatically set date_to
-
-                            // Update the displayed selected date
-                            if (selectedDateEl) {
-                                selectedDateEl.innerText = 'Selected Date: ' + formattedDate;
-                            }
-
-                            // Enable the submit button
-                            if (submitButton) {
-                                submitButton.disabled = false;
-                            }
-
-                            // Remove existing background events
-                            calendar.getEvents().forEach(function(event) {
-                                if (event.display === 'background') {
-                                    event.remove();
-                                }
-                            });
-
-                            // Add a new background event to highlight the selected date
-                            calendar.addEvent({
-                                title: 'Selected',
-                                start: selectedDate,
-                                allDay: true,
-                                display: 'background',
-                                backgroundColor: '#B0E0E6' // Light blue background
-                            });
-                        } else {
-                            alert('Please select a date starting from ' + minDate.toISOString().split(
-                                'T')[0]);
-                            calendar.unselect();
-                        }
-                    },
-                    validRange: {
-                        start: startDate.toISOString().split('T')[0], // 3 days from today
-                    },
-                    headerToolbar: {
-                        left: 'prev,next today',
-                        center: 'title',
-                        right: 'dayGridMonth,dayGridWeek,dayGridDay'
-                    },
-                    // Disable dateClick to prevent individual date selection
-                    dateClick: function(info) {
-                        // Do nothing
-                    },
-                });
-
-                calendar.render();
-
-                // Ensure the submit button is disabled initially
-                if (submitButton) {
-                    submitButton.disabled = true;
-                }
-            @endif
-        });
-    </script>
-@endpush
