@@ -5,14 +5,18 @@ const $hiddenRooms = $("#hiddenRooms");
 const $addRoomModal = $("#addMultipleRoomsModal");
 const $roomCardsContainer = $("#roomCardsContainer");
 
-// // Initialize rooms array if it doesn't exist
+// Initialize rooms array if it doesn't exist
 // const rooms = window.rooms || [];
+let isEditMode = false;
+let editRoomIndex = null;
+let isAddingRoom = false; // New flag to track if we're adding a new room
 
 renderRoomList();
 
 // Add room row in the modal
 $("#addMultipleRoomsRowBtn").on("click", function (e) {
     e.preventDefault();
+    isAddingRoom = true; // Set flag when adding new room
     $("#roomFormContainer").append(createRoomFormCard());
 });
 
@@ -30,12 +34,12 @@ function createRoomFormCard() {
             </div>
             <div class="col-md-4">
                 <label class="form-label">Sex Restriction</label>
-                  <div class="select">
-                  <select class="room-sex-restriction">
-                      <option value="">No Restriction</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                  </select>
+                <div class="select">
+                    <select class="room-sex-restriction">
+                        <option value="">No Restriction</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
                 </div>
             </div>
             <div class="col-md-1 d-flex align-items-center">
@@ -52,11 +56,109 @@ $(document).on("click", ".removeRoomBtn", function () {
     $(this).closest(".room-form-card").remove();
 });
 
-// Save multiple rooms
+// Save multiple rooms - Fixed the duplicate function call
 $("#saveMultipleRoomsBtn").on("click", function (e) {
     e.preventDefault();
-    saveMultipleRooms();
+    if (isEditMode) {
+        updateEditedRoom();
+    } else {
+        saveMultipleRooms();
+    }
 });
+
+function updateEditedRoom() {
+    let updatedRooms = [];
+    let valid = true;
+    let duplicateNames = [];
+
+    // Collect all room updates
+    $(".room-form-card").each(function () {
+        const roomIndex = parseInt($(this).data("room-index"));
+        const isDisabled = $(this).find(".room-name").prop("disabled");
+
+        if (!isDisabled) {
+            // Only process enabled rooms
+            const updatedRoom = {
+                room_name: $(this).find(".room-name").val().trim(),
+                capacity: parseInt($(this).find(".room-capacity").val().trim()),
+                sex_restriction: $(this).find(".room-sex-restriction").val(),
+                originalIndex: roomIndex,
+            };
+
+            if (
+                !updatedRoom.room_name ||
+                isNaN(updatedRoom.capacity) ||
+                updatedRoom.capacity <= 0
+            ) {
+                valid = false;
+                return false;
+            }
+
+            updatedRooms.push(updatedRoom);
+        }
+    });
+
+    if (!valid) {
+        alert("Please enter valid room details for all enabled rooms.");
+        return;
+    }
+
+    // Check for duplicate names within the updated rooms and against existing rooms
+    for (let i = 0; i < updatedRooms.length; i++) {
+        const currentRoom = updatedRooms[i];
+
+        // Check against other updated rooms
+        for (let j = i + 1; j < updatedRooms.length; j++) {
+            if (
+                currentRoom.room_name.toLowerCase() ===
+                updatedRooms[j].room_name.toLowerCase()
+            ) {
+                duplicateNames.push(currentRoom.room_name);
+            }
+        }
+
+        // Check against existing rooms (excluding the ones being updated)
+        const isDuplicate = rooms.some(
+            (room, index) =>
+                !updatedRooms.some((ur) => ur.originalIndex === index) &&
+                room.room_name.toLowerCase() ===
+                    currentRoom.room_name.toLowerCase()
+        );
+
+        if (isDuplicate) {
+            duplicateNames.push(currentRoom.room_name);
+        }
+    }
+
+    if (duplicateNames.length > 0) {
+        alert(
+            `Duplicate room names found: ${[...new Set(duplicateNames)].join(
+                ", "
+            )}. Please choose different names.`
+        );
+        return;
+    }
+
+    // Apply updates to the rooms array
+    updatedRooms.forEach((updatedRoom) => {
+        rooms[updatedRoom.originalIndex] = {
+            room_name: updatedRoom.room_name,
+            capacity: updatedRoom.capacity,
+            sex_restriction: updatedRoom.sex_restriction,
+            selected: rooms[updatedRoom.originalIndex].selected || false,
+        };
+    });
+
+    // Reset flags
+    isEditMode = false;
+    editRoomIndex = null;
+    isAddingRoom = false;
+
+    updateUI();
+    $("#roomFormContainer").empty();
+    $addRoomModal.modal("hide");
+    $("#saveMultipleRoomsBtn").text("Save All");
+}
 
 function saveMultipleRooms() {
     let valid = true;
@@ -77,10 +179,24 @@ function saveMultipleRooms() {
             return false;
         }
 
+        // Check for duplicate room names
+        const isDuplicate = rooms.some(
+            (room) => room.room_name.toLowerCase() === roomName.toLowerCase()
+        );
+
+        if (isDuplicate) {
+            alert(
+                `A room with the name "${roomName}" already exists. Please choose a different name.`
+            );
+            valid = false;
+            return false;
+        }
+
         newRooms.push({
             room_name: roomName,
             capacity: parseInt(roomCapacity),
             sex_restriction: roomSexRestriction,
+            selected: false, // Initialize selected property for bulk operations
         });
     });
 
@@ -93,6 +209,9 @@ function saveMultipleRooms() {
     updateUI();
     $("#roomFormContainer").empty();
     $addRoomModal.modal("hide");
+
+    // Reset the adding flag
+    isAddingRoom = false;
 }
 
 function renderRoomList() {
@@ -117,93 +236,169 @@ function renderRoomList() {
 function createRoomCard(room, index) {
     // Determine badge color based on sex restriction
     let badgeClass = "bg-secondary";
+    let restrictionText = "No Restriction";
+
     if (room.sex_restriction === "male") {
         badgeClass = "bg-primary";
+        restrictionText = "Male";
     } else if (room.sex_restriction === "female") {
         badgeClass = "bg-danger";
+        restrictionText = "Female";
     }
 
     return `
-
     <div class="card p-3 mb-3">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <h4 class="pe-2">${room.room_name}</h4>
-                    <span class="badge bg-info">${room.sex_restriction}</span>
-                    <p class="fw-bold">Capacity: <span class="badge bg-warning">${room.capacity}</span></p>
-                </div>
-                <div class="d-flex">
-                    <button type="button" class="btn btn-lg btn-outline-warning me-2 edit-room" data-index="${index}">
-                        <i class="icon-pen">Edit</i>
-                    </button>
-                    <button type="button" class="btn btn-lg btn-outline-danger delete-room" data-index="${index}">
-                        <i class="icon-trash"></i>
-                    </button>
-                </div>
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="pe-2">${room.room_name}</h4>
+                <span class="badge ${badgeClass}">${restrictionText}</span>
+                <p class="fw-bold">Capacity: <span class="badge bg-warning">${room.capacity}</span></p>
             </div>
-    `;
+            <div class="d-flex">
+                <button type="button" class="btn btn-lg btn-outline-warning me-2 edit-room" data-index="${index}">
+                    <i class="icon-pen"></i> Edit
+                </button>
+                <button type="button" class="btn btn-lg btn-outline-danger delete-room" data-index="${index}">
+                    <i class="icon-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>`;
 }
 
 function updateUI() {
     renderRoomList();
     updateHiddenRooms();
-    // calculateTotalCapacity();
+    // Update bulk actions if they exist
+    if (typeof toggleBulkActionsContainer === "function") {
+        toggleBulkActionsContainer();
+    }
 }
 
-// Edit room
+// Edit room - Show all rooms with toggle functionality
 $(document).on("click", ".edit-room", function () {
     const index = $(this).data("index");
     editRoom(index);
 });
 
 function editRoom(index) {
-    const room = rooms[index];
+    isEditMode = true;
+    editRoomIndex = index;
+    isAddingRoom = false; // Not adding, we're editing
 
-    // Clear existing forms and add a single form with the room's data
-    $("#roomFormContainer").empty().append(createRoomFormCard());
+    $("#roomFormContainer").empty();
 
-    // Fill the form with room data
-    const $form = $(".room-form-card").first();
-    $form.find(".room-name").val(room.room_name);
-    $form.find(".room-capacity").val(room.capacity);
-    $form.find(".room-sex-restriction").val(room.sex_restriction);
+    // Add toggle button for editing all rooms
+    const toggleButton = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5>Edit Room: ${rooms[index].room_name}</h5>
+            <button type="button" id="toggleEditAllBtn" class="btn btn-outline-primary">
+                <i class="fa-solid fa-edit"></i> Edit All Rooms
+            </button>
+        </div>
+    `;
+    $("#roomFormContainer").append(toggleButton);
 
-    // Change the save button to update mode
-    $("#saveMultipleRoomsBtn")
-        .text("Update Room")
-        .off("click")
-        .on("click", function () {
-            const updatedRoom = {
-                room_name: $form.find(".room-name").val().trim(),
-                capacity: parseInt($form.find(".room-capacity").val().trim()),
-                sex_restriction: $form.find(".room-sex-restriction").val(),
-            };
+    // Create form cards for all rooms
+    rooms.forEach((room, roomIndex) => {
+        const formCard = createEditRoomFormCard(
+            room,
+            roomIndex,
+            roomIndex === index
+        );
+        $("#roomFormContainer").append(formCard);
+    });
 
-            // Validate
-            if (
-                !updatedRoom.room_name ||
-                isNaN(updatedRoom.capacity) ||
-                updatedRoom.capacity <= 0
-            ) {
-                alert("Please enter valid room details.");
-                return;
-            }
+    // Handle toggle edit all button
+    $("#toggleEditAllBtn").on("click", function () {
+        const isEditingAll = $(this).hasClass("btn-primary");
 
-            // Update the room
-            rooms[index] = updatedRoom;
-            updateUI();
-            $("#roomFormContainer").empty();
-            $addRoomModal.modal("hide");
+        if (isEditingAll) {
+            // Disable editing for all except the original selected room
+            $(".room-form-card").each(function (cardIndex) {
+                if (cardIndex !== index) {
+                    $(this).find("input, select").prop("disabled", true);
+                    $(this)
+                        .removeClass("border-primary")
+                        .addClass("border-secondary");
+                }
+            });
+            $(this)
+                .removeClass("btn-primary")
+                .addClass("btn-outline-primary")
+                .html('<i class="fa-solid fa-edit"></i> Edit All Rooms');
+        } else {
+            // Enable editing for all rooms
+            $(".room-form-card").each(function () {
+                $(this).find("input, select").prop("disabled", false);
+                $(this)
+                    .removeClass("border-secondary")
+                    .addClass("border-primary");
+            });
+            $(this)
+                .removeClass("btn-outline-primary")
+                .addClass("btn-primary")
+                .html('<i class="fa-solid fa-lock-open"></i> Editing All');
+        }
+    });
 
-            // Reset the button
-            $("#saveMultipleRoomsBtn")
-                .text("Save All")
-                .off("click")
-                .on("click", saveMultipleRooms);
-        });
+    // Change the save button text
+    $("#saveMultipleRoomsBtn").text("Update Room(s)");
 
     // Show the modal
     $addRoomModal.modal("show");
+}
+
+function createEditRoomFormCard(room, roomIndex, isEditable) {
+    const borderClass = isEditable ? "border-primary" : "border-secondary";
+    const disabledAttr = isEditable ? "" : "disabled";
+
+    return `
+    <div class="room-form-card mb-3 p-3 border rounded ${borderClass}" data-room-index="${roomIndex}">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <small class="text-muted">Room ${roomIndex + 1}</small>
+            ${
+                !isEditable
+                    ? '<small class="text-muted"><i class="fa-solid fa-lock"></i> Locked</small>'
+                    : '<small class="text-primary"><i class="fa-solid fa-edit"></i> Editable</small>'
+            }
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Room Name</label>
+                <input type="text" class="form-control room-name" placeholder="Enter room name"
+                       value="${room.room_name}" ${disabledAttr}>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Capacity</label>
+                <input type="number" class="form-control room-capacity" min="1" placeholder="Enter capacity"
+                       value="${room.capacity}" ${disabledAttr}>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Sex Restriction</label>
+                <div class="select">
+                    <select class="room-sex-restriction" ${disabledAttr}>
+                        <option value="" ${
+                            room.sex_restriction === "" ? "selected" : ""
+                        }>No Restriction</option>
+                        <option value="male" ${
+                            room.sex_restriction === "male" ? "selected" : ""
+                        }>Male</option>
+                        <option value="female" ${
+                            room.sex_restriction === "female" ? "selected" : ""
+                        }>Female</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-1 d-flex align-items-center">
+                ${
+                    isEditable
+                        ? ""
+                        : '<i class="fa-solid fa-lock text-muted"></i>'
+                }
+            </div>
+        </div>
+    </div>`;
 }
 
 // Delete room
@@ -245,21 +440,28 @@ function createHiddenInput(name, value) {
 
 // Initialize on document ready
 $(document).ready(function () {
-    // Add at least one form card when opening the modal
-    $("#addMultipleRoomsModal").on("show.bs.modal", function () {
-        if ($("#roomFormContainer").children().length === 0) {
-            $("#roomFormContainer").append(createRoomFormCard());
+    // Add at least one form card when opening the modal for new rooms
+    $("#addMultipleRoomsModal").on("show.bs.modal", function (e) {
+        // Check if this is not an edit operation
+        if (!isEditMode) {
+            if ($("#roomFormContainer").children().length === 0) {
+                $("#roomFormContainer").append(createRoomFormCard());
+                isAddingRoom = false; // Reset the flag
+            }
         }
     });
 
-    // Reset the save button when opening the modal for new rooms
-    $("#addMultipleRoomsModal").on("show.bs.modal", function (e) {
-        // If not triggered by an edit button
-        if (!$(e.relatedTarget).hasClass("edit-room")) {
-            $("#saveMultipleRoomsBtn")
-                .text("Save All")
-                .off("click")
-                .on("click", saveMultipleRooms);
+    // Reset everything when modal is hidden
+    $("#addMultipleRoomsModal").on("hidden.bs.modal", function () {
+        if (!isEditMode) {
+            $("#roomFormContainer").empty();
+        } else {
+            // Reset edit mode when modal is closed
+            isEditMode = false;
+            editRoomIndex = null;
+            $("#roomFormContainer").empty();
         }
+        isAddingRoom = false;
+        $("#saveMultipleRoomsBtn").text("Save All");
     });
 });

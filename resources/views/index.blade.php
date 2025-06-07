@@ -93,7 +93,8 @@
                 @endforeach
             @else
                 <div class="carousel-item h-100 position-relative active">
-                    <img src="{{ asset('./images/OVPEBA.jpg') }}" alt="Default Slide" class="carousel-image" loading="lazy">
+                    <img src="{{ asset('./images/bargImage.png') }}" alt="Default Slide" class="carousel-image"
+                        loading="lazy">
                     <div class="carousel-overlay"></div>
                     <div class="carousel-content">
                         <div class="text-center py-2">
@@ -115,25 +116,6 @@
             <span class="carousel-control-next-icon"></span>
         </button>
     </header>
-
-
-
-    {{-- <div class="slider-category" style="
-    --width: 150px;
-    --height: 650px;
-    --quantity: {{ count($categories) }};
-    ">
-    <div class="list">
-        @foreach ($categories as $index => $category)
-        <div class="item" style="--position: {{ $index + 1 }}" loading="lazy">
-            <a href="{{ route('shop.index', ['categories' => $category->id]) }}" class="menu-link fw-medium"
-            data-toggle="tooltip" data-placement="top" title="{{ $category->name }}">
-                <img src="{{ asset('uploads/categories/' . $category->image) }}" alt="{{ $category->name }}">
-            </a>
-        </div>
-        @endforeach
-    </div>
-    </div> --}}
 
     <div class="container">
         <div class="swiper mySwiper py-5">
@@ -259,91 +241,6 @@
             </div>
         </section>
     @endif
-
-    {{-- @if (!empty($frentals) && $frentals->isNotEmpty())
-        <!-- Rental Section -->
-        <section id="collection" class="py-3 pt-5">
-            <div class="container pb-5">
-                <div class="title-h2 text-center">
-                    <h2 class="position-relative d-inline-block">Rentals</h2>
-                </div>
-
-                <div class="row g-4 my-5 mx-auto owl-carousel owl-theme">
-                    @foreach ($frentals as $frental)
-                        <div class="col product-item d-flex flex-column h-100">
-                            <div class="product-img h-100">
-                                <div class="swiper-container js-swiper-slider">
-                                    <div class="swiper-wrapper">
-                                        <div class="swiper-slide">
-                                            <img loading="lazy"
-                                                src="{{ asset('uploads/rental') }}/{{ $frental->image }}"
-                                                alt="{{ $frental->name }}" class="img-fluid d-block mx-auto"
-                                                style="object-fit: cover; aspect-ratio: 1/1;">
-                                        </div>
-                                        @foreach (explode(',', $frental->images) as $gimg)
-                                            <div class="swiper-slide">
-                                                <img loading="lazy"
-                                                    src="{{ asset('uploads/rental') }}/{{ $gimg }}"
-                                                    alt="{{ $frental->name }}" class="img-fluid d-block mx-auto"
-                                                    style="object-fit: cover; aspect-ratio: 1/1;">
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                    <div class="swiper-pagination slideshow-pagination"></div>
-                                    <div class="swiper-button-next"></div>
-                                    <div class="swiper-button-prev"></div>
-                                </div>
-                            </div>
-                            <div class="product-info p-3 text-center">
-                                <!-- Facility Name -->
-                                <h1 class="title-cards fw-bolder text-capitalize mb-2">
-                                    {{ $frental->name }}
-                                </h1>
-
-                                <!-- Facility Prices -->
-                                @if ($frental->prices && $frental->prices->isNotEmpty())
-                                    <div class="mb-2">
-                                        <strong>Prices:</strong>
-                                        <ul class="list-unstyled mb-0 small">
-                                            @foreach ($frental->prices as $price)
-                                                <li>
-                                                    {{ ucfirst($price->price_type) }} -
-                                                    ₱{{ number_format($price->value, 2) }}
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
-                                @else
-                                    <p class="small text-muted">No pricing info available.</p>
-                                @endif
-
-                                <!-- Facility Attributes -->
-                                @if ($frental->facilityAttributes && $frental->facilityAttributes->isNotEmpty())
-                                    <div class="mb-2">
-                                        <strong>Rooms:</strong>
-                                        <ul class="list-unstyled mb-0 small">
-                                            @foreach ($frental->facilityAttributes as $attr)
-                                                <li>
-                                                    {{ $attr->room_name ?? 'Unnamed Room' }},
-                                                    Capacity: {{ $attr->capacity ?? 'N/A' }},
-                                                    @if ($attr->sex_restriction)
-                                                        Restriction: {{ ucfirst($attr->sex_restriction) }}
-                                                    @endif
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
-                                @else
-                                    <p class="small text-muted">No room data available.</p>
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </section>
-    @endif --}}
-
 
     <section class="about-us py-4">
         <div class="title-h2 text-center">

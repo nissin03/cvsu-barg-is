@@ -28,27 +28,32 @@ class FacilityRequest extends FormRequest
             'facility_type' => 'required|string|in:individual,whole_place,both',
             'slug' => 'unique:facilities,slug,' . ($this->facility->id ?? 'NULL'),
             'description' => 'required|string',
-            'image' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
-            'images.*' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
-            'requirements' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:5120',
+            'rules_and_regulations' => 'required|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'images' => 'nullable|array|max:3',
+            'status' => 'nullable|boolean',
+            'featured' => 'nullable|boolean',
+            'requirements' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
             'sex_restriction' => 'nullable|in:male,female',
-            'prices' => 'nullable|array',
+            'prices' => 'required|array',
             'prices.*.name' => 'required|string',
-            'prices.*.value' => 'required|numeric',
+            'prices.*.value' => 'required|numeric|min:0',
             'prices.*.price_type' => 'required|string|in:individual,whole',
             'prices.*.is_based_on_days' => 'required|boolean',
-            'prices.*.date_from' => 'nullable|date|required_if:prices.*.is_based_on_days,true',
-            'prices.*.date_to' => 'nullable|date|required_if:prices.*.is_based_on_days,true|after_or_equal:prices.*.date_from',
+            'prices.*.is_there_a_quantity' => 'required|boolean',
+            'prices.*.date_from' => 'required_if:prices.*.is_based_on_days,true|nullable|date',
+            'prices.*.date_to' => 'required_if:prices.*.is_based_on_days,true|nullable|date|after_or_equal:prices.*.date_from',
             'whole_capacity' => $this->facilityTypeRequiresWholeCapacity() ? 'required|numeric|min:1' : 'nullable',
             'facility_attributes' => 'nullable|array',
-            'facility_attributes.*.room_name' => 'nullable|string|max:255',
-            'facility_attributes.*.capacity' => 'nullable|integer|min:1',
+            'facility_attributes.*.room_name' => 'required_with:facility_attributes|string',
+            'facility_attributes.*.capacity' => 'required_with:facility_attributes|integer|min:1',
             'facility_attributes.*.sex_restriction' => 'nullable|in:male,female',
         ];
-    
+
         return $rules;
     }
-    
+
     private function facilityTypeRequiresWholeCapacity(): bool
     {
         $facilityType = $this->input('facility_type');
@@ -61,6 +66,10 @@ class FacilityRequest extends FormRequest
             'name.required' => 'The facility name is required.',
             'description.required' => 'The description is required.',
             'image.required' => 'The main image is required.',
+            'image.max' => 'The main image must not exceed 2MB.',
+            'images.max' => 'You can only upload up to 3 gallery images.',
+            'images.*.max' => 'Each gallery image must not exceed 2MB.',
+            'requirements.max' => 'The requirements file must not exceed 2MB.',
         ];
     }
 }

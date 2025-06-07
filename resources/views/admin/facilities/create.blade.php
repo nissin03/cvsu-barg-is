@@ -503,6 +503,7 @@
             }
         }
 
+
         // document.addEventListener("DOMContentLoaded", function() {
         //     const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
         //     const dateFieldsDiv = document.getElementById('dateFields');
