@@ -300,7 +300,7 @@
                     <!-- Rooms Section -->
                     <div id="dormitoryRooms" class="mt-4">
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
-                            <h4>Room Management</h4>
+                            <h4>Rooms</h4>
                             <div class="d-flex gap-2">
                                 <button type="button" data-bs-toggle="modal" data-bs-target="#addBulkRoomsModal">
                                     <i class="bi bi-plus-circle"></i> Add Multiple Rooms
@@ -318,7 +318,6 @@
 
 
                         <div id="roomContainer" class="mt-4">
-                            <h4 class="mb-3">Rooms</h4>
                             <div class="row" id="roomCardsContainer">
 
                             </div>
