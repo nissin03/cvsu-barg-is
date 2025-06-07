@@ -300,11 +300,15 @@
                     <!-- Rooms Section -->
                     <div id="dormitoryRooms" class="mt-4">
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
-                            <h4>Room Management</h4>
-                            <button type="button" class="" data-bs-toggle="modal"
-                                data-bs-target="#addMultipleRoomsModal">
-                                <i class="bi bi-plus-circle"></i> Add Rooms
-                            </button>
+                            <h4>Rooms</h4>
+                            <div class="d-flex gap-2">
+                                <button type="button" data-bs-toggle="modal" data-bs-target="#addBulkRoomsModal">
+                                    <i class="bi bi-plus-circle"></i> Add Multiple Rooms
+                                </button>
+                                <button type="button" data-bs-toggle="modal" data-bs-target="#addMultipleRoomsModal">
+                                    <i class="bi bi-plus-circle"></i> Add Rooms
+                                </button>
+                            </div>
                         </div>
 
 
@@ -314,7 +318,6 @@
 
 
                         <div id="roomContainer" class="mt-4">
-                            <h4 class="mb-3">Rooms</h4>
                             <div class="row" id="roomCardsContainer">
 
                             </div>
@@ -415,6 +418,51 @@
         <!-- /main-content-wrap -->
     </div>
     <!-- /main-content-wrap -->
+    <div class="modal fade" id="addBulkRoomsModal" tabindex="-1" aria-labelledby="addBulkRoomsLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addBulkRoomsLabel">Add Multiple Rooms</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="bulkRoomForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Room Prefix</label>
+                                <input type="text" class="form-control" id="roomPrefix" placeholder="e.g., Room">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Start Number</label>
+                                <input type="number" class="form-control" id="startNumber" min="1" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">End Number</label>
+                                <input type="number" class="form-control" id="endNumber" min="1" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Capacity</label>
+                                <input type="number" class="form-control" id="bulkCapacity" min="1" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Sex Restriction</label>
+                                <select class="select" id="bulkSexRestriction">
+                                    <option value="">No Restriction</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveBulkRoomsBtn">Save Rooms</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -423,11 +471,13 @@
     <script>
         let rooms = [];
         let prices = [];
+        window.facilityId = null;
     </script>
 
     {{-- <script src="{{ asset('assets/js/roomandprices.js') }}"></script> --}}
     <script src="{{ asset('assets/js/hideFields.js') }}"></script>
     <script src="{{ asset('assets/js/addRooms.js') }}"></script>
+    <script src="{{ asset('assets/js/bulkRooms.js') }}"></script>
     <script type="module" src="{{ asset('assets/js/addPrice.js') }}"></script>
     <script type="module" src="{{ asset('assets/js/formSubmit.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
@@ -451,6 +501,7 @@
                 $('#galUpload').addClass('up-load');
             }
         }
+
 
         // document.addEventListener("DOMContentLoaded", function() {
         //     const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
