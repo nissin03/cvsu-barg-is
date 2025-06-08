@@ -71,7 +71,15 @@ $("#facilityForm").on("submit", function (event) {
         error: function (xhr) {
             console.log("Error:", xhr);
             if (xhr.status === 422) {
-                displayValidationErrors(xhr.responseJSON.errors);
+                const response = xhr.responseJSON;
+                // Show the main error message if it exists
+                if (response.message) {
+                    showAlert(response.message, "danger");
+                }
+                // Display individual field errors
+                if (response.errors) {
+                    displayValidationErrors(response.errors);
+                }
             } else {
                 showAlert(
                     "An unexpected error occurred. Please try again.",
@@ -86,11 +94,32 @@ $("#facilityForm").on("submit", function (event) {
 
 // Display validation errors in the form
 function displayValidationErrors(errors) {
+    // Clear any existing error messages
+    $(".alert-danger").remove();
+
+    // Create a container for all errors if it doesn't exist
+    let errorContainer = $("#alertContainer");
+    if (errorContainer.length === 0) {
+        errorContainer = $('<div id="alertContainer"></div>');
+        $("#facilityForm").prepend(errorContainer);
+    }
+
+    // Display each error message
     for (const [key, messages] of Object.entries(errors)) {
-        const errorContainer = $(`#${key}Error`);
-        if (errorContainer.length) {
-            errorContainer.html(messages[0]).show();
-        }
+        const errorMessage = messages[0]; // Get the first error message
+        const alertBox = $("<div>", {
+            class: "alert alert-danger alert-dismissible fade show",
+            role: "alert",
+            text: errorMessage,
+        }).append(
+            $("<button>", {
+                type: "button",
+                class: "btn-close",
+                "data-bs-dismiss": "alert",
+                "aria-label": "Close",
+            })
+        );
+        errorContainer.append(alertBox);
     }
 }
 
