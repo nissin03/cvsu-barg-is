@@ -1,5 +1,8 @@
 $(document).ready(function () {
-    renderRoomList(); // Initial render of room list
+    if (rooms.length === 0) {
+        $("#addMultipleRoomsRowBtn").hide();
+        renderRoomList(); // Initial render of room list
+    }
 
     // Adding a new room row in the modal - Fixed to prevent duplicate event binding
     $("#addMultipleRoomsRowBtn")
@@ -118,6 +121,10 @@ function renderRoomList() {
 }
 
 function createRoomCard(room, index) {
+    if (!room || room.capacity === 0) {
+        return "";
+    }
+
     // Determine badge color based on sex restriction
     let badgeClass = "bg-secondary";
     let restrictionText = "No Restriction";

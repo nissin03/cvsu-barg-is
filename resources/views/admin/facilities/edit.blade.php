@@ -322,63 +322,69 @@
 
                     <div id="hiddenRooms"></div>
 
-                    <div id="dormitoryRooms" class="mt-4">
-                        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
-                            <h4>Room Management</h4>
-                            <div class="d-flex gap-2">
-                                <button type="button" data-bs-toggle="modal" data-bs-target="#addBulkRoomsModal">
-                                    <i class="bi bi-plus-circle"></i> Add Multiple Rooms
-                                </button>
-                                <button type="button" data-bs-toggle="modal" data-bs-target="#addMultipleRoomsModal">
-                                    <i class="bi bi-plus-circle"></i> Add Rooms
-                                </button>
+                    @if (
+                        !isset($facility->facilityAttributes->first()->whole_capacity) ||
+                            $facility->facilityAttributes->first()->whole_capacity === null)
+                        <div id="dormitoryRooms" class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                                <h4>Room Management</h4>
+                                <div class="d-flex gap-2">
+                                    <button type="button" data-bs-toggle="modal" data-bs-target="#addBulkRoomsModal">
+                                        <i class="bi bi-plus-circle"></i> Add Multiple Rooms
+                                    </button>
+                                    <button type="button" data-bs-toggle="modal"
+                                        data-bs-target="#addMultipleRoomsModal">
+                                        <i class="bi bi-plus-circle"></i> Add Rooms
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- No rooms message -->
-                        <div id="noRoomsMessage" class="alert alert-warning">
-                            <i class="bi bi-info-circle me-2"></i> No rooms added yet. Click "Add Rooms" to get started.
-                        </div>
-
-                        <!-- Room display -->
-                        <div id="roomContainer" class="mt-4">
-                            <h4 class="mb-3">Rooms</h4>
-                            <div class="row" id="roomCardsContainer">
-                                <!-- Existing rooms will be rendered here -->
+                            <!-- No rooms message -->
+                            <div id="noRoomsMessage" class="alert alert-warning">
+                                <i class="bi bi-info-circle me-2"></i> No rooms added yet. Click "Add Rooms" to get
+                                started.
                             </div>
-                            <ul class="list-group d-none" id="roomList"></ul>
-                        </div>
 
-                        <!-- Add/Edit Rooms Modal -->
-                        <div class="modal fade" id="addMultipleRoomsModal" tabindex="-1"
-                            aria-labelledby="addMultipleRoomsLabel" aria-hidden="true">
-                            <div class="modal-dialog modal-lg">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="addMultipleRoomsLabel">Manage Rooms</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                    </div>
+                            <!-- Room display -->
+                            <div id="roomContainer" class="mt-4">
+                                <h4 class="mb-3">Rooms</h4>
+                                <div class="row" id="roomCardsContainer">
+                                    <!-- Existing rooms will be rendered here -->
+                                </div>
+                                <ul class="list-group d-none" id="roomList"></ul>
+                            </div>
 
-                                    <div class="modal-body">
-                                        <div id="roomFormContainer">
-                                            <!-- Dynamic room form elements will go here -->
+                            <!-- Add/Edit Rooms Modal -->
+                            <div class="modal fade" id="addMultipleRoomsModal" tabindex="-1"
+                                aria-labelledby="addMultipleRoomsLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="addMultipleRoomsLabel">Manage Rooms</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
                                         </div>
-                                        <button type="button" id="addMultipleRoomsRowBtn" class="mt-3">
-                                            <i class="bi bi-plus-circle"></i> Add Another Room
-                                        </button>
-                                    </div>
 
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" id="saveMultipleRoomsBtn">Save
-                                            All</button>
+                                        <div class="modal-body">
+                                            <div id="roomFormContainer">
+                                                <!-- Dynamic room form elements will go here -->
+                                            </div>
+                                            <button type="button" id="addMultipleRoomsRowBtn" class="mt-3">
+                                                <i class="bi bi-plus-circle"></i> Add Another Room
+                                            </button>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Close</button>
+                                            <button type="button" class="btn btn-primary" id="saveMultipleRoomsBtn">Save
+                                                All</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
 
                 {{-- prices fields  --}}
@@ -399,7 +405,11 @@
                     </div>
 
                     <div class="cols gap10">
-                        <button class="tf-button w-full" type="submit">Update facility</button>
+                        <button id="facilitySubmitBtn" class="tf-button w-full" type="submit">
+                            <span class="spinner-border spinner-border-sm d-none" role="status"
+                                aria-hidden="true"></span>
+                            <span class="btn-text">Update Facility</span>
+                        </button>
                     </div>
                 </div>
 
@@ -615,5 +625,64 @@
                 $('#galUpload').addClass('up-load');
             }
         }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('facilityForm');
+            const submitBtn = document.getElementById('facilitySubmitBtn');
+            const spinner = submitBtn.querySelector('.spinner-border');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const facilityTypeSelect = document.getElementById('rentalType');
+            const originalText = btnText.textContent;
+
+            function getRequiredFields() {
+                const type = facilityTypeSelect.value;
+                let fields = ['name', 'facility_type', 'description', 'rules_and_regulations'];
+                if (type === 'whole_place') {
+                    fields.push('whole_capacity');
+                } else if (type === 'individual' || type === 'both') {
+                    fields.push('room_name', 'capacity');
+                }
+                return fields;
+            }
+
+            function isFormValid() {
+                const requiredFields = getRequiredFields();
+                for (let field of requiredFields) {
+                    if (field === 'room_name' || field === 'capacity') {
+                        const inputs = form.querySelectorAll(`[name^="facility_attributes"][name$="[${field}]"]`);
+                        if (!inputs.length || Array.from(inputs).some(input => !input.value.trim())) {
+                            return false;
+                        }
+                    } else {
+                        const input = form.querySelector(`[name="${field}"]`);
+                        if (!input || !input.value.trim()) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            form.addEventListener('submit', function(e) {
+                submitBtn.disabled = true;
+                spinner.classList.remove('d-none');
+                btnText.textContent = 'Submitting...';
+
+                if (!isFormValid()) {
+                    e.preventDefault();
+                    submitBtn.disabled = false;
+                    spinner.classList.add('d-none');
+                    btnText.textContent = originalText;
+                    return;
+                }
+            });
+
+            facilityTypeSelect.addEventListener('change', function() {
+                submitBtn.disabled = false;
+                spinner.classList.add('d-none');
+                btnText.textContent = originalText;
+            });
+        });
     </script>
 @endpush
