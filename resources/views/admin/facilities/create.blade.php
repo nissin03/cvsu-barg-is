@@ -341,10 +341,6 @@
 
                                         </div>
 
-                                        <button type="button" id="addMultipleRoomsRowBtn" class="mt-3">
-                                            <i class="bi bi-plus-circle"></i> Add Another Room
-                                        </button>
-
                                     </div>
 
                                     <div class="modal-footer">
