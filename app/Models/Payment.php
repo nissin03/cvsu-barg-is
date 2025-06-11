@@ -14,6 +14,7 @@ class Payment extends Model
         'user_id',
         'status',
         'total_price',
+        'updated_by'
     ];
 
 
@@ -27,12 +28,17 @@ class Payment extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
     public function paymentDetails()
     {
         return $this->hasMany(PaymentDetail::class);
     }
 
-    public function transactionReservation()
+    public function transactionReservations()
     {
         return $this->hasMany(TransactionReservation::class);
     }

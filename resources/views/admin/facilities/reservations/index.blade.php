@@ -174,6 +174,37 @@
             left: 50%;
             transform: translate(-50%, -50%);
         }
+
+        .date-filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-separator {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            min-width: 150px;
+            background: #fff;
+            transition: border-color 0.2s;
+        }
+
+        .filter-select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+        }
+
+        .filter-select:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
     </style>
 
     <!-- Loading Indicator -->
@@ -208,15 +239,13 @@
             <div class="wg-box">
                 <div class="flex items-center justify-between gap10 flex-wrap">
                     <div class="filter-dropdowns flex items-center gap10">
-
                         <select name="status" id="status" class="filter-select">
                             <option value="">Select Status</option>
                             <option value="reserved" {{ request('status') == 'reserved' ? 'selected' : '' }}>Reserved
                             </option>
                             <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed
                             </option>
-                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending
-                            </option>
+                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                             <option value="canceled" {{ request('status') == 'canceled' ? 'selected' : '' }}>Canceled
                             </option>
                         </select>
@@ -277,6 +306,8 @@
                 lastScrollPosition = $(window).scrollTop();
 
                 let status = $('#status').val();
+                let dateFrom = $('#date_from').val();
+                let dateTo = $('#date_to').val();
 
                 $('#loading-indicator').show();
                 let url = '{{ route('admin.facilities.reservations') }}';
@@ -284,6 +315,12 @@
 
                 if (status) {
                     params.push('status=' + encodeURIComponent(status));
+                }
+                if (dateFrom) {
+                    params.push('date_from=' + encodeURIComponent(dateFrom));
+                }
+                if (dateTo) {
+                    params.push('date_to=' + encodeURIComponent(dateTo));
                 }
 
                 if (params.length > 0) {
@@ -344,7 +381,7 @@
                     });
                 });
             }
-            $('#status').on('change', function() {
+            $('#status, #date_from, #date_to').on('change', function() {
                 performFilter();
             });
 
@@ -412,6 +449,26 @@
                 initTooltips();
                 initPaginationEvents();
             });
+
+            // Date validation
+            $('#date_from').on('change', function() {
+                $('#date_to').attr('min', $(this).val());
+                if ($('#date_to').val() && $('#date_to').val() < $(this).val()) {
+                    $('#date_to').val($(this).val());
+                }
+            });
+
+            $('#date_to').on('change', function() {
+                $('#date_from').attr('max', $(this).val());
+                if ($('#date_from').val() && $('#date_from').val() > $(this).val()) {
+                    $('#date_from').val($(this).val());
+                }
+            });
+
+            // Set initial max date for both inputs
+            const today = new Date().toISOString().split('T')[0];
+            $('#date_from').attr('max', today);
+            $('#date_to').attr('max', today);
         });
     </script>
 @endpush

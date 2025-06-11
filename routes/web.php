@@ -37,7 +37,7 @@ Route::get('/user/checkout', [UserFacilityController::class, 'checkout'])->name(
 Route::post('user/facilities/place-reservation', [UserFacilityController::class, 'place_reservation'])->name('user.facilities.placeReservation');
 Route::get('/user/reservations', [UserFacilityController::class, 'account_reservation'])->name('user.reservations');
 Route::get('/user/reservatio_history', [UserFacilityController::class, 'reservation_history'])->name('user.reservations_history');
-Route::get('/user/reservation_details/{availability_id}', [UserFacilityController::class, 'account_reservation_details'])->name('user.reservation_details');
+Route::get('/user/reservation_details/{payment_id}', [UserFacilityController::class, 'account_reservation_details'])->name('user.reservation_details');
 
 Route::get('/about-us', [AboutController::class, 'index'])->name('about.index');
 
@@ -124,6 +124,7 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/profile', [AdminProfileController::class, 'show_profile'])->name('admin.profile.index');
 
         Route::get('/facilities', [FacilityController::class, 'index'])->name('admin.facilities.index');
+        Route::get('/facilities/search', [FacilityController::class, 'search'])->name('admin.facilities.search');
         Route::get('/facility/create', [FacilityController::class, 'create'])->name('admin.facility.create');
         Route::post('/facility/store', [FacilityController::class, 'store'])->name('admin.facilities.store');
         Route::get('/facility/edit/{id}', [FacilityController::class, 'edit'])->name('admin.facilities.edit');
@@ -189,7 +190,8 @@ Route::middleware(['auth', AuthAdmin::class])
 
 
         Route::get('/facilities/reservations', [FacilityReservationController::class, 'index'])->name('admin.facilities.reservations');
-        Route::patch('/reservations/{reservation}/status', [FacilityReservationController::class, 'update']);
+        Route::get('/facilities/reservations/{id}', [FacilityReservationController::class, 'show'])->name('admin.facilities.reservations.show');
+        Route::patch('/facilities/reservations/{reservation}/status', [FacilityReservationController::class, 'update'])->name('admin.facilities.reservations.update');
 
 
         Route::get('/slide', [AdminController::class, 'slides'])->name('admin.slides');

@@ -203,7 +203,6 @@
                             </fieldset>
                             <div class="button-submit">
                                 <button type="button" style="display:none;"> <i class="icon-search"></i></button>
-                                <!-- Hidden button -->
                             </div>
                         </form>
                     </div>

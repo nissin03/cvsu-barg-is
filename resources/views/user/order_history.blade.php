@@ -25,28 +25,31 @@
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
 
-       
+
     <div class="container" style="padding-top: 1em;">
         <div class="mb-4 pb-4"></div>
         <h3>Order History</h3>
         <div class="accordion" id="orderHistoryAccordion">
             @forelse($orders as $order)
-            @php
-                // Calculate the number of days since the order was created
-                $daysSinceOrder = \Carbon\Carbon::now()->diffInDays($order->created_at);
-                // Calculate the remaining days before the order disappears (30 days limit)
-                $daysRemaining = 30 - $daysSinceOrder;
-            @endphp
+                @php
+                    $daysSinceOrder = \Carbon\Carbon::now()->diffInDays($order->created_at);
+                    $daysRemaining = 30 - $daysSinceOrder;
+                @endphp
 
-            @if($daysRemaining > 0)
-                <div class="alert alert-warning" role="alert">
-                    <strong>Note:</strong> The Order #{{ $order->id }} will be removed from your order history in 30 days.
+                @if ($daysRemaining > 0)
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Note:</strong> The Order #{{ $order->id }} will be removed from your order history in 30
+                        days.
+                    </div>
+                @else
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Note:</strong> This order will be removed from your order history soon.
+                    </div>
+                @endif
+
+                <div class="col-lg-2">
+                    @include('user.account__nav')
                 </div>
-            @else
-                <div class="alert alert-warning" role="alert">
-                    <strong>Note:</strong> This order will be removed from your order history soon.
-                </div>
-            @endif
                 <div class="accordion-item mb-3 shadow-sm border rounded bg-white text-dark">
                     <h2 class="accordion-header" id="headingOrder{{ $order->id }}">
                         <button
@@ -92,7 +95,7 @@
                                             <p class="text-muted">₱{{ number_format($item->price, 2) }}</p>
                                         </div>
                                     </div>
-                                @endforeach 
+                                @endforeach
                             </div>
 
                             <!-- Order Footer Details -->
@@ -109,8 +112,8 @@
 
         <div class="divider"></div>
 
-                    <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-                        {{ $orders->links('pagination::bootstrap-5') }}
+        <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
+            {{ $orders->links('pagination::bootstrap-5') }}
         </div>
-    </div>  
+    </div>
 @endsection

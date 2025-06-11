@@ -45,11 +45,32 @@ class FacilityController extends Controller
     public function index(Request $request)
     {
         $archived = $request->query('archived', 0);
+        $search = $request->input('search');
+        $sortColumn = $request->input('sort_column', 'created_at');
+        $sortDirection = $request->input('sort_direction', 'DESC');
 
-        $facilities = Facility::with('facilityAttributes', 'prices')
-            ->where('archived', $archived)
-            ->orderBy('created_at', 'DESC')
-            ->paginate(5);
+        $query = Facility::with('facilityAttributes', 'prices')
+            ->where('archived', $archived);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('facility_type', 'like', "%{$search}%");
+            });
+            $sortColumn = 'name';
+        }
+
+        $query->orderBy($sortColumn, $sortDirection);
+        $facilities = $query->paginate(5)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'facilities' => view('partials._facilities-table', compact('facilities'))->render(),
+                'pagination' => view('partials._facilities-pagination', compact('facilities'))->render()
+            ]);
+        }
+
         return view('admin.facilities.index', compact('facilities', 'archived'));
     }
 
