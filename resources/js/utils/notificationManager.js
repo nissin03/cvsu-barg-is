@@ -1,5 +1,5 @@
 function fetchNotifications() {
-    fetch("/notifications")
+    fetch("/admin/notifications")
         .then((response) => {
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -76,7 +76,7 @@ function addNotificationHandlers(container) {
 }
 
 function markAsReadOnly(id, notificationElement) {
-    fetch(`/notifications/mark-as-read/${id}`, {
+    fetch(`/admin/notifications/mark-as-read/${id}`, {
         method: "POST",
         headers: {
             "X-CSRF-TOKEN": document
@@ -112,7 +112,7 @@ function markAsReadOnly(id, notificationElement) {
 }
 
 function updateNotificationCount() {
-    fetch("/notifications/count")
+    fetch("/admin/notifications/count")
         .then((response) => {
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -141,7 +141,7 @@ function markAsRead(id) {
 }
 
 function markAllAsRead() {
-    fetch("/notifications/mark-all-as-read", {
+    fetch("/admin/notifications/mark-all-as-read", {
         method: "POST",
         headers: {
             "X-CSRF-TOKEN": document
@@ -182,7 +182,7 @@ function removeNotification(id) {
         return;
     }
 
-    fetch(`/notifications/destroy/${id}`, {
+    fetch(`/admin/notifications/destroy/${id}`, {
         method: "DELETE",
         headers: {
             "X-CSRF-TOKEN": document
@@ -258,7 +258,7 @@ function removeNotification(id) {
         });
 }
 function removeAllNotifications() {
-    fetch("/notifications/destroy-all", {
+    fetch("/admin/notifications/destroy-all", {
         method: "DELETE",
         headers: {
             "X-CSRF-TOKEN": document
@@ -296,7 +296,7 @@ function removeAllNotifications() {
 }
 
 function fetchAllNotifications() {
-    fetch("/notifications")
+    fetch("/admin/notifications")
         .then((response) => {
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
