@@ -15,7 +15,7 @@
                                 </div>
                                 <div>
                                     <div class="body-text mb-2">Total Reservation</div>
-                                    <h4>{{ $dashboardDatas[0]->Total }}</h4>
+                                    <h4>{{ $dashboardData[0]->Total }}</h4>
 
                                 </div>
                             </div>
@@ -29,7 +29,7 @@
                                 </div>
                                 <div>
                                     <div class="body-text mb-2">Total Amount of Reserve Items</div>
-                                    <h4>{{ $dashboardDatas[0]->TotalReservedAmount }}</h4>
+                                    <h4>{{ $dashboardData[0]->TotalReservedAmount }}</h4>
                                 </div>
                             </div>
                         </div>
@@ -42,7 +42,7 @@
                                 </div>
                                 <div>
                                     <div class="body-text mb-2">Total Claimed Items</div>
-                                    <h4>{{ $dashboardDatas[0]->TotalPickedUp }}</h4>
+                                    <h4>{{ $dashboardData[0]->TotalPickedUp }}</h4>
                                 </div>
                             </div>
                         </div>
@@ -55,7 +55,7 @@
                                 </div>
                                 <div>
                                     <div class="body-text mb-2">Total Amount of Claimed Items</div>
-                                    <h4>{{ $dashboardDatas[0]->TotalPickedUpAmount }}</h4>
+                                    <h4>{{ $dashboardData[0]->TotalPickedUpAmount }}</h4>
                                 </div>
                             </div>
                         </div>
@@ -68,7 +68,7 @@
                                 </div>
                                 <div>
                                     <div class="body-text mb-2">Total Canceled Orders</div>
-                                    <h4>{{ $dashboardDatas[0]->TotalCanceled }}</h4>
+                                    <h4>{{ $dashboardData[0]->TotalCanceled }}</h4>
                                 </div>
                             </div>
                         </div>
@@ -81,7 +81,7 @@
                                 </div>
                                 <div>
                                     <div class="body-text mb-2">Total Amount of Cancelled Orders</div>
-                                    <h4>{{ $dashboardDatas[0]->TotalCanceledAmount }}</h4>
+                                    <h4>{{ $dashboardData[0]->TotalCanceledAmount }}</h4>
                                 </div>
                             </div>
                         </div>
@@ -100,48 +100,67 @@
                     <div class="flex gap20 flex-wrap-mobile">
 
                         <div class="wg-box p-4 bg-light shadow-sm rounded-lg w-100" style="max-width: 100%;">
+                            <!-- Header Controls -->
                             <div class="d-flex align-items-center justify-content-between mb-3">
                                 <div class="dropdown">
-                                    <!-- Button for Earnings Revenue Dropdown -->
-                                    <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center w-100"
-                                        type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
-                                        style="text-align: left;">
-                                        <h5 class="mb-0 me-2">Monthly Earnings Revenue</h5>
+                                    <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center"
+                                        type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <h5 class="mb-0 me-2" id="chart-title">Monthly Earnings Revenue</h5>
                                         <i class="fas fa-chart-line"></i>
                                     </button>
-                                    <!-- Dropdown menu with same width as the button -->
-                                    <ul class="dropdown-menu dropdown-menu-end w-100 shadow-sm">
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center p-3"
-                                                href="{{ route('admin.index-weekly') }}">
+                                            <a class="dropdown-item d-flex align-items-center p-3" href="#"
+                                                data-view="monthly">
+                                                <i class="fas fa-calendar-alt me-2"></i> Monthly Earnings Revenue
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center p-3" href="#"
+                                                data-view="weekly">
                                                 <i class="fas fa-calendar-week me-2"></i> Weekly Earnings Revenue
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item d-flex align-items-center p-3"
-                                                href="{{ route('admin.index-daily') }}">
+                                            <a class="dropdown-item d-flex align-items-center p-3" href="#"
+                                                data-view="daily">
                                                 <i class="fas fa-calendar-day me-2"></i> Daily Earnings Revenue
                                             </a>
                                         </li>
                                     </ul>
                                 </div>
 
-                                <form action="{{ route('admin.index') }}" method="GET"
-                                    class="d-flex flex-grow-1 align-items-center">
-                                    <select name="year" class="form-select me-2 w-100">
+                                <!-- Dynamic Filter Controls -->
+                                <div class="d-flex flex-grow-1 align-items-center ms-3" id="filter-controls">
+                                    <!-- Year selector (always visible) -->
+                                    <select id="year-select" class="form-select me-2">
                                         @foreach ($yearRange as $year)
-                                            <option value="{{ $year }}"
-                                                {{ $year == $selectedYear ? 'selected' : '' }}>
+                                            <option value="{{ $year }}" {{ $year == date('Y') ? 'selected' : '' }}>
                                                 {{ $year }}
                                             </option>
                                         @endforeach
                                     </select>
 
-                                    <button type="submit" class="btn btn-primary w-100">Confirm</button>
-                                </form>
+                                    <!-- Month selector (for weekly and daily views) -->
+                                    <select id="month-select" class="form-select me-2" style="display: none;">
+                                        <option value="">Select Month</option>
+                                    </select>
+
+                                    <!-- Week selector (for daily view only) -->
+                                    <select id="week-select" class="form-select me-2" style="display: none;">
+                                        <option value="">Select Week</option>
+                                    </select>
+
+                                    <!-- Loading indicator -->
+                                    <div id="loading-spinner" class="spinner-border spinner-border-sm me-2" role="status"
+                                        style="display: none;">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="row mb-4">
+                            <!-- Summary Cards -->
+                            <div class="row mb-4" id="summary-cards">
                                 <div class="col-md-6">
                                     <div class="mb-2">
                                         <div class="block-legend">
@@ -150,7 +169,7 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        <h4>${{ $TotalAmount }}</h4>
+                                        <h4 id="total-amount">₱0</h4>
                                     </div>
                                 </div>
 
@@ -162,38 +181,37 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        <h4>${{ $TotalReservedAmount }}</h4>
+                                        <h4 id="reserved-amount">₱0</h4>
                                     </div>
                                 </div>
 
                                 <div class="col-md-6">
                                     <div class="mb-2">
                                         <div class="block-legend">
-                                            <div class="dot t2"></div>
+                                            <div class="dot t3"></div>
                                             <div class="text-tiny">Received Amount</div>
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        <h4>${{ $TotalPickedUpAmount }}</h4>
+                                        <h4 id="pickedup-amount">₱0</h4>
                                     </div>
                                 </div>
 
                                 <div class="col-md-6">
                                     <div class="mb-2">
                                         <div class="block-legend">
-                                            <div class="dot t2"></div>
+                                            <div class="dot t4"></div>
                                             <div class="text-tiny">Cancelled Orders Amount</div>
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        <h4>${{ $TotalCanceledAmount }}</h4>
+                                        <h4 id="canceled-amount">₱0</h4>
                                     </div>
                                 </div>
                             </div>
 
-                            <div id="line-chart-8"></div>
-
-
+                            <!-- Chart Container -->
+                            <div id="dashboard-chart"></div>
                         </div>
 
                     </div>
@@ -415,107 +433,236 @@
         }
     </style>
 @endpush
-
 @push('scripts')
     <script>
-        (function($) {
+        class DashboardManager {
+            constructor() {
+                this.chart = null;
+                this.currentView = 'monthly';
+                this.currentFilters = {
+                    year: document.getElementById('year-select').value,
+                    month: new Date().getMonth() + 1,
+                    week: 1
+                };
 
-            var tfLineChart = (function() {
+                this.init();
+            }
 
-                var chartBar = function() {
+            init() {
+                this.bindEvents();
+                this.loadAvailableMonths();
+                this.loadDashboardData();
+            }
 
-                    var options = {
-                        series: [{
-                                name: 'Total',
-                                data: [{{ $AmountM }}]
-                            }, {
-                                name: 'Reserved',
-                                data: [{{ $ReservationAmountM }}]
-                            },
-                            {
-                                name: 'Pickedup',
-                                data: [{{ $PickedUpAmountM }}]
-                            }, {
-                                name: 'Canceled',
-                                data: [{{ $CanceledAmountM }}]
-                            }
-                        ],
-                        chart: {
-                            type: 'bar',
-                            height: 325,
-                            toolbar: {
-                                show: false,
-                            },
-                        },
-                        plotOptions: {
-                            bar: {
-                                horizontal: false,
-                                columnWidth: '10px',
-                                endingShape: 'rounded'
-                            },
-                        },
-                        dataLabels: {
-                            enabled: false
-                        },
+            bindEvents() {
+                // View switcher
+                document.querySelectorAll('[data-view]').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.switchView(e.target.closest('[data-view]').dataset.view);
+                    });
+                });
 
+                // Filter changes
+                document.getElementById('year-select').addEventListener('change', () => {
+                    this.currentFilters.year = document.getElementById('year-select').value;
+                    this.loadDashboardData();
+                });
 
-                        xaxis: {
-                            labels: {
-                                style: {
-                                    colors: '#212529',
-                                },
-                            },
-                            categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
-                                'Oct', 'Nov', 'Dec'
-                            ],
-                        },
-                        yaxis: {
+                document.getElementById('month-select').addEventListener('change', () => {
+                    this.currentFilters.month = document.getElementById('month-select').value;
+                    if (this.currentView === 'weekly') {
+                        this.loadDashboardData();
+                    } else if (this.currentView === 'daily') {
+                        this.loadAvailableWeeks();
+                    }
+                });
+
+                document.getElementById('week-select').addEventListener('change', () => {
+                    this.currentFilters.week = document.getElementById('week-select').value;
+                    this.loadDashboardData();
+                });
+            }
+
+            switchView(view) {
+                this.currentView = view;
+                this.updateUI();
+                this.loadDashboardData();
+            }
+
+            updateUI() {
+                // Update title
+                const titles = {
+                    'monthly': 'Monthly Earnings Revenue',
+                    'weekly': 'Weekly Earnings Revenue',
+                    'daily': 'Daily Earnings Revenue'
+                };
+                document.getElementById('chart-title').textContent = titles[this.currentView];
+
+                // Show/hide filter controls
+                const monthSelect = document.getElementById('month-select');
+                const weekSelect = document.getElementById('week-select');
+
+                if (this.currentView === 'monthly') {
+                    monthSelect.style.display = 'none';
+                    weekSelect.style.display = 'none';
+                } else if (this.currentView === 'weekly') {
+                    monthSelect.style.display = 'block';
+                    weekSelect.style.display = 'none';
+                } else if (this.currentView === 'daily') {
+                    monthSelect.style.display = 'block';
+                    weekSelect.style.display = 'block';
+                    this.loadAvailableWeeks();
+                }
+            }
+
+            showLoading(show = true) {
+                document.getElementById('loading-spinner').style.display = show ? 'block' : 'none';
+            }
+
+            async loadAvailableMonths() {
+                try {
+                    const response = await fetch('/admin/api/months');
+                    const data = await response.json();
+
+                    const monthSelect = document.getElementById('month-select');
+                    monthSelect.innerHTML = '<option value="">Select Month</option>';
+
+                    data.months.forEach(month => {
+                        const option = document.createElement('option');
+                        option.value = month.id;
+                        option.textContent = month.name;
+                        if (month.id == this.currentFilters.month) {
+                            option.selected = true;
+                        }
+                        monthSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error loading months:', error);
+                }
+            }
+
+            async loadAvailableWeeks() {
+                try {
+                    const response = await fetch(
+                        `/admin/api/weeks?year=${this.currentFilters.year}&month=${this.currentFilters.month}`);
+                    const data = await response.json();
+
+                    const weekSelect = document.getElementById('week-select');
+                    weekSelect.innerHTML = '<option value="">Select Week</option>';
+
+                    data.weeks.forEach(week => {
+                        const option = document.createElement('option');
+                        option.value = week.number;
+                        option.textContent = week.label;
+                        if (week.number == this.currentFilters.week) {
+                            option.selected = true;
+                        }
+                        weekSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error loading weeks:', error);
+                }
+            }
+
+            async loadDashboardData() {
+                this.showLoading(true);
+
+                try {
+                    const params = new URLSearchParams({
+                        view: this.currentView,
+                        year: this.currentFilters.year,
+                        ...(this.currentView !== 'monthly' && {
+                            month: this.currentFilters.month
+                        }),
+                        ...(this.currentView === 'daily' && {
+                            week: this.currentFilters.week
+                        })
+                    });
+
+                    const response = await fetch(`/admin/api/dashboard-data?${params}`);
+                    const data = await response.json();
+
+                    this.updateSummaryCards(data.totals);
+                    this.updateChart(data.chartData);
+
+                } catch (error) {
+                    console.error('Error loading dashboard data:', error);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+            updateSummaryCards(totals) {
+                document.getElementById('total-amount').textContent = `₱${parseFloat(totals.total || 0).toFixed(2)}`;
+                document.getElementById('reserved-amount').textContent =
+                    `₱${parseFloat(totals.reserved || 0).toFixed(2)}`;
+                document.getElementById('pickedup-amount').textContent =
+                    `₱${parseFloat(totals.pickedUp || 0).toFixed(2)}`;
+                document.getElementById('canceled-amount').textContent =
+                    `₱${parseFloat(totals.canceled || 0).toFixed(2)}`;
+            }
+
+            updateChart(chartData) {
+                const options = {
+                    series: chartData.series,
+                    chart: {
+                        type: 'bar',
+                        height: 325,
+                        toolbar: {
                             show: false,
                         },
-                        fill: {
-                            opacity: 1
+                        animations: {
+                            enabled: true,
+                            easing: 'easeinout',
+                            speed: 800
+                        }
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            columnWidth: '60%',
+                            endingShape: 'rounded'
                         },
-                        tooltip: {
-                            y: {
-                                formatter: function(val) {
-                                    return "$ " + val + ""
-                                }
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    xaxis: {
+                        labels: {
+                            style: {
+                                colors: '#212529',
+                            },
+                        },
+                        categories: chartData.categories,
+                    },
+                    yaxis: {
+                        show: false,
+                    },
+                    fill: {
+                        opacity: 1
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: function(val) {
+                                return "₱" + val;
                             }
                         }
-                    };
-
-                    chart = new ApexCharts(
-                        document.querySelector("#line-chart-8"),
-                        options
-                    );
-                    if ($("#line-chart-8").length > 0) {
-                        chart.render();
-                    }
-                };
-
-                return {
-                    init: function() {},
-
-                    load: function() {
-                        chartBar();
                     },
-                    resize: function() {},
+                    colors: ['#2E93fA', '#66DA26', '#546E7A', '#E91E63']
                 };
-            })();
 
-            jQuery(document).ready(function() {});
+                if (this.chart) {
+                    this.chart.destroy();
+                }
 
-            jQuery(window).on("load", function() {
-                tfLineChart.load();
-            });
+                this.chart = new ApexCharts(document.querySelector("#dashboard-chart"), options);
+                this.chart.render();
+            }
+        }
 
-            jQuery(window).on("resize", function() {});
-        })(jQuery);
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            window.dashboardManager = new DashboardManager();
+        });
     </script>
-@endpush
-
-@push('styles')
-    <style>
-        /* Additional styles if needed */
-    </style>
 @endpush
