@@ -11,9 +11,22 @@ $(function () {
 
     $("#gFile").on("change", function (e) {
         const gphotos = this.files;
+        const maxImages = 3;
+        const existingImages = $("#gallery-container .gitems").length;
+        const totalImages = existingImages + gphotos.length;
+
+        // Check if adding these images would exceed the limit
+        if (totalImages > maxImages) {
+            showAlert(
+                `You can only upload up to ${maxImages} gallery images.`,
+                "danger"
+            );
+            this.value = ""; // Clear the file input
+            return false;
+        }
+
         $("#galUpload").removeClass("up-load");
         let imgCount = 0;
-        $("#gallery-container .gitems").remove();
 
         $.each(gphotos, function (key, val) {
             imgCount++;
@@ -31,10 +44,16 @@ $(function () {
             );
         });
 
-        if (imgCount > 2) {
-            $("#galUpload").css("flex-basis", "100%");
+        // Update upload button visibility and styling
+        if (totalImages >= maxImages) {
+            $("#galUpload").hide();
         } else {
-            $("#galUpload").css("flex-basis", "auto");
+            $("#galUpload").show();
+            if (imgCount > 2) {
+                $("#galUpload").css("flex-basis", "100%");
+            } else {
+                $("#galUpload").css("flex-basis", "auto");
+            }
         }
     });
 });
@@ -53,17 +72,47 @@ $("#requirementsFile").on("change", function (e) {
     }
 });
 
+// Function to remove gallery image
+function removeGalleryImage(button, inputId) {
+    $(button).parent(".gitems").remove();
+    const remainingImages = $("#gallery-container .gitems").length;
+
+    // Show upload button if we have less than 3 images
+    if (remainingImages < 3) {
+        $("#galUpload").show();
+        // Reset file input to allow selecting new images
+        $("#" + inputId).val("");
+    }
+}
+
+// Show alert function
+function showAlert(message, type) {
+    const alertBox = $("<div>", {
+        class: `alert alert-${type} alert-dismissible fade show`,
+        role: "alert",
+        text: message,
+    }).append(
+        $("<button>", {
+            type: "button",
+            class: "btn-close",
+            "data-bs-dismiss": "alert",
+            "aria-label": "Close",
+        })
+    );
+
+    $("#alertContainer").html(alertBox);
+    alertBox.alert();
+}
+
 $(function () {
     tinymce.init({
         selector: "#rules",
         setup: function (editor) {
             editor.on("change", function (e) {
                 tinyMCE.triggerSave();
-
                 var sd_data = $("#short_description").val();
             });
         },
-
         height: 300,
         menubar: false,
         plugins: [

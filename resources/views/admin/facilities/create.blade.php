@@ -341,10 +341,6 @@
 
                                         </div>
 
-                                        <button type="button" id="addMultipleRoomsRowBtn" class="mt-3">
-                                            <i class="bi bi-plus-circle"></i> Add Another Room
-                                        </button>
-
                                     </div>
 
                                     <div class="modal-footer">
@@ -381,7 +377,11 @@
                     </div>
 
                     <div class="cols gap10">
-                        <button class="tf-button w-full" type="submit">Create Facility</button>
+                        <button id="facilitySubmitBtn" class="tf-button w-full" type="submit">
+                            <span class="spinner-border spinner-border-sm d-none" role="status"
+                                aria-hidden="true"></span>
+                            <span class="btn-text">Create Facility</span>
+                        </button>
                     </div>
                 </div>
 
@@ -535,5 +535,65 @@
         //     // Disable past dates initially
         //     disablePastDates();
         // });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('facilityForm');
+            const submitBtn = document.getElementById('facilitySubmitBtn');
+            const spinner = submitBtn.querySelector('.spinner-border');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const facilityTypeSelect = document.getElementById('rentalType');
+            const originalText = btnText.textContent;
+
+            function getRequiredFields() {
+                const type = facilityTypeSelect.value;
+                let fields = ['name', 'facility_type', 'description', 'rules_and_regulations'];
+                if (type === 'whole_place') {
+                    fields.push('whole_capacity');
+                } else if (type === 'individual' || type === 'both') {
+                    fields.push('room_name', 'capacity');
+                }
+                return fields;
+            }
+
+            function isFormValid() {
+                const requiredFields = getRequiredFields();
+                for (let field of requiredFields) {
+                    if (field === 'room_name' || field === 'capacity') {
+                        const inputs = form.querySelectorAll(`[name^="facility_attributes"][name$="[${field}]"]`);
+                        if (!inputs.length || Array.from(inputs).some(input => !input.value.trim())) {
+                            return false;
+                        }
+                    } else {
+                        const input = form.querySelector(`[name="${field}"]`);
+                        if (!input || !input.value.trim()) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            form.addEventListener('submit', function(e) {
+                submitBtn.disabled = true;
+                spinner.classList.remove('d-none');
+                btnText.textContent = 'Submitting...';
+
+                if (!isFormValid()) {
+                    e.preventDefault();
+                    submitBtn.disabled = false;
+                    spinner.classList.add('d-none');
+                    btnText.textContent = originalText;
+                    alert('Please fill in all required fields.');
+                }
+            });
+
+            facilityTypeSelect.addEventListener('change', function() {
+                submitBtn.disabled = false;
+                spinner.classList.add('d-none');
+                btnText.textContent = originalText;
+            });
+        });
     </script>
 @endpush

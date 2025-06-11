@@ -28,7 +28,7 @@ class FacilityRequest extends FormRequest
             'facility_type' => 'required|string|in:individual,whole_place,both',
             'slug' => 'unique:facilities,slug,' . ($this->facility->id ?? 'NULL'),
             'description' => 'required|string',
-            'rules_and_regulations' => 'required|string',
+
             'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'images' => 'nullable|array|max:3',

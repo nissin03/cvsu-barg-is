@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use App\Models\User;
@@ -39,266 +40,240 @@ class AdminController extends Controller
 {
     public function index(Request $request)
     {
-        // Get the current year and year from the request, or default to the current year
         $currentYear = Carbon::now()->year;
-        $selectedYear = $request->input('year', $currentYear);
-
-        // Fetch the latest 10 orders
-        $orders = Order::orderBy('created_at', 'DESC')->take(10)->get();
-
-        // Filter products to include only those with stock status as 'Reorder' or 'Out of Stock'
-        $products = Product::all()->filter(function ($product) {
-            $currentStock = $product->attributeValues->isNotEmpty()
-                ? $product->attributeValues->sum('quantity')
-                : $product->current_stock;
-            return $currentStock <= $product->reorder_quantity; // Show only if Reorder or Out of Stock
-        });
-
-        // Dashboard data (overall totals) for the selected year
-        $dashboardDatas = DB::select("SELECT
-                                        SUM(total) AS TotalAmount,
-                                        SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
-                                        SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
-                                        SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount,
-                                        COUNT(*) AS Total,
-                                        SUM(IF(status = 'reserved', 1, 0)) AS TotalReserved,
-                                        SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp,
-                                        SUM(IF(status = 'canceled', 1, 0)) AS TotalCanceled
-                                    FROM Orders
-                                    WHERE YEAR(created_at) = ?", [$selectedYear]);
-
-        // Monthly Data for the selected year
-        $monthlyDatas = DB::select("SELECT M.id AS MonthNo, M.name AS MonthName,
-                                        IFNULL(D.TotalAmount, 0) AS TotalAmount,
-                                        IFNULL(D.TotalReservedAmount, 0) AS TotalReservedAmount,
-                                        IFNULL(D.TotalPickedUpAmount, 0) AS TotalPickedUpAmount,
-                                        IFNULL(D.TotalCanceledAmount, 0) AS TotalCanceledAmount
-                                    FROM month_names M
-                                    LEFT JOIN (
-                                        SELECT
-                                            MONTH(created_at) AS MonthNo,
-                                            SUM(total) AS TotalAmount,
-                                            SUM(IF(status='reserved', total, 0)) AS TotalReservedAmount,
-                                            SUM(IF(status='pickedup', total, 0)) AS TotalPickedUpAmount,
-                                            SUM(IF(status='canceled', total, 0)) AS TotalCanceledAmount
-                                        FROM Orders
-                                        WHERE YEAR(created_at) = ?
-                                        GROUP BY MONTH(created_at)
-                                    ) D ON D.MonthNo = M.id
-                                    ORDER BY M.id", [$selectedYear]);
-
-        // Prepare Monthly Data for View
-        $AmountM = implode(',', collect($monthlyDatas)->pluck('TotalAmount')->toArray());
-        $ReservationAmountM = implode(',', collect($monthlyDatas)->pluck('TotalReservedAmount')->toArray());
-        $PickedUpAmountM = implode(',', collect($monthlyDatas)->pluck('TotalPickedUpAmount')->toArray());
-        $CanceledAmountM = implode(',', collect($monthlyDatas)->pluck('TotalCanceledAmount')->toArray());
-        $TotalAmount = collect($monthlyDatas)->sum('TotalAmount');
-        $TotalReservedAmount = collect($monthlyDatas)->sum('TotalReservedAmount');
-        $TotalPickedUpAmount = collect($monthlyDatas)->sum('TotalPickedUpAmount');
-        $TotalCanceledAmount = collect($monthlyDatas)->sum('TotalCanceledAmount');
-
-        // Calculate the range of years to show in the dropdown
         $yearRange = range($currentYear, $currentYear - 10);
+
+        // Get low stock products
+        $products = $this->getLowStockProducts();
+        $dashboardData = [$this->getDashboardSummary($currentYear)];
+
+        // Get recent orders
+        $orders = Order::orderBy('created_at', 'DESC')->take(10)->get();
 
         $pageTitle = 'Admin Dashboard';
 
-        // Return View with Monthly Data
         return view('admin.index', compact(
             'orders',
-            'dashboardDatas',
-            'AmountM',
-            'ReservationAmountM',
-            'PickedUpAmountM',
-            'CanceledAmountM',
-            'TotalAmount',
-            'TotalReservedAmount',
-            'TotalPickedUpAmount',
-            'TotalCanceledAmount',
             'yearRange',
-            'selectedYear',
             'pageTitle',
-            'products'
+            'products',
+            'dashboardData'
         ));
     }
 
-    public function indexWeekly(Request $request)
+    /**
+     * API endpoint for dashboard data
+     */
+    public function getDashboardData(Request $request)
     {
-        $availableMonths = MonthName::orderBy('id')->get();
+        $view = $request->input('view', 'monthly'); // monthly, weekly, daily
+        $year = $request->input('year', Carbon::now()->year);
+        $month = $request->input('month', Carbon::now()->month);
+        $week = $request->input('week', 1);
 
-        $currentDate = Carbon::now();
-        $currentMonthId = $currentDate->month;
-        $currentYear = $currentDate->year;
-        $selectedMonthId = $request->input('month', $currentMonthId);
-        $selectedYear = $request->input('year', $currentYear);
-
-        $selectedMonth = $availableMonths->firstWhere('id', $selectedMonthId);
-
-        // Dashboard data (overall totals) for the selected year
-        $dashboardDatas = DB::select("SELECT
-                                        SUM(total) AS TotalAmount,
-                                        SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
-                                        SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
-                                        SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount,
-                                        COUNT(*) AS Total,
-                                        SUM(IF(status = 'reserved', 1, 0)) AS TotalReserved,
-                                        SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp,
-                                        SUM(IF(status = 'canceled', 1, 0)) AS TotalCanceled
-                                    FROM Orders
-                                    WHERE YEAR(created_at) = ?", [$selectedYear]);
-
-        if (!$selectedMonth) {
-            $selectedMonth = $availableMonths->first();
-            $selectedMonthId = $selectedMonth->id;
+        switch ($view) {
+            case 'weekly':
+                return $this->getWeeklyData($year, $month);
+            case 'daily':
+                return $this->getDailyData($year, $month, $week);
+            default:
+                return $this->getMonthlyData($year);
         }
+    }
 
-        // Define the start and end of the selected month
-        $startOfMonth = Carbon::create($selectedYear, $selectedMonthId, 1)->startOfMonth();
+    private function getMonthlyData($year)
+    {
+        // Get dashboard summary
+        $dashboardData = $this->getDashboardSummary($year);
+
+        // Get monthly breakdown
+        $monthlyData = DB::select("
+            SELECT M.id AS MonthNo, M.name AS MonthName,
+                IFNULL(D.TotalAmount, 0) AS TotalAmount,
+                IFNULL(D.TotalReservedAmount, 0) AS TotalReservedAmount,
+                IFNULL(D.TotalPickedUpAmount, 0) AS TotalPickedUpAmount,
+                IFNULL(D.TotalCanceledAmount, 0) AS TotalCanceledAmount
+            FROM month_names M
+            LEFT JOIN (
+                SELECT
+                    MONTH(created_at) AS MonthNo,
+                    SUM(total) AS TotalAmount,
+                    SUM(IF(status='reserved', total, 0)) AS TotalReservedAmount,
+                    SUM(IF(status='pickedup', total, 0)) AS TotalPickedUpAmount,
+                    SUM(IF(status='canceled', total, 0)) AS TotalCanceledAmount
+                FROM Orders
+                WHERE YEAR(created_at) = ?
+                GROUP BY MONTH(created_at)
+            ) D ON D.MonthNo = M.id
+            ORDER BY M.id
+        ", [$year]);
+
+        return response()->json([
+            'view' => 'monthly',
+            'year' => $year,
+            'summary' => $dashboardData,
+            'chartData' => [
+                'categories' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                'series' => [
+                    [
+                        'name' => 'Total',
+                        'data' => collect($monthlyData)->pluck('TotalAmount')->toArray()
+                    ],
+                    [
+                        'name' => 'Reserved',
+                        'data' => collect($monthlyData)->pluck('TotalReservedAmount')->toArray()
+                    ],
+                    [
+                        'name' => 'Picked Up',
+                        'data' => collect($monthlyData)->pluck('TotalPickedUpAmount')->toArray()
+                    ],
+                    [
+                        'name' => 'Canceled',
+                        'data' => collect($monthlyData)->pluck('TotalCanceledAmount')->toArray()
+                    ]
+                ]
+            ],
+            'totals' => [
+                'total' => collect($monthlyData)->sum('TotalAmount'),
+                'reserved' => collect($monthlyData)->sum('TotalReservedAmount'),
+                'pickedUp' => collect($monthlyData)->sum('TotalPickedUpAmount'),
+                'canceled' => collect($monthlyData)->sum('TotalCanceledAmount')
+            ]
+        ]);
+    }
+
+    private function getWeeklyData($year, $month)
+    {
+        $startOfMonth = Carbon::create($year, $month, 1)->startOfMonth();
         $endOfMonth = $startOfMonth->copy()->endOfMonth();
 
-        // Calculate week ranges for the month
-        $weekRanges = [];
-        for ($week = 1; $week <= 6; $week++) {
-            $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek();
-            $endOfWeek = $startOfWeek->copy()->endOfWeek();
+        // Generate week ranges
+        $weekRanges = $this->generateWeekRanges($startOfMonth, $endOfMonth);
 
-            // Ensure the start and end of the week don't exceed the month boundaries
-            if ($startOfWeek->lt($startOfMonth)) {
-                $startOfWeek = $startOfMonth;
-            }
-            if ($endOfWeek->gt($endOfMonth)) {
-                $endOfWeek = $endOfMonth;
-            }
+        $weeklyData = [];
+        $categories = [];
 
-            // Add valid week ranges
-            if ($startOfWeek->lte($endOfMonth)) {
-                $weekRanges[$week] = [$startOfWeek, $endOfWeek];
-            }
-        }
-
-        // Fetch products with stock information and filter by Reorder or Out of Stock status
-        $products = Product::with(['category', 'attributeValues'])->get()->filter(function ($product) {
-            $currentStock = $product->attributeValues->isNotEmpty()
-                ? $product->attributeValues->sum('quantity')
-                : $product->current_stock;
-            return $currentStock <= $product->reorder_quantity; // Show only if Reorder or Out of Stock
-        });
-
-        // Fetch orders for the selected month and year
-        $orders = Order::whereBetween('created_at', [$startOfMonth, $endOfMonth])
-            ->orderBy('created_at', 'DESC')
-            ->take(10) // Fetch the most recent 10 orders for display
-            ->get();
-
-        // Fetch totals for each week
-        $totalAmounts = [];
-        $reservationAmounts = [];
-        $pickedUpAmounts = [];
-        $canceledAmounts = [];
-
-        foreach ($weekRanges as $week => [$startOfSelectedWeek, $endOfSelectedWeek]) {
-            // Fetch total amounts for the week
-            $dashboardData = DB::select(
-                "SELECT
+        foreach ($weekRanges as $week => [$startOfWeek, $endOfWeek]) {
+            $data = DB::select("
+                SELECT
                     SUM(total) AS TotalAmount,
                     SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                     SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
                     SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
                 FROM Orders
-                WHERE created_at BETWEEN ? AND ?",
-                [$startOfSelectedWeek, $endOfSelectedWeek]
-            )[0];
+                WHERE created_at BETWEEN ? AND ?
+            ", [$startOfWeek, $endOfWeek]);
 
-            $totalAmounts[$week] = $dashboardData->TotalAmount ?? 0;
-            $reservationAmounts[$week] = $dashboardData->TotalReservedAmount ?? 0;
-            $pickedUpAmounts[$week] = $dashboardData->TotalPickedUpAmount ?? 0;
-            $canceledAmounts[$week] = $dashboardData->TotalCanceledAmount ?? 0;
+            $result = $data[0] ?? (object)[
+                'TotalAmount' => 0,
+                'TotalReservedAmount' => 0,
+                'TotalPickedUpAmount' => 0,
+                'TotalCanceledAmount' => 0
+            ];
+
+            $weeklyData[] = $result;
+            $categories[] = "Week " . $week;
         }
 
-        // Prepare data for view
-        $AmountW = implode(',', $totalAmounts);
-        $ReservationAmountW = implode(',', $reservationAmounts);
-        $PickedUpAmountW = implode(',', $pickedUpAmounts);
-        $CanceledAmountW = implode(',', $canceledAmounts);
-        $TotalAmountW = array_sum($totalAmounts);
-        $TotalReservedAmountW = array_sum($reservationAmounts);
-        $TotalPickedUpAmountW = array_sum($pickedUpAmounts);
-        $TotalCanceledAmountW = array_sum($canceledAmounts);
-        $pageTitle = 'Weekly Reports Dashboard';
-
-        // Calculate the range of years to show in the dropdown
-        $yearRange = range($currentYear, $currentYear - 10);
-
-        return view('admin.index-weekly', compact(
-            'orders',
-            'availableMonths',
-            'selectedMonth',
-            'selectedYear',
-            'AmountW',
-            'ReservationAmountW',
-            'PickedUpAmountW',
-            'CanceledAmountW',
-            'TotalAmountW',
-            'TotalReservedAmountW',
-            'TotalPickedUpAmountW',
-            'TotalCanceledAmountW',
-            'yearRange',
-            'pageTitle',
-            'dashboardDatas',
-            'products' // Pass the filtered products to the view
-        ));
+        return response()->json([
+            'view' => 'weekly',
+            'year' => $year,
+            'month' => $month,
+            'chartData' => [
+                'categories' => $categories,
+                'series' => [
+                    [
+                        'name' => 'Total',
+                        'data' => collect($weeklyData)->pluck('TotalAmount')->toArray()
+                    ],
+                    [
+                        'name' => 'Reserved',
+                        'data' => collect($weeklyData)->pluck('TotalReservedAmount')->toArray()
+                    ],
+                    [
+                        'name' => 'Picked Up',
+                        'data' => collect($weeklyData)->pluck('TotalPickedUpAmount')->toArray()
+                    ],
+                    [
+                        'name' => 'Canceled',
+                        'data' => collect($weeklyData)->pluck('TotalCanceledAmount')->toArray()
+                    ]
+                ]
+            ],
+            'totals' => [
+                'total' => collect($weeklyData)->sum('TotalAmount'),
+                'reserved' => collect($weeklyData)->sum('TotalReservedAmount'),
+                'pickedUp' => collect($weeklyData)->sum('TotalPickedUpAmount'),
+                'canceled' => collect($weeklyData)->sum('TotalCanceledAmount')
+            ]
+        ]);
     }
 
-    public function indexDaily(Request $request)
+    private function getDailyData($year, $month, $weekNumber)
     {
-        // Retrieve available months and weeks
-        $availableMonths = MonthName::orderBy('id')->get();
-        $availableWeeks = DB::table('week_names')->orderBy('week_number')->get();
-
-        // Set default values based on the current date
-        $currentDate = Carbon::now();
-        $selectedMonthId = $request->input('month', $currentDate->month);
-        $selectedYear = $request->input('year', $currentDate->year);
-        $selectedWeekId = $request->input('week', $currentDate->weekOfMonth);
-
-        // Get the selected month or default to the current one
-        $selectedMonth = $availableMonths->firstWhere('id', $selectedMonthId) ?? $availableMonths->first();
-
-        // Define the start and end of the selected month
-        $startOfMonth = Carbon::create($selectedYear, $selectedMonthId, 1)->startOfMonth();
+        $startOfMonth = Carbon::create($year, $month, 1)->startOfMonth();
         $endOfMonth = $startOfMonth->copy()->endOfMonth();
+        $weekRanges = $this->generateWeekRanges($startOfMonth, $endOfMonth);
 
-        // Calculate week ranges within the selected month
-        $weekRanges = [];
-        $weekStart = $startOfMonth->copy()->startOfWeek();
-        while ($weekStart->lte($endOfMonth)) {
-            $weekEnd = $weekStart->copy()->endOfWeek()->min($endOfMonth);
-            $weekRanges[] = [$weekStart->copy(), $weekEnd->copy()];
-            $weekStart->addWeek();
+        if (!isset($weekRanges[$weekNumber])) {
+            $weekNumber = 1;
         }
 
-        // Validate selected week and set start/end of selected week
-        if (!isset($weekRanges[$selectedWeekId - 1])) {
-            $selectedWeekId = 1;
-        }
-        [$startOfSelectedWeek, $endOfSelectedWeek] = $weekRanges[$selectedWeekId - 1];
+        [$startOfWeek, $endOfWeek] = $weekRanges[$weekNumber];
 
-        // Fetch products with stock information and filter only "Reorder" or "Out of Stock"
-        $products = Product::with(['category', 'attributeValues'])->get()->filter(function ($product) {
-            $currentStock = $product->attributeValues->isNotEmpty()
-                ? $product->attributeValues->sum('quantity')
-                : $product->current_stock;
-            return $currentStock <= $product->reorder_quantity; // Show only if Reorder or Out of Stock
-        });
+        $dailyData = DB::select("
+            SELECT
+                DAYOFWEEK(created_at) AS DayNo,
+                DAYNAME(created_at) AS DayName,
+                SUM(total) AS TotalAmount,
+                SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
+                SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
+                SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
+            FROM Orders
+            WHERE created_at BETWEEN ? AND ?
+            GROUP BY DAYOFWEEK(created_at), DAYNAME(created_at)
+            ORDER BY DayNo
+        ", [$startOfWeek, $endOfWeek]);
 
-        // Fetch orders within the selected week (for table display)
-        $orders = Order::whereBetween('created_at', [$startOfSelectedWeek, $endOfSelectedWeek])
-            ->orderBy('created_at', 'DESC')
-            ->take(10)
-            ->get();
+        return response()->json([
+            'view' => 'daily',
+            'year' => $year,
+            'month' => $month,
+            'week' => $weekNumber,
+            'chartData' => [
+                'categories' => collect($dailyData)->pluck('DayName')->toArray(),
+                'series' => [
+                    [
+                        'name' => 'Total',
+                        'data' => collect($dailyData)->pluck('TotalAmount')->toArray()
+                    ],
+                    [
+                        'name' => 'Reserved',
+                        'data' => collect($dailyData)->pluck('TotalReservedAmount')->toArray()
+                    ],
+                    [
+                        'name' => 'Picked Up',
+                        'data' => collect($dailyData)->pluck('TotalPickedUpAmount')->toArray()
+                    ],
+                    [
+                        'name' => 'Canceled',
+                        'data' => collect($dailyData)->pluck('TotalCanceledAmount')->toArray()
+                    ]
+                ]
+            ],
+            'totals' => [
+                'total' => collect($dailyData)->sum('TotalAmount'),
+                'reserved' => collect($dailyData)->sum('TotalReservedAmount'),
+                'pickedUp' => collect($dailyData)->sum('TotalPickedUpAmount'),
+                'canceled' => collect($dailyData)->sum('TotalCanceledAmount')
+            ]
+        ]);
+    }
 
-        // Aggregate data for dashboard display
-        $dashboardDatas = DB::select(
-            "SELECT
+    private function getDashboardSummary($year, $dateRange = null)
+    {
+        $query = "
+            SELECT
                 SUM(total) AS TotalAmount,
                 SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                 SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
@@ -307,71 +282,76 @@ class AdminController extends Controller
                 SUM(IF(status = 'reserved', 1, 0)) AS TotalReserved,
                 SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp,
                 SUM(IF(status = 'canceled', 1, 0)) AS TotalCanceled
-              FROM Orders
-              WHERE created_at BETWEEN ? AND ?",
-            [$startOfSelectedWeek, $endOfSelectedWeek]
-        );
+            FROM Orders
+            WHERE YEAR(created_at) = ?
+        ";
 
-        // Aggregate daily data for chart display
-        $dailyDatas = DB::select(
-            "SELECT DAYOFWEEK(created_at) AS DayNo,
-                    DAYNAME(created_at) AS DayName,
-                    SUM(total) AS TotalAmount,
-                    SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
-                    SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
-                    SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
-               FROM Orders
-               WHERE created_at BETWEEN ? AND ?
-               GROUP BY DAYOFWEEK(created_at), DAYNAME(created_at)
-               ORDER BY DayNo",
-            [$startOfSelectedWeek, $endOfSelectedWeek]
-        );
-
-        // Ensure that dashboard data is structured as an array for view compatibility
-        $dashboardDatas = $dashboardDatas ? [$dashboardDatas[0]] : [];
-
-        // Prepare variables for chart rendering in the Blade view
-        $AmountD = implode(',', collect($dailyDatas)->pluck('TotalAmount')->toArray());
-        $ReservationAmountD = implode(',', collect($dailyDatas)->pluck('TotalReservedAmount')->toArray());
-        $PickedUpAmountD = implode(',', collect($dailyDatas)->pluck('TotalPickedUpAmount')->toArray());
-        $CanceledAmountD = implode(',', collect($dailyDatas)->pluck('TotalCanceledAmount')->toArray());
-
-        // Calculate total amounts for display
-        $TotalAmountD = collect($dailyDatas)->sum('TotalAmount');
-        $TotalReservedAmountD = collect($dailyDatas)->sum('TotalReservedAmount');
-        $TotalPickedUpAmountD = collect($dailyDatas)->sum('TotalPickedUpAmount');
-        $TotalCanceledAmountD = collect($dailyDatas)->sum('TotalCanceledAmount');
-
-        // Define page title and year range for the dropdown
-        $pageTitle = 'Reports Dashboard';
-        $yearRange = range($currentDate->year, $currentDate->year - 10);
-
-        // Return all required data to the view
-        return view('admin.index-daily', compact(
-            'orders',
-            'dashboardDatas',
-            'dailyDatas',
-            'AmountD',
-            'ReservationAmountD',
-            'PickedUpAmountD',
-            'CanceledAmountD',
-            'TotalAmountD',
-            'TotalReservedAmountD',
-            'TotalPickedUpAmountD',
-            'TotalCanceledAmountD',
-            'selectedMonth',
-            'selectedYear',
-            'selectedWeekId',
-            'availableMonths',
-            'availableWeeks',
-            'yearRange',
-            'pageTitle',
-            'products' // Pass the filtered products to the view
-        ));
+        return DB::select($query, [$year])[0] ?? null;
     }
 
+    private function generateWeekRanges($startOfMonth, $endOfMonth)
+    {
+        $weekRanges = [];
+        for ($week = 1; $week <= 6; $week++) {
+            $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek();
+            $endOfWeek = $startOfWeek->copy()->endOfWeek();
 
+            if ($startOfWeek->lt($startOfMonth)) {
+                $startOfWeek = $startOfMonth;
+            }
+            if ($endOfWeek->gt($endOfMonth)) {
+                $endOfWeek = $endOfMonth;
+            }
 
+            if ($startOfWeek->lte($endOfMonth)) {
+                $weekRanges[$week] = [$startOfWeek, $endOfWeek];
+            }
+        }
+        return $weekRanges;
+    }
+
+    private function getLowStockProducts()
+    {
+        return Product::with(['category', 'attributeValues'])->get()->filter(function ($product) {
+            $currentStock = $product->attributeValues->isNotEmpty()
+                ? $product->attributeValues->sum('quantity')
+                : $product->current_stock;
+            return $currentStock <= $product->reorder_quantity;
+        });
+    }
+
+    /**
+     * Get available months for dropdowns
+     */
+    public function getAvailableMonths()
+    {
+        return response()->json([
+            'months' => MonthName::orderBy('id')->get()
+        ]);
+    }
+
+    /**
+     * Get available weeks for a given month
+     */
+    public function getAvailableWeeks(Request $request)
+    {
+        $year = $request->input('year', Carbon::now()->year);
+        $month = $request->input('month', Carbon::now()->month);
+
+        $startOfMonth = Carbon::create($year, $month, 1)->startOfMonth();
+        $endOfMonth = $startOfMonth->copy()->endOfMonth();
+        $weekRanges = $this->generateWeekRanges($startOfMonth, $endOfMonth);
+
+        $weeks = [];
+        foreach ($weekRanges as $weekNumber => $range) {
+            $weeks[] = [
+                'number' => $weekNumber,
+                'label' => "Week {$weekNumber}"
+            ];
+        }
+
+        return response()->json(['weeks' => $weeks]);
+    }
     public function categories()
     {
         // $categories = Category::orderBy('id', 'DESC')->paginate(10);
@@ -490,17 +470,17 @@ class AdminController extends Controller
             'attributes',
             'attributeValues.productAttribute'
         ])
-        ->where('archived', $archived);
+            ->where('archived', $archived);
         $isNumeric = is_numeric($search);
 
         if ($search) {
             $query->where(function ($q) use ($search, $isNumeric) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
 
                 if ($isNumeric) {
                     $q->orWhere('quantity', 'like', "%{$search}%")
-                      ->orWhere('price', 'like', "%{$search}%");
+                        ->orWhere('price', 'like', "%{$search}%");
                 }
             });
             if ($isNumeric) {
@@ -3875,12 +3855,26 @@ class AdminController extends Controller
 
         // Return View with all data
         return view('admin.report-facilities', compact(
-            'AmountM', 'ReservedAmountM', 'CompletedAmountM', 'CanceledAmountM',
-            'TotalAmount', 'TotalReservedAmount', 'TotalCompletedAmount', 'TotalCanceledAmount',
-            'AmountW', 'ReservedAmountW', 'CompletedAmountW', 'CanceledAmountW',
-            'TotalAmountW', 'TotalReservedAmountW', 'TotalCompletedAmountW', 'TotalCanceledAmountW',
-            'selectedMonth', 'selectedYear', 'availableMonths', 'yearRange'
+            'AmountM',
+            'ReservedAmountM',
+            'CompletedAmountM',
+            'CanceledAmountM',
+            'TotalAmount',
+            'TotalReservedAmount',
+            'TotalCompletedAmount',
+            'TotalCanceledAmount',
+            'AmountW',
+            'ReservedAmountW',
+            'CompletedAmountW',
+            'CanceledAmountW',
+            'TotalAmountW',
+            'TotalReservedAmountW',
+            'TotalCompletedAmountW',
+            'TotalCanceledAmountW',
+            'selectedMonth',
+            'selectedYear',
+            'availableMonths',
+            'yearRange'
         ));
     }
-
 }

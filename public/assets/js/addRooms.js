@@ -299,14 +299,20 @@ function editRoom(index) {
     `;
     $("#roomFormContainer").append(toggleButton);
 
-    // Create form cards for all rooms
+    // Create form cards for all rooms but initially hide them
     rooms.forEach((room, roomIndex) => {
         const formCard = createEditRoomFormCard(
             room,
             roomIndex,
             roomIndex === index
         );
-        $("#roomFormContainer").append(formCard);
+        const $formCard = $(formCard);
+        $("#roomFormContainer").append($formCard);
+
+        // Hide all rooms except the target room initially
+        if (roomIndex !== index) {
+            $formCard.hide();
+        }
     });
 
     // Handle toggle edit all button
@@ -314,33 +320,49 @@ function editRoom(index) {
         const isEditingAll = $(this).hasClass("btn-primary");
 
         if (isEditingAll) {
-            // Disable editing for all except the original selected room
-            $(".room-form-card").each(function (cardIndex) {
-                if (cardIndex !== index) {
+            // Switch back to single room edit
+            $(this)
+                .removeClass("btn-primary")
+                .addClass("btn-outline-primary")
+                .html('<i class="fa-solid fa-edit"></i> Edit All Rooms');
+
+            // Hide all other room forms
+            $(".room-form-card").each(function () {
+                const cardIndex = $(this).data("room-index");
+                if (cardIndex === index) {
+                    $(this).show();
+                    $(this).find("input, select").prop("disabled", false);
+                    $(this)
+                        .removeClass("border-secondary")
+                        .addClass("border-primary");
+                } else {
+                    $(this).hide();
                     $(this).find("input, select").prop("disabled", true);
                     $(this)
                         .removeClass("border-primary")
                         .addClass("border-secondary");
                 }
             });
-            $(this)
-                .removeClass("btn-primary")
-                .addClass("btn-outline-primary")
-                .html('<i class="fa-solid fa-edit"></i> Edit All Rooms');
         } else {
-            // Enable editing for all rooms
+            // Switch to edit all rooms
+            $(this)
+                .removeClass("btn-outline-primary")
+                .addClass("btn-primary")
+                .html('<i class="fa-solid fa-lock-open"></i> Cancel Edit All');
+
+            // Show all room forms
             $(".room-form-card").each(function () {
+                $(this).show();
                 $(this).find("input, select").prop("disabled", false);
                 $(this)
                     .removeClass("border-secondary")
                     .addClass("border-primary");
             });
-            $(this)
-                .removeClass("btn-outline-primary")
-                .addClass("btn-primary")
-                .html('<i class="fa-solid fa-lock-open"></i> Editing All');
         }
     });
+
+    // Hide the "Add Another Room" button in edit mode
+    $("#addMultipleRoomsRowBtn").hide();
 
     // Change the save button text
     $("#saveMultipleRoomsBtn").text("Update Room(s)");

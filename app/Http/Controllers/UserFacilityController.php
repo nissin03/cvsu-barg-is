@@ -909,4 +909,32 @@ class UserFacilityController extends Controller
         $qualification_r->save();
         Log::info('Qualification approval record created', ['qualification_id' => $qualification_r->id]);
     }
+
+
+    public function account_reservation()
+    {
+        $user = Auth::user();
+        $payments = Payment::with(['availability.facility', 'updatedBy', 'paymentDetails'])
+            ->where('user_id', $user->id)
+            ->latest()
+            ->paginate(10);
+
+        return view('user.reservations', compact('payments'));
+    }
+
+    public function account_reservation_details($reservation_id)
+    {
+        $user = Auth::user();
+        $payment = Payment::with([
+            'availability.facility',
+            'updatedBy',
+            'paymentDetails',
+            'transactionReservations.facilityAttribute',
+            'transactionReservations.price'
+        ])
+            ->where('user_id', $user->id)
+            ->findOrFail($reservation_id);
+
+        return view('user.reservation_details', compact('payment'));
+    }
 }

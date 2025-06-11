@@ -1,5 +1,8 @@
 $(document).ready(function () {
-    renderRoomList(); // Initial render of room list
+    if (rooms.length === 0) {
+        $("#addMultipleRoomsRowBtn").hide();
+        renderRoomList(); // Initial render of room list
+    }
 
     // Adding a new room row in the modal - Fixed to prevent duplicate event binding
     $("#addMultipleRoomsRowBtn")
@@ -96,7 +99,7 @@ $(document).ready(function () {
             $("#roomFormContainer").empty();
         }
         $("#saveMultipleRoomsBtn").text("Save All");
-        $("#addMultipleRoomsRowBtn").show();
+        $("#addMultipleRoomsRowBtn").hide(); // Always hide the Add Another Room button
     });
 });
 
@@ -118,6 +121,10 @@ function renderRoomList() {
 }
 
 function createRoomCard(room, index) {
+    if (!room || room.capacity === 0) {
+        return "";
+    }
+
     // Determine badge color based on sex restriction
     let badgeClass = "bg-secondary";
     let restrictionText = "No Restriction";
@@ -343,8 +350,79 @@ function editRoom(index) {
     const room = rooms[index];
 
     $("#roomFormContainer").empty();
-    const $form = createEditRoomFormCard(room, index, true);
-    $("#roomFormContainer").append($form);
+
+    // Add toggle button for editing all rooms
+    const toggleButton = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5>Edit Room: ${room.room_name}</h5>
+            <button type="button" id="toggleEditAllBtn" class="btn btn-outline-primary">
+                <i class="fa-solid fa-edit"></i> Edit All Rooms
+            </button>
+        </div>
+    `;
+    $("#roomFormContainer").append(toggleButton);
+
+    // Create form cards for all rooms but initially hide them
+    rooms.forEach((room, roomIndex) => {
+        const formCard = createEditRoomFormCard(
+            room,
+            roomIndex,
+            roomIndex === index
+        );
+        const $formCard = $(formCard);
+        $("#roomFormContainer").append($formCard);
+
+        // Hide all rooms except the target room initially
+        if (roomIndex !== index) {
+            $formCard.hide();
+        }
+    });
+
+    // Handle toggle edit all button
+    $("#toggleEditAllBtn").on("click", function () {
+        const isEditingAll = $(this).hasClass("btn-primary");
+
+        if (isEditingAll) {
+            // Switch back to single room edit
+            $(this)
+                .removeClass("btn-primary")
+                .addClass("btn-outline-primary")
+                .html('<i class="fa-solid fa-edit"></i> Edit All Rooms');
+
+            // Hide all other room forms
+            $(".room-form-card").each(function () {
+                const cardIndex = $(this).data("room-index");
+                if (cardIndex === index) {
+                    $(this).show();
+                    $(this).find("input, select").prop("disabled", false);
+                    $(this)
+                        .removeClass("border-secondary")
+                        .addClass("border-primary");
+                } else {
+                    $(this).hide();
+                    $(this).find("input, select").prop("disabled", true);
+                    $(this)
+                        .removeClass("border-primary")
+                        .addClass("border-secondary");
+                }
+            });
+        } else {
+            // Switch to edit all rooms
+            $(this)
+                .removeClass("btn-outline-primary")
+                .addClass("btn-primary")
+                .html('<i class="fa-solid fa-lock-open"></i> Cancel Edit All');
+
+            // Show all room forms
+            $(".room-form-card").each(function () {
+                $(this).show();
+                $(this).find("input, select").prop("disabled", false);
+                $(this)
+                    .removeClass("border-secondary")
+                    .addClass("border-primary");
+            });
+        }
+    });
 
     // Hide the "Add Another Room" button in edit mode
     $("#addMultipleRoomsRowBtn").hide();
@@ -397,7 +475,7 @@ function updateEditedRoom() {
     $("#roomFormContainer").empty();
     $("#addMultipleRoomsModal").modal("hide");
     $("#saveMultipleRoomsBtn").text("Save All");
-    $("#addMultipleRoomsRowBtn").show();
+    $("#addMultipleRoomsRowBtn").hide();
 }
 
 function deleteRoom(index) {
