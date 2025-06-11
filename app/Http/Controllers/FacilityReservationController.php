@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class FacilityReservationController extends Controller
 {
@@ -27,15 +28,32 @@ class FacilityReservationController extends Controller
     private function filterReservations(Request $request)
     {
         $status = $request->input('status');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
 
         $query = Payment::with([
             'user',
             'availability.facility',
             'availability.facilityAttribute',
+            'updatedBy' => function ($q) {
+                $q->where('utype', 'ADM');
+            }
         ]);
 
         if ($status) {
             $query->where('status', $status);
+        }
+
+        if ($dateFrom) {
+            $query->whereHas('availability', function ($q) use ($dateFrom) {
+                $q->where('date_from', '>=', $dateFrom);
+            });
+        }
+
+        if ($dateTo) {
+            $query->whereHas('availability', function ($q) use ($dateTo) {
+                $q->where('date_to', '<=', $dateTo);
+            });
         }
 
         return $query->latest()->paginate(12)->withQueryString();
@@ -47,7 +65,16 @@ class FacilityReservationController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $reservation = Payment::with([
+            'user',
+            'availability.facility',
+            'availability.facilityAttribute',
+            'updatedBy' => function ($q) {
+                $q->where('utype', 'ADM');
+            }
+        ])->findOrFail($id);
+
+        return view('admin.facilities.reservations.details', compact('reservation'));
     }
 
     /**
@@ -60,6 +87,7 @@ class FacilityReservationController extends Controller
         ]);
 
         $reservation->status = $validated['status'];
+        $reservation->updated_by = Auth::id();
         $reservation->save();
 
         if ($reservation->transactionReservation) {
@@ -68,7 +96,6 @@ class FacilityReservationController extends Controller
                 $transaction->save();
             }
         }
-
 
         return response()->json(['message' => 'Status updated']);
     }
