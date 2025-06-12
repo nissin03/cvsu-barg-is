@@ -703,7 +703,7 @@ class AdminController extends Controller
         $previousStockStatus = $product->stock_status;
 
         // Update product fields
-        $product->fill($request->except(['image', 'images', 'variant_name', 'product_attribute_id', 'variant_price', 'variant_quantity']));
+        $product->fill($request->except(['image', 'images', 'variant_name', 'product_attribute_id', 'variant_price', 'variant_quantity', 'existing_variant_ids', 'removed_variant_ids']));
 
         $current_timestamp = Carbon::now()->timestamp;
 
@@ -756,39 +756,67 @@ class AdminController extends Controller
 
         $product->save();
 
+        // Handle variant removal first
+        $removedVariantIds = $request->input('removed_variant_ids', []);
+        if (!empty($removedVariantIds)) {
+            ProductAttributeValue::whereIn('id', $removedVariantIds)->delete();
+        }
+
         // Handle variants
         if ($hasVariant) {
-            $product->attributeValues()->delete();
+            $existingVariantIds = $request->input('existing_variant_ids', []);
             $attributeValues = [];
 
             foreach ($request->variant_name as $index => $name) {
-                $attributeValues[] = [
+                $attributeValue = [
                     'product_id' => $product->id,
                     'product_attribute_id' => $request->product_attribute_id[$index],
                     'value' => $name,
                     'price' => $request->variant_price[$index] ?? null,
                     'quantity' => $request->variant_quantity[$index] ?? 0,
                 ];
+
+                // Check if this is an existing variant or a new one
+                if (isset($existingVariantIds[$index]) && !empty($existingVariantIds[$index])) {
+                    // Update existing variant
+                    $existingVariant = ProductAttributeValue::find($existingVariantIds[$index]);
+                    if ($existingVariant) {
+                        $existingVariant->update($attributeValue);
+                        $attributeValues[] = $attributeValue;
+                    }
+                } else {
+                    // Create new variant
+                    ProductAttributeValue::create($attributeValue);
+                    $attributeValues[] = $attributeValue;
+                }
             }
 
-            foreach ($attributeValues as $value) {
-                ProductAttributeValue::updateOrCreate(
-                    [
-                        'product_id' => $value['product_id'],
-                        'product_attribute_id' => $value['product_attribute_id'],
-                        'value' => $value['value']
-                    ],
-                    $value
-                );
-            }
-
-            $variantTotalQuantity = collect($attributeValues)->sum('quantity');
+            // Get total quantity from all variants (including newly created ones)
+            $variantTotalQuantity = $product->attributeValues()->sum('quantity');
 
             // Stock status based on variant quantities
-            $product->stock_status = $variantTotalQuantity > $product->reorder_quantity
-                ? 'instock'
-                : ($variantTotalQuantity > $product->outofstock_quantity ? 'reorder' : 'outofstock');
+            if ($variantTotalQuantity > $product->reorder_quantity) {
+                $product->stock_status = 'instock';
+            } elseif ($variantTotalQuantity <= $product->reorder_quantity && $variantTotalQuantity > $product->outofstock_quantity) {
+                $product->stock_status = 'reorder';
+            } else {
+                $product->stock_status = 'outofstock';
+            }
+        } else {
+            // If no variants, remove all existing variants
+            $product->attributeValues()->delete();
+
+            // Determine stock status for products without variants
+            if ($product->quantity > $product->reorder_quantity) {
+                $product->stock_status = 'instock';
+            } elseif ($product->quantity <= $product->reorder_quantity && $product->quantity > $product->outofstock_quantity) {
+                $product->stock_status = 'reorder';
+            } else {
+                $product->stock_status = 'outofstock';
+            }
         }
+
+        $product->save();
 
         // Notify users if stock status changes
         if ($product->stock_status === 'instock' && $previousStockStatus !== 'instock') {
@@ -798,7 +826,6 @@ class AdminController extends Controller
 
         return redirect()->route('admin.products')->with('status', 'Product has been updated successfully!');
     }
-
 
 
 

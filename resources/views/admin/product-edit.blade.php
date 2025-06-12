@@ -374,7 +374,6 @@
                     <input type="checkbox" id="use-variants-checkbox" {{ $hasVariant ? 'checked' : '' }}>
                     <label for="use-variants-checkbox">Use Variants</label>
 
-
                     @error('product_attribute_id')
                         <span class="alert alert-danger text-center">{{ $message }} </span>
                     @enderror
@@ -389,9 +388,11 @@
                     <!-- Variant Fields Container for multiple variants -->
                     <div id="variant-fields-container" style="{{ $hasVariant ? 'display: block;' : 'display: none;' }}">
                         @foreach ($product->attributeValues as $variant)
-                            <div class="variant-fields" data-variant-index="{{ $loop->index }}">
+                            <div class="variant-fields" data-variant-index="{{ $loop->index }}"
+                                data-existing-variant-id="{{ $variant->id }}">
                                 <input type="hidden" name="product_attribute_id[]"
                                     value="{{ $variant->product_attribute_id }}">
+                                <input type="hidden" name="existing_variant_ids[]" value="{{ $variant->id }}">
                                 <fieldset class="name">
                                     <div class="body-title mb-10">Variant Name:</div>
                                     <input type="text" name="variant_name[]" class="form-control"
@@ -449,7 +450,7 @@
                 if (totalImages > maxImages) {
                     alert(
                         `You can only upload a maximum of ${maxImages} images. You already have ${existingImages} images and trying to add ${newFiles.length} more.`
-                        );
+                    );
                     this.value = '';
                     return;
                 }
@@ -485,6 +486,14 @@
                 $("input[name='slug']").val(StringToSlug($(this).val()));
             });
 
+            $("#use-variants-checkbox").on("change", function() {
+                const variantsContainer = document.getElementById('variant-fields-container');
+                if (this.checked) {
+                    variantsContainer.style.display = 'block';
+                } else {
+                    variantsContainer.style.display = 'none';
+                }
+            });
         });
 
         function removeUpload(previewId, inputId) {
@@ -538,6 +547,97 @@
                 reader.readAsDataURL(file);
             }
         }
+
+        $(document).ready(function() {
+            const addVariantBtn = document.getElementById('add-variant-btn');
+            const variantsContainer = document.getElementById('variant-fields-container');
+            let variantCounter = {{ $product->attributeValues->count() }};
+
+            function createVariantFields() {
+                const selectedAttributeId = $("#product_attribute_select").val();
+                const selectedAttributeName = $("#product_attribute_select option:selected").text();
+
+                if (!selectedAttributeId) {
+                    alert("Please select a product attribute before adding a variant.");
+                    return;
+                }
+
+                variantCounter++;
+
+                const variantDiv = document.createElement('div');
+                variantDiv.className = 'variant-fields';
+                variantDiv.setAttribute('data-variant-index', variantCounter);
+                variantDiv.innerHTML = `
+                    <div class="variant-header flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">Variant ${variantCounter}</h3>
+                        <button type="button" class="remove-variant-btn btn btn-danger btn-sm" 
+                                data-variant-index="${variantCounter}">
+                            <i class="fas fa-times"></i> Remove
+                        </button>
+                    </div>
+                    <div>
+                        <input type="hidden" name="product_attribute_id[]" value="${selectedAttributeId}">
+                        <fieldset class="name">
+                            <div class="body-title mb-10 my-4">Variant for: ${selectedAttributeName}</div>
+                            <input type="text" name="variant_name[]" placeholder="Variant Name" required>
+                        </fieldset>
+                        <fieldset class="name">
+                            <div class="body-title mb-10 my-4">Variant Price <span class="tf-color-1">*</span></div>
+                            <input class="mb-10" type="text" placeholder="Enter price" name="variant_price[]"
+                                tabindex="0" aria-required="true" required>
+                        </fieldset>
+                        <fieldset class="name">
+                            <div class="body-title mb-10 my-4">Variant Quantity:</div>
+                            <input type="number" name="variant_quantity[]" placeholder="Variant Quantity" required>
+                        </fieldset>
+                    </div>
+                `;
+                variantsContainer.appendChild(variantDiv);
+
+                const removeBtn = variantDiv.querySelector('.remove-variant-btn');
+                removeBtn.addEventListener('click', () => {
+                    variantsContainer.removeChild(variantDiv);
+                    updateVariantNumbers();
+                });
+
+                updateVariantNumbers();
+            }
+
+            function updateVariantNumbers() {
+                const variants = variantsContainer.querySelectorAll('.variant-fields');
+                variants.forEach((variant, index) => {
+                    const variantHeader = variant.querySelector('.variant-header h3');
+                    if (variantHeader) {
+                        variantHeader.textContent = `Variant ${index + 1}`;
+                    }
+                    variant.setAttribute('data-variant-index', index + 1);
+                    const removeBtn = variant.querySelector('.remove-variant-btn');
+                    if (removeBtn) {
+                        removeBtn.setAttribute('data-variant-index', index + 1);
+                    }
+                });
+            }
+
+            // Handle existing variant removal
+            $(document).on('click', '.remove-variant-btn', function() {
+                const variantDiv = $(this).closest('.variant-fields');
+                const existingVariantId = variantDiv.data('existing-variant-id');
+
+                if (existingVariantId) {
+                    // Add hidden input to mark for deletion
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'removed_variant_ids[]',
+                        value: existingVariantId
+                    }).appendTo('form');
+                }
+
+                variantDiv.remove();
+                updateVariantNumbers();
+            });
+
+            addVariantBtn.addEventListener('click', createVariantFields);
+        });
 
         // document.getElementById('remove-btn').addEventListener('click', function() {
         //     const imgPreview = document.getElementById('imgpreview');
