@@ -105,7 +105,8 @@
                 </ul>
             </div>
 
-            <form class="tf-section-2 form-add-product" method="POST" enctype="multipart/form-data" action="{{ route('admin.product.store') }}" novalidate>
+            <form class="tf-section-2 form-add-product" method="POST" enctype="multipart/form-data"
+                action="{{ route('admin.product.store') }}" novalidate>
                 @csrf
 
                 <div class="wg-box">
@@ -128,7 +129,8 @@
                                         <option value="{{ $category->id }}">{{ $category->name }}</option>
                                         @if ($category->children)
                                             @foreach ($category->children as $child)
-                                                <option value="{{ $child->id }}">&nbsp; &nbsp; &rarrhk; {{ $child->name }}</option>
+                                                <option value="{{ $child->id }}">&nbsp; &nbsp; &rarrhk;
+                                                    {{ $child->name }}</option>
                                             @endforeach
                                         @endif
                                     @endforeach
@@ -181,8 +183,10 @@
                         <div class="body-title">Upload Main Image <span class="tf-color-1">*</span></div>
                         <div class="upload-image flex-grow">
                             <div class="item" id="imgpreview" style="display:none">
-                                <img src="../../../localhost_8000/images/upload/upload-1.png" id="preview-img" class="effect8" alt="">
-                                <button type="button" class="remove-upload" onclick="removeUpload('imgpreview', 'myFile')">Remove</button>
+                                <img src="../../../localhost_8000/images/upload/upload-1.png" id="preview-img"
+                                    class="effect8" alt="">
+                                <button type="button" class="remove-upload"
+                                    onclick="removeUpload('imgpreview', 'myFile')">Remove</button>
                             </div>
                             <div id="upload-file" class="item up-load">
                                 <label class="uploadfile" for="myFile">
@@ -195,23 +199,29 @@
                             </div>
                         </div>
                     </fieldset>
-                    @error('image') <span class="alert alert-danger text-center">{{$message}} </span> @enderror
+                    @error('image')
+                        <span class="alert alert-danger text-center">{{ $message }} </span>
+                    @enderror
 
                     <fieldset>
-                        <div class="body-title mb-10">Upload Gallery Images</div>
+                        <div class="body-title mb-10">Upload Gallery Images (Max 5 images)</div>
                         <div class="upload-image mb-16 flex-grow" id="gallery-container">
                             <div id="galUpload" class="item up-load">
                                 <label class="uploadfile" for="gFile">
                                     <span class="icon">
                                         <i class="icon-upload-cloud"></i>
                                     </span>
-                                    <span class="text-tiny">Select your images here or click to browse</span>
-                                    <input type="file" id="gFile" name="images[]" accept="image/*" multiple="">
+                                    <span class="text-tiny">Drop your images here or select <span class="tf-color">click
+                                            to browse</span></span>
+                                    <input type="file" id="gFile" name="images[]" accept="image/*" multiple>
                                 </label>
                             </div>
                         </div>
                     </fieldset>
-                    @error('images') <span class="alert alert-danger text-center">{{$message}} </span> @enderror
+                    <div id="gallery-error" class="error-message"></div>
+                    @error('images')
+                        <span class="alert alert-danger text-center">{{ $message }} </span>
+                    @enderror
 
                     <!-- **Added Stock Status Fields Above Featured Field** -->
                     <div class="cols gap22">
@@ -225,8 +235,8 @@
                                 </div>
                                 <div class="stock-status-item">
                                     <label for="outofstock_quantity">Out of Stock Quantity:</label>
-                                    <input type="number" id="outofstock_quantity" name="outofstock_quantity" min="0"
-                                        value="{{ old('outofstock_quantity', 0) }}" required>
+                                    <input type="number" id="outofstock_quantity" name="outofstock_quantity"
+                                        min="0" value="{{ old('outofstock_quantity', 0) }}" required>
                                 </div>
                             </div>
                         </fieldset>
@@ -331,26 +341,43 @@
             });
 
             $("#gFile").on("change", function(e) {
-                const gphotos = this.files;
+                const maxImages = 5;
+                const existingImages = $('.gitems').length;
+                const newFiles = this.files;
+                const totalImages = existingImages + newFiles.length;
+
+                if (totalImages > maxImages) {
+                    alert(
+                        `You can only upload a maximum of ${maxImages} images. You already have ${existingImages} images and trying to add ${newFiles.length} more.`
+                        );
+                    this.value = '';
+                    return;
+                }
+
                 $("#galUpload").removeClass('up-load');
                 let imgCount = 0;
 
-                $('#gallery-container .gitems').remove();
+                $.each(newFiles, function(key, val) {
+                    if (val.size > 5 * 1024 * 1024) { // 5MB check
+                        alert(`File ${val.name} exceeds 5MB limit!`);
+                        return false;
+                    }
 
-                $.each(gphotos, function(key, val) {
                     imgCount++;
                     const fileName = val.name;
-                    $('#galUpload').before('<div class="item gitems"><img src="' + URL.createObjectURL(val) +
-                        '" style="width: 100px; height: 100px; object-fit: cover;" /><p class="file-name-overlay">' +
-                        fileName +
-                        '</p><button type="button" class="remove-upload" onclick="removeGalleryImage(this, \'gFile\')">Remove</button></div>'
-                    );
+                    $('#galUpload').before(`
+                        <div class="item gitems">
+                            <img src="${URL.createObjectURL(val)}" class="effect8" alt="Gallery Image" style="width: 100px; height: 100px; object-fit: cover;" />
+                            <p class="file-name-overlay">${fileName}</p>
+                            <button type="button" class="remove-upload" onclick="removeGalleryImage(this)">Remove</button>
+                        </div>
+                    `);
                 });
 
-                if (imgCount > 2) {
-                    $('#galUpload').css('flex-basis', '100%');
+                if (totalImages >= maxImages) {
+                    $('#galUpload').hide();
                 } else {
-                    $('#galUpload').css('flex-basis', 'auto');
+                    $('#galUpload').show();
                 }
             });
 
@@ -368,11 +395,13 @@
             $('#' + inputId).val('');
         }
 
-        function removeGalleryImage(button, inputId) {
-            $(button).parent('.gitems').remove();
-            $('#' + inputId).val('');
-            if ($('.gitems').length === 0) {
-                $('#galUpload').addClass('up-load');
+        function removeGalleryImage(button) {
+            const galleryItem = $(button).closest('.gitems');
+            galleryItem.remove();
+
+            // Show upload button if we're below the limit
+            if ($('.gitems').length < 5) {
+                $('#galUpload').show();
             }
         }
 

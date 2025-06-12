@@ -681,9 +681,7 @@ class AdminController extends Controller
         $product = Product::findOrFail($request->input('id'));
 
         // Determine if product has variants
-        $hasVariant = $request->has('variant_name') &&
-            is_array($request->variant_name) &&
-            count(array_filter($request->variant_name)) > 0;
+        $hasVariant = !empty($request->variant_name) && is_array($request->variant_name);
 
         // Validation
         $request->validate([
@@ -693,66 +691,67 @@ class AdminController extends Controller
             'price' => $hasVariant ? 'nullable' : 'required|numeric',
             'quantity' => $hasVariant ? 'nullable' : 'required|integer|min:0',
             'featured' => 'required|boolean',
-            'image' => 'nullable|mimes:png,jpg,jpeg|max:2048',
+            'image' => 'nullable|image|mimes:png,jpg,jpeg|max:5120', // 5MB limit
+            'images.*' => 'nullable|image|mimes:png,jpg,jpeg|max:5120', // 5MB limit
             'sex' => 'required|in:male,female,all',
             'category_id' => 'required|integer|exists:categories,id',
             'reorder_quantity' => 'required|integer|min:0',
             'outofstock_quantity' => 'required|integer|min:0',
         ]);
 
+        // Store previous stock status
         $previousStockStatus = $product->stock_status;
-        $previousTotalQuantity = $product->quantity ?? $product->attributeValues->sum('quantity');
 
         // Update product fields
-        $product->name = $request->name;
-        $product->short_description = $request->short_description;
-        $product->description = $request->description;
-        $product->price = $hasVariant ? null : $request->price;
-        $product->quantity = $hasVariant ? null : $request->quantity;
-        $product->sex = $request->sex;
-        $product->featured = $request->featured;
-        $product->category_id = $request->category_id;
-        $product->reorder_quantity = $request->reorder_quantity;
-        $product->outofstock_quantity = $request->outofstock_quantity;
+        $product->fill($request->except(['image', 'images', 'variant_name', 'product_attribute_id', 'variant_price', 'variant_quantity']));
 
         $current_timestamp = Carbon::now()->timestamp;
 
-        // Stock Status Logic
-        $totalQuantity = $product->quantity ?? $product->attributeValues->sum('quantity');
-
-        if ($totalQuantity > $product->reorder_quantity) {
-            $product->stock_status = 'instock';
-        } elseif ($totalQuantity <= $product->reorder_quantity && $totalQuantity > $product->outofstock_quantity) {
-            $product->stock_status = 'reorder';
-        } else {
-            $product->stock_status = 'outofstock';
-        }
-
-        // Handle image upload
+        // Handle image upload (retain existing image if no new upload)
         if ($request->hasFile('image')) {
-            if (File::exists(public_path('uploads/products') . '/' . $product->image)) {
-                File::delete(public_path('uploads/products') . '/' . $product->image);
+            if (!empty($product->image) && File::exists(public_path("uploads/products/{$product->image}"))) {
+                File::delete(public_path("uploads/products/{$product->image}"));
             }
             $image = $request->file('image');
-            $imageName = $current_timestamp . '.' . $image->extension();
+            $imageName = "{$current_timestamp}.{$image->extension()}";
             $this->GenerateProductThumbnailsImage($image, $imageName);
             $product->image = $imageName;
         }
 
         // Handle gallery images
+        $existingImages = !empty($product->images) ? explode(',', $product->images) : [];
+        $removedImages = $request->input('removed_images', []);
+
+        // Remove deleted images
+        foreach ($removedImages as $removedImage) {
+            if (File::exists(public_path("uploads/products/{$removedImage}"))) {
+                File::delete(public_path("uploads/products/{$removedImage}"));
+            }
+            $existingImages = array_diff($existingImages, [$removedImage]);
+        }
+
+        // Handle new gallery images
         if ($request->hasFile('images')) {
-            $gallery_arr = [];
-            foreach (explode(",", $product->images) as $ofile) {
-                if (File::exists(public_path('uploads/products') . '/' . $ofile)) {
-                    File::delete(public_path('uploads/products') . '/' . $ofile);
+            $newImages = [];
+            $maxGalleryImages = 5;
+            $remainingSlots = $maxGalleryImages - count($existingImages);
+
+            if ($remainingSlots > 0) {
+                foreach ($request->file('images') as $index => $file) {
+                    if ($index >= $remainingSlots) break; // Stop if we've reached the limit
+
+                    $gfilename = "{$current_timestamp}-" . ($index + 1) . ".{$file->extension()}";
+                    $this->GenerateProductThumbnailsImage($file, $gfilename);
+                    $newImages[] = $gfilename;
                 }
             }
-            foreach ($request->file('images') as $index => $file) {
-                $gfilename = $current_timestamp . "-" . ($index + 1) . "." . $file->extension();
-                $this->GenerateProductThumbnailsImage($file, $gfilename);
-                $gallery_arr[] = $gfilename;
-            }
-            $product->images = implode(',', $gallery_arr);
+
+            // Combine existing and new images
+            $allImages = array_merge($existingImages, $newImages);
+            $product->images = implode(',', $allImages);
+        } else {
+            // If no new images, just update with existing ones
+            $product->images = implode(',', $existingImages);
         }
 
         $product->save();
@@ -760,15 +759,15 @@ class AdminController extends Controller
         // Handle variants
         if ($hasVariant) {
             $product->attributeValues()->delete();
-
             $attributeValues = [];
+
             foreach ($request->variant_name as $index => $name) {
                 $attributeValues[] = [
                     'product_id' => $product->id,
                     'product_attribute_id' => $request->product_attribute_id[$index],
                     'value' => $name,
-                    'price' => $request->variant_price[$index],
-                    'quantity' => $request->variant_quantity[$index],
+                    'price' => $request->variant_price[$index] ?? null,
+                    'quantity' => $request->variant_quantity[$index] ?? 0,
                 ];
             }
 
@@ -786,26 +785,19 @@ class AdminController extends Controller
             $variantTotalQuantity = collect($attributeValues)->sum('quantity');
 
             // Stock status based on variant quantities
-            if ($variantTotalQuantity > $product->reorder_quantity) {
-                $product->stock_status = 'instock';
-            } elseif ($variantTotalQuantity <= $product->reorder_quantity && $variantTotalQuantity > $product->outofstock_quantity) {
-                $product->stock_status = 'reorder';
-            } else {
-                $product->stock_status = 'outofstock';
-            }
-
-            $product->save();
+            $product->stock_status = $variantTotalQuantity > $product->reorder_quantity
+                ? 'instock'
+                : ($variantTotalQuantity > $product->outofstock_quantity ? 'reorder' : 'outofstock');
         }
 
+        // Notify users if stock status changes
         if ($product->stock_status === 'instock' && $previousStockStatus !== 'instock') {
             $users = User::where('utype', 'USR')->get();
-            $message = "Good news! The product {$product->name} is now back in stock.";
-            Notification::send($users, new StockUpdate($product, $message));
+            Notification::send($users, new StockUpdate($product, "Good news! The product {$product->name} is now back in stock."));
         }
 
         return redirect()->route('admin.products')->with('status', 'Product has been updated successfully!');
     }
-
 
 
 
