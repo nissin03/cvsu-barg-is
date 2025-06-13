@@ -276,35 +276,6 @@
                     @error('images')
                         <span class="alert alert-danger text-center">{{ $message }} </span>
                     @enderror
-
-
-                    <div class="cols gap22">
-                        <fieldset class="name">
-                            <div class="body-title mb-10">Status</div>
-                            <div class="select mb-10">
-                                <select name="featured">
-                                    <option value="0" {{ $facility->status == '0' ? 'selected' : '' }}>No</option>
-                                    <option value="1" {{ $facility->status == '1' ? 'selected' : '' }}>Yes</option>
-                                </select>
-                            </div>
-                        </fieldset>
-                        @error('status')
-                            <span class="alert alert-danger text-center">{{ $message }} </span>
-                        @enderror
-
-                        <fieldset class="name">
-                            <div class="body-title mb-10">Featured</div>
-                            <div class="select mb-10">
-                                <select name="featured">
-                                    <option value="0" {{ $facility->featured == '0' ? 'selected' : '' }}>No</option>
-                                    <option value="1" {{ $facility->featured == '1' ? 'selected' : '' }}>Yes</option>
-                                </select>
-                            </div>
-                        </fieldset>
-                        @error('featured')
-                            <span class="alert alert-danger text-center">{{ $message }} </span>
-                        @enderror
-                    </div>
                 </div>
 
 

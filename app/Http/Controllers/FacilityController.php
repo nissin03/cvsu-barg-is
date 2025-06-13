@@ -299,8 +299,6 @@ class FacilityController extends Controller
         $facility->description = $request->description;
         $facility->created_by = Auth::id();
         $facility->slug = Str::slug($request->name);
-        $facility->status = $request->status ?? 1;
-        $facility->featured = $request->featured ?? 0;
         $facility->rules_and_regulations = $request->rules_and_regulations;
     }
 

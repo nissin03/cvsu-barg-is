@@ -4,27 +4,23 @@
     <style>
         table {
             table-layout: auto;
-            width: 100%;
             border-collapse: collapse;
-            /* Collapses borders for a cleaner look */
         }
+
+
 
         th,
         td {
-            padding: 12px 15px;
-            /* Adjusted padding for better spacing */
+            padding: 15px 30px;
             border: 1px solid #ddd;
             word-wrap: break-word;
             white-space: normal;
             text-align: left;
-            /* Align text to the left for better readability */
         }
 
         th {
             background-color: #f8f9fa;
-            /* Light background for headers */
             font-weight: bold;
-            /* Make header text bold */
         }
 
         th:nth-child(8),
@@ -176,12 +172,10 @@
                     <table class="table table-striped table-bordered">
                         <thead>
                             <tr>
-                                <th>#</th>
                                 <th>Name</th>
-                                <th>Type</th>
-                                <th>Description</th>
-                                {{-- <th>Status</th> --}}
-                                {{-- <th>Featured</th> --}}
+                                <th scope="col">Type</th>
+                                <th scope="col">Prices</th>
+                                <th scope="col">Rooms</th>
                                 <th>Action</th>
                             </tr>
                         </thead>

@@ -236,39 +236,51 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($products as $product)
-                                        @php
-                                            $currentStock = $product->attributeValues->isNotEmpty()
-                                                ? $product->attributeValues->sum('quantity')
-                                                : $product->current_stock;
-                                        @endphp
+                                    @if ($products->isEmpty())
+                                        <tr>
+                                            <td colspan="10" class="text-center py-5"
+                                                style="height: 200px; vertical-align: middle;">
+                                                <div class="d-flex flex-column align-items-center justify-content-center">
+                                                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                                    <span class="text-muted ">No products found</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @else
+                                        @foreach ($products as $product)
+                                            @php
+                                                $currentStock = $product->attributeValues->isNotEmpty()
+                                                    ? $product->attributeValues->sum('quantity')
+                                                    : $product->current_stock;
+                                            @endphp
 
-                                        @if ($currentStock == 0)
-                                            <!-- Check if the stock is 0 -->
-                                            <tr>
-                                                <td class="text-center">{{ $product->id }}</td>
-                                                <td class="text-center">{{ $product->name }}</td>
-                                                <td class="text-center">
-                                                    <span class="badge bg-danger">Out of Stock</span>
-                                                </td>
-                                                <td class="text-center">{{ $currentStock }}</td>
-                                            </tr>
-                                        @elseif($currentStock <= $product->reorder_quantity)
-                                            <!-- Display 'Reorder' and 'Low Stock' items -->
-                                            <tr>
-                                                <td class="text-center">{{ $product->id }}</td>
-                                                <td class="text-center">{{ $product->name }}</td>
-                                                <td class="text-center">
-                                                    @if ($currentStock <= $product->outofstock_quantity)
-                                                        <span class="badge bg-danger">Low Stock</span>
-                                                    @else
-                                                        <span class="badge bg-warning">Reorder Level</span>
-                                                    @endif
-                                                </td>
-                                                <td class="text-center">{{ $currentStock }}</td>
-                                            </tr>
-                                        @endif
-                                    @endforeach
+                                            @if ($currentStock == 0)
+                                                <!-- Check if the stock is 0 -->
+                                                <tr>
+                                                    <td class="text-center">{{ $product->id }}</td>
+                                                    <td class="text-center">{{ $product->name }}</td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-danger">Out of Stock</span>
+                                                    </td>
+                                                    <td class="text-center">{{ $currentStock }}</td>
+                                                </tr>
+                                            @elseif($currentStock <= $product->reorder_quantity)
+                                                <!-- Display 'Reorder' and 'Low Stock' items -->
+                                                <tr>
+                                                    <td class="text-center">{{ $product->id }}</td>
+                                                    <td class="text-center">{{ $product->name }}</td>
+                                                    <td class="text-center">
+                                                        @if ($currentStock <= $product->outofstock_quantity)
+                                                            <span class="badge bg-danger">Low Stock</span>
+                                                        @else
+                                                            <span class="badge bg-warning">Reorder Level</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="text-center">{{ $currentStock }}</td>
+                                                </tr>
+                                            @endif
+                                        @endforeach
+                                    @endif
                                 </tbody>
 
                             </table>
@@ -430,6 +442,77 @@
 
         .text-muted:hover {
             text-decoration: underline;
+        }
+
+        table {
+            table-layout: auto;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            word-wrap: break-word;
+            white-space: normal;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .badge {
+            padding: 0.25em 0.6em;
+            border-radius: 0.25rem;
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.75em;
+            display: inline-block;
+        }
+
+        .badge-success {
+            background-color: #28a745;
+        }
+
+        .badge-danger {
+            background-color: #dc3545;
+        }
+
+        .badge-warning {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .empty-state {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state span {
+            color: #6c757d;
+            font-size: 1.1rem;
         }
     </style>
 @endpush
