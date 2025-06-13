@@ -269,6 +269,7 @@
                     <!-- Capacity Section -->
                     <!-- Rooms Section -->
                     <div id="dormitoryRooms" class="mt-4">
+                        <div id="container-error-message"></div>
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
                             <h4>Rooms</h4>
                             <div class="d-flex gap-2">
