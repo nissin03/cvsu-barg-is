@@ -111,7 +111,8 @@
                                 <div class="text-center">
                                     <a href="{{ url('auth/google') }}"
                                         class="btn btn-light btn-google w-100 text-uppercase">
-                                        <img src="{{ asset('./images/   ') }}" alt="Google Icon" class="google-icon">
+                                        <img src="{{ asset('./images/googleicon.svg') }}" alt="Google Icon"
+                                            class="google-icon">
                                         Sign in with Google
                                     </a>
                                 </div>
