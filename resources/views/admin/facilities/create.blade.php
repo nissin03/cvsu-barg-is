@@ -349,8 +349,6 @@
 
                     <div class="cols gap10">
                         <button id="facilitySubmitBtn" class="tf-button w-full" type="submit">
-                            <span class="spinner-border spinner-border-sm d-none" role="status"
-                                aria-hidden="true"></span>
                             <span class="btn-text">Create Facility</span>
                         </button>
                     </div>
