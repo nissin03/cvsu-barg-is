@@ -254,36 +254,6 @@
                     @error('images')
                         <span class="alert alert-danger text-center">{{ $message }} </span>
                     @enderror
-
-
-                    <div class="cols gap22">
-                        <fieldset class="name">
-                            <div class="body-title mb-10">Status</div>
-                            <div class="select mb-10">
-                                <select name="status">
-                                    <option value="1" {{ old('status') ? 'selected' : '' }}>Available</option>
-                                    <option value="0" {{ old('status') ? 'selected' : '' }}>Not Available</option>
-                                </select>
-                            </div>
-                        </fieldset>
-                        @error('status')
-                            <span class="alert alert-danger text-center">{{ $message }} </span>
-                        @enderror
-
-                        <fieldset class="name">
-                            <div class="body-title mb-10">Featured</div>
-                            <div class="select mb-10">
-                                <select name="featured">
-                                    <option value="0" {{ old('featured') == '0' ? 'selected' : '' }}>No</option>
-                                    <option value="1" {{ old('featured') == '1' ? 'selected' : '' }}>Yes</option>
-                                </select>
-                            </div>
-                        </fieldset>
-                        @error('featured')
-                            <span class="alert alert-danger text-center">{{ $message }} </span>
-                        @enderror
-                    </div>
-
                 </div>
                 <!-- Room Management Container -->
                 <div class="wg-box" id="roomBox">
@@ -299,6 +269,7 @@
                     <!-- Capacity Section -->
                     <!-- Rooms Section -->
                     <div id="dormitoryRooms" class="mt-4">
+                        <div id="container-error-message"></div>
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
                             <h4>Rooms</h4>
                             <div class="d-flex gap-2">
