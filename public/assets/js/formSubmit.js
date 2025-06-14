@@ -9,11 +9,15 @@ function clearValidationErrors() {
 // Function to reset submit button state
 function resetSubmitButton() {
     const submitBtn = $("#facilitySubmitBtn");
-    submitBtn.prop("disabled", false).html("Submit");
+    const spinner = submitBtn.find(".spinner-border");
+    const btnText = submitBtn.find(".btn-text");
+    submitBtn.prop("disabled", false);
+    spinner.addClass("d-none");
+    btnText.text("Create Facility");
 }
 
-// Function to validate files before submission
-function validateFiles() {
+// Function to validate file uploads
+function validateFileUploads() {
     let isValid = true;
     clearValidationErrors();
 
@@ -36,9 +40,64 @@ function validateFiles() {
     if (galleryFiles.length === 0) {
         showAlert("Please upload at least one gallery image", "danger");
         isValid = false;
+    } else if (galleryFiles.length > 3) {
+        showAlert("You can only upload up to 3 gallery images", "danger");
+        isValid = false;
     }
 
     return isValid;
+}
+
+// Function to get required fields based on facility type
+function getRequiredFields() {
+    const type = $("#rentalType").val();
+    let fields = [
+        "name",
+        "facility_type",
+        "description",
+        "rules_and_regulations",
+    ];
+
+    if (type === "whole_place") {
+        fields.push("whole_capacity");
+    } else if (type === "individual") {
+        fields.push("room_name", "capacity");
+    } else if (type === "both") {
+        // Check if rooms exist
+        const hasRooms = rooms && rooms.length > 0;
+        if (!hasRooms) {
+            fields.push("whole_capacity");
+        } else {
+            fields.push("room_name", "capacity");
+        }
+    }
+    return fields;
+}
+
+// Function to validate form fields
+function isFormValid() {
+    const form = $("#facilityForm");
+    const requiredFields = getRequiredFields();
+
+    for (let field of requiredFields) {
+        if (field === "room_name" || field === "capacity") {
+            const inputs = form.find(
+                `[name^="facility_attributes"][name$="[${field}]"]`
+            );
+            if (
+                !inputs.length ||
+                inputs.toArray().some((input) => !$(input).val().trim())
+            ) {
+                return false;
+            }
+        } else {
+            const input = form.find(`[name="${field}"]`);
+            if (!input.length || !input.val().trim()) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 // Function to display validation errors
@@ -125,6 +184,28 @@ $(document).on("change", 'input[type="file"]', function () {
     clearValidationErrors();
 });
 
+// Handle facility type changes
+$("#rentalType").on("change", function () {
+    const type = $(this).val();
+    const wholeCapacityField = $("#roomCapacityWhole");
+
+    if (type === "both") {
+        // Enable whole capacity field initially
+        wholeCapacityField.prop("disabled", false);
+
+        // Check if rooms exist and disable whole capacity if they do
+        if (rooms && rooms.length > 0) {
+            wholeCapacityField.prop("disabled", true);
+            wholeCapacityField.val("");
+        }
+    } else {
+        wholeCapacityField.prop("disabled", type !== "whole_place");
+    }
+
+    resetSubmitButton();
+    clearValidationErrors();
+});
+
 // Form submission handler
 $("#facilityForm").on("submit", function (event) {
     event.preventDefault();
@@ -132,78 +213,27 @@ $("#facilityForm").on("submit", function (event) {
     // Clear any existing error messages
     clearValidationErrors();
 
+    // Validate file uploads
+    if (!validateFileUploads()) {
+        return;
+    }
+
+    // Basic form validation
+    if (!isFormValid()) {
+        showAlert("Please fill in all required fields.", "danger");
+        return;
+    }
+
     // Get the form data
     const formData = new FormData(this);
     const facilityType = $("#rentalType").val();
 
-    // Add price data to formData
-    const prices = [];
-    $("#hiddenPrices input").each(function () {
-        const name = $(this).attr("name");
-        const value = $(this).val();
-        const matches = name.match(/prices\[(\d+)\]\[(\w+)\]/);
-
-        if (matches) {
-            const index = parseInt(matches[1]);
-            const field = matches[2];
-
-            if (!prices[index]) {
-                prices[index] = {};
-            }
-            prices[index][field] = value;
-        }
-    });
-
-    prices.forEach((price, index) => {
-        if (price.name && price.price_type && price.value) {
-            formData.append(`prices[${index}][name]`, price.name);
-            formData.append(`prices[${index}][price_type]`, price.price_type);
-            formData.append(`prices[${index}][value]`, price.value);
-            formData.append(
-                `prices[${index}][is_based_on_days]`,
-                price.is_based_on_days
-            );
-            formData.append(
-                `prices[${index}][is_there_a_quantity]`,
-                price.is_there_a_quantity
-            );
-            if (price.date_from) {
-                formData.append(`prices[${index}][date_from]`, price.date_from);
-            }
-            if (price.date_to) {
-                formData.append(`prices[${index}][date_to]`, price.date_to);
-            }
-        }
-    });
-
     // Handle facility type specific data
-    if (facilityType === "whole_place") {
-        const wholeCapacity = $("#roomCapacityWhole").val();
-        formData.append("whole_capacity", wholeCapacity);
-    } else if (facilityType === "both") {
-        const wholeCapacity = $("#roomCapacityWhole").val();
-        formData.append("whole_capacity", wholeCapacity);
+    if (facilityType === "both" && rooms && rooms.length > 0) {
+        // Remove whole_capacity if rooms exist
+        formData.delete("whole_capacity");
 
-        // Only append rooms if they exist
-        if (Array.isArray(rooms) && rooms.length > 0) {
-            rooms.forEach((room, index) => {
-                if (room.room_name && room.capacity) {
-                    formData.append(
-                        `facility_attributes[${index}][room_name]`,
-                        room.room_name
-                    );
-                    formData.append(
-                        `facility_attributes[${index}][capacity]`,
-                        room.capacity
-                    );
-                    formData.append(
-                        `facility_attributes[${index}][sex_restriction]`,
-                        room.sex_restriction
-                    );
-                }
-            });
-        }
-    } else if (facilityType === "individual") {
+        // Add room data
         rooms.forEach((room, index) => {
             if (room.room_name && room.capacity) {
                 formData.append(
@@ -224,11 +254,11 @@ $("#facilityForm").on("submit", function (event) {
 
     // Disable submit button and show loading state
     const submitBtn = $("#facilitySubmitBtn");
-    submitBtn
-        .prop("disabled", true)
-        .html(
-            '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...'
-        );
+    const spinner = submitBtn.find(".spinner-border");
+    const btnText = submitBtn.find(".btn-text");
+    submitBtn.prop("disabled", true);
+    spinner.removeClass("d-none");
+    btnText.text("Submitting...");
 
     // Make AJAX request
     $.ajax({
