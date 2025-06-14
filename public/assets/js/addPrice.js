@@ -14,9 +14,6 @@ $(document).ready(function () {
     $("#addPrice").on("show.bs.modal", function () {
         if ($priceFormContainer.children().length === 0) {
             $priceFormContainer.append(createPriceFormCard());
-            if (typeof window.updatePriceFieldVisibility === "function") {
-                window.updatePriceFieldVisibility($("#rentalType").val());
-            }
         }
 
         // Add global settings after the price form container
@@ -45,6 +42,11 @@ $(document).ready(function () {
                 </div>
             </div>`;
             $priceFormContainer.after(globalSettings);
+        }
+
+        // Call updatePriceFieldVisibility when modal opens
+        if (typeof window.updatePriceFieldVisibility === "function") {
+            window.updatePriceFieldVisibility($("#rentalType").val());
         }
     });
 

@@ -223,7 +223,7 @@
                         <thead>
                             <tr>
                                 <th scope="col">Name</th>
-                                <th scope="col">Quantity</th>
+                                <th scope="col" width="15%">Quantity</th>
                                 <th scope="col">Price</th>
                                 <th scope="col">Category</th>
                                 <th scope="col">Action</th>

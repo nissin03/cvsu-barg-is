@@ -1,39 +1,36 @@
 @extends('layouts.app')
 @section('content')
-<style>
-    
-.divider-wrapper {
-    display: flex;
-    flex-direction: row;
-    text-transform: uppercase;
-    border: none;
-    font-size: 12px;
-    font-weight: 400;
-    margin: 10px 0 0;
-    padding: 0;
-    align-items: center;
-    justify-content: center;
-    width: 100%; 
-}
+    <style>
+        .divider-wrapper {
+            display: flex;
+            flex-direction: row;
+            text-transform: uppercase;
+            border: none;
+            font-size: 12px;
+            font-weight: 400;
+            margin: 10px 0 0;
+            padding: 0;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
 
-.divider-wrapper::before,
-.divider-wrapper::after {
-    content: "";
-    border-bottom: 1px solid #c2c8d0;
-    flex: 1 0 auto;
-    height: 0.5em;
-    margin: 0;
-}
+        .divider-wrapper::before,
+        .divider-wrapper::after {
+            content: "";
+            border-bottom: 1px solid #c2c8d0;
+            flex: 1 0 auto;
+            height: 0.5em;
+            margin: 0;
+        }
 
-.divider {
-    text-align: center;    
-    flex: 0 1 auto;
-    margin: 20px 16px;
-    height: 12px;
-}
-
-
-</style>
+        .divider {
+            text-align: center;
+            flex: 0 1 auto;
+            margin: 20px 16px;
+            height: 12px;
+        }
+    </style>
     <main class="pt-90">
         <div class="mb-4 pb-4"></div>
         <div class="container" style="padding-top: 100px;">
@@ -88,7 +85,8 @@
                                     <div class="d-flex justify-content-between mt-3">
                                         <!-- Remember Me Checkbox -->
                                         <div class="form-check mb-3">
-                                            <input type="checkbox" class="form-check-input custom-checkbox" id="rememberMe" name="remember">
+                                            <input type="checkbox" class="form-check-input custom-checkbox" id="rememberMe"
+                                                name="remember">
                                             <label class="form-check-label" for="rememberMe">{{ __('Remember Me') }}</label>
                                         </div>
 
@@ -100,8 +98,6 @@
                                             </a>
                                         </div>
                                     </div>
-
-
                                     <!-- Submit Button -->
                                     <button
                                         class="btn btn-btn-dark form-control bg-dark text-white mb-1 w-100 text-uppercase"
@@ -115,8 +111,7 @@
                                 <div class="text-center">
                                     <a href="{{ url('auth/google') }}"
                                         class="btn btn-light btn-google w-100 text-uppercase">
-                                        <img src="{{ asset('./images/googleicon.svg') }}" alt="Google Icon"
-                                            class="google-icon">
+                                        <img src="{{ asset('./images/   ') }}" alt="Google Icon" class="google-icon">
                                         Sign in with Google
                                     </a>
                                 </div>
@@ -176,20 +171,19 @@
                     cancelButtonText: 'Login',
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        window.location.href = '/register';  // Redirect to register page
+                        window.location.href = '/register'; // Redirect to register page
                     }
                 });
             }
         });
     });
 
-        // Handle form submission
-        document.getElementById('login-form').addEventListener('submit', function(event) {
-            const password = document.getElementById('password').value;
-            if (!password) {
-                event.preventDefault();
-                alert('Please enter your password.');
-            }
-        });
-
+    // Handle form submission
+    document.getElementById('login-form').addEventListener('submit', function(event) {
+        const password = document.getElementById('password').value;
+        if (!password) {
+            event.preventDefault();
+            alert('Please enter your password.');
+        }
+    });
 </script>
