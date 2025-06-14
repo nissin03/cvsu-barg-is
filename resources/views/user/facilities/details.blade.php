@@ -1553,7 +1553,7 @@
                     if (calendarEl) {
                         const today = new Date();
                         const startDate = new Date();
-                        startDate.setDate(today.getDate() + 3);
+                        startDate.setDate(today.getDate() + 4);
 
                         const calendar = new FullCalendar.Calendar(calendarEl, {
                             initialView: 'dayGridMonth',

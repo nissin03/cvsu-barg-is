@@ -472,40 +472,6 @@
                 $('#galUpload').addClass('up-load');
             }
         }
-
-
-        // document.addEventListener("DOMContentLoaded", function() {
-        //     const isBasedOnDaysCheckbox = document.getElementById('isBasedOnDays');
-        //     const dateFieldsDiv = document.getElementById('dateFields');
-        //     const dateFromInput = document.getElementById('date_from');
-        //     const dateToInput = document.getElementById('date_to');
-
-
-        //     function disablePastDates() {
-        //         const today = new Date().toISOString().split('T')[0];
-        //         dateFromInput.setAttribute('min', today);
-        //         dateToInput.setAttribute('min', today);
-        //     }
-
-
-        //     dateFromInput.addEventListener('change', function() {
-        //         if (dateFromInput.value) {
-        //             dateToInput.value = dateFromInput.value;
-        //         }
-        //     });
-
-        //     // Handle the checkbox state to show/hide the date fields
-        //     isBasedOnDaysCheckbox.addEventListener('change', function() {
-        //         if (isBasedOnDaysCheckbox.checked) {
-        //             dateFieldsDiv.style.display = 'block';
-        //         } else {
-        //             dateFieldsDiv.style.display = 'none';
-        //         }
-        //     });
-
-        //     // Disable past dates initially
-        //     disablePastDates();
-        // });
     </script>
 
     <script>
@@ -520,10 +486,18 @@
             function getRequiredFields() {
                 const type = facilityTypeSelect.value;
                 let fields = ['name', 'facility_type', 'description', 'rules_and_regulations'];
+
                 if (type === 'whole_place') {
                     fields.push('whole_capacity');
-                } else if (type === 'individual' || type === 'both') {
+                } else if (type === 'individual') {
                     fields.push('room_name', 'capacity');
+                } else if (type === 'both') {
+                    fields.push('whole_capacity');
+                    // Only require rooms if no whole_capacity is provided
+                    const wholeCapacity = document.getElementById('roomCapacityWhole').value;
+                    if (!wholeCapacity || wholeCapacity.trim() === '') {
+                        fields.push('room_name', 'capacity');
+                    }
                 }
                 return fields;
             }
