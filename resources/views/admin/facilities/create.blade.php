@@ -76,6 +76,10 @@
             position: relative;
         }
 
+        .custom-icon {
+            fill: oklch(55.1% 0.027 264.364);
+        }
+
         .remove-room {
             position: absolute;
             top: 10px;
@@ -131,7 +135,7 @@
                 <input type="hidden" id="pricesJson" name="prices_json">
 
                 <div class="wg-box">
-                    <div class="container mx-auto p-3"  style="{{ $errors->any() ? '' : 'display: none;' }}">
+                    <div class="container mx-auto p-3" style="{{ $errors->any() ? '' : 'display: none;' }}">
                         @if ($errors->any())
                             <div class="alert alert-danger">
                                 <ul class="mb-0">
@@ -273,6 +277,35 @@
                     @enderror
                 </div>
                 <div class="wg-box" id="roomBox">
+                    <div id="selectionBothType">
+                        <div class="d-flex align-items-center justify-items-center gap-5">
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="radio" id="hasWholeCapacity" name="facility_selection_both"
+                                    value="whole" {{ old('facility_selection_both') === 'whole' ? 'checked' : '' }}>
+                                <label for="hasWholeCapacity">Has Whole Capacity?</label>
+
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="radio" id="hasRooms" name="facility_selection_both" value="room"
+                                    {{ old('facility_selection_both') === 'room' ? 'checked' : '' }}>
+                                <label for="hasRooms">Has a Room(s)?</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="selectionContent" class="mt-4">
+                        <div class="card" style="border: none;">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <img src="{{ asset('images/choose.svg') }}" alt="no selection"
+                                        class="img-fluid custom-icon"
+                                        style="width: 100px; height: 100px; fill: oklch(55.1% 0.027 264.364);">
+                                    <h5 class="card-title">Choose one option
+                                        to show the content</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <fieldset class="name" id="hideRoomBox">
                         <div class="body-title mb-10">Whole Place Capacity</div>
                         <input type="number" min="0" id="roomCapacityWhole" name="whole_capacity"
