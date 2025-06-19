@@ -15,6 +15,7 @@ class Facility extends Model
         'name',
         'slug',
         'facility_type',
+        'facility_selection_both',
         'description',
         'image',
         'images',
