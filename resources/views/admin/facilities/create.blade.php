@@ -130,17 +130,18 @@
                 <input type="hidden" id="facilityAttributesJson" name="facility_attributes_json">
                 <input type="hidden" id="pricesJson" name="prices_json">
 
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
                 <div class="wg-box">
+                    <div class="container mx-auto p-3"  style="{{ $errors->any() ? '' : 'display: none;' }}">
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </div>
                     <fieldset class="name">
                         <div class="body-title mb-10">Facility name <span class="tf-color-1">*</span></div>
                         <input class="form-control" type="text" value="{{ old('name') }}"
@@ -273,9 +274,9 @@
                 </div>
                 <div class="wg-box" id="roomBox">
                     <fieldset class="name" id="hideRoomBox">
-                        <div class="body-title mb-10">Capacity</div>
+                        <div class="body-title mb-10">Whole Place Capacity</div>
                         <input type="number" min="0" id="roomCapacityWhole" name="whole_capacity"
-                            placeholder="Enter capacity">
+                            placeholder="Enter whole capacity">
                     </fieldset>
                     <div id="dormitoryRooms" class="mt-4">
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
@@ -1118,24 +1119,4 @@
 
     <script src="{{ asset('assets/js/hideFields.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
-
-    <script>
-        function removeUpload(previewId, inputId) {
-            // Hide the preview block
-            $('#' + previewId).hide();
-            $('#' + previewId + ' img').attr('src', '{{ asset('images/upload/upload-1.png') }}');
-            $('#' + previewId + ' p.file-name-overlay').remove();
-            $('#' + previewId + ' .remove-upload').hide();
-            $('#' + inputId).val('');
-            $('#upload-file').show();
-        }
-
-        function removeGalleryImage(button, inputId) {
-            $(button).parent('.gitems').remove();
-            if ($('.gitems').length === 0) {
-                $('#' + inputId).val('');
-                $('#galUpload').addClass('up-load');
-            }
-        }
-    </script>
 @endpush
