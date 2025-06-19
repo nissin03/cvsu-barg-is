@@ -116,7 +116,6 @@ Route::middleware(['auth', AuthAdmin::class])
 
 
         // api
-
         Route::get('/api/dashboard-data', [AdminController::class, 'getDashboardData'])->name('admin.api.dashboard-data');
         Route::get('/api/months', [AdminController::class, 'getAvailableMonths'])->name('admin.api.months');
         Route::get('/api/weeks', [AdminController::class, 'getAvailableWeeks'])->name('admin.api.weeks');

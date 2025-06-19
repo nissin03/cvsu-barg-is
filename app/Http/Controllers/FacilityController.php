@@ -97,259 +97,607 @@ class FacilityController extends Controller
         return view('admin.facilities.reservations-history', compact('availability'));
     }
 
-    public function store(FacilityRequest $request)
+    // public function store(FacilityRequest $request)
+    // {
+    //     $facility = new Facility();
+    //     $this->save($facility, $request);
+    //     $this->handleImage($facility, $request);
+    //     $facility->save();
+    //     $this->handleFacilityAttributes($facility, $request);
+    //     $this->handlePrices($facility, $request);
+    //     // dd($request->all());
+    //     return response()->json(['message' => 'Facility created successfully!', 'action' => 'create']);
+    // }
+
+
+    public function store(Request $request)
     {
-        $facility = new Facility();
-        $this->save($facility, $request);
-        $this->handleImage($facility, $request);
-        $facility->save();
-        $this->handleFacilityAttributes($facility, $request);
-        $this->handlePrices($facility, $request);
         // dd($request->all());
-        return response()->json(['message' => 'Facility created successfully!', 'action' => 'create']);
+        $facilityAttributes = json_decode($request->facility_attributes_json, true) ?? [];
+        $prices = json_decode($request->prices_json, true) ?? [];
+        $rules = [
+            'name' => 'required|unique:facilities,name',
+            'slug' => 'nullable|unique:facilities,slug',
+            'facility_type' => 'required|string|in:individual,whole_place,both',
+            'description' => 'required|string|max:2000',
+            'rules_and_regulations' => 'required|string|max:2000',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'images' => 'nullable|array|min:1',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'whole_capacity' => $this->facilityTypeRequiresWholeCapacity($request) ? 'required|numeric|min:1' : 'nullable',
+            'requirements' => 'required|file|mimes:pdf,doc,docx,jpg,png|max:2048',
+            'facility_attributes_json' => 'nullable|string',
+        ];
+        $messages = [];
+        switch ($request->facility_type) {
+            case 'individual':
+                $rules['facility_attributes_json'] = 'required|string';
+                $rules['facility_attributes.*.room_name'] = 'required|string|max:255';
+                $rules['facility_attributes.*.capacity'] = 'required|numeric|min:1|max:50';
+                $rules['facility_attributes.*.sex_restriction'] = 'required|string|in:male,female';
+                $messages['facility_attributes_json.required'] = 'Facility Attributes are required for Individual Type. Each room must have a name, capacity, and sex restriction.';
+                $messages['facility_attributes.*.room_name.required'] = 'Room Name is required for Individual Type.';
+                $messages['facility_attributes.*.capacity.required'] = 'Capacity is required for Individual Type.';
+                $messages['facility_attributes.*.sex_restriction.required'] = 'Sex Restriction is required for Individual Type.';
+                break;
+            case 'whole_place':
+                $rules['whole_capacity'] = 'required|numeric|min:1';
+                $messages['whole_capacity.required'] = 'Whole Capacity is required for Whole Place Type. Please provide a valid capacity.';
+                break;
+            case 'both':
+                if (!empty($facilityAttributes) && isset($facilityAttributes[0]['capacity'])) {
+                    // Individual rooms are provided
+                    $rules['facility_attributes_json'] = 'required|string';
+                    $rules['facility_attributes.*.room_name'] = 'required|string|max:255';
+                    $rules['facility_attributes.*.capacity'] = 'required|numeric|min:1|max:50';
+                    $rules['facility_attributes.*.sex_restriction'] = 'required|string|in:male,female';
+                    $messages['facility_attributes_json.required'] = 'Facility Attributes are required for Both Type. Each room must have a name, capacity, and sex restriction.';
+                    $messages['facility_attributes.*.room_name.required'] = 'Room Name is required for Both Type.';
+                    $messages['facility_attributes.*.capacity.required'] = 'Capacity is required for Both Type.';
+                    $messages['facility_attributes.*.sex_restriction.required'] = 'Sex Restriction is required for Both Type.';
+                } elseif (request()->has('whole_capacity') && request()->input('whole_capacity')) {
+                    $rules['facility_attributes_json'] = 'nullable|string';
+                    $rules['whole_capacity'] = 'required|numeric|min:1';
+                    $messages['whole_capacity.required'] = 'Whole Capacity is required when no individual room attributes are specified.';
+                } else {
+                    $rules['facility_attributes_json'] = 'required_without:whole_capacity';
+                    $rules['whole_capacity'] = 'required_without:facility_attributes_json';
+                    $messages['facility_attributes_json.required_without'] = 'Either individual rooms or whole capacity must be provided for Both Type.';
+                    $messages['whole_capacity.required_without'] = 'Either individual rooms or whole capacity must be provided for Both Type.';
+                }
+                break;
+        }
+        $validated = $request->validate($rules, $messages);
+
+        try {
+            $current_timestamp = Carbon::now()->timestamp;
+            $requirementsFileName = null;
+
+            if ($request->hasFile('requirements')) {
+                $requirementsFile = $request->file('requirements');
+                $requirementsFileName = $current_timestamp . '-requirements.' . $requirementsFile->getClientOriginalExtension();
+
+                if (Facility::where('requirements', $requirementsFileName)->exists()) {
+                    return redirect()->back()->withErrors([
+                        'requirements' => 'The Requirements file name already exists. Please rename the file.'
+                    ])->withInput();
+                }
+
+                $destinationPath = storage_path('app/public/facilities/');
+                if (!File::exists($destinationPath)) {
+                    File::makeDirectory($destinationPath, 0755, true);
+                }
+                $requirementsFile->move($destinationPath, $requirementsFileName);
+            }
+
+            $data = [
+                'name' => $validated['name'],
+                'slug' => Str::slug($validated['name']),
+                'facility_type' => $validated['facility_type'],
+                'description' => $validated['description'],
+                'rules_and_regulations' => $validated['rules_and_regulations'],
+                'created_by' => Auth::id(),
+                'requirements' => $requirementsFileName,
+            ];
+
+            $facility = Facility::create($data);
+            $this->handleFacilityAttributes($facility, $facilityAttributes);
+            $this->handlePrices($facility, $prices);
+
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imageName = $current_timestamp . '.' . $image->extension();
+                $this->GenerateFacilityThumbnailsImage($image, $imageName);
+                $facility->image = 'facilities/' . $imageName;
+            }
+
+            $gallery_arr = [];
+            $gallery_images = "";
+            $counter = 1;
+
+            if ($request->hasFile('images')) {
+                $allowedFileExtension = ['jpg', 'png', 'jpeg'];
+                $files = $request->file('images');
+
+                foreach ($files as $file) {
+                    $gextension = $file->getClientOriginalExtension();
+                    $gcheck = in_array($gextension, $allowedFileExtension);
+                    if ($gcheck) {
+                        $gFileName = $current_timestamp . "." . $counter . '.' . $gextension;
+                        $this->GenerateFacilityThumbnailsImage($file, $gFileName);
+                        array_push($gallery_arr, 'facilities/' . $gFileName);
+                        $counter++;
+                    }
+                }
+                $gallery_images = implode(',', $gallery_arr);
+                $facility->images = $gallery_images;
+            }
+
+            $facility->save();
+
+            return redirect()->route('admin.facilities.index')->with('success', 'Facility created successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Facility creation error: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['general' => 'An error occurred while creating the facility. Please try again.'])->withInput();
+        }
     }
-
-
-    private function handleFacilityAttributes(Facility $facility, $request)
+    private function facilityTypeRequiresWholeCapacity(Request $request): bool
     {
-        if ($request->facility_type === 'whole_place') {
+        $facilityType = $request->input('facility_type');
+        $facilityAttributes = json_decode($request->input('facility_attributes_json'), true) ?? [];
+
+        if ($facilityType === 'whole_place') {
+            return true;
+        }
+
+        if ($facilityType === 'both') {
+            return empty($facilityAttributes) || !isset($facilityAttributes[0]['capacity']);
+        }
+
+        return false;
+    }
+    private function handleFacilityAttributes(Facility $facility, array $facilityAttributes)
+    {
+
+        if ($facility->facility_type === 'individual') {
+            if (!empty($facilityAttributes)) {
+                foreach ($facilityAttributes as $attribute) {
+                    FacilityAttribute::create([
+                        'facility_id' => $facility->id,
+                        'room_name' => $attribute['room_name'] ?? null,
+                        'capacity' => $attribute['capacity'] ?? null,
+                        'sex_restriction' => $attribute['sex_restriction'] ?? null,
+                        'whole_capacity' => null,
+                    ]);
+                }
+            }
+        } elseif ($facility->facility_type === 'whole_place') {
             FacilityAttribute::create([
                 'facility_id' => $facility->id,
                 'room_name' => null,
                 'capacity' => null,
-                'whole_capacity' => $request->whole_capacity,
+                'whole_capacity' => request()->input('whole_capacity'),
                 'sex_restriction' => null,
             ]);
-        } elseif ($request->facility_type === 'individual') {
-            $this->createIndividualAttributes($facility, $request);
-        } elseif ($request->facility_type === 'both') {
-            $this->createBothTypeAttributes($facility, $request);
-        }
-    }
-
-    private function createIndividualAttributes(Facility $facility, $request)
-    {
-        $facilityAttributes = $request->input('facility_attributes', []);
-        if (!empty($facilityAttributes)) {
-            foreach ($facilityAttributes as $attribute) {
+        } elseif ($facility->facility_type === 'both') {
+            if (!empty($facilityAttributes) && isset($facilityAttributes[0]['capacity'])) {
+                foreach ($facilityAttributes as $attribute) {
+                    FacilityAttribute::create([
+                        'facility_id' => $facility->id,
+                        'room_name' => $attribute['room_name'] ?? null,
+                        'capacity' => $attribute['capacity'] ?? null,
+                        'sex_restriction' => $attribute['sex_restriction'] ?? null,
+                        'whole_capacity' => null,
+                    ]);
+                }
+            } elseif (request()->has('whole_capacity') && request()->input('whole_capacity')) {
                 FacilityAttribute::create([
                     'facility_id' => $facility->id,
-                    'room_name' => $attribute['room_name'] ?? null,
-                    'capacity' => $attribute['capacity'] ?? null,
-                    'whole_capacity' => null,
-                    'sex_restriction' => $attribute['sex_restriction'] ?? null,
+                    'room_name' => null,
+                    'capacity' => null,
+                    'sex_restriction' => null,
+                    'whole_capacity' => request()->input('whole_capacity'),
+                ]);
+            } else {
+                \Log::warning('Neither rooms nor whole capacity provided for "both" facility type', [
+                    'facility_id' => $facility->id,
+                    'facility_attributes' => $facilityAttributes,
+                    'whole_capacity' => request()->input('whole_capacity')
                 ]);
             }
         }
     }
 
-    private function createBothTypeAttributes(Facility $facility, $request)
+    private function handlePrices(Facility $facility, array $prices)
     {
-        $facilityAttributes = $request->input('facility_attributes', []);
+        $pricesData = [];
 
-        if (!empty($facilityAttributes)) {
-            foreach ($facilityAttributes as $attribute) {
-                FacilityAttribute::create([
-                    'facility_id' => $facility->id,
-                    'room_name' => $attribute['room_name'] ?? null,
-                    'capacity' => $attribute['capacity'] ?? null,
-                    'whole_capacity' => $request->whole_capacity ?? null,
-                    'sex_restriction' => $attribute['sex_restriction'] ?? null,
-                ]);
-            }
-        } else {
-            FacilityAttribute::create([
+        foreach ($prices as $price) {
+            $pricesData[] = [
                 'facility_id' => $facility->id,
-                'room_name' => null,
-                'capacity' => null,
-                'whole_capacity' => $request->whole_capacity,
-                'sex_restriction' => null,
-            ]);
+                'name' => $price['priceName'] ?? $price['name'],
+                'value' => $price['priceValue'] ?? $price['value'],
+                'price_type' => $price['priceType'] ?? 'individual',
+                'is_based_on_days' => $price['isBasedOnDays'] == 1,
+                'is_there_a_quantity' => $price['isThereAQuantity'] == 1,
+                'date_from' => ($price['isBasedOnDays'] == 1) ? $price['dateFrom'] : null,
+                'date_to' => ($price['isBasedOnDays'] == 1) ? $price['dateTo'] : null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
         }
-    }
 
-    private function handlePrices(Facility $facility, $request)
-    {
-        $priceType = $request->input('price_type', 'individual');
-
-        if (is_array($request->prices)) {
-            $pricesData = [];
-            foreach ($request->prices as $price) {
-                $pricesData[] = [
-                    'facility_id' => $facility->id,
-                    'name' => $price['name'],
-                    'value' => $price['value'],
-                    'price_type' => $price['price_type'] ?? 'individual',
-                    'is_based_on_days' => filter_var($price['is_based_on_days'], FILTER_VALIDATE_BOOLEAN),
-                    'is_there_a_quantity' => $price['is_there_a_quantity'] ?? false,
-                    'date_from' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_from'] : null,
-                    'date_to' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_to'] : null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            }
+        if (count($pricesData)) {
             Price::insert($pricesData);
         }
     }
     public function edit($id)
     {
-        $facility =  Facility::find($id);
-        $facilityAttributes = FacilityAttribute::where('facility_id', $facility->id)->first();
-        // dd($facilityAttributes);
-        $prices = Price::where('facility_id', $facility->id)->get();
-        // dd($prices);
-        return view('admin.facilities.edit', compact('facility',  'facilityAttributes', 'prices'));
+        $facility = Facility::with(['facilityAttributes', 'prices'])->findOrFail($id);
+        return view('admin.facilities.edit', [
+            'facility' => $facility,
+            'facilityAttributes' => $facility->facilityAttributes,
+            'prices' => $facility->prices,
+        ]);
     }
 
-    public function update(FacilityUpdateRequest $request, $id)
-    {
-        $request->validate([
-            'name' => 'required|unique:facilities,name,' . $id,
-        ]);
 
+    public function update(Request $request, $id)
+    {
         $facility = Facility::findOrFail($id);
-        $request->merge([
-            'sex_restriction' => $request->sex_restriction ?? '',
-            'name' => $request->name ?: $facility->name,
-        ]);
-
-        $this->save($facility, $request);
-        $this->handleImage($facility, $request);
-        $facility->save();
-
-        // Get facility attributes from request
-        $facilityAttributes = $request->input('facility_attributes', []);
-
-        if ($request->facility_type === 'whole_place') {
-            // Delete attributes only if facility_type has changed to "whole_place"
-            FacilityAttribute::where('facility_id', $facility->id)->delete();
-
-            FacilityAttribute::create([
-                'facility_id' => $facility->id,
-                'room_name' => null,
-                'capacity' => null,
-                'whole_capacity' => $request->whole_capacity,
-                'sex_restriction' => null,
-            ]);
-        } elseif ($request->facility_type === 'individual' || $request->facility_type === 'both') {
-            // Only delete existing attributes if new ones are being provided
-            if (!empty($facilityAttributes)) {
-                FacilityAttribute::where('facility_id', $facility->id)->delete();
-
-                $validAttributes = array_filter($facilityAttributes, function ($attr) {
-                    return isset($attr['room_name']) && isset($attr['capacity']);
-                });
-
-                $this->createFacilityAttributes($facility, $validAttributes);
-            }
-        }
-
-        if (is_array($request->prices)) {
-            $pricesData = [];
-            foreach ($request->prices as $price) {
-                $pricesData[] = [
-                    'facility_id' => $facility->id,
-                    'name' => $price['name'],
-                    'value' => $price['value'],
-                    'price_type' => $price['price_type'],
-                    'is_based_on_days' => filter_var($price['is_based_on_days'], FILTER_VALIDATE_BOOLEAN),
-                    // 'is_there_a_quantity' => filter_var($price['is_there_a_quantity'], FILTER_VALIDATE_BOOLEAN),
-                    'is_there_a_quantity' => $price['is_there_a_quantity'] ?? false,
-                    'date_from' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_from'] : null,
-                    'date_to' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_to'] : null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            }
-
-            Price::where('facility_id', $facility->id)->delete();
-            Price::insert($pricesData);
-        }
-
-        return response()->json(['message' => 'Facility updated successfully!', 'action' => 'update']);
-    }
-
-
-    private function createFacilityAttributes($facility, $facilityAttributes)
-    {
-        foreach ($facilityAttributes as $attribute) {
-            if (isset($attribute['room_name']) && isset($attribute['capacity'])) {
-                // Explicitly handle sex_restriction
-                $sexRestriction = isset($attribute['sex_restriction']) &&
-                    in_array($attribute['sex_restriction'], ['male', 'female'])
-                    ? $attribute['sex_restriction']
-                    : null;
-
-                if (isset($attribute['room_name'], $attribute['capacity'])) {
-                    FacilityAttribute::create([
-                        'facility_id' => $facility->id,
-                        'room_name' => $attribute['room_name'],
-                        'capacity' => $attribute['capacity'],
-                        'sex_restriction' => $sexRestriction,
+        $facilityAttributes = collect(json_decode($request->facility_attributes_json, true) ?? [])
+            ->filter(function ($attr) {
+                return !empty($attr['room_name']) || !empty($attr['capacity']) || !empty($attr['sex_restriction']) || !empty($attr['whole_capacity']);
+            })
+            ->values()
+            ->all();
+        $prices = json_decode($request->prices_json, true) ?? [];
+        if ($request->facility_type === 'both') {
+            if (!$request->filled('facility_attributes_json') && !$request->filled('whole_capacity')) {
+                if ($facility->facilityAttributes()->whereNotNull('capacity')->exists()) {
+                    $request->merge([
+                        'facility_attributes_json' => json_encode($facility->facilityAttributes()->get()->toArray())
+                    ]);
+                    $facilityAttributes = json_decode($request->facility_attributes_json, true);
+                } elseif ($facility->facilityAttributes()->whereNotNull('whole_capacity')->exists()) {
+                    $request->merge([
+                        'whole_capacity' => $facility->facilityAttributes()->value('whole_capacity')
                     ]);
                 }
             }
         }
-    }
+        $rules = [
+            'name' => [
+                'required',
+                Rule::unique('facilities', 'name')->ignore($facility->id),
+            ],
 
-    private function save(Facility $facility, Request $request)
-    {
-        $facility->name = $request->name;
-        $facility->facility_type = $request->facility_type;
-        $facility->description = $request->description;
-        $facility->created_by = Auth::id();
-        $facility->slug = Str::slug($request->name);
-        $facility->rules_and_regulations = $request->rules_and_regulations;
-    }
+            'facility_type' => 'required|string|in:individual,whole_place,both',
+            'description' => 'required|string|max:2000',
+            'rules_and_regulations' => 'nullable|string|max:2000',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'images' => 'nullable|array|min:1',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'whole_capacity' => $this->facilityTypeRequiresWholeCapacity($request) ? 'required|numeric|min:1' : 'nullable',
+            'requirements' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
+            'facility_attributes_json' => 'nullable|string',
+        ];
+        $messages = [];
+        switch ($request->facility_type) {
+            case 'individual':
+                $rules['facility_attributes_json'] = 'required|string';
+                $rules['facility_attributes.*.room_name'] = 'required|string|max:255';
+                $rules['facility_attributes.*.capacity'] = 'required|numeric|min:1|max:50';
+                $rules['facility_attributes.*.sex_restriction'] = 'required|string|in:male,female';
+                $messages['facility_attributes_json.required'] = 'Facility Attributes are required for Individual Type. Each room must have a name, capacity, and sex restriction.';
+                $messages['facility_attributes.*.room_name.required'] = 'Room Name is required for Individual Type.';
+                $messages['facility_attributes.*.capacity.required'] = 'Capacity is required for Individual Type.';
+                $messages['facility_attributes.*.sex_restriction.required'] = 'Sex Restriction is required for Individual Type.';
+                break;
+            case 'whole_place':
+                $rules['whole_capacity'] = 'required|numeric|min:1';
+                $messages['whole_capacity.required'] = 'Whole Capacity is required for Whole Place Type. Please provide a valid capacity.';
+                break;
+            case 'both':
+                $hasIndividualRooms = collect($facilityAttributes)->contains(function ($a) {
+                    return !empty($a['room_name']) || !empty($a['capacity']);
+                });
 
-    private function handleImage(Facility $facility, Request $request)
-    {
-        $current_timestamp = Carbon::now()->timestamp;
+                $hasWholeCapacity = $request->filled('whole_capacity') && $request->whole_capacity > 0;
 
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = $current_timestamp . '.' . $image->extension();
-            $this->GenerateFacilityThumbnailsImage($image, $imageName);
-            $facility->image = 'facilities/' . $imageName;
+                if ($hasIndividualRooms) {
+                    // Validate individual rooms
+                    $rules['facility_attributes_json'] = 'required|string';
+                    $rules['facility_attributes.*.room_name'] = 'required|string|max:255';
+                    $rules['facility_attributes.*.capacity'] = 'required|numeric|min:1|max:50';
+                    $rules['facility_attributes.*.sex_restriction'] = 'required|string|in:male,female';
+                    $messages['facility_attributes.*.room_name.required'] = 'Room Name is required when providing individual rooms.';
+                    $messages['facility_attributes.*.capacity.required'] = 'Capacity is required when providing individual rooms.';
+                    $messages['facility_attributes.*.sex_restriction.required'] = 'Sex Restriction is required when providing individual rooms.';
+                } elseif ($hasWholeCapacity) {
+                    // Validate whole capacity
+                    $rules['whole_capacity'] = 'required|numeric|min:1';
+                    $messages['whole_capacity.required'] = 'Whole Capacity is required when not providing individual rooms.';
+                } else {
+                    // Neither provided - require at least one
+                    $rules['facility_attributes_json'] = 'required_without:whole_capacity|string';
+                    $rules['whole_capacity'] = 'required_without:facility_attributes_json|numeric|min:1';
+                    $messages['facility_attributes_json.required_without'] = 'Either individual rooms or whole capacity must be provided for Both Type.';
+                    $messages['whole_capacity.required_without'] = 'Either individual rooms or whole capacity must be provided for Both Type.';
+                }
+                break;
         }
-        $gallery_arr = [];
-        $gallery_images = "";
-        $counter = 1;
+        $validated = $request->validate($rules, $messages);
 
-        if ($request->hasFile('images')) {
-            $allowedFileExtension = ['jpg', 'png', 'jpeg'];
-            $files = $request->file('images');
+        try {
+            $current_timestamp = now()->timestamp;
 
-            foreach ($files as $file) {
-                $gextension = $file->getClientOriginalExtension();
-                $gcheck = in_array($gextension, $allowedFileExtension);
+            if ($request->hasFile('requirements')) {
+                $requirementsFile = $request->file('requirements');
+                $requirementsFileName = $current_timestamp . '-requirements.' . $requirementsFile->getClientOriginalExtension();
 
-                if ($gcheck) {
-                    $gFileName = $current_timestamp . "." . $counter . '.' . $gextension;
+                $destinationPath = storage_path('app/public/facilities/');
+                if (!File::exists($destinationPath)) {
+                    File::makeDirectory($destinationPath, 0755, true);
+                }
+                $requirementsFile->move($destinationPath, $requirementsFileName);
+                $facility->requirements = $requirementsFileName;
+            }
+
+            $facility->update([
+                'name' => $validated['name'],
+                'slug' => Str::slug($validated['name']),
+                'facility_type' => $validated['facility_type'],
+                'description' => $validated['description'],
+                'rules_and_regulations' => $validated['rules_and_regulations'],
+                'created_by' => Auth::id(),
+            ]);
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imageName = $current_timestamp . '.' . $image->extension();
+                $this->GenerateFacilityThumbnailsImage($image, $imageName);
+                $facility->image = 'facilities/' . $imageName;
+            }
+
+            $gallery_arr = [];
+            $counter = 1;
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $ext = $file->getClientOriginalExtension();
+                    $gFileName = $current_timestamp . "." . $counter . '.' . $ext;
                     $this->GenerateFacilityThumbnailsImage($file, $gFileName);
-                    array_push($gallery_arr, 'facilities/' . $gFileName);
+                    $gallery_arr[] = 'facilities/' . $gFileName;
                     $counter++;
                 }
+                $facility->images = implode(',', $gallery_arr);
             }
-            $gallery_images = implode(',', $gallery_arr);
-            $facility->images = $gallery_images;
+
+            $facility->save();
+
+            $this->syncFacilityAttributes($facility, $facilityAttributes);
+            $this->syncPrices($facility, $prices);
+
+            return redirect()->route('admin.facilities.index')->with('success', 'Facility updated successfully.');
+        } catch (\Exception $e) {
+            dd($e->getMessage(), $e->getTraceAsString());
+        }
+    }
+    private function syncFacilityAttributes(Facility $facility, array $facilityAttributes)
+    {
+        $existingIds = $facility->facilityAttributes()->pluck('id')->toArray();
+        $processedIds = [];
+
+        foreach ($facilityAttributes as $attr) {
+            if (!empty($attr['id'])) {
+                $model = FacilityAttribute::find($attr['id']);
+                if ($model) {
+                    $model->update([
+                        'room_name' => $attr['room_name'] ?? null,
+                        'capacity' => $attr['capacity'] ?? null,
+                        'sex_restriction' => $attr['sex_restriction'] ?? null,
+                        'whole_capacity' => $attr['whole_capacity'] ?? null,
+                    ]);
+                    $processedIds[] = $model->id;
+                }
+            } else {
+                $new = FacilityAttribute::create([
+                    'facility_id' => $facility->id,
+                    'room_name' => $attr['room_name'] ?? null,
+                    'capacity' => $attr['capacity'] ?? null,
+                    'sex_restriction' => $attr['sex_restriction'] ?? null,
+                    'whole_capacity' => $attr['whole_capacity'] ?? null,
+                ]);
+                $processedIds[] = $new->id;
+            }
         }
 
-        if ($request->hasFile('requirements')) {
-            $requirementsFile = $request->file('requirements');
-            $requirementsFileName = $current_timestamp . '-requirements.' . $requirementsFile->getClientOriginalExtension();
-            if (Facility::where('requirements', $requirementsFileName)->exists()) {
-                return redirect()->back()->withErrors(['requirements' => 'The Requirements file name already exists. Please rename the file.'])->withInput();
-            }
-            $destinationPath = storage_path('app/public/facilities/');
-            if (!File::exists($destinationPath)) {
-                File::makeDirectory($destinationPath, 0755, true);
-            }
-            $requirementsFile->move($destinationPath, $requirementsFileName);
-            $facility->requirements = $requirementsFileName;
-        }
-        $facility->save();
+        // Delete removed attributes
+        $toDelete = array_diff($existingIds, $processedIds);
+        FacilityAttribute::destroy($toDelete);
     }
+
+    private function syncPrices(Facility $facility, array $prices)
+    {
+        $existingIds = $facility->prices()->pluck('id')->toArray();
+        $processedIds = [];
+
+        foreach ($prices as $price) {
+            $data = [
+                'name' => $price['priceName'] ?? $price['name'],
+                'value' => $price['priceValue'] ?? $price['value'],
+                'price_type' => $price['priceType'] ?? 'individual',
+                'is_based_on_days' => $price['isBasedOnDays'] == 1,
+                'is_there_a_quantity' => $price['isThereAQuantity'] == 1,
+                'date_from' => $price['isBasedOnDays'] == 1 ? $price['dateFrom'] : null,
+                'date_to' => $price['isBasedOnDays'] == 1 ? $price['dateTo'] : null,
+            ];
+
+            if (!empty($price['id'])) {
+                $model = Price::find($price['id']);
+                if ($model) {
+                    $model->update($data);
+                    $processedIds[] = $model->id;
+                }
+            } else {
+                $new = $facility->prices()->create($data);
+                $processedIds[] = $new->id;
+            }
+        }
+
+        // Delete removed prices
+        $toDelete = array_diff($existingIds, $processedIds);
+        Price::destroy($toDelete);
+    }
+
+    // public function update(FacilityUpdateRequest $request, $id)
+    // {
+    //     $request->validate([
+    //         'name' => 'required|unique:facilities,name,' . $id,
+    //     ]);
+
+    //     $facility = Facility::findOrFail($id);
+    //     $request->merge([
+    //         'sex_restriction' => $request->sex_restriction ?? '',
+    //         'name' => $request->name ?: $facility->name,
+    //     ]);
+
+    //     $this->save($facility, $request);
+    //     $this->handleImage($facility, $request);
+    //     $facility->save();
+
+    //     // Get facility attributes from request
+    //     $facilityAttributes = $request->input('facility_attributes', []);
+
+    //     if ($request->facility_type === 'whole_place') {
+    //         // Delete attributes only if facility_type has changed to "whole_place"
+    //         FacilityAttribute::where('facility_id', $facility->id)->delete();
+
+    //         FacilityAttribute::create([
+    //             'facility_id' => $facility->id,
+    //             'room_name' => null,
+    //             'capacity' => null,
+    //             'whole_capacity' => $request->whole_capacity,
+    //             'sex_restriction' => null,
+    //         ]);
+    //     } elseif ($request->facility_type === 'individual' || $request->facility_type === 'both') {
+    //         // Only delete existing attributes if new ones are being provided
+    //         if (!empty($facilityAttributes)) {
+    //             FacilityAttribute::where('facility_id', $facility->id)->delete();
+
+    //             $validAttributes = array_filter($facilityAttributes, function ($attr) {
+    //                 return isset($attr['room_name']) && isset($attr['capacity']);
+    //             });
+
+    //             $this->createFacilityAttributes($facility, $validAttributes);
+    //         }
+    //     }
+
+    //     if (is_array($request->prices)) {
+    //         $pricesData = [];
+    //         foreach ($request->prices as $price) {
+    //             $pricesData[] = [
+    //                 'facility_id' => $facility->id,
+    //                 'name' => $price['name'],
+    //                 'value' => $price['value'],
+    //                 'price_type' => $price['price_type'],
+    //                 'is_based_on_days' => filter_var($price['is_based_on_days'], FILTER_VALIDATE_BOOLEAN),
+    //                 // 'is_there_a_quantity' => filter_var($price['is_there_a_quantity'], FILTER_VALIDATE_BOOLEAN),
+    //                 'is_there_a_quantity' => $price['is_there_a_quantity'] ?? false,
+    //                 'date_from' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_from'] : null,
+    //                 'date_to' => isset($price['is_based_on_days']) && $price['is_based_on_days'] ? $price['date_to'] : null,
+    //                 'created_at' => now(),
+    //                 'updated_at' => now(),
+    //             ];
+    //         }
+
+    //         Price::where('facility_id', $facility->id)->delete();
+    //         Price::insert($pricesData);
+    //     }
+
+    //     return response()->json(['message' => 'Facility updated successfully!', 'action' => 'update']);
+    // }
+
+
+    // private function createFacilityAttributes($facility, $facilityAttributes)
+    // {
+    //     foreach ($facilityAttributes as $attribute) {
+    //         if (isset($attribute['room_name']) && isset($attribute['capacity'])) {
+    //             // Explicitly handle sex_restriction
+    //             $sexRestriction = isset($attribute['sex_restriction']) &&
+    //                 in_array($attribute['sex_restriction'], ['male', 'female'])
+    //                 ? $attribute['sex_restriction']
+    //                 : null;
+
+    //             if (isset($attribute['room_name'], $attribute['capacity'])) {
+    //                 FacilityAttribute::create([
+    //                     'facility_id' => $facility->id,
+    //                     'room_name' => $attribute['room_name'],
+    //                     'capacity' => $attribute['capacity'],
+    //                     'sex_restriction' => $sexRestriction,
+    //                 ]);
+    //             }
+    //         }
+    //     }
+    // }
+
+    // private function save(Facility $facility, Request $request)
+    // {
+    //     $facility->name = $request->name;
+    //     $facility->facility_type = $request->facility_type;
+    //     $facility->description = $request->description;
+    //     $facility->created_by = Auth::id();
+    //     $facility->slug = Str::slug($request->name);
+    //     $facility->rules_and_regulations = $request->rules_and_regulations;
+    // }
+
+    // private function handleImage(Facility $facility, Request $request)
+    // {
+    //     $current_timestamp = Carbon::now()->timestamp;
+
+    //     if ($request->hasFile('image')) {
+    //         $image = $request->file('image');
+    //         $imageName = $current_timestamp . '.' . $image->extension();
+    //         $this->GenerateFacilityThumbnailsImage($image, $imageName);
+    //         $facility->image = 'facilities/' . $imageName;
+    //     }
+    //     $gallery_arr = [];
+    //     $gallery_images = "";
+    //     $counter = 1;
+
+    //     if ($request->hasFile('images')) {
+    //         $allowedFileExtension = ['jpg', 'png', 'jpeg'];
+    //         $files = $request->file('images');
+
+    //         foreach ($files as $file) {
+    //             $gextension = $file->getClientOriginalExtension();
+    //             $gcheck = in_array($gextension, $allowedFileExtension);
+
+    //             if ($gcheck) {
+    //                 $gFileName = $current_timestamp . "." . $counter . '.' . $gextension;
+    //                 $this->GenerateFacilityThumbnailsImage($file, $gFileName);
+    //                 array_push($gallery_arr, 'facilities/' . $gFileName);
+    //                 $counter++;
+    //             }
+    //         }
+    //         $gallery_images = implode(',', $gallery_arr);
+    //         $facility->images = $gallery_images;
+    //     }
+
+    //     if ($request->hasFile('requirements')) {
+    //         $requirementsFile = $request->file('requirements');
+    //         $requirementsFileName = $current_timestamp . '-requirements.' . $requirementsFile->getClientOriginalExtension();
+    //         if (Facility::where('requirements', $requirementsFileName)->exists()) {
+    //             return redirect()->back()->withErrors(['requirements' => 'The Requirements file name already exists. Please rename the file.'])->withInput();
+    //         }
+    //         $destinationPath = storage_path('app/public/facilities/');
+    //         if (!File::exists($destinationPath)) {
+    //             File::makeDirectory($destinationPath, 0755, true);
+    //         }
+    //         $requirementsFile->move($destinationPath, $requirementsFileName);
+    //         $facility->requirements = $requirementsFileName;
+    //     }
+    //     $facility->save();
+    // }
 
     // archive codes
     public function archivedFacilities($id)

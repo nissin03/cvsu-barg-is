@@ -7,8 +7,6 @@
             border-collapse: collapse;
         }
 
-
-
         th,
         td {
             padding: 15px 30px;
@@ -166,8 +164,8 @@
                             class="icon-archive"></i> Archived Facility</a>
                 </div>
                 <div class="table-responsive">
-                    @if (Session::has('status'))
-                        <p class="alert alert-success">{{ Session::get('status') }}</p>
+                    @if (Session::has('success'))
+                        <p class="alert alert-success">{{ Session::get('success') }}</p>
                     @endif
                     <table class="table table-striped table-bordered">
                         <thead>

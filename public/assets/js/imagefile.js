@@ -1,107 +1,113 @@
 $(function () {
+    function cleanupObjectURLs() {
+        const previews = document.querySelectorAll(
+            ".gallery-preview img, #imgpreview img, #requirementsPreview img"
+        );
+        previews.forEach((img) => {
+            if (img.src.startsWith("blob:")) {
+                URL.revokeObjectURL(img.src);
+            }
+        });
+    }
+
+    function updateFileInputUI(inputId, previewId, showPreview = true) {
+        const input = $(`#${inputId}`);
+        const preview = $(`#${previewId}`);
+
+        if (showPreview) {
+            preview.show();
+            preview.find(".remove-upload").show();
+            $(`#upload-${inputId}`).hide();
+        } else {
+            preview.hide();
+            preview.find(".remove-upload").hide();
+            $(`#upload-${inputId}`).show();
+        }
+    }
+
     $("#myFile").on("change", function (e) {
         const [file] = this.files;
+
         if (file) {
-            $("#imgpreview img").attr("src", URL.createObjectURL(file));
-            $("#imgpreview").show();
-            $("#imgpreview .remove-upload").show();
-            $("#upload-file").hide();
+            const objectUrl = URL.createObjectURL(file);
+            $("#imgpreview img").attr("src", objectUrl);
+            updateFileInputUI("myFile", "imgpreview", true);
         }
     });
 
     $("#gFile").on("change", function (e) {
-        const gphotos = this.files;
-        const maxImages = 3;
-        const existingImages = $("#gallery-container .gitems").length;
-        const totalImages = existingImages + gphotos.length;
-
-        // Check if adding these images would exceed the limit
-        if (totalImages > maxImages) {
-            showAlert(
-                `You can only upload up to ${maxImages} gallery images.`,
-                "danger"
-            );
-            this.value = ""; // Clear the file input
-            return false;
-        }
+        const files = Array.from(this.files);
 
         $("#galUpload").removeClass("up-load");
-        let imgCount = 0;
 
-        $.each(gphotos, function (key, val) {
-            imgCount++;
-            const fileName = val.name;
-            $("#galUpload").before(
-                '<div class="item gitems">' +
-                    '<img src="' +
-                    URL.createObjectURL(val) +
-                    '" style="width: 100px; height: 100px; object-fit: cover;" />' +
-                    '<p class="file-name-overlay">' +
-                    fileName +
-                    "</p>" +
-                    '<button type="button" class="remove-upload show" onclick="removeGalleryImage(this, \'gFile\')">Remove</button>' +
-                    "</div>"
-            );
+        files.forEach((file) => {
+            const objectUrl = URL.createObjectURL(file);
+            const galleryItem = $('<div class="item gitems">')
+                .append(
+                    $("<img>", {
+                        src: objectUrl,
+                        style: "width: 100px; height: 100px; object-fit: cover;",
+                    })
+                )
+                .append($('<p class="file-name-overlay">').text(file.name))
+                .append(
+                    $("<button>", {
+                        type: "button",
+                        class: "remove-upload show",
+                        text: "Remove",
+                        click: function () {
+                            removeGalleryImage(this, "gFile");
+                        },
+                    })
+                );
+
+            $("#galUpload").before(galleryItem);
         });
 
-        // Update upload button visibility and styling
-        if (totalImages >= maxImages) {
-            $("#galUpload").hide();
-        } else {
-            $("#galUpload").show();
-            if (imgCount > 2) {
-                $("#galUpload").css("flex-basis", "100%");
-            } else {
-                $("#galUpload").css("flex-basis", "auto");
-            }
+        $("#galUpload").show();
+    });
+
+    $("#requirementsFile").on("change", function (e) {
+        const [file] = this.files;
+
+        if (file) {
+            const objectUrl = URL.createObjectURL(file);
+            $("#requirementsPreview img").attr("src", objectUrl);
+            $("#requirementsPreview").show();
+            $("#requirementsPreview .file-name-overlay").remove();
+            $("#requirementsPreview").append(
+                $('<p class="file-name-overlay">').text(file.name)
+            );
+            $("#requirementsPreview .remove-upload").show();
         }
+    });
+
+    $(".form-add-rental").on("submit reset", function () {
+        cleanupObjectURLs();
     });
 });
 
-// Requirements preview with file name inside the picture area
-$("#requirementsFile").on("change", function (e) {
-    const [file] = this.files;
-    if (file) {
-        $("#requirementsPreview img").attr("src", URL.createObjectURL(file));
-        $("#requirementsPreview").show();
-        $("#requirementsPreview .file-name-overlay").remove(); // Remove existing overlays
-        $("#requirementsPreview").append(
-            '<p class="file-name-overlay">' + file.name + "</p>"
-        ); // Display the file name inside the picture area
-        $("#requirementsPreview .remove-upload").show(); // Show the remove button
-    }
-});
-
-// Function to remove gallery image
 function removeGalleryImage(button, inputId) {
+    const img = $(button).parent(".gitems").find("img");
+    if (img.length && img[0].src.startsWith("blob:")) {
+        URL.revokeObjectURL(img[0].src);
+    }
     $(button).parent(".gitems").remove();
-    const remainingImages = $("#gallery-container .gitems").length;
 
-    // Show upload button if we have less than 3 images
-    if (remainingImages < 3) {
-        $("#galUpload").show();
-        // Reset file input to allow selecting new images
-        $("#" + inputId).val("");
+    const remainingImages = $("#gallery-container .gitems").length;
+    if (remainingImages === 0) {
+        $(`#${inputId}`).val("");
+        $("#galUpload").addClass("up-load");
     }
 }
 
-// Show alert function
-function showAlert(message, type) {
-    const alertBox = $("<div>", {
-        class: `alert alert-${type} alert-dismissible fade show`,
-        role: "alert",
-        text: message,
-    }).append(
-        $("<button>", {
-            type: "button",
-            class: "btn-close",
-            "data-bs-dismiss": "alert",
-            "aria-label": "Close",
-        })
-    );
-
-    $("#alertContainer").html(alertBox);
-    alertBox.alert();
+function removeUpload(previewId, inputId) {
+    $("#" + previewId).hide();
+    $("#" + previewId + " img").attr("src", "/images/upload/upload-1.png");
+    $("#" + previewId + " p.file-name-overlay").remove();
+    $("#" + previewId + " .remove-upload").hide();
+    $("#" + inputId).val("");
+    $("#upload-" + inputId).show();
 }
 
 $(function () {
@@ -110,7 +116,6 @@ $(function () {
         setup: function (editor) {
             editor.on("change", function (e) {
                 tinyMCE.triggerSave();
-                var sd_data = $("#short_description").val();
             });
         },
         height: 300,
@@ -141,9 +146,3 @@ $(function () {
             "removeformat | help",
     });
 });
-
-function StringToSlug(Text) {
-    return Text.toLowerCase()
-        .replace(/[^\w ]+/g, "")
-        .replace(/ +/g, "-");
-}
