@@ -229,8 +229,6 @@
                                     <tr>
                                         <th class="text-center">Product ID</th>
                                         <th class="text-center">Name</th>
-                                        {{-- <th class="text-center">Category</th>
-                                        <th class="text-center">Price</th> --}}
                                         <th class="text-center">Stock Status</th>
                                         <th class="text-center">Current Stock</th>
                                     </tr>

@@ -61,8 +61,7 @@ $(document).ready(function () {
 
     function disablePastDates($form) {
         const today = new Date().toISOString().split("T")[0];
-        $form.find(".date-from").attr("min", today);
-        $form.find(".date-to").attr("min", today);
+        $form.find(".date-from, .date-to").attr("min", today);
     }
 
     $(document).on("change", ".date-from", function () {
@@ -75,7 +74,7 @@ $(document).ready(function () {
 
     // Create the price form card
     function createPriceFormCard() {
-        return `
+        const $card = $(`
         <div class="price-form-card mb-3 p-3 border rounded">
             <div class="row g-3">
                 <div class="col-md-6">
@@ -101,7 +100,11 @@ $(document).ready(function () {
                     <i class="fa-solid fa-trash"></i>
                 </button>
             </div>
-        </div>`;
+        </div>`);
+
+        // Initialize date fields with min date
+        disablePastDates($card);
+        return $card;
     }
 
     // Toggle the display of date fields based on global 'is-based-on-days' checkbox
@@ -109,7 +112,9 @@ $(document).ready(function () {
         const $dateFields = $(".date-fields");
         if ($(this).prop("checked")) {
             $dateFields.show();
-            disablePastDates($("#globalPriceSettings")); // Disable past dates when shown
+            // Ensure global date fields have min date set
+            const today = new Date().toISOString().split("T")[0];
+            $("#globalDateFrom, #globalDateTo").attr("min", today);
         } else {
             $dateFields.hide();
         }
@@ -120,6 +125,8 @@ $(document).ready(function () {
         const $dateTo = $("#globalDateTo");
         if ($(this).val()) {
             $dateTo.val($(this).val());
+            // Ensure date-to cannot be before date-from
+            $dateTo.attr("min", $(this).val());
         }
     });
 
