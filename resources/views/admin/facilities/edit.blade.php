@@ -294,15 +294,41 @@
                     @enderror
                 </div>
                 <div class="wg-box" id="roomBox">
-                    {{-- @if (optional($facility->facilityAttributes->first())->whole_capacity) --}}
+                    <div id="selectionBothType">
+                        <div class="d-flex align-items-center justify-items-center gap-5">
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="radio" id="hasWholeCapacity" name="facility_selection_both"
+                                    value="whole"
+                                    {{ old('facility_selection_both') === 'whole' || $facility->facility_selection_both === 'whole' ? 'checked' : '' }}>
+                                <label for="hasWholeCapacity">Has Whole Capacity?</label>
+
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="radio" id="hasRooms" name="facility_selection_both" value="room"
+                                    {{ old('facility_selection_both') === 'room' || $facility->facility_selection_both === 'room' ? 'checked' : '' }}>
+                                <label for="hasRooms">Has a Room(s)?</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="selectionContent" class="mt-4">
+                        <div class="card" style="border: none;">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <img src="{{ asset('images/choose.svg') }}" alt="no selection"
+                                        class="img-fluid custom-icon"
+                                        style="width: 100px; height: 100px; fill: oklch(55.1% 0.027 264.364);">
+                                    <h5 class="card-title">Choose one option
+                                        to show the content</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <fieldset class="name" id="hideRoomBox" style="display: none;">
                         <div class="body-title mb-10">Whole Place Capacity</div>
                         <input type="number" min="0" id="roomCapacityWhole" name="whole_capacity"
                             placeholder="Enter whole capacity"
                             value="{{ old('whole_capacity', $facility->facilityAttributes->whereNotNull('whole_capacity')->first()->whole_capacity ?? '') }}">
                     </fieldset>
-
-                    {{-- @endif --}}
 
                     @if (optional($facility->facilityAttributes->first())->whole_capacity === null)
                         <div id="dormitoryRooms" class="mt-4">

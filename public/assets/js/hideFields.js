@@ -8,13 +8,41 @@ $(function () {
     const $isThereAQuantity = $("#isThereAQuantityContainer");
     const $priceTypeIndividual = $(".price-type option[value='individual']");
     const $priceTypeWhole = $(".price-type option[value='whole']");
-
+    const $selectionBothType = $("#selectionBothType");
     function initializeForm() {
-        if (!$rentalType.val()) {
+        const selectedType = $rentalType.val();
+
+        if (!selectedType) {
             $roomBox.hide();
             $priceBox.hide();
+            $selectionBothType.hide();
+            return;
+        }
+
+        // Pre-show relevant parts if facility_type already set
+        handleFacilityTypeChange(selectedType);
+
+        // If "both", re-trigger the mode selection (whole/room)
+        if (selectedType === "both") {
+            const checkedMode = $(
+                'input[name="facility_selection_both"]:checked'
+            ).val();
+            if (checkedMode === "whole") {
+                $("#selectionContent").hide();
+                handleBothTypeWholeCapacity();
+            } else if (checkedMode === "room") {
+                $("#selectionContent").hide();
+                handleBothTypeRooms();
+            } else {
+                $("#selectionContent").show();
+            }
         }
     }
+    console.log("Rental type on load:", $rentalType.val());
+    console.log(
+        "Checked facility_selection_both:",
+        $('input[name="facility_selection_both"]:checked').val()
+    );
 
     $rentalType.on("change", function () {
         const selectedType = $(this).val();
@@ -82,24 +110,31 @@ $(function () {
     }
 
     function handleBothType() {
-        Swal.fire({
-            title: "Choose Facility Configuration",
-            text: "How would you like to configure this facility?",
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonText: "Add Room(s)",
-            cancelButtonText: "Add Whole Capacity",
-            reverseButtons: true,
-            allowOutsideClick: true,
-            allowEscapeKey: true,
-            allowEnterKey: false,
-        }).then((result) => {
-            if (result.isConfirmed) {
-                handleBothTypeRooms();
-            } else if (result.dismiss === Swal.DismissReason.cancel) {
+        $selectionBothType.show();
+        $hideRoomBox.hide();
+        $dormitoryRooms.hide();
+
+        const oldMode = $(
+            'input[name="facility_selection_both"]:checked'
+        ).val();
+        if (oldMode === "whole") {
+            $("#selectionContent").hide();
+            handleBothTypeWholeCapacity();
+        } else if (oldMode === "room") {
+            $("#selectionContent").hide();
+            handleBothTypeRooms();
+        } else {
+            $("#selectionContent").show();
+        }
+
+        $('input[name="facility_selection_both"]').on("change", function () {
+            $("#selectionContent").hide();
+
+            const selected = $(this).val();
+            if (selected === "whole") {
                 handleBothTypeWholeCapacity();
             } else {
-                resetToDefaultState();
+                handleBothTypeRooms();
             }
         });
     }
