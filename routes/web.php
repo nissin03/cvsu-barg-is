@@ -52,7 +52,7 @@ Route::delete('/cart/clear', [CartController::class, 'empty_cart'])->name('cart.
 
 Route::get('/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
 Route::post('/place-an-order', [CartController::class, 'place_an_order'])->name('cart.place.an.order');
-
+Route::get('/api/slots', [CartController::class, 'getAvailableTimeSlots'])->name('slots.available');
 
 
 Route::get('/order-confirmation', [CartController::class, 'order_confirmation'])->name('cart.order.confirmation');

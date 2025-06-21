@@ -43,6 +43,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <script defer src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <link rel="stylesheet" href="{{ asset('./font-awesome-6-pro-main/css/all.min.css') }}">
+    {{-- <link rel="stylesheet" href="{{ asset('css/facilities.css') }}"> --}}
     <link rel="stylesheet" href="{{ asset('owl_carousel/owl.theme.default.css') }}">
     <link rel="stylesheet" href="{{ asset('owl_carousel/owl.carousel.css') }}">
     <link rel="stylesheet" href="{{ asset('css/plugins/swiper.min.css') }}">
