@@ -170,8 +170,7 @@
                     <div class="cart-total">
                         <h5>Cart Total</h5>
                         <p>Total: <span id="total">{{ Cart::total() }}</span></p>
-                        <button class="btn btn-black w-100"
-                            onclick="window.location.href='{{ route('cart.checkout') }}'">Process Checkout</button>
+                        <a href="{{ route('cart.checkout') }}" class="btn btn-black w-100">Process Checkout</a>
                     </div>
                 </div>
             </div>

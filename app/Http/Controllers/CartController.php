@@ -294,13 +294,18 @@ class CartController extends Controller
         if (!Auth::check()) {
             return redirect()->route('login');
         }
+        $user = Auth::user();
 
+        if ($this->isProfileIncomplete($user)) {
+            return redirect()->route('user.profile', ['swal' => 1])->with([
+                'message' => 'Please complete your profile to proceed with the checkout.'
+            ]);
+        }
         $total = (float) str_replace(',', '', Cart::instance('cart')->total());
         if ($total <= 0) {
             return redirect()->route('cart.index')
                 ->with('warning', 'Your cart is empty. Add items before checking out.');
         }
-        $user = Auth::user();
         $timeSlots = $this->timeSlots();
 
         return view('checkout', compact('user', 'timeSlots'));
@@ -323,19 +328,9 @@ class CartController extends Controller
     public function place_an_order(Request $request)
     {
         $user = Auth::user();
-
-        // Check if profile information is complete based on role
-        if ($this->isProfileIncomplete($user)) {
-            return redirect()->route('user.profile')->with([
-                'incomplete_profile' => true,
-                'message' => 'Please complete your profile to proceed with the checkout.'
-            ]);
-        }
-
         $this->setTotalAmount();
 
         try {
-            // Create a new Order
             $order = new Order();
             $order->user_id = $user->id;
             $order->subtotal = Session::get('checkout')['subtotal'];
@@ -398,7 +393,6 @@ class CartController extends Controller
                 $orderItem->save();
             }
 
-            // Create a new Transaction
             $transaction = new Transaction();
             $transaction->user_id = $user->id;
             $transaction->order_id = $order->id;
@@ -411,9 +405,7 @@ class CartController extends Controller
 
             return redirect()->route('cart.order.confirmation');
         } catch (\Exception $e) {
-
-            \Log::error('Order placement failed: ' . $e->getMessage());
-
+            Log::error('Order placement failed: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to place order. ' . $e->getMessage());
         }
     }

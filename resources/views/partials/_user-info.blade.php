@@ -3,7 +3,7 @@
         <div class="user-info-section" style="max-width: 100%; overflow-x: hidden;">
             <div class="section-header">
                 <i class="fas fa-user-graduate"></i>
-                <span>Student Information</span>
+                <span>User Details</span>
             </div>
             <div class="my-account__coursedept-list">
                 <div class="my-account__coursedept-list-item">
