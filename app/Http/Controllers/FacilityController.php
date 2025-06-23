@@ -61,7 +61,6 @@ class FacilityController extends Controller
             'name' => 'required|unique:facilities,name',
             'slug' => 'nullable|unique:facilities,slug',
             'facility_type' => 'required|string|in:individual,whole_place,both',
-            'facility_selection_both' => 'nullable|in:whole,room',
             'description' => 'required|string|max:2000',
             'rules_and_regulations' => 'required|string|max:2000',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
@@ -88,6 +87,7 @@ class FacilityController extends Controller
                 $messages['whole_capacity.required'] = 'Whole Capacity is required for Whole Place Type. Please provide a valid capacity.';
                 break;
             case 'both':
+                $rules['facility_selection_both'] = 'required|in:whole,room';
                 if (!empty($facilityAttributes) && isset($facilityAttributes[0]['capacity'])) {
                     // Individual rooms are provided
                     $rules['facility_attributes_json'] = 'required|string';
@@ -137,12 +137,14 @@ class FacilityController extends Controller
                 'name' => $validated['name'],
                 'slug' => Str::slug($validated['name']),
                 'facility_type' => $validated['facility_type'],
-                'facility_selection_both' => $validated['facility_selection_both'],
                 'description' => $validated['description'],
                 'rules_and_regulations' => $validated['rules_and_regulations'],
                 'created_by' => Auth::id(),
                 'requirements' => $requirementsFileName,
             ];
+            if ($validated['facility_type'] === 'both') {
+                $data['facility_selection_both'] = $validated['facility_selection_both'];
+            }
 
             $facility = Facility::create($data);
             $this->handleFacilityAttributes($facility, $facilityAttributes);
@@ -310,7 +312,6 @@ class FacilityController extends Controller
         $rules = [
             'name' => ['required', Rule::unique('facilities', 'name')->ignore($facility->id),],
             'facility_type' => 'required|string|in:individual,whole_place,both',
-            'facility_selection_both' => 'nullable|in:whole,room',
             'description' => 'required|string|max:2000',
             'rules_and_regulations' => 'nullable|string|max:2000',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
@@ -337,6 +338,7 @@ class FacilityController extends Controller
                 $messages['whole_capacity.required'] = 'Whole Capacity is required for Whole Place Type. Please provide a valid capacity.';
                 break;
             case 'both':
+                $rules['facility_selection_both'] = 'required|in:whole,room';
                 $hasIndividualRooms = collect($facilityAttributes)->contains(function ($a) {
                     return !empty($a['room_name']) || !empty($a['capacity']);
                 });
@@ -377,15 +379,19 @@ class FacilityController extends Controller
                 $facility->requirements = $requirementsFileName;
             }
 
-            $facility->update([
+            $updateData = [
                 'name' => $validated['name'],
                 'slug' => Str::slug($validated['name']),
                 'facility_type' => $validated['facility_type'],
-                'facility_selection_both' => $validated['facility_selection_both'],
                 'description' => $validated['description'],
                 'rules_and_regulations' => $validated['rules_and_regulations'],
                 'created_by' => Auth::id(),
-            ]);
+            ];
+            if ($validated['facility_type'] === 'both') {
+                $updateData['facility_selection_both'] = $validated['facility_selection_both'];
+            }
+            $facility->update($updateData);
+
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $imageName = $current_timestamp . '.' . $image->extension();
