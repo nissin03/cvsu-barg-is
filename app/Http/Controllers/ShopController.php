@@ -10,15 +10,15 @@ use App\Models\ProductAttribute;
 
 class ShopController extends Controller
 {
- public function index(Request $request)
+    public function index(Request $request)
     {
         $o_column = "";
         $o_order = "";
         $order = $request->query('order') ? $request->query('order') : -1;
         $f_categories = $request->query('categories');
-        $sex = $request->query('sex', ''); // Add sex parameter with default empty string
-        
-        switch($order) {
+        $sex = $request->query('sex', '');
+
+        switch ($order) {
             case 1:
                 $o_column = 'created_at';
                 $o_order = 'DESC';
@@ -40,23 +40,25 @@ class ShopController extends Controller
                 $o_order = 'DESC';
                 break;
         }
-        
+
         $categories = Category::with('children')->whereNull('parent_id')->orderBy('name', 'ASC')->get();
-        
-        // Modify query to include gender filter
+
+
         $products = Product::where(function ($query) use ($f_categories) {
             $query->whereIn('category_id', explode(',', $f_categories))->orWhereRaw("'" . $f_categories . "'=''"); // include all if no category is selected
         })
-        ->when($sex !== '', function ($query) use ($sex) {
-            return $query->where('sex', $sex);
-        })
-        ->orderBy($o_column, $o_order)
-        ->paginate(9);
-        
-        // Check if the request is an AJAX request
+            ->when($sex !== '', function ($query) use ($sex) {
+                return $query->where('sex', $sex);
+            })
+            ->orderBy($o_column, $o_order)
+            ->paginate(9);
+
+
         if ($request->ajax()) {
-            return view('partials.products-list', compact('products')); 
+            $view = view('partials.products-list', compact('products'))->render();
+            return response()->json(['html' => $view]);
         }
+
 
         return view('shop', compact('products', 'order', 'categories', 'f_categories', 'sex'));
     }
@@ -67,7 +69,7 @@ class ShopController extends Controller
         $product = Product::with(['attributeValues.productAttribute'])
             ->where('slug', $product_slug)
             ->firstOrFail();
-     
+
         $groupedAttributes = [];
         $uniqueAttributes = [];
         foreach ($product->attributeValues as $value) {
@@ -77,7 +79,7 @@ class ShopController extends Controller
                 $uniqueAttributes[$attributeId] = $value->productAttribute;
             }
         }
-        
+
         $rproducts = Product::where('slug', '<>', $product_slug)->take(8)->get();
         return view('details', compact('product', 'rproducts', 'groupedAttributes', 'uniqueAttributes'));
     }

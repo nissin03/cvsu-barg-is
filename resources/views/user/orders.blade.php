@@ -59,27 +59,6 @@
         }
     </style>
 
-    @php
-        $user = auth()->user();
-        $currentRoute = request()->route()->getName();
-
-        // Determine the base home route based on user type
-        $homeRoute = match ($user->utype ?? 'guest') {
-            'USR' => route('user.index'),
-            'ADM' => route('admin.index'),
-            default => route('home.index'),
-        };
-
-        $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
-
-        // Handle Shop pages
-        if ($currentRoute === 'user.orders') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'User Orders'];
-        } else {
-            $breadcrumbs[] = ['url' => null, 'label' => ucwords(str_replace('.', ' ', $currentRoute))];
-        }
-    @endphp
-
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
 

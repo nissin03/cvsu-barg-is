@@ -2,22 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\FacilityUpdateRequest;
 use App\Models\Price;
 use App\Models\Facility;
-use App\Models\Availability;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use App\Models\FacilityAttribute;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
-use App\Http\Requests\FacilityRequest;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 use Intervention\Image\Laravel\Facades\Image;
 
 class FacilityController extends Controller
@@ -55,9 +49,6 @@ class FacilityController extends Controller
     }
     public function create()
     {
-        // $rooms = FacilityAttribute::all();
-        // $prices = Price::all();
-        // return view('admin.facilities.create', compact('rooms', 'prices'));
         return view('admin.facilities.create');
     }
 
