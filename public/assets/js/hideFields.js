@@ -19,7 +19,6 @@ $(function () {
             return;
         }
 
-        // Pre-show relevant parts if facility_type already set
         handleFacilityTypeChange(selectedType);
 
         // If "both", re-trigger the mode selection (whole/room)
@@ -55,6 +54,8 @@ $(function () {
         if (!facilityType) {
             $roomBox.hide();
             $priceBox.hide();
+            $selectionBothType.hide();
+            $("#selectionContent").hide();
             return;
         }
 
@@ -85,6 +86,9 @@ $(function () {
         $priceTypeIndividual.show();
         $priceTypeWhole.hide();
 
+        $("#selectionContent").hide();
+        $selectionBothType.hide();
+
         $(".price-type").each(function () {
             if ($(this).val() === "whole") {
                 $(this).val("");
@@ -101,6 +105,9 @@ $(function () {
 
         $priceTypeIndividual.hide();
         $priceTypeWhole.show();
+
+        $("#selectionContent").hide();
+        $selectionBothType.hide();
 
         $(".price-type").each(function () {
             if ($(this).val() === "individual") {
