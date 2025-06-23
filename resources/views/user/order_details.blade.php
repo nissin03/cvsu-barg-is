@@ -132,6 +132,7 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+
             .order-summary .left-section,
             .order-summary .right-section {
                 width: 100%;
@@ -140,32 +141,9 @@
         }
     </style>
 
-    @php
-        $user = auth()->user();
-        $currentRoute = request()->route()->getName();
 
-        // Determine the base home route based on user type
-        $homeRoute = match ($user->utype ?? 'guest') {
-            'USR' => route('user.index'),
-            'ADM' => route('admin.index'),
-            default => route('home.index'),
-        };
-
-        $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
-
-        // Handle Shop pages
-        if ($currentRoute === 'user.orders') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'User Orders'];
-        } else {
-            $breadcrumbs[] = ['url' => null, 'label' => ucwords(str_replace('.', ' ', $currentRoute))];
-        }
-    @endphp
-
-    <x-header 
-        backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" 
-        title="{{ last($breadcrumbs)['label'] }}"
-        :breadcrumbs="$breadcrumbs" 
-    />
+    <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
+        :breadcrumbs="$breadcrumbs" />
 
     <main class="container pt-90">
         <section class="my-account">
@@ -176,9 +154,9 @@
                     <!-- Left Section -->
                     <div class="left-section">
                         <div class="order-status">
-                            @if($order->status == "pickedup")
+                            @if ($order->status == 'pickedup')
                                 <span class="badge badge-success">Picked Up</span>
-                            @elseif($order->status == "canceled")
+                            @elseif($order->status == 'canceled')
                                 <span class="badge badge-danger">Canceled</span>
                             @else
                                 <span class="badge badge-warning">Ordered</span>
@@ -187,9 +165,15 @@
                         <div class="order-info">
                             <p><strong>Order No:</strong> {{ $order->id }}</p>
                             <p><strong>Order Date:</strong> {{ $order->created_at->format('M d, Y H:i') }}</p>
-                            <p><strong>Reservation Date:</strong> {{ $order->reservation_date ? \Carbon\Carbon::parse($order->reservation_date)->format('M d, Y') : 'N/A' }}</p>
-                            <p><strong>Picked Up Date:</strong> {{ $order->picked_up_date ? \Carbon\Carbon::parse($order->picked_up_date)->format('M d, Y') : 'N/A' }}</p>
-                            <p><strong>Canceled Date:</strong> {{ $order->canceled_date ? \Carbon\Carbon::parse($order->canceled_date)->format('M d, Y') : 'N/A' }}</p>
+                            <p><strong>Reservation Date:</strong>
+                                {{ $order->reservation_date ? \Carbon\Carbon::parse($order->reservation_date)->format('M d, Y') : 'N/A' }}
+                            </p>
+                            <p><strong>Picked Up Date:</strong>
+                                {{ $order->picked_up_date ? \Carbon\Carbon::parse($order->picked_up_date)->format('M d, Y') : 'N/A' }}
+                            </p>
+                            <p><strong>Canceled Date:</strong>
+                                {{ $order->canceled_date ? \Carbon\Carbon::parse($order->canceled_date)->format('M d, Y') : 'N/A' }}
+                            </p>
                         </div>
                     </div>
 
@@ -231,7 +215,8 @@
                             <tr>
                                 <td>
                                     <div class="product-info">
-                                        <img src="{{ asset('uploads/products/thumbnails/' . $item->product->image) }}" alt="{{ $item->product->name }}">
+                                        <img src="{{ asset('uploads/products/thumbnails/' . $item->product->image) }}"
+                                            alt="{{ $item->product->name }}">
                                         <div class="product-details">
                                             <p class="py-2">{{ $item->product->name }}</p>
                                         </div>
@@ -262,8 +247,8 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('shop.product.details', ['product_slug' => $item->product->slug]) }}" 
-                                       class="btn btn-custom btn-outline-primary" target="_blank">
+                                    <a href="{{ route('shop.product.details', ['product_slug' => $item->product->slug]) }}"
+                                        class="btn btn-custom btn-outline-primary" target="_blank">
                                         View
                                     </a>
                                 </td>
@@ -291,7 +276,7 @@
                     <tr>
                         <th>Status</th>
                         <td>
-                            @if($transaction->status == 'approved')
+                            @if ($transaction->status == 'approved')
                                 <span class="badge badge-success">Approved</span>
                             @elseif ($transaction->status == 'decline')
                                 <span class="badge badge-danger">Declined</span>
@@ -317,25 +302,25 @@
 @endsection
 
 @push('scripts')
-<script>
-    $(function() {
-        $('.cancel-order').on('click', function(e) {
-            e.preventDefault();
-            var form = $(this).closest('form');
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You want to cancel this order?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, cancel it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
+    <script>
+        $(function() {
+            $('.cancel-order').on('click', function(e) {
+                e.preventDefault();
+                var form = $(this).closest('form');
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You want to cancel this order?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, cancel it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
             });
         });
-    });
-</script>
+    </script>
 @endpush

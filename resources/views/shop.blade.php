@@ -10,164 +10,152 @@
         .product-info {
             cursor: pointer;
         }
-    </style>
-    @php
-        $user = auth()->user();
-        $currentRoute = request()->route()->getName();
 
-        // Determine the base home route based on user type
-        $homeRoute = match ($user->utype ?? 'guest') {
-            'USR' => route('user.index'),
-            'ADM' => route('admin.index'),
-            default => route('home.index'),
-        };
-
-        // Initialize breadcrumbs array with the Home link
-        $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
-
-        // Handle Shop pages
-        if ($currentRoute === 'shop.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'Shop'];
-        } elseif ($currentRoute === 'shop.product.details') {
-            $breadcrumbs[] = ['url' => route('shop.index'), 'label' => 'Shop'];
-            $breadcrumbs[] = ['url' => null, 'label' => 'Product Details'];
-
-            // Handle About page
-        } elseif ($currentRoute === 'about.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'About Us'];
-
-            // Handle Contact page
-        } elseif ($currentRoute === 'contact.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'Contact Us'];
-
-            // Add more pages as needed
-        } else {
-            $breadcrumbs[] = ['url' => null, 'label' => ucwords(str_replace('.', ' ', $currentRoute))];
+        .filter-sidebar {
+            position: relative;
         }
-    @endphp
+
+        .sticky-sidebar {
+            position: sticky;
+            top: 100px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .scrollable-section {
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 6px;
+        }
+    </style>
 
 
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
 
+
     <main class="container my-5">
         <div class="row">
             <!-- Sidebar -->
             <div class="col-md-3">
-                <div class="filter-sidebar bg-white rounded-3 p-4">
-                    <div class="accordion" id="categories-list">
-                        <div class="accordion-item border-0 mb-3 rounded-3">
-                            <h5 class="accordion-header" id="accordion-heading-1">
-                                <button class="accordion-button py-3 border-0 text-uppercase fw-bold text-primary"
-                                    type="button" data-bs-toggle="collapse" data-bs-target="#accordion-filter-1"
-                                    aria-expanded="true" aria-controls="accordion-filter-1">
-                                    Product Categories
-                                </button>
-                            </h5>
-                            <div id="accordion-filter-1" class="accordion-collapse collapse show"
-                                aria-labelledby="accordion-heading-1" data-bs-parent="#categories-list">
-                                <div class="accordion-body p-0">
-                                    <ul class="list-unstyled mb-0">
-                                        @foreach ($categories as $category)
-                                            <li
-                                                class="d-flex justify-content-between align-items-center py-2 border-bottom hover-bg-light">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="categories"
-                                                        value="{{ $category->id }}"
-                                                        @if (in_array($category->id, explode(',', $f_categories))) checked @endif
-                                                        aria-label="Select {{ $category->name }}">
-                                                    <label class="form-check-label ms-2">
-                                                        {{ $category->name }}
-                                                    </label>
-                                                </div>
-                                                <span
-                                                    class="badge bg-secondary rounded-pill">{{ $category->products->count() }}</span>
-                                            </li>
-
-                                            @if ($category->children->isNotEmpty())
-                                                @foreach ($category->children as $subcategory)
+                <div class="filter-sidebar bg-white rounded-3 p-4 shadow-sm">
+                    <div class="sticky-sidebar">
+                        <h5 class="accordion-header" id="accordion-heading-1">
+                            <button class="accordion-button py-3 border-0 text-uppercase fw-bold text-primary" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#accordion-filter-1" aria-expanded="true"
+                                aria-controls="accordion-filter-1">
+                                Product Categories
+                            </button>
+                        </h5>
+                        <div class="scrollable-section">
+                            <div class="accordion" id="categories-list">
+                                <div class="accordion-item border-0 mb-3 rounded-3">
+                                    <div id="accordion-filter-1" class="accordion-collapse collapse show"
+                                        aria-labelledby="accordion-heading-1" data-bs-parent="#categories-list">
+                                        <div class="accordion-body p-0">
+                                            <ul class="list-unstyled mb-0">
+                                                @foreach ($categories as $category)
                                                     <li
-                                                        class="d-flex justify-content-between align-items-center py-2 border-bottom hover-bg-light ms-4">
+                                                        class="d-flex justify-content-between align-items-center py-2 border-bottom hover-bg-light">
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox"
-                                                                name="categories" value="{{ $subcategory->id }}"
-                                                                @if (in_array($subcategory->id, explode(',', $f_categories))) checked @endif
-                                                                aria-label="Select {{ $subcategory->name }}">
+                                                                name="categories" value="{{ $category->id }}"
+                                                                @if (in_array($category->id, explode(',', $f_categories))) checked @endif
+                                                                aria-label="Select {{ $category->name }}">
                                                             <label class="form-check-label ms-2">
-                                                                &nbsp;&rarrhk; {{ $subcategory->name }}
+                                                                {{ $category->name }}
                                                             </label>
                                                         </div>
                                                         <span
-                                                            class="badge bg-secondary rounded-pill">{{ $subcategory->products->count() }}</span>
+                                                            class="badge bg-secondary rounded-pill">{{ $category->products->count() }}</span>
                                                     </li>
-                                                @endforeach
-                                            @endif
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Gender Accordion -->
-                    <div class="accordion" id="gender-filter">
-                        <div class="accordion-item border-0 mb-3 rounded-3">
-                            <h5 class="accordion-header" id="accordion-gender-heading">
-                                <button class="accordion-button py-3 border-0 text-uppercase fw-bold text-primary"
-                                    type="button" data-bs-toggle="collapse" data-bs-target="#accordion-gender-filter"
-                                    aria-expanded="true" aria-controls="accordion-gender-filter">
-                                    Product Type
-                                </button>
-                            </h5>
-                            <div id="accordion-gender-filter" class="accordion-collapse collapse show"
-                                aria-labelledby="accordion-gender-heading" data-bs-parent="#gender-filter">
-                                <div class="accordion-body p-0">
-                                    <ul class="list-unstyled mb-0">
-                                        <li
-                                            class="d-flex justify-content-between align-items-center py-2 border-bottom hover-bg-light">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="sex" id="sex-all"
-                                                    value="" {{ request('sex') == '' ? 'checked' : '' }}
-                                                    aria-label="Select all genders">
-                                                <label class="form-check-label ms-2" for="sex-all">
-                                                    All
-                                                </label>
-                                            </div>
-                                        </li>
-                                        <li
-                                            class="d-flex justify-content-between align-items-center py-2 border-bottom hover-bg-light">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="sex" id="sex-male"
-                                                    value="male" {{ request('sex') == 'male' ? 'checked' : '' }}
-                                                    aria-label="Select male">
-                                                <label class="form-check-label ms-2" for="sex-male">
-                                                    Men
-                                                </label>
-                                            </div>
-                                        </li>
-                                        <li
-                                            class="d-flex justify-content-between align-items-center py-2 border-bottom hover-bg-light">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="sex"
-                                                    id="sex-female" value="female"
-                                                    {{ request('sex') == 'female' ? 'checked' : '' }}
-                                                    aria-label="Select female">
-                                                <label class="form-check-label ms-2" for="sex-female">
-                                                    Women
-                                                </label>
-                                            </div>
-                                        </li>
-                                    </ul>
+                                                    @if ($category->children->isNotEmpty())
+                                                        @foreach ($category->children as $subcategory)
+                                                            <li
+                                                                class="d-flex justify-content-between align-items-center py-2 border-bottom hover-bg-light ms-4">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        name="categories" value="{{ $subcategory->id }}"
+                                                                        @if (in_array($subcategory->id, explode(',', $f_categories))) checked @endif
+                                                                        aria-label="Select {{ $subcategory->name }}">
+                                                                    <label class="form-check-label ms-2">
+                                                                        &nbsp;&rarrhk; {{ $subcategory->name }}
+                                                                    </label>
+                                                                </div>
+                                                                <span
+                                                                    class="badge bg-secondary rounded-pill">{{ $subcategory->products->count() }}</span>
+                                                            </li>
+                                                        @endforeach
+                                                    @endif
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Gender Accordion -->
+                        <div class="accordion" id="gender-filter">
+                            <div class="accordion-item border-0 mb-3 rounded-3">
+                                <h5 class="accordion-header" id="accordion-gender-heading">
+                                    <button class="accordion-button py-3 border-0 text-uppercase fw-bold text-primary"
+                                        type="button" data-bs-toggle="collapse" data-bs-target="#accordion-gender-filter"
+                                        aria-expanded="true" aria-controls="accordion-gender-filter">
+                                        Product Type
+                                    </button>
+                                </h5>
+                                <div id="accordion-gender-filter" class="accordion-collapse collapse show"
+                                    aria-labelledby="accordion-gender-heading" data-bs-parent="#gender-filter">
+                                    <div class="accordion-body p-0">
+                                        <ul class="list-unstyled mb-0">
+                                            <li
+                                                class="d-flex justify-content-between align-items-center py-2 border-bottom hover-bg-light">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="sex"
+                                                        id="sex-all" value=""
+                                                        {{ request('sex') == '' ? 'checked' : '' }}
+                                                        aria-label="Select all genders">
+                                                    <label class="form-check-label ms-2" for="sex-all">
+                                                        All
+                                                    </label>
+                                                </div>
+                                            </li>
+                                            <li
+                                                class="d-flex justify-content-between align-items-center py-2 border-bottom hover-bg-light">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="sex"
+                                                        id="sex-male" value="male"
+                                                        {{ request('sex') == 'male' ? 'checked' : '' }}
+                                                        aria-label="Select male">
+                                                    <label class="form-check-label ms-2" for="sex-male">
+                                                        Men
+                                                    </label>
+                                                </div>
+                                            </li>
+                                            <li
+                                                class="d-flex justify-content-between align-items-center py-2 border-bottom hover-bg-light">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="sex"
+                                                        id="sex-female" value="female"
+                                                        {{ request('sex') == 'female' ? 'checked' : '' }}
+                                                        aria-label="Select female">
+                                                    <label class="form-check-label ms-2" for="sex-female">
+                                                        Women
+                                                    </label>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
-
-
-
-
             <!-- Main Content -->
             <div class="col-md-9">
                 <div class="d-flex justify-content-end mb-4">
@@ -182,11 +170,10 @@
                         </select>
                     </div>
                 </div>
-                <div id="product-list">
-                    @include('partials.products-list', ['products' => $products])
-                </div>
-                <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination mt-3">
-                    {{ $products->withQueryString()->links('pagination::bootstrap-5') }}
+                <div id="product-container">
+                    <div id="product-list">
+                        @include('partials.products-list', ['products' => $products])
+                    </div>
                 </div>
             </div>
         </div>
@@ -231,14 +218,32 @@
             @endif
         });
 
+        $(document).on('click', '.pagination a', function(e) {
+            e.preventDefault();
+            const url = $(this).attr('href');
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function(response) {
+                    $('#product-container').html(response.html);
+                },
+                error: function(xhr) {
+                    console.error('Pagination error:', xhr);
+                    toastr.error('Failed to load paginated products.');
+                }
+            });
+        });
+
         $(function() {
             function submitFilterForm() {
+                $('input[name="page"]').val(1);
                 $.ajax({
-                    url: $('#frmfilter').attr('action'), // Get the form action URL
-                    type: 'GET', // Use GET method
-                    data: $('#frmfilter').serialize(), // Serialize the form data
-                    success: function(data) {
-                        $('#product-list').html(data); // Update the product list
+                    url: $('#frmfilter').attr('action'),
+                    type: 'GET',
+                    data: $('#frmfilter').serialize(),
+                    dataType: 'json',
+                    success: function(response) {
+                        $('#product-container').html(response.html);
                     },
                     error: function(xhr) {
                         console.error("An error occurred: " + xhr.status + " " + xhr.statusText);
@@ -250,7 +255,7 @@
             // Handle order change
             $("#orderBy").on("change", function() {
                 $('#order').val($(this).val());
-                submitFilterForm(); // Submit via AJAX
+                submitFilterForm();
             });
 
             // Handle categories change
@@ -259,14 +264,14 @@
                 $("input[name='categories']:checked").each(function() {
                     categories.push($(this).val());
                 });
-                $("#hdnCategories").val(categories.join(",")); // Update hidden input
-                submitFilterForm(); // Submit via AJAX
+                $("#hdnCategories").val(categories.join(","));
+                submitFilterForm();
             });
 
             // Handle gender radio button change
             $("input[name='sex']").on("change", function() {
                 $("#hdnSex").val($(this).val());
-                submitFilterForm(); // Submit via AJAX
+                submitFilterForm();
             });
         });
     </script>

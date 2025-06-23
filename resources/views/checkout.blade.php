@@ -1,264 +1,231 @@
 @extends('layouts.app')
 @section('content')
+    <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
+        :breadcrumbs="$breadcrumbs" />
+    <div class="container py-5">
 
-@php
-    $user = auth()->user();
-    $currentRoute = request()->route()->getName();
+        <div class="reservation-card">
+            <div class="card-header text-center">
+                <i class="fas fa-calendar-check reservation-icon"></i>
+                <h2 class="reservation-title">Reservation Details</h2>
+            </div>
 
-    // Determine the base home route based on user type
-    $homeRoute = match ($user->utype ?? 'guest') {
-        'USR' => route('user.index'),
-        'DIR' => route('director.index'),
-        'ADM' => route('admin.index'),
-        default => route('home.index'),
-    };
+            <form name="checkout-form" action="{{ route('cart.place.an.order') }}" method="POST">
+                @csrf
+                <input type="hidden" name="reservation_date" id="reservation_date">
+                <input type="hidden" name="time_slot" id="time_slot">
 
-    // Initialize breadcrumbs array with the Home link
-    $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
+                <div class="row">
+                    <div class="col-md-7 col-lg-7">
+                        <div class="calendar-section mb-4">
+                            <div class="section-header">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Select Date & Time</span>
+                            </div>
+                            <div id='calendar'></div>
+                            <div class="selected-info">
+                                <i class="fas fa-info-circle"></i>
+                                <span class="text-muted">Selected: <strong id="displayDate"></strong> at <strong
+                                        id="displayTime"></strong></span>
+                            </div>
+                        </div>
 
-    // Handle different pages
-    if ($currentRoute === 'shop.index') {
-        $breadcrumbs[] = ['url' => null, 'label' => 'Shop'];
-    } elseif ($currentRoute === 'cart.checkout') {
-        $breadcrumbs[] = ['url' => null, 'label' => 'Checkout Page'];
-    } else {
-        $breadcrumbs[] = ['url' => null, 'label' => ucwords(str_replace('.', ' ', $currentRoute))];
-    }
-@endphp
-
-<x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}" :breadcrumbs="$breadcrumbs" />
-<div class="container py-5 d-flex justify-content-center align-items-center" style="min-height: 100vh;">
-    <div class="col-md-8 col-lg-6">
-        <h2 class="text-center mb-4">Reservation Details</h2>
-        <form name="checkout-form" action="{{ route('cart.place.an.order') }}" method="POST">
-            @csrf
-
-            @if ($user->role === 'student')
-                <div class="mb-4">
-                    <div class="my-account__coursedept-list">
-                        <div class="my-account__coursedept-list-item">
-                            <div class="my-account__coursedept-list__detail">
-                                <div class="mb-3">
-                                    <p><strong>Full Name:</strong> {{ $user->name }}</p>
-                                    <p><strong>Phone Number:</strong> {{ $user->phone_number }}</p>
-                                    <p><strong>Year Level:</strong> {{ $user->year_level }}</p>
-                                    <p><strong>Department:</strong> {{ $user->department }}</p>
-                                    <p><strong>Course:</strong> {{ $user->course }}</p>
-                                    <p><strong>Email:</strong> {{ $user->email }}</p>
+                        <div id="timeSlotContainer" class="d-none">
+                            <div class="d-flex justify-content-center mt-3 d-none" id="slotDisplay">
+                                <div class="slots-indicator">
+                                    <i class="fas fa-users"></i>
+                                    <span>Available Slots: <span id="selectedSlots"
+                                            class="text-success fw-bold">50</span></span>
+                                </div>
+                            </div>
+                            <div class="time-slots-container">
+                                <div class="d-flex flex-wrap justify-content-center gap-2 mb-2">
+                                    @foreach ($timeSlots as $time)
+                                        <button class="btn btn-sm time-btn" type="button" data-time="{{ $time }}">
+                                            <i class="fas fa-clock"></i>
+                                            {{ $time }}
+                                        </button>
+                                    @endforeach
                                 </div>
                             </div>
                         </div>
+
+                        <button type="submit" class="btn reservation-btn w-100" id="placeReservationBtn" disabled>
+                            <i class="fas fa-check-circle"></i>
+                            Place Reservation
+                        </button>
                     </div>
-                </div>
-            @elseif($user->role === 'employee' || $user->role === 'non-employee')
-            <div class="mb-4">
-                <div class="my-account__coursedept-list">
-                    <div class="my-account__coursedept-list-item">
-                        <div class="my-account__coursedept-list__detail">
-                            <div class="mb-3">
-                                <p><strong>Full Name:</strong> {{ $user->name }}</p>
-                                <p><strong>Phone Number:</strong> {{ $user->phone_number }}</p>
-                                <p><strong>Email:</strong> {{ $user->email }}</p>
+                    <div class="col-md-5 col-lg-5">
+                        @include('partials._user-info', ['user' => $user])
+                        <div class="order-summary mb-4">
+                            <div class="section-header">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span>Your Order</span>
                             </div>
+                            <table class="table checkout-cart-item order-table">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <i class="fas fa-box"></i>
+                                            PRODUCT
+                                        </th>
+                                        <th class="text-end">
+                                            <i class="fa-solid fa-tag"></i>
+                                            PRICE
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (Cart::instance('cart')->content() as $item)
+                                        <tr>
+                                            <td>{{ $item->name }} x {{ $item->qty }}</td>
+                                            <td class="text-end">{{ $item->price }}</td>
+                                        </tr>
+                                    @endforeach
+                                    <tr class="total-row">
+                                        <td>
+                                            <strong>
+                                                <i class="fas fa-calculator"></i>
+                                                TOTAL
+                                            </strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong>{{ Cart::instance('cart')->total() }}</strong>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-            </div>
-            @endif
 
-            <div class="mb-3">
-                <label for="reservationDate">Reservation Date</label>
-                <input type="text" id="reservationDate" name="reservation_date" class="form-control" required>
-            </div>
 
-            <div class="mb-3">
-                <label for="timeSlot">Time Slot</label>
-                <div id="timeSlotContainer" class="form-select">
-                </div>
-                @error('time_slot')
-                    <span class="text-danger">{{ $message }}</span>
-                @enderror
-            </div>
 
-            <div class="order-summary mb-4">
-                <h3 class="text-center">YOUR ORDER</h3>
-                <table class="table checkout-cart-item">
-                    <thead>
-                        <tr>
-                            <th>PRODUCT</th>
-                            <th class="text-end">Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (Cart::instance('cart')->content() as $item)
-                            <tr>
-                                <td>{{ $item->name }} x {{ $item->qty }}</td>
-                                <td class="text-end">{{ $item->price}}</td>
-                            </tr>
-                        @endforeach
-                        <tr>
-                            <td><strong>SUBTOTAL</strong></td>
-                            <td class="text-end"><strong>{{ Cart::instance('cart')->subtotal() }}</strong></td>
-                        </tr>
-                        <tr>
-                            <td><strong>TOTAL</strong></td>
-                            <td class="text-end"><strong>{{ Cart::instance('cart')->total() }}</strong></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            </form>
+        </div>
 
-            <button type="submit" class="btn btn-warning w-100">Place Reservation</button>
-        </form>
     </div>
-</div>
-
 @endsection
 
-
 @push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-    const departmentSelect = document.getElementById('department');
-    const courseSelect = document.getElementById('course');
-    const reservationDateInput = document.getElementById('reservationDate');
-    const timeSlotContainer = document.getElementById('timeSlotContainer');
-    const phoneInput = document.getElementById('phoneNumber');
-    const submitButton = document.querySelector('button[type="submit"]');
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js'></script>
+    <script>
+        let selectedDate = null;
 
-        const courses = {
-            CEIT: ['BS Agricultural and Biosystems Engineering', 'BS Architecture', 'BS Civil Engineering', 'BS Computer Engineering', 'BS Computer Science', 'BS Electrical Engineering', 'BS Electronics Engineering', 'BS Industrial Technology Major in Automotive Technology', 'BS Industrial Technology Major in Electrical Technology', 'BS Industrial Technology Major in Electronics Technology', 'BS Information Technology'],
-            GSOLC: ['PhD in Agriculture', 'PhD in Education', 'PhD in Management', 'Master in Business Administration', 'Master in Agriculture', 'Master of Arts in Education', 'Master in Engineering', 'Master of Management', 'Master of Professional Studies', 'MS Agriculture', 'MS Biology', 'MS Food Science', 'Master in Information Technology'],
-            CAFENR: ['Bachelor of Agricultural Entrepreneurship', 'BS Agriculture', 'BS Environmental Science', 'BS Food Technology'],
-            CAS: ['BA English Language Studies', 'BA Journalism', 'BA Political Science', 'BA Applied Mathematics', 'BS Biology', 'BS Psychology', 'BS Social Work'],
-            CCJ: ['BS Criminology', 'BS Industrial Security Management'],
-            CEMDS: ['BS Accountancy', 'BS Business Management', 'BS Economics', 'BS International Studies', 'BS Office Administration'],
-            CED: ['Bachelor of Early Childhood Education', 'Bachelor of Elementary Education', 'Bachelor of Secondary Education', 'Bachelor of Special Needs Education', 'Bachelor of Technology and Livelihood Education', 'BS Hospitality Management', 'BS Tourism Management', 'Teacher Certificate Program', 'Science High School', 'Elementary Education', 'Pre-Elementary Education'],
-            CON: ['BS Medical Technology', 'BS Midwifery', 'BS Nursing', 'Diploma in Midwifery'],
-            CVMBS: ['Doctor of Veterinary Medicine']
-        };
-
-        function updateCourseOptions() {
-            const department = departmentSelect.value;
-            courseSelect.innerHTML = '<option value="" disabled selected>Select Course</option>';
-            if (courses[department]) {
-                courses[department].forEach(function(course) {
-                    const option = document.createElement('option');
-                    option.value = course;
-                    option.textContent = course;
-                    courseSelect.appendChild(option);
-                });
+        function dateClick(info) {
+            const clickedDate = info.date;
+            const day = clickedDate.getDay();
+            if (day < 1 || day > 4) {
+                return;
             }
-        }
 
-        if (departmentSelect) {
-            departmentSelect.addEventListener('change', updateCourseOptions);
-        }
-
-        if (phoneInput) {
-            phoneInput.addEventListener('input', function() {
-                this.value = this.value.replace(/[^0-9]/g, '');
-                if (this.value.length > 10) {
-                    this.value = this.value.slice(0, 10);
-                }
-                if (this.value.length > 0 && this.value[0] !== '9') {
-                    this.value = '9' + this.value.slice(1);
-                }
-            });
-        }
-
-    let unavailableDates = JSON.parse(localStorage.getItem('unavailableDates')) || [];
-
-    async function fetchUnavailableDates() {
-        if (unavailableDates.length === 0) {
-            const response = await fetch('/api/get-unavailable-dates');
-            const data = await response.json();
-            unavailableDates = data.map(date => moment(date).toDate());
-            localStorage.setItem('unavailableDates', JSON.stringify(unavailableDates));
-        }
-    }
-
-    function isDateAvailable(date) {
-        const dayOfWeek = date.getDay();
-        return dayOfWeek !== 0 && !unavailableDates.some(d => moment(d).isSame(date, 'day'));
-    }
-
-    fetchUnavailableDates();
-
-    const picker = new Pikaday({
-        field: reservationDateInput,
-        format: 'YYYY-MM-DD',
-        minDate: moment().toDate(),
-        maxDate: moment().add(1, 'months').toDate(),
-        onSelect: function(date) {
-            updateTimeSlots(moment(date).format('YYYY-MM-DD'));
-        },
-        disableDayFn: function(date) {
-            return !isDateAvailable(date);
-        },
-        render: function(date, cellNode) {
-            if (isDateAvailable(date)) {
-                cellNode.style.backgroundColor = 'lightgreen';
-                cellNode.style.color = 'black';
-            } else {
-                cellNode.style.backgroundColor = 'lightcoral';
-                cellNode.style.color = 'white';
+            const calendarApi = info.view.calendar;
+            if (clickedDate.getMonth() !== calendarApi.getDate().getMonth()) {
+                calendarApi.gotoDate(clickedDate);
+                return;
             }
-        }
-    });
+            const dateStr = clickedDate.toLocaleDateString('en-CA');
+            const isSameDate = selectedDate === dateStr;
+            selectedDate = dateStr;
 
-    function updateTimeSlots(selectedDate) {
-        fetch(`/api/get-time-slots?date=${selectedDate}`)
-            .then(response => response.json())
-            .then(data => {
-                timeSlotContainer.innerHTML = '';
-                const dateData = data.find(item => item.date === selectedDate);
-                if (dateData && dateData.timeSlots) {
-                    dateData.timeSlots.forEach(slot => {
-                        const radioDiv = document.createElement('div');
-                        radioDiv.className = 'form-check';
+            if (isSameDate) {
+                return;
+            }
 
-                        const radioInput = document.createElement('input');
-                        radioInput.type = 'radio';
-                        radioInput.name = 'time_slot';
-                        radioInput.id = `timeSlot_${slot.time_slot}`;
-                        radioInput.value = slot.time_slot;
-                        radioInput.className = 'form-check-input';
-                        radioInput.required = true;
-                        radioInput.disabled = slot.slots_left === 0;
+            $('#reservation_date').val(dateStr);
+            $('#timeSlotContainer').removeClass('d-none');
+            if (!isSameDate) {
+                $('#time_slot').val('');
+                $('#selectedSlots').text('0').removeClass('text-danger');
+            }
 
-                        const radioLabel = document.createElement('label');
-                        radioLabel.className = 'form-check-label';
-                        radioLabel.htmlFor = radioInput.id;
-                        radioLabel.textContent = `${slot.time_slot} - ${slot.slots_left} slots left`;
-                        radioLabel.style.color = slot.slots_left > 0 ? 'green' : 'red';
+            fetch(`/api/slots?date=${dateStr}`)
+                .then(res => res.json())
+                .then(data => {
+                    window.slotAvailability = data;
+                    const currentTime = $('#time_slot').val();
 
-                        radioDiv.appendChild(radioInput);
-                        radioDiv.appendChild(radioLabel);
-                        timeSlotContainer.appendChild(radioDiv);
+                    $('.time-btn').each(function() {
+                        const time = $(this).data('time');
+                        const available = data[time] ?? 0;
+                        const isActive = time === currentTime && available > 0;
+
+                        $(this)
+                            .prop('disabled', available === 0)
+                            .toggleClass('disabled', available === 0)
+                            .toggleClass('active', isActive)
+                            .attr('title', `${available} slots left`);
                     });
-                } else {
-                    console.error('No time slots available for the selected date');
-                }
-            })
-            .catch(error => console.error('Error fetching time slots:', error));
-    }
 
-    // Submission handling
-    submitButton.addEventListener('click', function(e) {
-        const selectedTimeSlot = document.querySelector('input[name="time_slot"]:checked');
-        if (!selectedTimeSlot) {
-            e.preventDefault();
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: 'Please select a time slot before placing the order!',
-            });
+                    const selectedSlotCount = window.slotAvailability?.[currentTime] ?? 0;
+                    $('#selectedSlots').text(selectedSlotCount).toggleClass('text-danger', selectedSlotCount === 0);
+                    $('#slotDisplay').toggleClass('d-none', selectedSlotCount === 0);
+                    toggleSubmitButton();
+                });
+            $('.fc-day').removeClass('selected-date');
+            setTimeout(() => {
+                const selector = `.fc-day[data-date="${dateStr}"]`;
+                $(selector).addClass('selected-date');
+            }, 0);
+            calendarApi.unselect();
         }
-    });
-    });
-</script>
+
+        const today = new Date();
+        const todayDate = today.toISOString().split('T')[0];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                aspectRatio: 1.5,
+                initialView: 'dayGridMonth',
+                selectable: true,
+                dateClick: dateClick,
+                validRange: {
+                    start: todayDate,
+                },
+                selectAllow: function(selectInfo) {
+                    const day = selectInfo.start.getDay();
+                    return day >= 1 && day <= 4;
+                },
+                dayCellClassNames: function(arg) {
+                    const day = arg.date.getDay();
+                    if (arg.date < today.setHours(0, 0, 0, 0) || day === 0 || day === 5 || day === 6) {
+                        return ['fc-disabled-day'];
+                    }
+                }
+            });
+            calendar.render();
+            $(document).on('click', '.time-btn', function() {
+                $('.time-btn').removeClass('active');
+                $(this).addClass('active');
+
+                const time = $(this).data('time');
+                const slots = window.slotAvailability?.[time] ?? 0;
+
+                $('#selectedSlots').text(slots).toggleClass('text-danger', slots === 0);
+                $('#slotDisplay').removeClass('d-none');
+                $('#time_slot').val(time);
+
+                const selectedISODate = $('#reservation_date').val();
+                const formattedDate = new Date(selectedISODate).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: '2-digit'
+                });
+                $('#displayDate').text(formattedDate);
+                $('#displayTime').text($('#time_slot').val() || '');
+                toggleSubmitButton();
+            });
+        });
+
+        function toggleSubmitButton() {
+            const date = $('#reservation_date').val();
+            const time = $('#time_slot').val();
+            $('#placeReservationBtn').prop('disabled', !(date && time));
+        }
+    </script>
 @endpush
 
-
-
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/checkout.css') }}">
+@endpush

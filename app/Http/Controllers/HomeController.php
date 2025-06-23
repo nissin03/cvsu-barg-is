@@ -25,15 +25,12 @@ class HomeController extends Controller
         $slides = Slide::where('status', 1)->get()->take(3);
         $categories = Category::orderBy('name')->get();
         $fproducts = Product::where('featured', 1)->get()->take(8);
-        // $frentals = Facility::with(['prices', 'facilityAttributes'])
-        // ->where('featured', 1)
-        // ->take(8)
-        // ->get();
         return view('index', compact('slides', 'categories', 'fproducts'));
     }
     public function contact()
     {
-        return view('contact');
+        $user = Auth::user();
+        return view('contact', compact('user'));
     }
     public function contact_store(Request $request)
     {

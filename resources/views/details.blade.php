@@ -1,35 +1,5 @@
 @extends('layouts.app')
 @section('content')
-    @php
-        $user = auth()->user();
-        $currentRoute = request()->route()->getName();
-
-        // Determine the base home route based on user type
-        $homeRoute = match ($user->utype ?? 'guest') {
-            'USR' => route('user.index'),
-            'DIR' => route('director.index'),
-            'ADM' => route('admin.index'),
-            default => route('home.index'),
-        };
-
-        // Initialize breadcrumbs array with the Home link
-        $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
-
-        // Handle Shop pages
-        if ($currentRoute === 'shop.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'Shop'];
-        } elseif ($currentRoute === 'shop.product.details') {
-            $breadcrumbs[] = ['url' => route('shop.index'), 'label' => 'Shop'];
-            $breadcrumbs[] = ['url' => null, 'label' => 'Product Details'];
-        } elseif ($currentRoute === 'about.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'About Us'];
-        } elseif ($currentRoute === 'contact.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'Contact Us'];
-        } else {
-            $breadcrumbs[] = ['url' => null, 'label' => ucwords(str_replace('.', ' ', $currentRoute))];
-        }
-    @endphp
-
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
 

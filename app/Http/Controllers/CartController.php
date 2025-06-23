@@ -30,7 +30,6 @@ class CartController extends Controller
         $items = Cart::instance('cart')->content();
         return view('cart', compact('items'));
     }
-
     public function add_to_cart(Request $request)
     {
         if (!Auth::check()) {
@@ -45,28 +44,22 @@ class CartController extends Controller
             return redirect()->back()->with('error', 'Product not found.');
         }
 
-        // $userSex = Auth::user()->sex;
+        $userSex = Auth::user()->sex;
 
-        // if ($product->sex !== 'all' && $product->sex !== $userSex) {
-        //     Log::warning('Product sex mismatch. Product ID: ' . $product->id . ' - User sex: ' . $userSex);
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'You cannot add this product to the cart due to sex restrictions.'
-        //     ], 403);
-        // }
+        if ($product->sex !== 'all' && $product->sex !== $userSex) {
+            Log::warning('Product sex mismatch. Product ID: ' . $product->id . ' - User sex: ' . $userSex);
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot add this product to the cart due to sex restrictions.'
+            ], 403);
+        }
 
-
-        // Check if the product has variants
         $hasVariants = $product->attributeValues()->exists();
         $variantAttributes = null;
-
-        Log::info('Product ID ' . $product->id . ' - Checking for variants: ' . ($hasVariants ? 'Has Variants' : 'No Variants'));
-
         if ($hasVariants && (!$request->has('variant_id') || empty($request->variant_id))) {
             Log::warning('Variant not selected for product with variants. Product ID: ' . $product->id);
             return redirect()->back()->withErrors(['variant_id' => 'Please select a product variant.'])->withInput();
         }
-
 
         if ($hasVariants) {
             $variant = $product->attributeValues->where('id', $request->variant_id)->first();
@@ -83,20 +76,16 @@ class CartController extends Controller
                 return redirect()->back()->with('error', 'Cannot add more than available stock for this variant.');
             }
 
-
             $variantAttributes = $variant->getAttributesArray();
             $attributeValues = array_values($variantAttributes);
             $variantNameSuffix = ' - ' . implode(', ', $attributeValues);
 
-            // Log variant details
             Log::info('Adding variant to cart', [
                 'product_id' => $product->id,
                 'variant_id' => $variant->id,
                 'variant_attributes' => $variantAttributes,
                 'price' => $variant->price
             ]);
-
-            // Add variant to the cart
             Cart::instance('cart')->add([
                 'id' => $product->id,
                 'name' => $product->name . $variantNameSuffix,
@@ -136,9 +125,6 @@ class CartController extends Controller
         Log::info('Product added to cart successfully for Product ID: ' . $product->id);
         return response()->json(['incomplete_profile' => true, 'message' => 'Your password has been successfully updated. Please complete your profile to proceed.'], 200);
     }
-
-
-
 
     public function increase_cart_quantity($rowId)
     {
@@ -230,13 +216,10 @@ class CartController extends Controller
             }
         }
 
-
         $matchingVariant = $product->attributeValues()->whereIn('id', $variantIds)->first();
-
         if ($matchingVariant) {
-            // Update the cart item with new variant details
             Cart::instance('cart')->update($rowId, [
-                'id' => $product->id, // Use only product_id
+                'id' => $product->id,
                 'name' => $product->name . ' - ' . implode(', ', $variantAttributes),
                 'price' => $matchingVariant->price,
                 'options' => array_merge($cartItem->options->toArray(), [
@@ -253,8 +236,6 @@ class CartController extends Controller
         }
     }
 
-
-
     public function remove_item($rowId)
     {
         // Check if the cart contains the rowId
@@ -265,13 +246,11 @@ class CartController extends Controller
         return redirect()->back();
     }
 
-
     public function empty_cart()
     {
         Cart::instance('cart')->destroy();
         return redirect()->back();
     }
-
 
     public function updateQuantity($action, $rowId)
     {
@@ -310,39 +289,48 @@ class CartController extends Controller
             ]);
         }
     }
-
     public function checkout()
     {
         if (!Auth::check()) {
             return redirect()->route('login');
         }
-
-        $user = Auth::user();
-        $availableDatesAndTimeSlots = $this->getAvailableDatesAndTimeSlots();
-
-        return view('checkout', compact('user', 'availableDatesAndTimeSlots'));
-    }
-
-
-
-
-    public function place_an_order(Request $request)
-    {
         $user = Auth::user();
 
-        // Check if profile information is complete based on role
         if ($this->isProfileIncomplete($user)) {
-            return redirect()->route('user.profile')->with([
-                'incomplete_profile' => true,
+            return redirect()->route('user.profile', ['swal' => 1])->with([
                 'message' => 'Please complete your profile to proceed with the checkout.'
             ]);
         }
+        $total = (float) str_replace(',', '', Cart::instance('cart')->total());
+        if ($total <= 0) {
+            return redirect()->route('cart.index')
+                ->with('warning', 'Your cart is empty. Add items before checking out.');
+        }
+        $timeSlots = $this->timeSlots();
 
-        // Proceed with the order placement if profile is complete
+        return view('checkout', compact('user', 'timeSlots'));
+    }
+
+    private function timeSlots()
+    {
+        $timeSlots = [
+            '8:00 AM',
+            '9:00 AM',
+            '10:00 AM',
+            '11:00 AM',
+            '1:00 PM',
+            '2:00 PM',
+            '3:00 PM',
+            '4:00 PM',
+        ];
+        return $timeSlots;
+    }
+    public function place_an_order(Request $request)
+    {
+        $user = Auth::user();
         $this->setTotalAmount();
 
         try {
-            // Create a new Order
             $order = new Order();
             $order->user_id = $user->id;
             $order->subtotal = Session::get('checkout')['subtotal'];
@@ -358,7 +346,6 @@ class CartController extends Controller
             $order->status = 'reserved';
             $order->save();
 
-
             foreach (Cart::instance('cart')->content() as $item) {
                 $orderItem = new OrderItem();
                 $orderItem->product_id = $item->id;
@@ -366,9 +353,7 @@ class CartController extends Controller
                 $orderItem->price = $item->price;
                 $orderItem->quantity = $item->qty;
 
-                // Handle variants (variant_id)
                 if ($item->options->has('is_variant') && $item->options->has('variant_id')) {
-                    // Reduce stock of the variant
                     $variant = ProductAttributeValue::find($item->options->variant_id);
                     if (!$variant || $variant->quantity < $item->qty) {
                         throw new \Exception('Insufficient variant stock for product: ' . $item->name);
@@ -377,10 +362,9 @@ class CartController extends Controller
                     $variant->quantity -= $item->qty;
                     $variant->stock_status = $variant->quantity <= 0 ? 'outofstock' : 'instock';
                     $variant->save();
-                    // Trigger low stock event if needed
                     if ($variant->quantity <= 20) {
-                        $product = $variant->product; // Access the related product
-                        $quantity = $variant->quantity; // Use the variant quantity
+                        $product = $variant->product;
+                        $quantity = $variant->quantity;
                         \Log::info('LowStockEvent triggered for variant', ['product' => $product, 'quantity' => $quantity]);
                         $admin = User::where('utype', 'ADM')->first();
                         if ($admin) {
@@ -409,13 +393,11 @@ class CartController extends Controller
                 $orderItem->save();
             }
 
-            // Create a new Transaction
             $transaction = new Transaction();
             $transaction->user_id = $user->id;
             $transaction->order_id = $order->id;
             $transaction->status = "pending";
             $transaction->save();
-
 
             Cart::instance('cart')->destroy();
             Session::forget('checkout');
@@ -423,9 +405,7 @@ class CartController extends Controller
 
             return redirect()->route('cart.order.confirmation');
         } catch (\Exception $e) {
-
-            \Log::error('Order placement failed: ' . $e->getMessage());
-
+            Log::error('Order placement failed: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to place order. ' . $e->getMessage());
         }
     }
@@ -462,74 +442,28 @@ class CartController extends Controller
         return redirect()->route('cart.index');
     }
 
-    public function getUnavailableDates()
+    public function getAvailableTimeSlots(Request $request)
     {
-        $apiKey = 'SPNrrilajlxqFgYvY5uYnftQ5NREo7YS';
-        $country = 'PH';
-        $year = Carbon::now()->year;
-        $url = "https://calendarific.com/api/v2/holidays?api_key=" . urlencode($apiKey) . "&country=" . urlencode($country) . "&year=" . urlencode($year);
-        $response = Http::get($url);
-        $unavailableDates = [];
-
-        if ($response->successful()) {
-            $holidays = $response->json()['response']['holidays'];
-            foreach ($holidays as $holiday) {
-                $unavailableDates[] = Carbon::parse($holiday['date']['iso'])->toDateString();
-            }
-        }
-
-        return $unavailableDates;
-    }
-
-    public function getAvailableDatesAndTimeSlots()
-    {
-        $dates = [];
-        $startDate = Carbon::today();
-        $endDate = $startDate->copy()->addMonths(3);
-        $unavailableDates = $this->getUnavailableDates();
-        $timeSlotsConfig = [
-            '08:00 am - 09:00 am' => 50,
-            '10:00 am - 11:00 am' => 50,
-            '01:00 pm - 02:00 pm' => 50,
-            '03:00 pm - 04:00 pm' => 50,
+        $date = $request->query('date');
+        $timeSlots = [
+            '8:00 AM',
+            '9:00 AM',
+            '10:00 AM',
+            '11:00 AM',
+            '1:00 PM',
+            '2:00 PM',
+            '3:00 PM',
+            '4:00 PM'
         ];
+        $slotCounts = [];
+        foreach ($timeSlots as $slot) {
+            $count = Order::where('reservation_date', $date)
+                ->where('time_slot', $slot)
+                ->where('status', 'reserved')
+                ->count();
 
-        while ($startDate->lte($endDate)) {
-            if (in_array($startDate->toDateString(), $unavailableDates)) {
-                $startDate->addDay();
-                continue;
-            }
-            $timeSlots = [];
-            foreach ($timeSlotsConfig as $startTime => $limit) {
-                $slotsLeft = $limit - $this->countReservations($startDate->toDateString(), $startTime);
-                if ($slotsLeft > 0) {
-                    $timeSlots[] = [
-                        'time_slot' => $startTime,
-                        'slots_left' => $slotsLeft,
-                    ];
-                }
-            }
-            if (!empty($timeSlots)) {
-                $dates[] = [
-                    'date' => $startDate->toDateString(),
-                    'timeSlots' => $timeSlots,
-                ];
-            }
-            $startDate->addDay();
+            $slotCounts[$slot] = max(50 - $count, 0);
         }
-
-        return response()->json($dates);
-    }
-
-    private function countReservations($date, $timeSlot)
-    {
-        return Order::where('reservation_date', $date)
-            ->where('time_slot', $timeSlot)
-            ->count();
-    }
-    private function isTimeSlotAvailable($date, $timeSlot, $limit)
-    {
-        $reservations = $this->countReservations($date, $timeSlot);
-        return $reservations < $limit;
+        return response()->json($slotCounts);
     }
 }
