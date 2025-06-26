@@ -15,6 +15,23 @@
             width: 100%;
             border-collapse: collapse;
         }
+
+        .body-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
     </style>
 
     <div class="main-content-inner">
@@ -31,214 +48,264 @@
                         <i class="icon-chevron-right"></i>
                     </li>
                     <li>
+                        <a href="{{ route('admin.orders') }}">
+                            <div class="text-tiny">Orders</div>
+                        </a>
+                    </li>
+                    <li>
+                        <i class="icon-chevron-right"></i>
+                    </li>
+                    <li>
                         <div class="text-tiny">Order Details</div>
                     </li>
                 </ul>
             </div>
 
-            <div class="wg-box">
-                <div class="flex items-center justify-between gap10 flex-wrap">
-                    <div class="wg-filter flex-grow">
-                        <h5>Order Details</h5>
-                    </div>
-                    <a class="btn btn-sm btn-danger" href="{{ route('admin.orders') }}">Back</a>
-                </div>
-                <div class="table-responsive">
-                    @if (Session::has('status'))
-                        <p class="alert alert-success">{{ Session::get('status') }}</p>
-                    @endif
-                    <table class="table table-striped table-bordered">
-                        <tbody>
-                            <tr>
-                                <th>Order No</th>
-                                <td>{{ $order->id ?? 'N/A' }}</td>
-                                <th>Phone</th>
-                                <td>{{ $order->phone_number ?? 'N/A' }}</td>
-                                <th>Year Level</th>
-                                <td>{{ $order->year_level ?? 'N/A' }}</td>
-                                <th>Department</th>
-                                <td>{{ $order->department ?? 'N/A' }}</td>
-                                <th>Course</th>
-                                <td>{{ $order->course ?? 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Reservation Date</th>
-                                <td>{{ $order->reservation_date ?? 'N/A' }}</td>
-                                <th>Time</th>
-                                <td>{{ $order->time_slot ?? 'N/A' }}</td>
-                                <th>Order Date</th>
-                                <td>{{ $order->created_at->format('M d, Y') ?? 'N/A' }}</td>
-                                <th>Picked Up Date</th>
-                                <td>{{ $order->picked_up_date ?? 'N/A' }}</td>
-                                <th>Canceled Date</th>
-                                <td>{{ $order->canceled_date ?? 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Order Status</th>
-                                <td colspan="9">
-                                    @if ($order->status == 'pickedup')
-                                        <span class="badge bg-success">Picked Up</span>
-                                    @elseif($order->status == 'canceled')
-                                        <span class="badge bg-danger">Canceled</span>
-                                    @else
-                                        <span class="badge bg-warning">Reserved</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        </tbody>
-
-                    </table>
-                </div>
-            </div>
-
-            <div class="wg-box mt-5">
-                <h5>Ordered Items</h5>
-                <div class="table-responsive">
-                    <table class="table table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th class="text-center">Price</th>
-                                <th class="text-center">Quantity</th>
-                                <th class="text-center">Category</th>
-                                <th class="text-center">Options</th>
-                                {{-- <th class="text-center">Return Status</th> --}}
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($orderItems as $item)
-                                <tr>
-                                    <td>
-                                        <div class="image">
-                                            <img src="{{ asset('uploads/products/thumbnails/' . $item->product->image) }}"
-                                                alt="{{ $item->product->name }}" class="image">
-                                        </div>
-                                        <div class="name">
-                                            <a href="{{ route('shop.product.details', ['product_slug' => $item->product->slug]) }}"
-                                                target="_blank" class="body-title-2">
-                                                {{ $item->product->name }}
-                                            </a>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">{{ $item->price }}</td>
-                                    <td class="text-center">{{ $item->quantity }}</td>
-                                    <td class="text-center">{{ $item->product->category->name }}</td>
-                                    <td class="text-center">{{ $item->option ?? 'N/A' }}</td>
-                                    {{-- <td class="text-center">{{ $item->rstatus == 0 ? 'No' : 'Yes' }}</td> --}}
-                                    <td class="text-center">
-                                        <div class="list-icon-function view-icon">
-                                            <div class="item eye">
-                                                <i class="icon-eye"></i>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                <div class="divider"></div>
-                <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-                    {{ $orderItems->links('pagination::bootstrap-5') }}
-                </div>
-            </div>
-
-            <div class="wg-box mt-5">
-                <h5>User Information</h5>
-                <div class="my-account__address-item col-md-6">
-                    <div class="my-account__address-item__detail">
-                        <p>{{ $order->name }}</p>
-                        <p>{{ $order->year_level }}</p>
-                        <p>{{ $order->department }}</p>
-                        <p>{{ $order->course }}</p>
-                        <p>{{ $order->reservation_date }}</p>
-                        <p>{{ $order->time_slot }}</p>
-                        <br>
-                        <p>Mobile: {{ $order->phone_number }}</p>
+            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
+                <div id="paymentToast" class="toast align-items-center text-bg-success border-0" role="alert"
+                    aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body" id="paymentToastBody">Payment completed successfully!</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                            aria-label="Close"></button>
                     </div>
                 </div>
             </div>
 
-            <div class="wg-box mt-5">
-                <h5>Transactions</h5>
-                <div class="table-responsive">
-                    <table class="table table-striped table-bordered table-transaction">
-                        <tbody>
-                            <tr>
-                                <th>Price</th>
-                                {{-- <td>{{ $item->price }}</td> --}}
-                                <th>Subtotal</th>
-                                <td>{{ $order->subtotal }}</td>
-                            </tr>
-                            <tr>
-                                <th>Total</th>
-                                <td>{{ $order->total }}</td>
-                                <th>Status</th>
-                                <td>
-                                    @if ($transaction)
-                                        @if ($transaction->status == 'approved')
-                                            <span class="badge bg-success">Approved</span>
-                                        @elseif ($transaction->status == 'decline')
-                                            <span class="badge bg-danger">Declined</span>
-                                        @else
-                                            <span class="badge bg-warning">Pending</span>
-                                        @endif
-                                    @else
-                                        <span class="badge bg-secondary">No Transaction</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="wg-box mt-5">
-                <h5>Update Order Status</h5>
-                <div class="table-responsive">
-                    <form action="{{ route('admin.order.status.update') }}" method="POST">
-                        @csrf
-                        @method('PUT')
+            <div class="row">
+                <div class="col-md-7">
+                    <div class="wg-box">
+                        <div class="d-flex align-items-center justify-content-between gap10 flex-wrap">
+                            <h5>User Details</h5>
+                            <div id="pdf-download-container" style="display: none;">
+                                <a id="download-receipt-btn" href="{{ route('admin.order-receipt.pdf', $order->id) }}"
+                                    target="_blank" class="btn btn-outline-danger mt-3">
+                                    <i class="fas fa-file-pdf me-1"></i> Download PDF
+                                </a>
+                            </div>
 
-                        <input type="hidden" name="order_id" value="{{ $order->id }}" />
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="select">
-                                    <select name="order_status" id="order_status" onchange="checkStatus()"
-                                        {{ session('disabled') ? 'disabled' : '' }}>
-                                        <option value="reserved" {{ $order->status == 'reserved' ? 'selected' : '' }}>
-                                            Reserve</option>
-                                        <option value="pickedup" {{ $order->status == 'pickedup' ? 'selected' : '' }}>
-                                            Picked up</option>
-                                        <option value="canceled" {{ $order->status == 'canceled' ? 'selected' : '' }}>
-                                            Canceled</option>
-                                    </select>
+                        </div>
+                        <div class="my-account__address-item">
+                            <div class="my-account__address-item__detail col-md-6">
+                                <div class="d-flex align-items-center gap-2 mb-5">
+                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Name:</p>
+                                    <p class="body-text mb-2">
+                                        {{ $order->user->name }}</p>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mb-5">
+                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Year
+                                        Level:</p>
+                                    <p class="body-text mb-2">
+                                        {{ $order->user->year_level }}</p>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mb-5">
+                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Department:
+                                    <p class="body-text mb-2">
+                                        {{ $order->user->department }}</p>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mb-5">
+                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Course:
+                                    <p class="body-text mb-2">
+                                        {{ $order->user->course }}</p>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mb-5">
+                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Mobile:
+                                    <p class="body-text mb-2">
+                                        {{ $order->user->phone_number }}</p>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <button type="submit" class="btn btn-primary tf-button w208" id="submit-button"
-                                    {{ session('disabled') ? 'disabled' : '' }}>
-                                    Update Status
-                                </button>
+                        </div>
+
+                        <h5 class="text-capitalize mt-5">Reservation Details</h5>
+                        <div class="my-account__address-item">
+                            <div class="my-account__address-item__detail">
+                                <div class="d-flex align-items-center gap-2 mb-5">
+                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">
+                                        Reservation
+                                        Date:</p>
+                                    <p class="body-text mb-2">
+                                        {{ \Carbon\Carbon::parse($order->reservation_date)->format('F d, Y') }}</p>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mb-5">
+                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Time
+                                        Slot:</p>
+                                    <p class="body-text mb-2">
+                                        {{ \Carbon\Carbon::parse($order->time_slot)->format('h:i A') }}</p>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mb-5">
+                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Status:</p>
+                                    <span
+                                        class="badge status-badge
+                                    {{ $order->status === 'canceled' ? 'bg-danger' : ($order->status === 'pickedup' ? 'bg-success' : 'bg-warning') }}">
+                                        {{ ucfirst($order->status) }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                    </form>
+                        <div class="mt-5">
+                            <form action="{{ route('admin.order.status.update') }}" method="POST">
+                                @csrf
+                                @method('PUT')
+                                @php
+                                    $isDisabled = in_array($order->status, ['canceled', 'pickedup']);
+                                @endphp
+                                <input type="hidden" name="order_id" value="{{ $order->id }}" />
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="select">
+                                            <select name="order_status" id="order_status" onchange="checkStatus()"
+                                                {{ session('disabled') ? 'disabled' : '' }}>
+                                                <option value="canceled"
+                                                    {{ $order->status === 'canceled' ? 'selected' : '' }}>
+                                                    Canceled
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <button type="submit" class="btn btn-primary tf-button w208" id="submit-button"
+                                            {{ $isDisabled ? 'disabled' : '' }}>
+                                            Update Status
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="wg-box">
+                        <h5 class="mb-2">Ordered Items</h5>
+                        @foreach ($orderItems as $item)
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <img src="{{ asset('uploads/products/thumbnails/' . $item->product->image) }}"
+                                    alt="Product Image" style="width: 60px; height: 60px; object-fit: cover;">
+                                <div>
+                                    <div class="text-capitalize body-title">{{ $item->product->name }}</div>
+                                    <div class="body-text">Price: &#8369;{{ $item->price }}</div>
+                                    <div class="body-text">Qty: {{ $item->quantity }}</div>
+                                    <div class="divider my-1"></div>
+                                    <div class="d-flex justify-content-start align-items-center gap-2 body-text mb-4">
+                                        <span>{{ number_format($item->product->price, 2) }}</span>
+                                        <span>x</span>
+                                        <span>{{ $item->quantity }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="divider my-1"></div>
+                        @endforeach
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-capitalize body-title">Total</span>
+                            <span class="text-capitalize body-title">&#8369;{{ number_format($order->total, 2) }}</span>
+                        </div>
+                        <div class="divider my-3"></div>
+
+                        <form method="POST" id="payment-form" class="gap-2"
+                            action="{{ route('admin.order.complete-payment', $order->id) }}">
+                            @csrf
+                            <div class="mb-5">
+                                <label for="amount_paid" class="body-text mb-2">Amount Paid</label>
+                                <input type="text" name="amount_paid" id="amount_paid" class="form-control"
+                                inputmode="numeric" pattern="[0-9,]*"
+                                @error('amount_paid') is-invalid @enderror {{ $isDisabled ? 'disabled' : '' }}>
+                            </div>
+                            @error('amount_paid')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+
+                            <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
+                                <span class="text-capitalize body-title">Change:</span>
+                                <span class="text-capitalize body-title"><span
+                                        id="change_display">0.00</span></span>
+                            </div>
+
+                            <div class="divider my-3"></div>
+
+                            <div class="d-flex align-items-end gap-2">
+                                <button type="submit" class="btn btn-success" {{ $isDisabled ? 'disabled' : '' }}>
+                                    Complete Payment
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
                 </div>
             </div>
         </div>
+
+
+
     </div>
 @endsection
+
 @push('scripts')
     <script>
-        function checkStatus() {
-            var status = document.getElementById('order_status').value;
-            var submitButton = document.getElementById('submit-button');
+        const amountInput = document.getElementById('amount_paid');
+        const changeDisplay = document.getElementById('change_display');
+        const total = parseFloat(@json($order->total));
 
-            if (status === 'pickedup' || status === 'canceled') {
-                submitButton.disabled = false;
-            } else {
-                submitButton.disabled = false;
+        amountInput.addEventListener('input', function(e) {
+            const numericValue = parseFloat(this.value.replace(/,/g, '')) || 0;
+            if (!isNaN(numericValue)) {
+                this.value = numericValue.toLocaleString('en-US');
             }
-        }
+            const change = numericValue - total;
+            changeDisplay.textContent = change >= 0 ? 
+                '₱' + change.toLocaleString('en-US', {minimumFractionDigits: 2}) : 
+                '₱0.00';
+            if (numericValue >= total) {
+                amountInput.classList.remove('is-invalid');
+                const feedback = amountInput.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.remove();
+                }
+            }
+        });
+
+        $('#payment-form').on('submit', function(e) {
+            e.preventDefault();
+            const form = $(this);
+            const formData = form.serialize();
+            $.ajax({
+                url: form.attr('action'),
+                method: 'POST',
+                data: formData,
+                success: function(response) {
+                    toastr.clear();
+                    toastr.success(response.message, 'Success');
+                    $('#amount_paid').prop('disabled', true);
+                    $('button[type="submit"]').prop('disabled', true);
+                    $('#pdf-download-container').show();
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) {
+                        const errors = xhr.responseJSON.errors;
+                        if (errors.amount_paid) {
+                            $('#amount_paid').addClass('is-invalid');
+                            $('#amount_paid').next('.invalid-feedback').remove();
+                            $('<div class="invalid-feedback">' + errors.amount_paid[0] + '</div>')
+                                .insertAfter('#amount_paid');
+                        }
+                    } else {
+                        toastr.clear();
+                        toastr.error('Something went wrong. Please try again.', 'Error');
+                    }
+                }
+            });
+        });
+
+
+        $('#order_status').on('change', function() {
+            const disabledStates = ['canceled', 'pickedup'];
+            const selected = $(this).val();
+            const shouldDisable = disabledStates.includes(selected);
+
+            $('#amount_paid').prop('disabled', shouldDisable);
+            $('button[type="submit"]').prop('disabled', shouldDisable);
+        });
     </script>
 @endpush

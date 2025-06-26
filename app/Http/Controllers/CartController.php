@@ -13,7 +13,6 @@ use Illuminate\Http\Request;
 use App\Events\LowStockEvent;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use App\Models\ProductAttributeValue;
@@ -33,21 +32,18 @@ class CartController extends Controller
     public function add_to_cart(Request $request)
     {
         if (!Auth::check()) {
-            Log::info('User not authenticated');
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
         $product = Product::find($request->id);
 
         if (!$product) {
-            Log::error('Product not found with ID: ' . $request->id);
             return redirect()->back()->with('error', 'Product not found.');
         }
 
         $userSex = Auth::user()->sex;
 
         if ($product->sex !== 'all' && $product->sex !== $userSex) {
-            Log::warning('Product sex mismatch. Product ID: ' . $product->id . ' - User sex: ' . $userSex);
             return response()->json([
                 'success' => false,
                 'message' => 'You cannot add this product to the cart due to sex restrictions.'
@@ -57,7 +53,6 @@ class CartController extends Controller
         $hasVariants = $product->attributeValues()->exists();
         $variantAttributes = null;
         if ($hasVariants && (!$request->has('variant_id') || empty($request->variant_id))) {
-            Log::warning('Variant not selected for product with variants. Product ID: ' . $product->id);
             return redirect()->back()->withErrors(['variant_id' => 'Please select a product variant.'])->withInput();
         }
 
@@ -80,12 +75,6 @@ class CartController extends Controller
             $attributeValues = array_values($variantAttributes);
             $variantNameSuffix = ' - ' . implode(', ', $attributeValues);
 
-            Log::info('Adding variant to cart', [
-                'product_id' => $product->id,
-                'variant_id' => $variant->id,
-                'variant_attributes' => $variantAttributes,
-                'price' => $variant->price
-            ]);
             Cart::instance('cart')->add([
                 'id' => $product->id,
                 'name' => $product->name . $variantNameSuffix,
@@ -104,12 +93,6 @@ class CartController extends Controller
                 return redirect()->back()->with('error', 'Cannot add more than available stock.');
             }
 
-            Log::info('Adding product without variant to cart', [
-                'product_id' => $product->id,
-                'quantity' => $request->quantity,
-                'price' => $product->price
-            ]);
-
             Cart::instance('cart')->add([
                 'id' => $product->id,
                 'name' => $product->name,
@@ -122,7 +105,6 @@ class CartController extends Controller
                 ]
             ])->associate('App\Models\Product');
         }
-        Log::info('Product added to cart successfully for Product ID: ' . $product->id);
         return response()->json(['incomplete_profile' => true, 'message' => 'Your password has been successfully updated. Please complete your profile to proceed.'], 200);
     }
 
@@ -301,6 +283,15 @@ class CartController extends Controller
                 'message' => 'Please complete your profile to proceed with the checkout.'
             ]);
         }
+        $hasReservedOrder = Order::where('user_id', $user->id)
+            ->where('status', 'reserved')
+            ->exists();
+
+        if ($hasReservedOrder) {
+            Cart::instance('cart')->destroy();
+            return redirect()->route('cart.index')->with('error', 'You already have a reserved order. Please complete or cancel it before placing another.');
+        }
+
         $total = (float) str_replace(',', '', Cart::instance('cart')->total());
         if ($total <= 0) {
             return redirect()->route('cart.index')
@@ -328,24 +319,19 @@ class CartController extends Controller
     public function place_an_order(Request $request)
     {
         $user = Auth::user();
-        $this->setTotalAmount();
 
+        $this->setTotalAmount();
+        // dd($request->all());
         try {
             $order = new Order();
             $order->user_id = $user->id;
-            $order->subtotal = Session::get('checkout')['subtotal'];
             $order->total = Session::get('checkout')['total'];
-            $order->name = $user->name;
-            $order->phone_number = $user->phone_number;
-            $order->year_level = $user->year_level;
-            $order->department = $user->department;
-            $order->course = $user->course;
-            $order->email = $user->email;
             $order->reservation_date = $request->input('reservation_date');
             $order->time_slot = $request->input('time_slot');
             $order->status = 'reserved';
             $order->save();
 
+            // Create Order Items
             foreach (Cart::instance('cart')->content() as $item) {
                 $orderItem = new OrderItem();
                 $orderItem->product_id = $item->id;
@@ -353,19 +339,19 @@ class CartController extends Controller
                 $orderItem->price = $item->price;
                 $orderItem->quantity = $item->qty;
 
+                // Stock deduction for variant or simple product
                 if ($item->options->has('is_variant') && $item->options->has('variant_id')) {
                     $variant = ProductAttributeValue::find($item->options->variant_id);
                     if (!$variant || $variant->quantity < $item->qty) {
                         throw new \Exception('Insufficient variant stock for product: ' . $item->name);
                     }
-
                     $variant->quantity -= $item->qty;
                     $variant->stock_status = $variant->quantity <= 0 ? 'outofstock' : 'instock';
                     $variant->save();
+
                     if ($variant->quantity <= 20) {
                         $product = $variant->product;
                         $quantity = $variant->quantity;
-                        \Log::info('LowStockEvent triggered for variant', ['product' => $product, 'quantity' => $quantity]);
                         $admin = User::where('utype', 'ADM')->first();
                         if ($admin) {
                             $admin->notify(new LowStockNotification($product, $quantity));
@@ -373,30 +359,28 @@ class CartController extends Controller
                         broadcast(new LowStockEvent($product, $quantity));
                     }
                 } else {
-
                     $product = Product::find($item->id);
                     if (!$product || $product->quantity < $item->qty) {
                         throw new \Exception('Insufficient stock for product: ' . $item->name);
                     }
-
                     $product->quantity -= $item->qty;
                     $product->stock_status = $product->quantity <= 0 ? 'outofstock' : 'instock';
                     $product->save();
 
                     if ($product->quantity <= 20) {
-                        $quantity = $product->quantity;
                         event(new LowStockEvent($product, $product->quantity));
                     }
                 }
 
-                $orderItem->options = json_encode($item->options->toArray());
+                $orderItem->variant_id = $item->options->variant_id ?? null;
                 $orderItem->save();
             }
 
             $transaction = new Transaction();
-            $transaction->user_id = $user->id;
             $transaction->order_id = $order->id;
-            $transaction->status = "pending";
+            $transaction->amount_paid = 0;
+            $transaction->change = 0;
+            $transaction->status = "unpaid";
             $transaction->save();
 
             Cart::instance('cart')->destroy();
@@ -405,7 +389,6 @@ class CartController extends Controller
 
             return redirect()->route('cart.order.confirmation');
         } catch (\Exception $e) {
-            Log::error('Order placement failed: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to place order. ' . $e->getMessage());
         }
     }

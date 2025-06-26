@@ -9,6 +9,10 @@ class NotificationController extends Controller
 {
     public function allNotifications()
     {
+        if (!request()->ajax()) {
+            abort(403, 'Direct access not allowed');
+        }
+
         return response()->json(Auth::user()->notifications);
     }
 

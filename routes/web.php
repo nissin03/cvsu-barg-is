@@ -3,6 +3,7 @@
 use App\Http\Middleware\AuthAdmin;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PosController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ShopController;
@@ -181,11 +182,20 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::put('/product-attribute/update', [AdminController::class, 'product_attribute_update'])->name('admin.product.attribute.update');
         Route::delete('/product-attribute/{id}/delete', [AdminController::class, 'product_attribute_delete'])->name('admin.product.attribute.delete');
 
+        // Route::get('/pos', [PosController::class, 'index'])->name('admin.pos.index');
+        // Route::get('/pos/{order?}', [PosController::class, 'index'])->name('admin.pos');
+
+
 
         Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders');
         Route::get('/orders/filters', [AdminController::class, 'filterOrders'])->name('admin.orders.filter');
         Route::get('/order/{order_id}/details', [AdminController::class, 'order_details'])->name('admin.order.details');
         Route::put('/order/update-status', [AdminController::class, 'update_order_status'])->name('admin.order.status.update');
+        Route::post('/order/{order_id}/complete-payment', [AdminController::class, 'completePayment'])->name('admin.order.complete-payment');
+        Route::get('/order/{order}/receipt-pdf', [AdminController::class, 'downloadReceipt'])->name('admin.order-receipt.pdf');
+        // Route::get('/order/{order}/receipt-preview', [AdminController::class, 'previewReceipt'])
+        //     ->name('admin.order.receipt-preview');
+
 
 
         Route::get('/facilities/reservations', [FacilityReservationController::class, 'index'])->name('admin.facilities.reservations');
