@@ -940,15 +940,14 @@ class AdminController extends Controller
 
         $query = Order::query();
 
-        if ($status) {
-            $query->where('status', $status);
-        }
+        $query->when($status, fn($q) => $q->where('status', $status))
+            ->when($timeSlot, fn($q) => $q->where('time_slot', $timeSlot));
 
-        if ($timeSlot) {
-            $query->where('time_slot', $timeSlot);
-        }
-
-        $orders = $query->orderBy('created_at', 'DESC')->paginate(12)->withQueryString();
+        $orders = $query
+            ->orderByRaw("FIELD(status, 'reserved', 'canceled', 'pickedup')")
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
 
         if ($request->ajax()) {
             return response()->json([
@@ -1000,37 +999,75 @@ class AdminController extends Controller
 
     public function update_order_status(Request $request)
     {
-        $order = Order::find($request->order_id);
-
+        $request->validate([
+            'order_status' => 'required|in:reserved,canceled'
+        ]);
+        $order = Order::findOrFail($request->order_id);
         $order->status = $request->order_status;
 
-        if ($request->order_status == 'pickedup') {
-            $order->picked_up_date = Carbon::now();
-        } else if ($request->order_status == 'canceled') {
+
+        if ($request->order_status === 'canceled') {
             $order->canceled_date = Carbon::now();
         }
         $order->save();
-        if ($request->order_status == 'pickedup') {
-            $transaction = Transaction::where('order_id', $request->order_id)->first();
-
-
-            $transaction->status = "approved";
-            $transaction->save();
-        }
-
-        return back()->with("status", "Status changed successfully!")
-            ->with("disabled", true);
+        return back()->with('status', 'Status updated successfully!');
+    }
+    public function completePayment(Request $request, $order_id)
+    {
+        return DB::transaction(function () use ($request, $order_id) {
+            $order = Order::findOrFail($order_id);
+            $request->merge([
+                'amount_paid' => str_replace(',', '', $request->amount_paid)
+            ]);
+            $request->validate([
+                'amount_paid' => ['required', 'numeric', function ($attribute, $value, $fail) use ($order) {
+                    if ($value < $order->total) {
+                        $fail('The amount paid must be at least ₱' . number_format($order->total, 2));
+                    }
+                }]
+            ]);
+            $change = $request->amount_paid - $order->total;
+            $transaction = Transaction::create([
+                'order_id' => $order->id,
+                'amount_paid' => $request->amount_paid,
+                'change' => $change,
+                'status' => 'paid',
+            ]);
+            $order->update([
+                'status' => 'pickedup',
+                'picked_up_date' => now(),
+            ]);
+            return response()->json([
+                'message' => 'Payment completed successfully!',
+                'order_id' => $order->id,
+                'transaction_id' => $transaction->id
+            ]);
+        });
     }
 
-
+    public function downloadReceipt(Request $request, Order $order)
+    {
+        $order->load(['orderItems.product', 'user']);
+        $transaction = Transaction::where('order_id', $order->id)
+            ->latest()
+            ->first();
+        $orderItems = $order->orderItems;
+        if (!$transaction) {
+            abort(404, 'Transaction not found for this order');
+        }
+        $pdf = Pdf::loadView('admin.pdf.receipt', [
+            'order' => $order,
+            'transaction' => $transaction,
+            'orderItems' => $orderItems
+        ]);
+        return $pdf->download('receipt_order_' . $order->id . '.pdf');
+    }
     // Sliders Page
-
     public function slides()
     {
         $slides = Slide::orderBy('id', 'DESC')->paginate(12);
         return view('admin.slides', compact('slides'));
     }
-
     public function slide_add()
     {
 

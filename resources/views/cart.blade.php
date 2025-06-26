@@ -3,14 +3,22 @@
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="Shopping Cart" />
     <main class="container my-5">
         <h2 class="mb-4">Shopping Cart</h2>
-        <div class="row">
-            <div class="col-md-12">
-                @if (session('warning'))
-                    <div class="alert alert-warning">
-                        {{ session('warning') }}
+        @if (session('error'))
+            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
+                <div id="errorToast" class="toast align-items-center text-bg-danger border-0 show" role="alert"
+                    aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            {{ session('error') }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                            aria-label="Close"></button>
                     </div>
-                @endif
+                </div>
             </div>
+        @endif
+        <div class="row">
+
             <div class="col-md-12">
                 @if ($items->count() > 0)
                     <div class="table-responsive">

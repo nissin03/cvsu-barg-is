@@ -32,22 +32,16 @@ class OrderSeeder extends Seeder
 
             $orderData = [
                 'user_id'          => $userId,
-                'name'             => $user ? $user->name : $faker->name,
-                'email'            => $user ? $user->email : $faker->email,
-                'phone_number'     => $faker->phoneNumber,
-                'year_level'       => $faker->optional()->randomElement(['1st', '2nd', '3rd', '4th']),
-                'department'       => $faker->optional()->word,
-                'course'           => $faker->optional()->word,
                 'reservation_date' => $reservationDate,
                 'time_slot'        => $faker->time('H:i'),
-                'picked_up_date'   => $faker->date(),
-                'canceled_date'    => null,
+                'picked_up_date'   => $faker->optional()->date(),
+                'canceled_date'    => $faker->optional()->date(),
                 'status'           => $faker->randomElement(['reserved', 'pickedup', 'canceled']),
-                'subtotal'         => 0,
                 'total'            => 0,
                 'created_at'       => $createdAt,
                 'updated_at'       => $createdAt,
             ];
+
 
             $order = Order::create($orderData);
             $orderSubtotal = 0;
@@ -70,23 +64,21 @@ class OrderSeeder extends Seeder
                     'order_id'   => $order->id,
                     'price'      => $itemPrice,
                     'quantity'   => $quantity,
-                    'options'    => null,
-                    'rstatus'    => false,
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ]);
             }
 
-            $order->subtotal = $orderSubtotal;
             $order->total = $orderSubtotal;
             $order->save();
 
-            Transaction::create([
-                'user_id'    => $order->user_id,
-                'order_id'   => $order->id,
-                'status'     => $faker->randomElement(['pending', 'approved', 'decline']),
-                'created_at' => $createdAt,
-                'updated_at' => $createdAt,
+            $transaction = Transaction::create([
+                'order_id'    => $order->id,
+                'amount_paid' => $orderSubtotal,
+                'change'      => 0,
+                'status'      => $faker->randomElement(['paid', 'unpaid']),
+                'created_at'  => $createdAt,
+                'updated_at'  => $createdAt,
             ]);
         }
 

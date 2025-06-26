@@ -1,6 +1,18 @@
 function fetchNotifications() {
-    fetch("/admin/notifications")
+    fetch("/admin/notifications", {
+        headers: {
+            "X-Requested-With": "XMLHttpRequest", // Required for AJAX detection
+            Accept: "application/json", // Explicitly request JSON
+            "X-CSRF-TOKEN":
+                document.querySelector('meta[name="csrf-token"]')?.content ||
+                "",
+        },
+        credentials: "same-origin", // Include cookies for auth
+    })
         .then((response) => {
+            if (response.status === 403) {
+                throw new Error("Access forbidden");
+            }
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
@@ -9,17 +21,24 @@ function fetchNotifications() {
         .then((data) => {
             updateNotificationUI(data);
         })
-        .catch(() => {
+        .catch((error) => {
+            console.error("Notification fetch error:", error);
             const notificationList =
                 document.getElementById("notification-list");
             if (notificationList) {
                 notificationList.innerHTML = `
-                    <div class="notification-item">
-                        <div class="notification-content">
-                            <p class="notification-text text-center">Unable to load notifications</p>
-                        </div>
+                <div class="notification-item">
+                    <div class="notification-content">
+                        <p class="notification-text text-center">
+                            ${
+                                error.message.includes("forbidden")
+                                    ? "Please refresh the page"
+                                    : "Unable to load notifications"
+                            }
+                        </p>
                     </div>
-                `;
+                </div>
+            `;
             }
         });
 }

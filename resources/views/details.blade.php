@@ -3,6 +3,7 @@
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
 
+
     <main class="container my-5">
         @if (session('incomplete_profile'))
             <script>
@@ -18,6 +19,19 @@
                 });
             </script>
         @endif
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
+            <div id="cartToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive"
+                aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body" id="toast-body">
+                        <!-- Toast message will go here -->
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                        aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+
 
         <div class="mb-md-1 pb-md-3"></div>
         <section class="product-single container">
@@ -358,6 +372,9 @@
             const errorMessage = document.getElementById('error-message');
             const selectedVariantIdInput = document.getElementById('selected-variant-id');
             const variantButtons = document.querySelectorAll('.variant-button');
+            const toastElement = document.getElementById('cartToast');
+            const toastBody = document.getElementById('toast-body');
+            const toast = new bootstrap.Toast(toastElement);
             const hasVariants = variantButtons.length > 0;
             let activeButton = null;
 
@@ -393,27 +410,25 @@
                         if (xhr.status === 401) {
                             window.location.href = "{{ route('login') }}";
                         } else if (xhr.status === 403) {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: JSON.parse(xhr.responseText).message,
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
+                            toastr.error(
+                        JSON.parse(xhr.responseText).message || "Unauthorized action.",
+                            "Error",
+                            {timeOut: 3000}
+                        );
                         } else if (xhr.status === 200) {
-                            Swal.fire({
-                                title: 'Added to Cart!',
-                                icon: 'success',
-                                confirmButtonText: 'OK'
-                            }).then(() => {
-                                window.location.href = "{{ route('cart.index') }}";
-                            });
+                            toastr.success(
+                        "Added to Cart!",
+                        "Success",
+                        {timeOut: 1500, onHidden: function() {
+                            window.location.href = "{{ route('cart.index') }}";
+                        }}
+                    );
                         } else {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: 'There was an issue adding the product to your cart.',
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
+                            toastr.error(
+                        "There was an issue adding the product to your cart.",
+                        "Error",
+                        {timeOut: 3000}
+                    );
                         }
                     }
                 };

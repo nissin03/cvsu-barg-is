@@ -23,9 +23,9 @@
                     </div>
                 @endif
 
-                <div class="col-lg-2">
+                {{-- <div class="col-lg-2">
                     @include('user.account__nav')
-                </div>
+                </div> --}}
                 <div class="accordion-item mb-3 shadow-sm border rounded bg-white text-dark">
                     <h2 class="accordion-header" id="headingOrder{{ $order->id }}">
                         <button
