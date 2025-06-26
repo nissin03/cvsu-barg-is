@@ -50,7 +50,7 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('plugins/ijaboCropTool/ijaboCropTool.min.css') }}">
 
-
+        
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
@@ -318,9 +318,13 @@
     <script src="{{ asset('js/index.js') }}"></script>
     <!-- countdown js  -->
     <script src="{{ asset('js/countdown.js') }}"></script>
-
+  
+    <!-- bootstrap bundle js  -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- fullcalendar js  -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales-all.min.js"></script>
+
 
 
     <script>
@@ -389,6 +393,15 @@
 
     <!-- main js  -->
     <script src="{{ asset('js/main.js') }}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var errorToast = document.getElementById('errorToast');
+            if (errorToast) {
+                new bootstrap.Toast(errorToast).show();
+            }
+        });
+    </script>
+
     @stack('scripts')
 
 

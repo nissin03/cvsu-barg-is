@@ -247,7 +247,6 @@
                                     <th class="text-center">Total Items</th>
                                     <th class="text-center">Total Price</th>
                                     <th class="text-center">Order Date</th>
-                                    <th class="text-center">Picked up on</th>
                                     <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
