@@ -1,9 +1,10 @@
 @extends('layouts.admin')
 @section('content')
+
     <div class="main-content-inner">
         <div class="main-content-wrap">
             <div class="flex items-center flex-wrap justify-between gap20 mb-27">
-                <h3>Categories</h3>
+                <h3>Archived Categories</h3>
                 <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
                     <li>
                         <a href="{{ route('admin.index') }}">
@@ -14,7 +15,15 @@
                         <i class="icon-chevron-right"></i>
                     </li>
                     <li>
-                        <div class="text-tiny">Categories</div>
+                        <a href="{{ route('admin.categories') }}">
+                            <div class="text-tiny">Categories</div>
+                        </a>
+                    </li>
+                    <li>
+                        <i class="icon-chevron-right"></i>
+                    </li>
+                    <li>
+                        <div class="text-tiny">Archived Categories</div>
                     </li>
                 </ul>
             </div>
@@ -29,12 +38,6 @@
                             </fieldset>
                         </form>
                     </div>
-                    
-                    <a class="tf-button  w-auto" href="{{ route('admin.category.add') }}"><i class="icon-plus"></i>Add
-                        new</a>
-                        <a class="tf-button  w-auto" href="{{ route('admin.archived-categories') }}">
-                            <i
-                            class="icon-archive"></i> Archived Categories</a>
                 </div>
                 <div class="table-all-user">
                     <div class="">
@@ -50,7 +53,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($categories as $category)
+                                @foreach ($archivedCategories as $category)
                                     <!-- Parent Category -->
                                     <tr data-toggle="collapse" data-target=".children-of-{{ $category->id }}" class="clickable-row">
                                         <td style="width: 7%;">{{ $category->id }}</td>
@@ -68,18 +71,12 @@
                                         </td>
                                         <td style="width: 20%">
                                             <div class="list-icon-function">
-                                                <a href="{{ route('admin.category.edit', ['id' => $category->id]) }}">
-                                                    <div class="item edit">
-                                                        <i class="icon-edit-3"></i>
-                                                    </div>
-                                                </a>
-                                                <form action="{{ route('admin.category.archive', ['id' => $category->id]) }}"
-                                                    method="POST" >
+                                                <form action="{{ route('admin.category.restore', ['id' => $category->id]) }}" method="POST">
                                                     @csrf
-                                                    @method('DELETE')
-                                                    <div class="item text-danger delete">
-                                                        <i class="icon-archive"></i>
-                                                    </div>
+                                                    @method('PUT')
+                                                    <button class="btn btn-lg btn-success restore">
+                                                      <i class="icon-rotate-ccw"></i> Restore
+                                                  </button>
                                                 </form>
                                             </div>
                                         </td>
@@ -100,25 +97,13 @@
                                               </div>
                                           </td>
                                           <td>
-                                            <div class="list-icon-function">
-                                                <a
-                                                    href="{{ route('admin.category.edit', ['id' => $childCategory->id]) }}">
-                                                    <div class="item edit">
-                                                        <i class="icon-edit-3"></i>
-                                                    </div>
-                                                </a>
-                                                <form
-                                                    action="{{ route('admin.category.archive', ['id' => $childCategory->id])  }}"
-                                                    method="POST">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <div class="item text-danger delete">
-                                                        <i class="icon-archive"></i>
-                                                    </div>
-                                                </form>
-                                            </div>
+                                              <form action="{{ route('admin.category.restore', $childCategory->id) }}" method="POST">
+                                                  @csrf @method('PUT')
+                                                  <button class="btn btn-lg btn-success restore">
+                                                      <i class="icon-rotate-ccw"></i> Restore
+                                                  </button>
+                                              </form>
                                           </td>
-
                                       </tr>
                                         @endforeach
                                     @endif
@@ -128,14 +113,13 @@
                     </div>
                     <div class="divider"></div>
                     <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-                        {{ $categories->links('pagination::bootstrap-5') }}
+                        {{ $archivedCategories->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 @endsection
-
 @push('styles')
       <style>
             .badge {
@@ -157,21 +141,19 @@
 }
       </style>
 @endpush
-
 @push('scripts')
     <script>
         $(function() {
-            $('.delete').on('click', function(e) {
+            $('.restore').on('click', function(e) {
                 e.preventDefault();
                 var form = $(this).closest('form');
                 Swal.fire({
-                    title: 'Are you sure?',
                     text: "You want to archive this record?",
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
+                    confirmButtonColor: '#dcd435',
                     cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, archive it!'
+                    confirmButtonText: 'Yes, restore it'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         form.submit();

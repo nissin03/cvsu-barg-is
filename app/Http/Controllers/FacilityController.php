@@ -533,29 +533,4 @@ class FacilityController extends Controller
         $facilities = Facility::all();
         return view('admin.facilities.archive.index', compact('archivedFacilities', 'facilities'));
     }
-
-    public function GenerateFacilityThumbnailsImage($image, $imageName)
-    {
-        try {
-            $destinationPathThumbnail = storage_path('app/public/facilities/thumbnails');
-            $destinationPath = storage_path('app/public/facilities');
-
-            File::makeDirectory($destinationPathThumbnail, 0755, true, true);
-            File::makeDirectory($destinationPath, 0755, true, true);
-
-            $img = Image::read($image->getRealPath());
-            $img->cover(689, 689, "center");
-            $img->resize(689, 689, function ($constraint) {
-                $constraint->aspectRatio();
-            })->save($destinationPath . '/' . $imageName);
-
-            $img->resize(204, 204, function ($constraint) {
-                $constraint->aspectRatio();
-            })->save($destinationPathThumbnail . '/' . $imageName);
-
-            Log::info('Saving image to: ' . $destinationPath . '/' . $imageName);
-        } catch (\Exception $e) {
-            Log::error('Image processing failed: ' . $e->getMessage());
-        }
-    }
 }

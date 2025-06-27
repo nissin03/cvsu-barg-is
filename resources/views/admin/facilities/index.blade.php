@@ -158,9 +158,9 @@
                             </div>
                         </form>
                     </div>
-                    <a class="tf-button style-1 w208" href="{{ route('admin.facility.create') }}"><i
+                    <a class="tf-button w-auto" href="{{ route('admin.facility.create') }}"><i
                             class="icon-plus"></i>Add New</a>
-                    <a class="tf-button style-1 w208" href="{{ route('admin.facilities.archive.index') }}"><i
+                    <a class="tf-button w-auto" href="{{ route('admin.facilities.archive.index') }}"><i
                             class="icon-archive"></i> Archived Facility</a>
                 </div>
                 <div class="table-responsive">

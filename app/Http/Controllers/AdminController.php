@@ -449,16 +449,31 @@ class AdminController extends Controller
         return redirect()->route('admin.categories')->with('status', 'Category has been updated successfully!');
     }
 
-    public function category_delete($id)
+    public function category_archive($id)
     {
-        $category = Category::find($id);
-        if (File::exists(public_path('uploads/categories') . '/' . $category->image)) {
-            File::delete(public_path('uploads/categories') . '/' . $category->image);
-        }
+        $category = Category::findOrFail($id);
         $category->delete();
-        return redirect()->route('admin.categories')->with('status', 'Category has been deleted successfully!');
+        return redirect()->route('admin.categories')->with('status', 'Category has been archived successfully!');
     }
 
+    public function archived_categories()
+    {
+        $archivedCategories = Category::onlyTrashed()
+            ->whereNull('parent_id')
+            ->with('children')
+            ->orderBy('id', 'DESC')
+            ->paginate(5);
+
+        $pageTitle = 'Archived Categories';
+        return view('admin.archived-categories', compact('archivedCategories', 'pageTitle'));
+    }
+
+    public function restore_categories($id)
+    {
+        $category = Category::onlyTrashed()->findOrFail($id);
+        $category->restore();
+        return redirect()->route('admin.archived-categories')->with('status', 'Category restored successfully!');
+    }
 
     public function products(Request $request)
     {

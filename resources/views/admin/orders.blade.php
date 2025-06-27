@@ -208,7 +208,7 @@
                 <div class="flex items-center justify-between gap10 flex-wrap">
                     <div class="filter-dropdowns flex items-center gap10">
                         <!-- Time Slot Dropdown -->
-                        <select name="time_slot" id="time_slot" class="filter-select">
+                        <select name="time_slot" id="time_slot" class="w-auto">
                             <option value="">Select Time Slot</option>
                             <option value="08:00 am - 09:00 am"
                                 {{ request('time_slot') == '08:00 am - 09:00 am' ? 'selected' : '' }}>08:00 am - 09:00 am
@@ -225,7 +225,7 @@
                         </select>
 
                         <!-- Status Dropdown -->
-                        <select name="status" id="status" class="filter-select">
+                        <select name="status" id="status" class="w-auto">
                             <option value="">Select Status</option>
                             <option value="reserved" {{ request('status') == 'reserved' ? 'selected' : '' }}>Reserved
                             </option>
@@ -237,7 +237,7 @@
                     </div>
                 </div>
 
-                <div class="wg-table table-all-user">
+                <div class="">
                     <div class="table-responsive">
                         <table class="table table-striped table-bordered" style="table-layout: auto;">
                             <thead>

@@ -113,7 +113,9 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::post('/category/store', [AdminController::class, 'category_store'])->name('admin.category.store');
         Route::get('/category/edit/{id}', [AdminController::class, 'category_edit'])->name('admin.category.edit');
         Route::put('/category/update', [AdminController::class, 'category_update'])->name('admin.category.update');
-        Route::delete('/category/{id}/delete', [AdminController::class, 'category_delete'])->name('admin.category.delete');
+        Route::delete('/category/{id}/archive', [AdminController::class, 'category_archive'])->name('admin.category.archive');
+        Route::get('/archived-categories', [AdminController::class, 'archived_categories'])->name('admin.archived-categories');
+        Route::put('/categories/{id}/restore', [AdminController::class, 'restore_categories'])->name('admin.category.restore');
 
 
         // api
