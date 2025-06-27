@@ -1,13 +1,13 @@
 function fetchNotifications() {
     fetch("/admin/notifications", {
         headers: {
-            "X-Requested-With": "XMLHttpRequest", // Required for AJAX detection
-            Accept: "application/json", // Explicitly request JSON
+            "X-Requested-With": "XMLHttpRequest",
+            Accept: "application/json",
             "X-CSRF-TOKEN":
                 document.querySelector('meta[name="csrf-token"]')?.content ||
                 "",
         },
-        credentials: "same-origin", // Include cookies for auth
+        credentials: "same-origin",
     })
         .then((response) => {
             if (response.status === 403) {
@@ -20,6 +20,10 @@ function fetchNotifications() {
         })
         .then((data) => {
             updateNotificationUI(data);
+            const markAllBtn = document.getElementById("markAllReadBtn");
+            if (markAllBtn) {
+                markAllBtn.disabled = data.length === 0;
+            }
         })
         .catch((error) => {
             console.error("Notification fetch error:", error);
@@ -315,7 +319,16 @@ function removeAllNotifications() {
 }
 
 function fetchAllNotifications() {
-    fetch("/admin/notifications")
+    fetch("/admin/notifications", {
+        headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            Accept: "application/json",
+            "X-CSRF-TOKEN":
+                document.querySelector('meta[name="csrf-token"]')?.content ||
+                "",
+        },
+        credentials: "same-origin",
+    })
         .then((response) => {
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
