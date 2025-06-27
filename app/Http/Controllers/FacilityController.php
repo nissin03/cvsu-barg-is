@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
+use App\Services\ImageProcessor;
 use App\Models\FacilityAttribute;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -52,7 +53,7 @@ class FacilityController extends Controller
         return view('admin.facilities.create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ImageProcessor $imageProcessor)
     {
         // dd($request->all());
         $facilityAttributes = json_decode($request->facility_attributes_json, true) ?? [];
@@ -113,7 +114,7 @@ class FacilityController extends Controller
         $validated = $request->validate($rules, $messages);
 
         try {
-            $current_timestamp = Carbon::now()->timestamp;
+            $current_timestamp = now()->timestamp;
             $requirementsFileName = null;
 
             if ($request->hasFile('requirements')) {
@@ -153,7 +154,11 @@ class FacilityController extends Controller
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $imageName = $current_timestamp . '.' . $image->extension();
-                $this->GenerateFacilityThumbnailsImage($image, $imageName);
+
+                $imageProcessor->process($image, $imageName, [
+                    ['path' => storage_path('app/public/facilities'), 'cover' => [689, 689, 'center']],
+                    ['path' => storage_path('app/public/facilities/thumbnails'), 'resize' => [300, 300]],
+                ]);
                 $facility->image = 'facilities/' . $imageName;
             }
 
@@ -170,7 +175,11 @@ class FacilityController extends Controller
                     $gcheck = in_array($gextension, $allowedFileExtension);
                     if ($gcheck) {
                         $gFileName = $current_timestamp . "." . $counter . '.' . $gextension;
-                        $this->GenerateFacilityThumbnailsImage($file, $gFileName);
+
+                        $imageProcessor->process($file, $gFileName, [
+                            ['path' => storage_path('app/public/facilities'), 'cover' => [689, 689, 'center']],
+                            ['path' => storage_path('app/public/facilities/thumbnails'), 'resize' => [300, 300]],
+                        ]);
                         array_push($gallery_arr, 'facilities/' . $gFileName);
                         $counter++;
                     }
@@ -285,7 +294,7 @@ class FacilityController extends Controller
             'prices' => $facility->prices,
         ]);
     }
-    public function update(Request $request, $id)
+    public function update(Request $request, $id, ImageProcessor $imageProcessor)
     {
         $facility = Facility::findOrFail($id);
         $facilityAttributes = collect(json_decode($request->facility_attributes_json, true) ?? [])
@@ -395,7 +404,10 @@ class FacilityController extends Controller
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $imageName = $current_timestamp . '.' . $image->extension();
-                $this->GenerateFacilityThumbnailsImage($image, $imageName);
+                $imageProcessor->process($image, $imageName, [
+                    ['path' => storage_path('app/public/facilities'), 'cover' => [689, 689, 'center']],
+                    ['path' => storage_path('app/public/facilities/thumbnails'), 'resize' => [300, 300]],
+                ]);
                 $facility->image = 'facilities/' . $imageName;
             }
 
@@ -403,9 +415,11 @@ class FacilityController extends Controller
             $counter = 1;
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
-                    $ext = $file->getClientOriginalExtension();
-                    $gFileName = $current_timestamp . "." . $counter . '.' . $ext;
-                    $this->GenerateFacilityThumbnailsImage($file, $gFileName);
+                    $gFileName = "{$current_timestamp}.{$counter}.{$file->extension()}";
+                    $imageProcessor->process($file, $gFileName, [
+                        ['path' => storage_path('app/public/facilities'), 'cover' => [689, 689, 'center']],
+                        ['path' => storage_path('app/public/facilities/thumbnails'), 'resize' => [300, 300]],
+                    ]);
                     $gallery_arr[] = 'facilities/' . $gFileName;
                     $counter++;
                 }
