@@ -31,62 +31,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     @vite('resources/js/app.js')
-    {{-- <script>
-        // console.log('Hello from Vite!')
-        Echo.channel('chats')
-            .listen('Example', (e) => {
-                console.log(e);
-            });
-    </script> --}}
-
-    {{--
-    <script>
-        toastr.options = {
-            "progressBar": true,
-            "positionClass": "toast-top-right",
-            "timeOut": "5000",
-            "extendedTimeOut": "0"
-        };
-
-        const notificationCount = $('.notification-count');
-        const notificationList = $('#notifications-list');
-
-        // CSRF Token for AJAX Requests
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            },
-        });
-
-        Pusher.logToConsole = true;
-
-        var pusher = new Pusher('bfb378da684dcc605648', {
-            cluster: 'ap1',
-            encrypted: true
-        });
-
-        var channel = pusher.subscribe('admin-notification');
-        // channel.bind('low-stock-event', function(data) {
-        //     console.log("Received data from Pusher:", data);
-        //     if (data && data.product) {
-        //         const productName = data.product.name;
-        //         const productQuantity = data.product.quantity;
-        //         toastr.warning(`${productName} stock is low. Only ${productQuantity} left in stock.`);
-        //     } else {
-        //         console.error('Product data is missing:', data);
-        //     }
-        // });
-
-        channel.bind('contact-message-event', function(data) {
-            console.log("Received contact-message-event from Pusher:", data);
-            const contactMessage = data.contactMessage;
-            toastr.success(
-                `New message from ${contactMessage.name} (${contactMessage.email}): ${contactMessage.message}`
-            );
-
-        });
-    </script> --}}
-
+  
     <style>
         .modal-backdrop {
             position: fixed;
@@ -588,7 +533,7 @@
                                             aria-labelledby="dropdownMenuButton2">
                                             <div class="dropdown-header">
                                                 <div class="notification-actions">
-                                                    <button type="button" class="mark-read">Mark all as read</button>
+                                                    <button type="button" id="markAllReadBtn" class="mark-read">Mark all as read</button>
                                                     <button type="button" class="remove-all">Remove all</button>
                                                 </div>
                                             </div>
@@ -637,81 +582,6 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <div class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false"
-                                    id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel"
-                                    aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-scrollable">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="notificationsModalLabel">
-                                                    Previous
-                                                    Notifications</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="dropdown-header border-bottom mb-3">
-                                                    <h6 class="notification-heading">Old Notifications</h6>
-                                                    <button type="button" class="mark-read">Mark all as
-                                                        read</button>
-                                                </div>
-                                                <div class="notification-item">
-                                                    <div class="badge-icon h5">
-                                                        <i class="fas fa-bell text-dark"></i>
-                                                    </div>
-                                                    <div class="notification-content">
-                                                        <p class="notification-text fw-bold">Project Update
-                                                        </p>
-                                                        <p class="notification-subtext">Your project has
-                                                            been reviewed
-                                                        </p>
-                                                    </div>
-                                                    <div class="unread-indicator"></div>
-                                                </div>
-                                                <div class="notification-item">
-                                                    <div class="badge-icon">
-                                                        <span class="text-primary"
-                                                            style="font-weight: bold; font-size: 12px">INFO</span>
-                                                    </div>
-                                                    <div class="notification-content">
-                                                        <p class="notification-text fw-bold">System Update
-                                                        </p>
-                                                        <p class="notification-subtext">System maintenance
-                                                            completed
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <!-- New notification header -->
-                                                <div class="dropdown-header border-bottom my-3">
-                                                    <h6 class="notification-heading">New Notifications</h6>
-                                                </div>
-
-                                                <!-- New notification item -->
-                                                <div class="notification-item">
-                                                    <div class="badge-icon h5">
-                                                        <i class="fas fa-envelope text-dark"></i>
-                                                    </div>
-                                                    <div class="notification-content">
-                                                        <p class="notification-text fw-bold">New Message
-                                                        </p>
-                                                        <p class="notification-subtext">You have received a
-                                                            new message
-                                                        </p>
-                                                    </div>
-                                                    <div class="unread-indicator"></div>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary"
-                                                    data-bs-dismiss="modal">Close</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-
                                 <div class="popup-wrap user type-header">
                                     <div class="dropdown">
                                         @if ((Auth::check() && Auth::user()->utype == 'ADM') || (Auth::check() && Auth::user()->utype == 'DIR'))

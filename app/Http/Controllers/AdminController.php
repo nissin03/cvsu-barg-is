@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\ProductAttributeValue;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Notification;
+use App\Services\ImageProcessor;
 use Intervention\Image\Laravel\Facades\Image;
 
 
@@ -370,7 +371,7 @@ class AdminController extends Controller
         return view('admin.category-add', compact('pageTitle', 'parentCategories'));
     }
 
-    public function category_store(Request $request)
+    public function category_store(Request $request, ImageProcessor $imageProcessor)
     {
         $request->validate([
             'name' => 'required',
@@ -379,6 +380,7 @@ class AdminController extends Controller
             'parent_id' => 'nullable|exists:categories,id'
         ], [
             'name.required' => 'The category name is required.',
+            'image.required' => 'The category image is required.',
             'slug.unique' => 'The slug must be unique. This slug is already taken.',
             'parent_id.exists' => 'The selected parent category does not exist.',
         ]);
@@ -389,9 +391,15 @@ class AdminController extends Controller
         $category->parent_id = $request->parent_id;
 
         $image = $request->file('image');
-        $file_extention = $request->file('image')->extension();
-        $file_name = Carbon::now()->timestamp . '.' . $file_extention;
-        $this->GenerateCategoryThumbnailsImage($image, $file_name);
+        $file_extention = $image->extension();
+        $file_name = now()->timestamp . '.' . $file_extention;
+
+        $imageProcessor->process($image, $file_name, [
+            [
+                'path' => public_path('uploads/categories'),
+                'cover' => [300, 300, 'top']
+            ]
+        ]);
         $category->image = $file_name;
         $category->save();
         return redirect()->route('admin.categories')->with('status', 'Category has been added successfully!');
@@ -406,7 +414,7 @@ class AdminController extends Controller
         return view('admin.category-edit', compact('category', 'parentCategories'));
     }
 
-    public function category_update(Request $request)
+    public function category_update(Request $request, ImageProcessor $imageProcessor)
     {
         $request->validate([
             'name' => 'required',
@@ -421,28 +429,24 @@ class AdminController extends Controller
         $category->parent_id = $request->parent_id;
 
         if ($request->hasFile('image')) {
-            if (File::exists(public_path('uploads/categories') . '/' . $category->image)) {
-                File::delete(public_path('uploads/categories') . '/' . $category->image);
+            $oldPath = public_path('uploads/categories/' . $category->image);
+            if (File::exists($oldPath)) {
+                File::delete($oldPath);
             }
             $image = $request->file('image');
-            $file_extention = $request->file('image')->extension();
-            $file_name = Carbon::now()->timestamp . '.' . $file_extention;
-            $this->GenerateCategoryThumbnailsImage($image, $file_name);
+            $file_extention = $image->extension();
+            $file_name = now()->timestamp . '.' . $file_extention;
+
+            $imageProcessor->process($image, $file_name, [
+                [
+                    'path' => public_path('uploads/categories'),
+                    'cover' => [300, 300, 'top']
+                ]
+            ]);
             $category->image = $file_name;
         }
-
         $category->save();
         return redirect()->route('admin.categories')->with('status', 'Category has been updated successfully!');
-    }
-
-    public function GenerateCategoryThumbnailsImage($image, $imageName)
-    {
-        $destinationPath = public_path('uploads/categories');
-        $img = Image::read($image->getRealPath());
-        $img->cover(124, 124, "top");
-        $img->resize(124, 124, function ($constraint) {
-            $constraint->aspectRatio();
-        })->save($destinationPath . '/' . $imageName);
     }
 
     public function category_delete($id)
@@ -519,15 +523,13 @@ class AdminController extends Controller
         return view('admin.product-add', compact('categories', 'productAttributes'));
     }
 
-    public function product_store(Request $request)
+    public function product_store(Request $request, ImageProcessor $imageProcessor)
     {
-        // Determine if the product has variants based on the presence of variant fields
         $hasVariant = $request->filled('variant_name') &&
             $request->filled('product_attribute_id') &&
             $request->filled('variant_price') &&
             $request->filled('variant_quantity');
 
-        // Validate the incoming request data
         $request->validate([
             'name' => 'required',
             'slug' => 'unique:products,slug',
@@ -539,21 +541,15 @@ class AdminController extends Controller
             'image' => 'required|mimes:png,jpg,jpeg|max:10240',
             'sex' => 'required|in:male,female,all',
             'category_id' => 'required|integer|exists:categories,id',
-
-            // **Added Validation Rules for Stock Status Fields**
-            // 'instock_quantity' => 'required|integer|min:0',
             'reorder_quantity' => 'required|integer|min:0',
             'outofstock_quantity' => 'required|integer|min:0',
         ], [
             'category_id.integer' => 'Please select a valid category.',
             'sex.in' => 'Please select a valid gender category.',
-            // **Optional Custom Messages for Stock Status Fields**
-            // 'instock_quantity.required' => 'In Stock Quantity is required.',
             'reorder_quantity.required' => 'Reorder Quantity is required.',
             'outofstock_quantity.required' => 'Out of Stock Quantity is required.',
         ]);
 
-        // Create a new Product instance and assign values from the request
         $product = new Product();
         $product->name = $request->name;
         $product->slug = Str::slug($request->name);
@@ -565,48 +561,43 @@ class AdminController extends Controller
         $product->featured = $request->featured;
         $product->sex = $request->sex;
         $product->category_id = $request->category_id;
-
-        // **Assign the New Stock Status Fields to the Product**
-        // $product->instock_quantity = $request->instock_quantity;
         $product->reorder_quantity = $request->reorder_quantity;
         $product->outofstock_quantity = $request->outofstock_quantity;
-        $current_timestamp = Carbon::now()->timestamp;
 
-
+        $current_timestamp = now()->timestamp;
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $imageName = $current_timestamp . '.' . $image->extension();
-            $this->GenerateProductThumbnailsImage($image, $imageName);
+
+            $imageProcessor->process($image, $imageName, [
+                ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
+                ['path' => public_path('uploads/products/thumbnails'), 'resize' => [300, 300]]
+            ]);
             $product->image = $imageName;
         }
-
-        // Handle gallery images upload
-        $gallery_arr = [];
-        $gallery_images = "";
-        $counter = 1;
-
         if ($request->hasFile('images')) {
             $allowedFileExtension = ['jpg', 'png', 'jpeg'];
             $files = $request->file('images');
-            foreach ($files as $file) {
-                $gextension = $file->getClientOriginalExtension();
-                $gcheck = in_array($gextension, $allowedFileExtension);
+            $counter = 1;
 
-                if ($gcheck) {
-                    $gFileName = $current_timestamp . "." . $counter . '.' . $gextension;
-                    $this->GenerateProductThumbnailsImage($file, $gFileName);
-                    array_push($gallery_arr, $gFileName);
+            foreach ($files as $file) {
+                $gext = $file->getClientOriginalExtension();
+
+                if (in_array($gext, $allowedFileExtension)) {
+                    $gFileName = $current_timestamp . '.' . $counter . '.' . $gext;
+
+                    $imageProcessor->process($file, $gFileName, [
+                        ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
+                        ['path' => public_path('uploads/products/thumbnails'), 'resize' => [300, 300]]
+                    ]);
+
+                    $gallery_arr[] = $gFileName;
                     $counter++;
                 }
             }
-            $gallery_images = implode(',', $gallery_arr);
+            $product->images = implode(',', $gallery_arr);
         }
-
-        $product->images = $gallery_images;
-
         $product->save();
-
-        // Handle variants
         if ($hasVariant && is_array($request->variant_name)) {
             $attributeValues = [];
             foreach ($request->variant_name as $index => $variantName) {
@@ -618,13 +609,9 @@ class AdminController extends Controller
                     'quantity' => $request->variant_quantity[$index],
                 ];
             }
-
             foreach ($attributeValues as $value) {
                 ProductAttributeValue::create($value);
             }
-
-            // $totalVariantQuantity = $product->attributeValues->sum('quantity');
-
             $totalVariantQuantity = collect($attributeValues)->sum('quantity');
 
             if ($totalVariantQuantity > $product->reorder_quantity) {
@@ -634,10 +621,8 @@ class AdminController extends Controller
             } else {
                 $product->stock_status = 'outofstock';
             }
-
             $product->save();
         } else {
-            // Determine stock status for products without variants
             if ($product->quantity > $product->reorder_quantity) {
                 $product->stock_status = 'instock';
             } elseif ($product->quantity <= $product->reorder_quantity && $product->quantity > $product->outofstock_quantity) {
@@ -676,14 +661,10 @@ class AdminController extends Controller
 
 
 
-    public function product_update(Request $request)
+    public function product_update(Request $request, ImageProcessor $imageProcessor)
     {
         $product = Product::findOrFail($request->input('id'));
-
-        // Determine if product has variants
         $hasVariant = !empty($request->variant_name) && is_array($request->variant_name);
-
-        // Validation
         $request->validate([
             'name' => 'required',
             'short_description' => 'required',
@@ -691,46 +672,37 @@ class AdminController extends Controller
             'price' => $hasVariant ? 'nullable' : 'required|numeric',
             'quantity' => $hasVariant ? 'nullable' : 'required|integer|min:0',
             'featured' => 'required|boolean',
-            'image' => 'nullable|image|mimes:png,jpg,jpeg|max:5120', // 5MB limit
-            'images.*' => 'nullable|image|mimes:png,jpg,jpeg|max:5120', // 5MB limit
+            'image' => 'nullable|image|mimes:png,jpg,jpeg|max:5120',
+            'images.*' => 'nullable|image|mimes:png,jpg,jpeg|max:5120',
             'sex' => 'required|in:male,female,all',
             'category_id' => 'required|integer|exists:categories,id',
             'reorder_quantity' => 'required|integer|min:0',
             'outofstock_quantity' => 'required|integer|min:0',
         ]);
-
-        // Store previous stock status
         $previousStockStatus = $product->stock_status;
-
-        // Update product fields
         $product->fill($request->except(['image', 'images', 'variant_name', 'product_attribute_id', 'variant_price', 'variant_quantity', 'existing_variant_ids', 'removed_variant_ids']));
 
-        $current_timestamp = Carbon::now()->timestamp;
-
-        // Handle image upload (retain existing image if no new upload)
+        $current_timestamp = now()->timestamp;
         if ($request->hasFile('image')) {
             if (!empty($product->image) && File::exists(public_path("uploads/products/{$product->image}"))) {
                 File::delete(public_path("uploads/products/{$product->image}"));
             }
             $image = $request->file('image');
             $imageName = "{$current_timestamp}.{$image->extension()}";
-            $this->GenerateProductThumbnailsImage($image, $imageName);
+            $imageProcessor->process($image, $imageName, [
+                ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
+                ['path' => public_path('uploads/products/thumbnails'), 'resize' => [300, 300]],
+            ]);
             $product->image = $imageName;
         }
-
-        // Handle gallery images
         $existingImages = !empty($product->images) ? explode(',', $product->images) : [];
         $removedImages = $request->input('removed_images', []);
-
-        // Remove deleted images
         foreach ($removedImages as $removedImage) {
             if (File::exists(public_path("uploads/products/{$removedImage}"))) {
                 File::delete(public_path("uploads/products/{$removedImage}"));
             }
             $existingImages = array_diff($existingImages, [$removedImage]);
         }
-
-        // Handle new gallery images
         if ($request->hasFile('images')) {
             $newImages = [];
             $maxGalleryImages = 5;
@@ -738,31 +710,31 @@ class AdminController extends Controller
 
             if ($remainingSlots > 0) {
                 foreach ($request->file('images') as $index => $file) {
-                    if ($index >= $remainingSlots) break; // Stop if we've reached the limit
+                    if ($index >= $remainingSlots) break;
 
                     $gfilename = "{$current_timestamp}-" . ($index + 1) . ".{$file->extension()}";
-                    $this->GenerateProductThumbnailsImage($file, $gfilename);
+
+                    $imageProcessor->process($file, $gfilename, [
+                        ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
+                        ['path' => public_path('uploads/products/thumbnails'), 'resize' => [204, 204]],
+                    ]);
+
                     $newImages[] = $gfilename;
                 }
             }
 
-            // Combine existing and new images
             $allImages = array_merge($existingImages, $newImages);
             $product->images = implode(',', $allImages);
         } else {
-            // If no new images, just update with existing ones
             $product->images = implode(',', $existingImages);
         }
-
         $product->save();
 
-        // Handle variant removal first
         $removedVariantIds = $request->input('removed_variant_ids', []);
         if (!empty($removedVariantIds)) {
             ProductAttributeValue::whereIn('id', $removedVariantIds)->delete();
         }
 
-        // Handle variants
         if ($hasVariant) {
             $existingVariantIds = $request->input('existing_variant_ids', []);
             $attributeValues = [];
@@ -775,26 +747,18 @@ class AdminController extends Controller
                     'price' => $request->variant_price[$index] ?? null,
                     'quantity' => $request->variant_quantity[$index] ?? 0,
                 ];
-
-                // Check if this is an existing variant or a new one
                 if (isset($existingVariantIds[$index]) && !empty($existingVariantIds[$index])) {
-                    // Update existing variant
                     $existingVariant = ProductAttributeValue::find($existingVariantIds[$index]);
                     if ($existingVariant) {
                         $existingVariant->update($attributeValue);
                         $attributeValues[] = $attributeValue;
                     }
                 } else {
-                    // Create new variant
                     ProductAttributeValue::create($attributeValue);
                     $attributeValues[] = $attributeValue;
                 }
             }
-
-            // Get total quantity from all variants (including newly created ones)
             $variantTotalQuantity = $product->attributeValues()->sum('quantity');
-
-            // Stock status based on variant quantities
             if ($variantTotalQuantity > $product->reorder_quantity) {
                 $product->stock_status = 'instock';
             } elseif ($variantTotalQuantity <= $product->reorder_quantity && $variantTotalQuantity > $product->outofstock_quantity) {
@@ -803,10 +767,7 @@ class AdminController extends Controller
                 $product->stock_status = 'outofstock';
             }
         } else {
-            // If no variants, remove all existing variants
             $product->attributeValues()->delete();
-
-            // Determine stock status for products without variants
             if ($product->quantity > $product->reorder_quantity) {
                 $product->stock_status = 'instock';
             } elseif ($product->quantity <= $product->reorder_quantity && $product->quantity > $product->outofstock_quantity) {
@@ -818,39 +779,13 @@ class AdminController extends Controller
 
         $product->save();
 
-        // Notify users if stock status changes
         if ($product->stock_status === 'instock' && $previousStockStatus !== 'instock') {
             $users = User::where('utype', 'USR')->get();
             Notification::send($users, new StockUpdate($product, "Good news! The product {$product->name} is now back in stock."));
         }
-
         return redirect()->route('admin.products')->with('status', 'Product has been updated successfully!');
     }
 
-
-
-    public function GenerateProductThumbnailsImage($image, $imageName)
-    {
-
-        try {
-
-            $destinationPathThumbnail = public_path('uploads/products/thumbnails');
-            $destinationPath = public_path('uploads/products');
-            $img = Image::read($image->getRealPath());
-            $img->cover(689, 689, "center");
-            $img->resize(689, 689, function ($constraint) {
-                $constraint->aspectRatio();
-            })->save($destinationPath . '/' . $imageName);
-
-            $img->resize(204, 204, function ($constraint) {
-                $constraint->aspectRatio();
-            })->save($destinationPathThumbnail . '/' . $imageName);
-
-            \Log::info('Image saved successfully: ' . $imageName);
-        } catch (\Exception $e) {
-            \Log::error('Image processing failed: ' . $e->getMessage());
-        }
-    }
 
     public function archivedProducts($id)
     {
