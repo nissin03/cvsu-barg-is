@@ -168,9 +168,9 @@
                             <div class="meta-item">
                                 <span style="font-size: 14px" id="available-quantity">
                                     @if ($product->attributeValues->isNotEmpty() && isset($product->attributeValues[0]->quantity))
-                                        {{ $product->attributeValues[0]->quantity > 0 ? $product->attributeValues[0]->quantity : 'Out of Stock' }}
+                                        {{ $product->attributeValues[0]->quantity > 0 }}
                                     @else
-                                        {{ $product->quantity > 0 ? $product->quantity : 'Out of Stock' }}
+                                    {{ $product->quantity }}
                                     @endif
                                 </span>
                             </div>
@@ -178,8 +178,10 @@
                             <input type="hidden" name="name" value="{{ $product->name }}" />
                             <input type="hidden" name="price" id="selected-price" value="{{ $product->price }}" />
                             <input type="hidden" name="variant_id" id="selected-variant-id" value="" />
-                            <button type="submit" class="btn btn-shop btn-addtocart" id="add-to-cart-button">
-                                Add to Cart
+                            <button type="submit" class="btn btn-shop btn-addtocart" id="add-to-cart-button"
+                                {{ $isOutOfStock ? 'disabled' : '' }}
+                            >
+                            {{ $isOutOfStock ? 'Out of Stock' : 'Add to Cart' }}
                             </button>
                         </div>
                     </form>
@@ -464,7 +466,8 @@
                             availableQuantitySpan.textContent = maxAvailableQty > 0 ?
                                 `${maxAvailableQty} pieces available` :
                                 'Out of Stock';
-                            addToCartButton.disabled = maxAvailableQty <= 0;
+                                addToCartButton.disabled = maxAvailableQty <= 0;
+                                addToCartButton.textContent = maxAvailableQty > 0 ? 'Add to Cart' : 'Out of Stock';
                         }
 
                         errorMessage.style.display = 'none';

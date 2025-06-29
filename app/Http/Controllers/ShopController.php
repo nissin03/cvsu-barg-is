@@ -80,7 +80,15 @@ class ShopController extends Controller
             }
         }
 
+        $isOutOfStock = $product->quantity <= 0 || $product->stock_status === 'outofstock';
+
+        if ($product->attributeValues->count()) {
+            $isOutOfStock = $product->attributeValues->every(function ($variant) {
+                return $variant->quantity <= 0 || $variant->stock_status === 'outofstock';
+            });
+        }
+
         $rproducts = Product::where('slug', '<>', $product_slug)->take(8)->get();
-        return view('details', compact('product', 'rproducts', 'groupedAttributes', 'uniqueAttributes'));
+        return view('details', compact('product',  'isOutOfStock', 'rproducts', 'groupedAttributes', 'uniqueAttributes'));
     }
 }

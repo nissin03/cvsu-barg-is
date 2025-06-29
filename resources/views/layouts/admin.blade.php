@@ -709,6 +709,9 @@
 
 
     @stack('scripts')
+    <script>
+           window.userId = @json(Auth::id());
+    </script>
 </body>
 
 </html>

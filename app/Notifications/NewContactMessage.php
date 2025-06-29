@@ -29,7 +29,7 @@ class NewContactMessage extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
     /**
      * Get the mail representation of the notification.
@@ -61,4 +61,15 @@ class NewContactMessage extends Notification
     /**
      * Get the broadcastable representation of the notification.
      */
+
+    public function toBroadcast($notifiable)
+    {
+        return new BroadcastMessage([
+            'contact_id' => $this->contact->id,
+            'name' => $this->contact->name,
+            'email' => $this->contact->email,
+            'message' => $this->contact->message,
+            'time' => $this->contact->created_at->diffForHumans(),
+        ]);
+    }
 }

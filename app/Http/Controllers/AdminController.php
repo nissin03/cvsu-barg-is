@@ -941,24 +941,49 @@ class AdminController extends Controller
 
     public function order_details($order_id)
     {
-        $order = Order::find($order_id);
-        $orderItems = OrderItem::where('order_id', $order_id)->orderBy('id')->paginate(12);
+        // $order = Order::find($order_id);
+        $order = Order::with('orderItems.product')->findOrFail($order_id);
+        // $orderItems = OrderItem::where('order_id', $order_id)->orderBy('id')->paginate(12);
         $transaction = Transaction::where('order_id', $order_id)->first();
-        return view('admin.order-details', compact('order', 'orderItems', 'transaction'));
+        return view('admin.order-details', compact('order',  'transaction'));
     }
 
+    private function restoreQuantity(Order $order)
+    {
+        foreach ($order->orderItems as $item) {
+            if ($item->variant_id) {
+                $variant = ProductAttributeValue::find($item->variant_id);
+                if ($variant) {
+                    $variant->quantity += $item->quantity;
+                    $variant->stock_status = $variant->quantity > 0 ? 'instock' : 'outofstock';
+                    $variant->save();
+                }
+            } else {
+                $product = Product::find($item->product_id);
+                if ($product) {
+                    $product->quantity += $item->quantity;
+                    $product->stock_status = $product->quantity > 0 ? 'instock' : 'outofstock';
+                    $product->save();
+                }
+            }
+        }
+    }
     public function update_order_status(Request $request)
     {
         $request->validate([
+            'order_id' => 'required|exists:orders,id',
             'order_status' => 'required|in:reserved,canceled'
         ]);
-        $order = Order::findOrFail($request->order_id);
-        $order->status = $request->order_status;
 
+        $order = Order::with('orderItems')->findOrFail($request->order_id);
+        $originalStatus = $order->status;
 
-        if ($request->order_status === 'canceled') {
+        if ($request->order_status === 'canceled' && $originalStatus !== 'canceled') {
+            $this->restoreQuantity($order);
             $order->canceled_date = Carbon::now();
         }
+
+        $order->status = $request->order_status;
         $order->save();
         return back()->with('status', 'Status updated successfully!');
     }

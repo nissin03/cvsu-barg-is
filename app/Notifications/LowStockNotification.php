@@ -18,7 +18,7 @@ class LowStockNotification extends Notification
     /**
      * Create a new notification instance.
      */
-    public function __construct($product)
+    public function __construct($product, $quantity)
     {
         $this->product = $product;
         $this->quantity = $product->quantity;
@@ -33,6 +33,21 @@ class LowStockNotification extends Notification
         return ['database', 'broadcast'];
     }
 
+    protected function getVariant()
+    {
+        $variants = [];
+
+        $attributeValues =  $this->product->attributeValues()->with('productAttribute')->get();
+
+        foreach ($attributeValues as $attributeValue) {
+            if ($attributeValue->productAttribute) {
+                $variants[] = $attributeValue->productAttribute->name . ': ' . $attributeValue->value;
+            }
+        }
+
+        return count($variants) ? implode(', ', $variants) : "Doesn't have any variant";
+    }
+
     /**
      * Get the array representation of the notification.
      *
@@ -43,6 +58,7 @@ class LowStockNotification extends Notification
         return [
             'product_id' => $this->product->id,
             'name' => $this->product->name,
+            'variant' => $this->getVariant(),
             'quantity' => $this->quantity,
             'message' => "{$this->product->name} stock is low. Only {$this->quantity} left in stock.",
         ];
@@ -59,6 +75,7 @@ class LowStockNotification extends Notification
         return new BroadcastMessage([
             'product_id' => $this->product->id,
             'name' => $this->product->name,
+            'variant' => $this->getVariant(),
             'quantity' => $this->quantity,
             'message' => "{$this->product->name} stock is low. Only {$this->quantity} left in stock.",
         ]);

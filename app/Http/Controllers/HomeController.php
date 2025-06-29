@@ -70,7 +70,8 @@ class HomeController extends Controller
         $contact->user_id = $user->id;
         $contact->save();
 
-        event(new ContactMessageReceived($contact));
+        $admin = User::where('utype', 'ADM')->get();
+        Notification::send($admin, new NewContactMessage($contact));
         return redirect()->back()->with('success', 'Your message has been sent successfully.');
     }
 

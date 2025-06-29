@@ -19,6 +19,7 @@ use App\Models\ProductAttributeValue;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use App\Notifications\LowStockNotification;
+use Illuminate\Support\Facades\Notification;
 use App\Notifications\PreOrderNotification;
 use Surfsidemedia\Shoppingcart\Facades\Cart;
 
@@ -283,14 +284,14 @@ class CartController extends Controller
                 'message' => 'Please complete your profile to proceed with the checkout.'
             ]);
         }
-        $hasReservedOrder = Order::where('user_id', $user->id)
-            ->where('status', 'reserved')
-            ->exists();
+        // $hasReservedOrder = Order::where('user_id', $user->id)
+        //     ->where('status', 'reserved')
+        //     ->exists();
 
-        if ($hasReservedOrder) {
-            Cart::instance('cart')->destroy();
-            return redirect()->route('cart.index')->with('error', 'You already have a reserved order. Please complete or cancel it before placing another.');
-        }
+        // if ($hasReservedOrder) {
+        //     Cart::instance('cart')->destroy();
+        //     return redirect()->route('cart.index')->with('error', 'You already have a reserved order. Please complete or cancel it before placing another.');
+        // }
 
         $total = (float) str_replace(',', '', Cart::instance('cart')->total());
         if ($total <= 0) {
@@ -323,6 +324,8 @@ class CartController extends Controller
         $this->setTotalAmount();
         // dd($request->all());
         try {
+            $this->preventOverBooking($request);
+
             $order = new Order();
             $order->user_id = $user->id;
             $order->total = Session::get('checkout')['total'];
@@ -331,47 +334,13 @@ class CartController extends Controller
             $order->status = 'reserved';
             $order->save();
 
-            // Create Order Items
             foreach (Cart::instance('cart')->content() as $item) {
                 $orderItem = new OrderItem();
                 $orderItem->product_id = $item->id;
                 $orderItem->order_id = $order->id;
                 $orderItem->price = $item->price;
                 $orderItem->quantity = $item->qty;
-
-                // Stock deduction for variant or simple product
-                if ($item->options->has('is_variant') && $item->options->has('variant_id')) {
-                    $variant = ProductAttributeValue::find($item->options->variant_id);
-                    if (!$variant || $variant->quantity < $item->qty) {
-                        throw new \Exception('Insufficient variant stock for product: ' . $item->name);
-                    }
-                    $variant->quantity -= $item->qty;
-                    $variant->stock_status = $variant->quantity <= 0 ? 'outofstock' : 'instock';
-                    $variant->save();
-
-                    if ($variant->quantity <= 20) {
-                        $product = $variant->product;
-                        $quantity = $variant->quantity;
-                        $admin = User::where('utype', 'ADM')->first();
-                        if ($admin) {
-                            $admin->notify(new LowStockNotification($product, $quantity));
-                        }
-                        broadcast(new LowStockEvent($product, $quantity));
-                    }
-                } else {
-                    $product = Product::find($item->id);
-                    if (!$product || $product->quantity < $item->qty) {
-                        throw new \Exception('Insufficient stock for product: ' . $item->name);
-                    }
-                    $product->quantity -= $item->qty;
-                    $product->stock_status = $product->quantity <= 0 ? 'outofstock' : 'instock';
-                    $product->save();
-
-                    if ($product->quantity <= 20) {
-                        event(new LowStockEvent($product, $product->quantity));
-                    }
-                }
-
+                $this->handleStockAndNotification($item, $orderItem);
                 $orderItem->variant_id = $item->options->variant_id ?? null;
                 $orderItem->save();
             }
@@ -392,6 +361,49 @@ class CartController extends Controller
             return redirect()->back()->with('error', 'Failed to place order. ' . $e->getMessage());
         }
     }
+
+    private function handleStockAndNotification($item, $orderItem): void
+    {
+        if ($item->options->has('is_variant') && $item->options->has('variant_id')) {
+            $variant = ProductAttributeValue::find($item->options->variant_id);
+
+            if (!$variant || $variant->quantity < $item->qty) {
+                throw new \Exception('Insufficient variant stock for product: ' . $item->name);
+            }
+
+            $variant->quantity -= $item->qty;
+            $variant->stock_status = $variant->quantity <= 0 ? 'outofstock' : 'instock';
+            $variant->save();
+
+            if ($variant->quantity <= 20) {
+                $product = $variant->product;
+                $product->load('attributeValues.productAttribute');
+                $admins = User::where('utype', 'ADM')->get();
+                Notification::send($admins, new LowStockNotification($product, $variant->quantity));
+            }
+
+            $orderItem->variant_id = $variant->id;
+        } else {
+            $product = Product::find($item->id);
+
+            if (!$product || $product->quantity < $item->qty) {
+                throw new \Exception('Insufficient stock for product: ' . $item->name);
+            }
+
+            $product->quantity -= $item->qty;
+            $product->stock_status = $product->quantity <= 0 ? 'outofstock' : 'instock';
+            $product->save();
+
+            if ($product->quantity <= 20) {
+                $product->load('attributeValues.productAttribute');
+                $admins = User::where('utype', 'ADM')->get();
+                Notification::send($admins, new LowStockNotification($product, $product->quantity));
+            }
+
+            $orderItem->variant_id = null;
+        }
+    }
+
     private function isProfileIncomplete($user)
     {
         if ($user->role === 'student') {
@@ -416,6 +428,22 @@ class CartController extends Controller
         }
     }
 
+    private function preventOverBooking(Request $request)
+    {
+        $selectedDate = $request->input('reservation_date');
+        $selectedTime = $request->input('time_slot');
+
+        $currentCount = Order::where('reservation_date', $selectedDate)
+            ->where('time_slot', $selectedTime)
+            ->where('status', 'reserved')
+            ->count();
+
+        if ($currentCount >= self::MAX_SLOT_COUNT) {
+            throw new \Exception('Selected time slot is fully booked.');
+        }
+    }
+    private const MAX_SLOT_COUNT = 50;
+
     public function order_confirmation()
     {
         if (Session::has('order_id')) {
@@ -428,16 +456,7 @@ class CartController extends Controller
     public function getAvailableTimeSlots(Request $request)
     {
         $date = $request->query('date');
-        $timeSlots = [
-            '8:00 AM',
-            '9:00 AM',
-            '10:00 AM',
-            '11:00 AM',
-            '1:00 PM',
-            '2:00 PM',
-            '3:00 PM',
-            '4:00 PM'
-        ];
+        $timeSlots =  $this->timeSlots();
         $slotCounts = [];
         foreach ($timeSlots as $slot) {
             $count = Order::where('reservation_date', $date)
@@ -445,7 +464,7 @@ class CartController extends Controller
                 ->where('status', 'reserved')
                 ->count();
 
-            $slotCounts[$slot] = max(50 - $count, 0);
+            $slotCounts[$slot] = max(self::MAX_SLOT_COUNT - $count, 0);
         }
         return response()->json($slotCounts);
     }

@@ -307,7 +307,7 @@
                             <table class="table table-striped table-bordered" style="table-layout: auto;">
                                 <thead>
                                     <tr>
-                                        <th>OrderNo</th>
+                                        <th>Order No</th>
                                         <th class="text-center">Name</th>
                                         <th class="text-center">Phone</th>
                                         <th class="text-center">Year Level</th>
@@ -315,28 +315,25 @@
                                         <th class="text-center">Course</th>
                                         <th class="text-center">Reservation Date</th>
                                         <th class="text-center">Time Slot</th>
-                                        <th class="text-center">Course</th>
-                                        <th class="text-center">Subtotal</th>
                                         <th class="text-center">Total</th>
                                         <th class="text-center">Status</th>
                                         <th class="text-center">Order Date</th>
                                         <th class="text-center">Total Items</th>
                                         <th class="text-center">Picked up on</th>
+                                        <th class="text-center">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($orders as $order)
                                         <tr>
                                             <td class="text-center">{{ $order->id }}</td>
-                                            <td class="text-center">{{ $order->name }}</td>
-                                            <td class="text-center">{{ $order->phone_number }}</td>
-                                            <td class="text-center">{{ $order->year_level }}</td>
-                                            <td class="text-center">{{ $order->department }}</td>
-                                            <td class="text-center">{{ $order->course }}</td>
+                                            <td class="text-center">{{ $order->user->name }}</td>
+                                            <td class="text-center">{{ $order->user->phone_number }}</td>
+                                            <td class="text-center">{{ $order->user->year_level }}</td>
+                                            <td class="text-center">{{ $order->user->department }}</td>
+                                            <td class="text-center">{{ $order->user->course }}</td>
                                             <td class="text-center">{{ $order->reservation_date }}</td>
                                             <td class="text-center">{{ $order->time_slot }}</td>
-                                            <td class="text-center">{{ $order->course }}</td>
-                                            <td class="text-center">{{ $order->subtotal }}</td>
                                             <td class="text-center">{{ $order->total }}</td>
                                             <td class="text-center">
                                                 @if ($order->status == 'pickedup')
@@ -348,7 +345,7 @@
                                                 @endif
                                             </td>
 
-                                            <td class="text-center">{{ $order->created_at }}</td>
+                                            <td class="text-center">{{ $order->created_at->format('F j, Y g:i A') }}</td>
                                             <td class="text-center">{{ $order->orderItems->count() }}</td>
                                             <td class="text-center">{{ $order->picked_up_date }}</td>
                                             <td class="text-center">
