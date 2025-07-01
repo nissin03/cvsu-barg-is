@@ -39,6 +39,17 @@
                     <div class="card border-0">
                         <div class="card-header border-0 text-center fw-bold">
                             <span class="title-form">{{ __('Login') }}</span>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        @if(session('error'))
+                                        <div class="alert alert-danger">
+                                            {{ session('error') }}
+                                        </div>
+                                    @endif
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="card-body">
                             <form method="POST" action="{{ route('login') }}" name="login-form" class="needs-validation"

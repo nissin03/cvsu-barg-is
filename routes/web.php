@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AuthUser;
 use App\Http\Middleware\AuthAdmin;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -71,7 +72,7 @@ Route::post('/contact-us', [HomeController::class, 'contact_store'])->name('home
 
 Route::get('/search', [HomeController::class, 'search'])->name('home.search');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', AuthUser::class])->group(function () {
     Route::get('/account-dashboard', [UserController::class, 'index'])->name('user.index');
     Route::get('/account-order', [UserController::class, 'orders'])->name('user.orders');
     Route::get('/account-order/{order_id}/details', [UserController::class, 'order_details'])->name('user.order.details');
@@ -124,6 +125,8 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/api/weeks', [AdminController::class, 'getAvailableWeeks'])->name('admin.api.weeks');
 
         Route::get('/profile', [AdminProfileController::class, 'show_profile'])->name('admin.profile.index');
+        Route::put('/profile/update', [AdminProfileController::class, 'update_profile'])->name('admin.profile.update');
+        Route::post('/profile/update-image', [AdminProfileController::class, 'update_profile_image'])->name('admin.profile.update-image');
 
         Route::get('/facilities', [FacilityController::class, 'index'])->name('admin.facilities.index');
         Route::get('/facilities/search', [FacilityController::class, 'search'])->name('admin.facilities.search');

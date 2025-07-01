@@ -326,15 +326,22 @@
                                 <tbody>
                                     @foreach ($orders as $order)
                                         <tr>
-                                            <td class="text-center">{{ $order->id }}</td>
-                                            <td class="text-center">{{ $order->user->name }}</td>
-                                            <td class="text-center">{{ $order->user->phone_number }}</td>
-                                            <td class="text-center">{{ $order->user->year_level }}</td>
-                                            <td class="text-center">{{ $order->user->department }}</td>
-                                            <td class="text-center">{{ $order->user->course }}</td>
-                                            <td class="text-center">{{ $order->reservation_date }}</td>
-                                            <td class="text-center">{{ $order->time_slot }}</td>
-                                            <td class="text-center">{{ $order->total }}</td>
+                                            <td class="text-center">{{ $order->id ?? '--' }}</td>
+                                            <td class="text-center">
+                                                {{ $order->user->name ?? '--' }}
+                                                {{-- if the user is an admin, show the admin badge --}}
+                                                @if (optional($order->user)->utype === 'ADM')
+                                                <span class="badge bg-danger ms-2">Admin</span>
+                                            @endif      
+                                            </td>
+                                            
+                                            <td class="text-center">{{ $order->user->phone_number ?? '--' }}</td>
+                                            <td class="text-center">{{ $order->user->year_level  ?? '--'}}</td>
+                                            <td class="text-center">{{ $order->user->department  ?? '--'}}</td>
+                                            <td class="text-center">{{ $order->user->course ?? '--' }}</td>
+                                            <td class="text-center">{{ $order->reservation_date ?? '--'}}</td>
+                                            <td class="text-center">{{ $order->time_slot ?? '--' }}</td>
+                                            <td class="text-center">{{ $order->total ?? '--' }}</td>
                                             <td class="text-center">
                                                 @if ($order->status == 'pickedup')
                                                     <span class="badge bg-success">Picked Up</span>

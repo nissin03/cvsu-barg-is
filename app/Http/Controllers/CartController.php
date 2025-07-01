@@ -222,7 +222,6 @@ class CartController extends Controller
 
     public function remove_item($rowId)
     {
-        // Check if the cart contains the rowId
         if (!Cart::instance('cart')->get($rowId)) {
             return redirect()->back()->with('error', 'The item does not exist in the cart.');
         }
@@ -257,7 +256,6 @@ class CartController extends Controller
                 Cart::update($rowId, $newQty);
             }
 
-            // Force Cart recalculation
             Cart::setGlobalTax(Cart::getGlobalTax());
 
             return response()->json([
@@ -280,19 +278,19 @@ class CartController extends Controller
         }
         $user = Auth::user();
 
-        if ($this->isProfileIncomplete($user)) {
+        if ($user->utype === 'USR' && $this->isProfileIncomplete($user)) {
             return redirect()->route('user.profile', ['swal' => 1])->with([
                 'message' => 'Please complete your profile to proceed with the checkout.'
             ]);
         }
-        // $hasReservedOrder = Order::where('user_id', $user->id)
-        //     ->where('status', 'reserved')
-        //     ->exists();
+        $hasReservedOrder = Order::where('user_id', $user->id)
+            ->where('status', 'reserved')
+            ->exists();
 
-        // if ($hasReservedOrder) {
-        //     Cart::instance('cart')->destroy();
-        //     return redirect()->route('cart.index')->with('error', 'You already have a reserved order. Please complete or cancel it before placing another.');
-        // }
+        if ($hasReservedOrder) {
+            Cart::instance('cart')->destroy();
+            return redirect()->route('cart.index')->with('error', 'You already have a reserved order. Please complete or cancel it before placing another.');
+        }
 
         $total = (float) str_replace(',', '', Cart::instance('cart')->total());
         if ($total <= 0) {
@@ -310,17 +308,6 @@ class CartController extends Controller
         if (!in_array($request->input('time_slot'), $allowedSlots)) {
             throw new \Exception('Invalid time slot selected.');
         }
-        // $timeSlots = [
-        //     '8:00 AM',
-        //     '9:00 AM',
-        //     '10:00 AM',
-        //     '11:00 AM',
-        //     '1:00 PM',
-        //     '2:00 PM',
-        //     '3:00 PM',
-        //     '4:00 PM',
-        // ];
-        // return $timeSlots;
     }
     private const MAX_SLOT_COUNT = 50;
     public function place_an_order(Request $request)
@@ -328,7 +315,7 @@ class CartController extends Controller
         $user = Auth::user();
 
         $this->setTotalAmount();
-        // dd($request->all());
+
         try {
             $this->validateTimeSlot($request);
             $this->preventOverBooking($request);

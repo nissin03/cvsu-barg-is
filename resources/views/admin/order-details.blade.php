@@ -90,28 +90,28 @@
                                 <div class="d-flex align-items-center gap-2 mb-5">
                                     <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Name:</p>
                                     <p class="body-text mb-2">
-                                        {{ $order->user->name }}</p>
+                                        {{ $order->user->name  ??  '--'}}</p>
                                 </div>
                                 <div class="d-flex align-items-center gap-2 mb-5">
                                     <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Year
                                         Level:</p>
                                     <p class="body-text mb-2">
-                                        {{ $order->user->year_level }}</p>
+                                        {{ $order->user->year_level ??  '--' }}</p>
                                 </div>
                                 <div class="d-flex align-items-center gap-2 mb-5">
                                     <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Department:
                                     <p class="body-text mb-2">
-                                        {{ $order->user->department }}</p>
+                                        {{ $order->user->department ??  '--' }}</p>
                                 </div>
                                 <div class="d-flex align-items-center gap-2 mb-5">
                                     <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Course:
                                     <p class="body-text mb-2">
-                                        {{ $order->user->course }}</p>
+                                        {{ $order->user->course ??  '--' }}</p>
                                 </div>
                                 <div class="d-flex align-items-center gap-2 mb-5">
                                     <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Mobile:
                                     <p class="body-text mb-2">
-                                        {{ $order->user->phone_number }}</p>
+                                        {{ $order->user->phone_number ??  '--' }}</p>
                                 </div>
                             </div>
                         </div>
