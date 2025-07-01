@@ -125,7 +125,7 @@
                                         @if (isset($groupedAttributes[$attributeId]))
                                             @foreach ($groupedAttributes[$attributeId] as $variant)
                                                 <button type="button"
-                                                    class="btn btn-outline-primary variant-button me-2 mb-2"
+                                                    class="btn btn-outline-success variant-button me-2 mb-2"
                                                     data-attribute-id="{{ $attributeId }}"
                                                     data-variant-id="{{ $variant->id }}"
                                                     data-variant-price="{{ $variant->price }}"
@@ -168,9 +168,9 @@
                             <div class="meta-item">
                                 <span style="font-size: 14px" id="available-quantity">
                                     @if ($product->attributeValues->isNotEmpty() && isset($product->attributeValues[0]->quantity))
-                                        {{ $product->attributeValues[0]->quantity > 0 ? $product->attributeValues[0]->quantity : 'Out of Stock' }}
+                                        {{ $product->attributeValues[0]->quantity > 0 }}
                                     @else
-                                        {{ $product->quantity > 0 ? $product->quantity : 'Out of Stock' }}
+                                    {{ $product->quantity }}
                                     @endif
                                 </span>
                             </div>
@@ -178,8 +178,10 @@
                             <input type="hidden" name="name" value="{{ $product->name }}" />
                             <input type="hidden" name="price" id="selected-price" value="{{ $product->price }}" />
                             <input type="hidden" name="variant_id" id="selected-variant-id" value="" />
-                            <button type="submit" class="btn btn-shop btn-addtocart" id="add-to-cart-button">
-                                Add to Cart
+                            <button type="submit" class="btn btn-shop btn-addtocart" id="add-to-cart-button"
+                                {{ $isOutOfStock ? 'disabled' : '' }}
+                            >
+                            {{ $isOutOfStock ? 'Out of Stock' : 'Add to Cart' }}
                             </button>
                         </div>
                     </form>
@@ -441,15 +443,15 @@
                     button.addEventListener('click', function() {
                         // Remove active styling from the previous button, if any.
                         if (activeButton) {
-                            activeButton.classList.remove('btn-primary');
-                            activeButton.classList.add('btn-outline-primary');
+                            activeButton.classList.remove('btn-success');
+                            activeButton.classList.add('btn-outline-success');
                         }
 
                         // Set the selected variant id.
                         const variantId = this.dataset.variantId;
                         selectedVariantIdInput.value = variantId;
-                        this.classList.remove('btn-outline-primary');
-                        this.classList.add('btn-primary');
+                        this.classList.remove('btn-outline-success');
+                        this.classList.add('btn-success');
                         activeButton = this;
 
                         // Update the displayed price to match the variant's designated price.
@@ -464,7 +466,8 @@
                             availableQuantitySpan.textContent = maxAvailableQty > 0 ?
                                 `${maxAvailableQty} pieces available` :
                                 'Out of Stock';
-                            addToCartButton.disabled = maxAvailableQty <= 0;
+                                addToCartButton.disabled = maxAvailableQty <= 0;
+                                addToCartButton.textContent = maxAvailableQty > 0 ? 'Add to Cart' : 'Out of Stock';
                         }
 
                         errorMessage.style.display = 'none';
