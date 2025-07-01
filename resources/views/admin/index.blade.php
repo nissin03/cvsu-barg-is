@@ -347,7 +347,7 @@
 
                                             <td class="text-center">{{ $order->created_at->format('F j, Y g:i A') }}</td>
                                             <td class="text-center">{{ $order->orderItems->count() }}</td>
-                                            <td class="text-center">{{ $order->picked_up_date }}</td>
+                                            <td class="text-center">{{ $order->picked_up_date  ? $order->picked_up_date : 'Not Available'}}</td>
                                             <td class="text-center">
                                                 <a href="{{ route('admin.order.details', ['order_id' => $order->id]) }}">
                                                     <div class="list-icon-function view-icon">

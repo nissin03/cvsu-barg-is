@@ -125,7 +125,7 @@
                                         @if (isset($groupedAttributes[$attributeId]))
                                             @foreach ($groupedAttributes[$attributeId] as $variant)
                                                 <button type="button"
-                                                    class="btn btn-outline-primary variant-button me-2 mb-2"
+                                                    class="btn btn-outline-success variant-button me-2 mb-2"
                                                     data-attribute-id="{{ $attributeId }}"
                                                     data-variant-id="{{ $variant->id }}"
                                                     data-variant-price="{{ $variant->price }}"
@@ -443,15 +443,15 @@
                     button.addEventListener('click', function() {
                         // Remove active styling from the previous button, if any.
                         if (activeButton) {
-                            activeButton.classList.remove('btn-primary');
-                            activeButton.classList.add('btn-outline-primary');
+                            activeButton.classList.remove('btn-success');
+                            activeButton.classList.add('btn-outline-success');
                         }
 
                         // Set the selected variant id.
                         const variantId = this.dataset.variantId;
                         selectedVariantIdInput.value = variantId;
-                        this.classList.remove('btn-outline-primary');
-                        this.classList.add('btn-primary');
+                        this.classList.remove('btn-outline-success');
+                        this.classList.add('btn-success');
                         activeButton = this;
 
                         // Update the displayed price to match the variant's designated price.

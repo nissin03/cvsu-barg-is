@@ -38,16 +38,18 @@
                                             class="text-success fw-bold">50</span></span>
                                 </div>
                             </div>
-                            <div class="time-slots-container">
+                            <div class="time-slots-container" id="timeSlotContainer">
                                 <div class="d-flex flex-wrap justify-content-center gap-2 mb-2">
                                     @foreach ($timeSlots as $time)
-                                        <button class="btn btn-sm time-btn" type="button" data-time="{{ $time }}">
-                                            <i class="fas fa-clock"></i>
-                                            {{ $time }}
+                                        <button class="btn btn-sm btn-outline-primary time-btn" type="button" data-time="{{ $time }}">
+                                            <i class="fas fa-clock"></i> {{ $time }}
                                         </button>
                                     @endforeach
+
                                 </div>
+                                {{-- <input type="hidden" name="time_slot" id="time_slot"> --}}
                             </div>
+                            
                         </div>
 
                         <button type="submit" class="btn reservation-btn w-100" id="placeReservationBtn" disabled>

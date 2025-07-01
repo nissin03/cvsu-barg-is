@@ -12,6 +12,7 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use App\Events\LowStockEvent;
 use Illuminate\Support\Carbon;
+use App\Helpers\TimeSlotHelper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -19,8 +20,8 @@ use App\Models\ProductAttributeValue;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use App\Notifications\LowStockNotification;
-use Illuminate\Support\Facades\Notification;
 use App\Notifications\PreOrderNotification;
+use Illuminate\Support\Facades\Notification;
 use Surfsidemedia\Shoppingcart\Facades\Cart;
 
 class CartController extends Controller
@@ -298,25 +299,30 @@ class CartController extends Controller
             return redirect()->route('cart.index')
                 ->with('warning', 'Your cart is empty. Add items before checking out.');
         }
-        $timeSlots = $this->timeSlots();
+        $timeSlots = TimeSlotHelper::time();
 
         return view('checkout', compact('user', 'timeSlots'));
     }
 
-    private function timeSlots()
+    private function validateTimeSlot(Request $request)
     {
-        $timeSlots = [
-            '8:00 AM',
-            '9:00 AM',
-            '10:00 AM',
-            '11:00 AM',
-            '1:00 PM',
-            '2:00 PM',
-            '3:00 PM',
-            '4:00 PM',
-        ];
-        return $timeSlots;
+        $allowedSlots = TimeSlotHelper::time();
+        if (!in_array($request->input('time_slot'), $allowedSlots)) {
+            throw new \Exception('Invalid time slot selected.');
+        }
+        // $timeSlots = [
+        //     '8:00 AM',
+        //     '9:00 AM',
+        //     '10:00 AM',
+        //     '11:00 AM',
+        //     '1:00 PM',
+        //     '2:00 PM',
+        //     '3:00 PM',
+        //     '4:00 PM',
+        // ];
+        // return $timeSlots;
     }
+    private const MAX_SLOT_COUNT = 50;
     public function place_an_order(Request $request)
     {
         $user = Auth::user();
@@ -324,6 +330,7 @@ class CartController extends Controller
         $this->setTotalAmount();
         // dd($request->all());
         try {
+            $this->validateTimeSlot($request);
             $this->preventOverBooking($request);
 
             $order = new Order();
@@ -442,7 +449,7 @@ class CartController extends Controller
             throw new \Exception('Selected time slot is fully booked.');
         }
     }
-    private const MAX_SLOT_COUNT = 50;
+
 
     public function order_confirmation()
     {
@@ -456,7 +463,7 @@ class CartController extends Controller
     public function getAvailableTimeSlots(Request $request)
     {
         $date = $request->query('date');
-        $timeSlots =  $this->timeSlots();
+        $timeSlots = TimeSlotHelper::time();
         $slotCounts = [];
         foreach ($timeSlots as $slot) {
             $count = Order::where('reservation_date', $date)

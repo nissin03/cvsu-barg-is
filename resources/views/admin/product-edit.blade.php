@@ -371,17 +371,21 @@
                             </div>
                         </fieldset>
                     </div>
-                    <input type="checkbox" id="use-variants-checkbox" {{ $hasVariant ? 'checked' : '' }}>
-                    <label for="use-variants-checkbox">Use Variants</label>
-
+                    <div class="d-flex justify-content-between align-items-center gap-4">
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" id="use-variants-checkbox" {{ $hasVariant ? 'checked' : '' }}>
+                            <label for="use-variants-checkbox" class="mb-0">Use Variants</label>
+                        </div>
+                        <div class="cols gap22">
+                            <button type="button" id="add-variant-btn" class="btn btn-primary">Add Variant</button>
+                        </div>
+                    </div>
                     @error('product_attribute_id')
                         <span class="alert alert-danger text-center">{{ $message }} </span>
                     @enderror
 
                     <!-- Button to Add Variant -->
-                    <div class="cols gap22">
-                        <button type="button" id="add-variant-btn" class="btn btn-primary">Add Variant</button>
-                    </div>
+                  
                 </div>
 
                 <div class="wg-box">

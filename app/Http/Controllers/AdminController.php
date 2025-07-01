@@ -21,8 +21,10 @@ use Illuminate\Http\Request;
 use App\Models\DormitoryRoom;
 use App\Models\ContactReplies;
 use Illuminate\Support\Carbon;
+use App\Helpers\TimeSlotHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProductAttribute;
+use App\Services\ImageProcessor;
 use App\Notifications\StockUpdate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -33,7 +35,6 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\ProductAttributeValue;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Notification;
-use App\Services\ImageProcessor;
 use Intervention\Image\Laravel\Facades\Image;
 
 
@@ -887,6 +888,7 @@ class AdminController extends Controller
     {
         $status = $request->input('status');
         $timeSlot = $request->input('time_slot');
+        $timeSlots = TimeSlotHelper::time();
 
         $query = Order::query();
 
@@ -907,7 +909,7 @@ class AdminController extends Controller
             ]);
         }
 
-        return view('admin.orders', compact('orders'));
+        return view('admin.orders', compact('orders', 'timeSlots'));
     }
 
     // This route handles the filter functionality
