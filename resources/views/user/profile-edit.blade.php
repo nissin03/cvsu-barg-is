@@ -1,4 +1,6 @@
 @extends('layouts.app')
+
+@section('content')
 <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
     :breadcrumbs="$breadcrumbs" />
 
@@ -53,8 +55,6 @@
         background-color: #23272b;
     }
 </style>
-
-@section('content')
     <div class="container mt-5 pt-5">
         <div class="row justify-content-center">
             <div class="col-md-12 mt-5">
