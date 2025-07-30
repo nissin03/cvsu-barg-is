@@ -25,4 +25,18 @@ class QualificationApproval extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+
+    public function getQualificationUrlAttribute()
+    {
+        if ($this->qualification) {
+            return asset('storage/' . $this->qualification);
+        }
+        return null;
+    }
+
+    public function hasQualificationFile()
+    {
+        return !empty($this->qualification) && Storage::disk('public')->exists($this->qualification);
+    }
 }

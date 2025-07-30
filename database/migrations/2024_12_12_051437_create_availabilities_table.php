@@ -16,8 +16,10 @@ return new class extends Migration
             $table->foreignId('facility_id')->constrained('facilities')->onDelete('cascade');
             $table->foreignId('facility_attribute_id')->nullable()->constrained('facility_attributes')->onDelete('cascade');
             $table->integer('remaining_capacity')->default(0);
-            $table->date('date_from');
-            $table->date('date_to');
+            $table->date('date_from')->nullable();
+            $table->date('date_to')->nullable();
+            $table->time('time_start')->nullable(); 
+            $table->time('time_end')->nullable(); 
             $table->timestamps();
         });
     }
