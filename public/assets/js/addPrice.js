@@ -15,22 +15,55 @@ $(document).ready(function () {
         if ($priceFormContainer.children().length === 0) {
             $priceFormContainer.append(createPriceFormCard());
         }
+
+        // Add global settings after the price form container
+        if ($("#globalPriceSettings").length === 0) {
+            const globalSettings = `
+            <div id="globalPriceSettings" class="mt-4 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <input type="checkbox" class="form-check-input" id="globalIsBasedOnDays">
+                        <label class="form-check-label ms-2 pt-2">Is based on days?</label>
+                    </div>
+                    <div class="d-flex align-items-center ms-3">
+                        <input type="checkbox" class="form-check-input" id="globalIsThereAQuantity">
+                        <label class="form-check-label ms-2 pt-2">Is there a quantity?</label>
+                    </div>
+                </div>
+                <div class="row g-3 mt-2 date-fields" style="display: none;">
+                    <div class="col-md-6">
+                        <label class="form-label">Date From</label>
+                        <input type="date" class="form-control" id="globalDateFrom">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Date To</label>
+                        <input type="date" class="form-control" id="globalDateTo">
+                    </div>
+                </div>
+            </div>`;
+            $priceFormContainer.after(globalSettings);
+        }
+
+        // Call updatePriceFieldVisibility when modal opens
+        if (typeof window.updatePriceFieldVisibility === "function") {
+            window.updatePriceFieldVisibility($("#rentalType").val());
+        }
     });
 
-    // Add new price form when the "Add Another Price" button is clicked
     $("#addMultiplePricesRowBtn").on("click", function (e) {
         e.preventDefault();
         $priceFormContainer.append(createPriceFormCard());
+
+        if (typeof window.updatePriceFieldVisibility === "function") {
+            window.updatePriceFieldVisibility($("#rentalType").val());
+        }
     });
 
-    // Dynamically disable past dates for all price forms
     function disablePastDates($form) {
         const today = new Date().toISOString().split("T")[0];
-        $form.find(".date-from").attr("min", today);
-        $form.find(".date-to").attr("min", today);
+        $form.find(".date-from, .date-to").attr("min", today);
     }
 
-    // Ensure that date-to is never earlier than date-from
     $(document).on("change", ".date-from", function () {
         const $dateFrom = $(this);
         const $dateTo = $dateFrom.closest(".price-form-card").find(".date-to");
@@ -39,9 +72,9 @@ $(document).ready(function () {
         }
     });
 
-    // Create the price form card with global checkboxes moved outside individual cards
+    // Create the price form card
     function createPriceFormCard() {
-        return `
+        const $card = $(`
         <div class="price-form-card mb-3 p-3 border rounded">
             <div class="row g-3">
                 <div class="col-md-6">
@@ -61,82 +94,39 @@ $(document).ready(function () {
                     </select>
                 </div>
             </div>
-        </div>`;
+
+            <div class="col-md-1 d-flex align-items-center mt-3">
+                <button type="button" class="btn btn-lg btn-outline-danger removePriceBtn">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        </div>`);
+
+        // Initialize date fields with min date
+        disablePastDates($card);
+        return $card;
     }
 
-    // Add global option controls outside of individual price forms
-    $("#priceFormContainer").after(`
-        <div class="d-flex justify-content-between align-items-center my-4 mx-auto global-options" style="display:none">
-            <div class="d-flex align-items-center">
-                <input type="checkbox" class="form-check-input global-is-based-on-days" id="globalIsBasedOnDays">
-                <label class="form-check-label ms-2 pt-2" for="globalIsBasedOnDays">Is that based on days?</label>
-            </div>
-            <div class="d-flex align-items-center ms-3">
-                <input type="checkbox" class="form-check-input global-is-there-a-quantity" id="globalIsThereAQuantity">
-                <label class="form-check-label ms-2 pt-2" for="globalIsThereAQuantity">Is have quantity?</label>
-            </div>
-        </div>
-        <div class="row g-3 mt-2 global-date-fields" id="globalDateFields" style="display: none;">
-            <div class="col-md-6">
-                <label class="form-label">Date From</label>
-                <input type="date" class="form-control global-date-from" id="globalDateFrom">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Date To</label>
-                <input type="date" class="form-control global-date-to" id="globalDateTo">
-            </div>
-        </div>
-    `);
-
-    // Show global options only when all price forms are filled
-    function checkAllFormsFilled() {
-        let allFilled = true;
-
-        $(".price-form-card").each(function () {
-            const priceName = $(this).find(".price-name").val().trim();
-            const priceType = $(this).find(".price-type").val();
-            const priceValue = $(this).find(".price-value").val().trim();
-
-            if (!priceName || !priceType || !priceValue) {
-                allFilled = false;
-                return false; // break the loop
-            }
-        });
-
-        // Show or hide global options based on all forms being filled
-        if (allFilled && $(".price-form-card").length > 0) {
-            $(".global-options").show();
-        } else {
-            $(".global-options").hide();
-            $("#globalDateFields").hide();
-            $(".global-is-based-on-days").prop("checked", false);
-            $(".global-is-there-a-quantity").prop("checked", false);
-        }
-    }
-
-    // Check if all forms are filled whenever an input changes
-    $(document).on(
-        "input change",
-        ".price-name, .price-value, .price-type",
-        function () {
-            checkAllFormsFilled();
-        }
-    );
-
-    // Toggle global date fields when "All prices based on days" is clicked
-    $(document).on("change", ".global-is-based-on-days", function () {
+    // Toggle the display of date fields based on global 'is-based-on-days' checkbox
+    $(document).on("change", "#globalIsBasedOnDays", function () {
+        const $dateFields = $(".date-fields");
         if ($(this).prop("checked")) {
-            $("#globalDateFields").show();
-            disablePastDates($("#globalDateFields"));
+            $dateFields.show();
+            // Ensure global date fields have min date set
+            const today = new Date().toISOString().split("T")[0];
+            $("#globalDateFrom, #globalDateTo").attr("min", today);
         } else {
-            $("#globalDateFields").hide();
+            $dateFields.hide();
         }
     });
 
-    // Update the date-from field on the global date-from
-    $(document).on("change", ".global-date-from", function () {
+    // Update date fields when global date from changes
+    $(document).on("change", "#globalDateFrom", function () {
+        const $dateTo = $("#globalDateTo");
         if ($(this).val()) {
-            $(".global-date-to").val($(this).val());
+            $dateTo.val($(this).val());
+            // Ensure date-to cannot be before date-from
+            $dateTo.attr("min", $(this).val());
         }
     });
 
@@ -145,18 +135,13 @@ $(document).ready(function () {
         const $card = $(this).closest(".price-form-card");
         if ($(".price-form-card").length > 1) {
             $card.remove();
-            checkAllFormsFilled();
         } else {
             // Reset the first form card if it is the only one
             $card
                 .find("input[type='text'], input[type='number'], select")
                 .val("");
-
-            // Hide global options
-            $(".global-options").hide();
-            $("#globalDateFields").hide();
-            $(".global-is-based-on-days").prop("checked", false);
-            $(".global-is-there-a-quantity").prop("checked", false);
+            $card.find("input[type='checkbox']").prop("checked", false);
+            $card.find("input[type='date']").val("");
         }
     });
 
@@ -175,19 +160,12 @@ $(document).ready(function () {
         let valid = true;
         let newPrices = [];
 
-        // Get global settings
-        const globalIsBasedOnDays = $(".global-is-based-on-days").prop(
-            "checked"
-        )
+        const isBasedOnDays = $("#globalIsBasedOnDays").prop("checked") ? 1 : 0;
+        const isThereAQuantity = $("#globalIsThereAQuantity").prop("checked")
             ? 1
             : 0;
-        const globalIsThereAQuantity = $(".global-is-there-a-quantity").prop(
-            "checked"
-        )
-            ? 1
-            : 0;
-        const globalDateFrom = $("#globalDateFrom").val();
-        const globalDateTo = $("#globalDateTo").val();
+        const dateFrom = $("#globalDateFrom").val();
+        const dateTo = $("#globalDateTo").val();
 
         $(".price-form-card").each(function () {
             const priceName = $(this).find(".price-name").val().trim();
@@ -213,10 +191,10 @@ $(document).ready(function () {
                 name: priceName,
                 price_type: priceType,
                 value: parseFloat(priceValue),
-                is_based_on_days: globalIsBasedOnDays,
-                is_there_a_quantity: globalIsThereAQuantity,
-                date_from: globalIsBasedOnDays ? globalDateFrom : null,
-                date_to: globalIsBasedOnDays ? globalDateTo : null,
+                is_based_on_days: isBasedOnDays,
+                is_there_a_quantity: isThereAQuantity,
+                date_from: dateFrom,
+                date_to: dateTo,
             });
         });
 
@@ -255,6 +233,7 @@ $(document).ready(function () {
         }
         prices.forEach((price, index) => {
             $priceCardsContainer.append(createPriceCard(price, index));
+            window.updatePriceFieldVisibility($("#rentalType").val());
         });
     }
 
@@ -316,18 +295,16 @@ $(document).ready(function () {
 
         // Create and populate a form with the price data
         $priceFormContainer.append(createPriceFormCard());
+        window.updatePriceFieldVisibility($("#rentalType").val());
         const $form = $priceFormContainer.find(".price-form-card:last");
 
         $form.find(".price-name").val(price.name);
         $form.find(".price-type").val(price.price_type);
         $form.find(".price-value").val(price.value);
 
-        // Set global options for editing
-        $(".global-is-based-on-days").prop(
-            "checked",
-            price.is_based_on_days === 1
-        );
-        $(".global-is-there-a-quantity").prop(
+        // Set global settings
+        $("#globalIsBasedOnDays").prop("checked", price.is_based_on_days === 1);
+        $("#globalIsThereAQuantity").prop(
             "checked",
             price.is_there_a_quantity === 1
         );
@@ -336,13 +313,8 @@ $(document).ready(function () {
 
         // Show/hide date fields based on is_based_on_days
         if (price.is_based_on_days === 1) {
-            $("#globalDateFields").show();
-        } else {
-            $("#globalDateFields").hide();
+            $(".date-fields").show();
         }
-
-        // Show global options for editing
-        $(".global-options").show();
 
         // Update the save button label to indicate editing
         $("#saveMultiplePricesBtn").text("Update Price");
@@ -362,6 +334,16 @@ $(document).ready(function () {
             const priceName = $form.find(".price-name").val().trim();
             const priceType = $form.find(".price-type").val();
             const priceValue = $form.find(".price-value").val().trim();
+            const isBasedOnDays = $("#globalIsBasedOnDays").prop("checked")
+                ? 1
+                : 0;
+            const isThereAQuantity = $("#globalIsThereAQuantity").prop(
+                "checked"
+            )
+                ? 1
+                : 0;
+            const dateFrom = $("#globalDateFrom").val();
+            const dateTo = $("#globalDateTo").val();
 
             // Validate inputs
             if (
@@ -375,29 +357,15 @@ $(document).ready(function () {
                 return;
             }
 
-            // Get global settings
-            const globalIsBasedOnDays = $(".global-is-based-on-days").prop(
-                "checked"
-            )
-                ? 1
-                : 0;
-            const globalIsThereAQuantity = $(
-                ".global-is-there-a-quantity"
-            ).prop("checked")
-                ? 1
-                : 0;
-            const globalDateFrom = $("#globalDateFrom").val();
-            const globalDateTo = $("#globalDateTo").val();
-
             // Update the price object
             prices[index] = {
                 name: priceName,
                 price_type: priceType,
                 value: parseFloat(priceValue),
-                is_based_on_days: globalIsBasedOnDays,
-                is_there_a_quantity: globalIsThereAQuantity,
-                date_from: globalIsBasedOnDays ? globalDateFrom : null,
-                date_to: globalIsBasedOnDays ? globalDateTo : null,
+                is_based_on_days: isBasedOnDays,
+                is_there_a_quantity: isThereAQuantity,
+                date_from: dateFrom,
+                date_to: dateTo,
             };
 
             updateUI();
@@ -410,19 +378,18 @@ $(document).ready(function () {
     function resetModal() {
         $priceFormContainer.empty();
         $priceFormContainer.append(createPriceFormCard());
-
-        // Reset global options
-        $(".global-options").hide();
-        $("#globalDateFields").hide();
-        $(".global-is-based-on-days").prop("checked", false);
-        $(".global-is-there-a-quantity").prop("checked", false);
-        $("#globalDateFrom").val("");
-        $("#globalDateTo").val("");
-
+        window.updatePriceFieldVisibility($("#rentalType").val());
         editMode = false;
         editIndex = -1;
         $("#saveMultiplePricesBtn").text("Save All");
         $("#addPriceLabel").text("Add Price");
+
+        // Reset global settings
+        $("#globalIsBasedOnDays").prop("checked", false);
+        $("#globalIsThereAQuantity").prop("checked", false);
+        $("#globalDateFrom").val("");
+        $("#globalDateTo").val("");
+        $(".date-fields").hide();
     }
 
     // Update hidden prices for form submission

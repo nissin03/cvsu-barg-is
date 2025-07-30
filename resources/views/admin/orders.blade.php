@@ -208,24 +208,18 @@
                 <div class="flex items-center justify-between gap10 flex-wrap">
                     <div class="filter-dropdowns flex items-center gap10">
                         <!-- Time Slot Dropdown -->
-                        <select name="time_slot" id="time_slot" class="filter-select">
+                        <select name="time_slot" id="time_slot" class="w-auto">
                             <option value="">Select Time Slot</option>
-                            <option value="08:00 am - 09:00 am"
-                                {{ request('time_slot') == '08:00 am - 09:00 am' ? 'selected' : '' }}>08:00 am - 09:00 am
-                            </option>
-                            <option value="10:00 am - 11:00 am"
-                                {{ request('time_slot') == '10:00 am - 11:00 am' ? 'selected' : '' }}>10:00 am - 11:00 am
-                            </option>
-                            <option value="01:00 pm - 02:00 pm"
-                                {{ request('time_slot') == '01:00 pm - 02:00 pm' ? 'selected' : '' }}>01:00 pm - 02:00 pm
-                            </option>
-                            <option value="03:00 pm - 04:00 pm"
-                                {{ request('time_slot') == '03:00 pm - 04:00 pm' ? 'selected' : '' }}>03:00 pm - 04:00 pm
-                            </option>
+                            @foreach ($timeSlots as $slot)
+                                <option value="{{ $slot }}" {{ request('time_slot') == $slot ? 'selected' : '' }}>
+                                    {{ $slot }}
+                                </option>
+                            @endforeach
                         </select>
+                        
 
                         <!-- Status Dropdown -->
-                        <select name="status" id="status" class="filter-select">
+                        <select name="status" id="status" class="w-auto">
                             <option value="">Select Status</option>
                             <option value="reserved" {{ request('status') == 'reserved' ? 'selected' : '' }}>Reserved
                             </option>
@@ -237,7 +231,7 @@
                     </div>
                 </div>
 
-                <div class="wg-table table-all-user">
+                <div class="">
                     <div class="table-responsive">
                         <table class="table table-striped table-bordered" style="table-layout: auto;">
                             <thead>
@@ -247,7 +241,6 @@
                                     <th class="text-center">Total Items</th>
                                     <th class="text-center">Total Price</th>
                                     <th class="text-center">Order Date</th>
-                                    <th class="text-center">Picked up on</th>
                                     <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
@@ -266,158 +259,97 @@
         </div>
     </div>
 @endsection
-
 @push('scripts')
-    <script>
-        $(document).ready(function() {
-            // Store current scroll position
-            let lastScrollPosition = 0;
+<script>
+    $(document).ready(function () {
+        let lastScrollPosition = 0;
+        const tooltip = $('<div class="custom-tooltip"></div>').appendTo('body');
 
-            // Tooltip for Reservation Date
-            const tooltip = $('<div class="custom-tooltip"></div>').appendTo('body');
-
-            function initTooltips() {
-                $('.reservation-date').hover(function() {
-                    const timeSlot = $(this).data('time-slot');
-                    tooltip.text(timeSlot).fadeIn('fast');
-                }, function() {
-                    tooltip.hide();
-                }).mousemove(function(e) {
-                    tooltip.css({
-                        top: e.pageY + 10 + 'px',
-                        left: e.pageX + 10 + 'px'
-                    });
+        function initTooltips() {
+            $('.reservation-date').hover(function () {
+                const timeSlot = $(this).data('time-slot');
+                tooltip.text(timeSlot).fadeIn('fast');
+            }, function () {
+                tooltip.hide();
+            }).mousemove(function (e) {
+                tooltip.css({
+                    top: e.pageY + 10 + 'px',
+                    left: e.pageX + 10 + 'px'
                 });
-            }
+            });
+        }
 
-            // Function to perform AJAX filter
-            function performFilter() {
-                // Save current scroll position
+        function performFilter() {
+            lastScrollPosition = $(window).scrollTop();
+
+            const status = $('#status').val();
+            const timeSlot = $('#time_slot').val();
+
+            $('#loading-indicator').show();
+
+            let url = '{{ route('admin.orders') }}';
+            const params = [];
+
+            if (status) params.push('status=' + encodeURIComponent(status));
+            if (timeSlot) params.push('time_slot=' + encodeURIComponent(timeSlot));
+            if (params.length > 0) url += '?' + params.join('&');
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                success: function (response) {
+                    $('#js-orders-partial-target').html(response.orders);
+                    $('#js-orders-partial-target-pagination').html(response.pagination);
+                    $('#loading-indicator').hide();
+                    window.history.pushState({}, '', url);
+                    initTooltips();
+                    initPaginationEvents();
+                    $(window).scrollTop(lastScrollPosition);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error:', error);
+                    $('#loading-indicator').hide();
+                    alert('An error occurred while filtering orders. Please try again.');
+                }
+            });
+        }
+
+        function initPaginationEvents() {
+            $('.pagination a').off('click').on('click', function (e) {
+                e.preventDefault();
                 lastScrollPosition = $(window).scrollTop();
 
-                // Get filter values
-                let status = $('#status').val();
-                let timeSlot = $('#time_slot').val();
-
-                // Show loading indicator
+                const url = $(this).attr('href');
                 $('#loading-indicator').show();
 
-                // Build the URL with query parameters
-                let url = '{{ route('admin.orders') }}';
-                let params = [];
-
-                if (status) {
-                    params.push('status=' + encodeURIComponent(status));
-                }
-
-                if (timeSlot) {
-                    params.push('time_slot=' + encodeURIComponent(timeSlot));
-                }
-
-                if (params.length > 0) {
-                    url += '?' + params.join('&');
-                }
-
-                // Perform AJAX request
                 $.ajax({
                     url: url,
                     type: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    success: function(response) {
-                        // Update table content
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    success: function (response) {
                         $('#js-orders-partial-target').html(response.orders);
-
-                        // Update pagination
                         $('#js-orders-partial-target-pagination').html(response.pagination);
-
-                        // Hide loading indicator
                         $('#loading-indicator').hide();
-
-                        // Update browser URL without page reload
                         window.history.pushState({}, '', url);
-
-                        // Reinitialize tooltips
                         initTooltips();
-
-                        // Reinitialize pagination events
                         initPaginationEvents();
-
-                        // Restore scroll position
                         $(window).scrollTop(lastScrollPosition);
                     },
-                    error: function(xhr, status, error) {
+                    error: function (xhr, status, error) {
                         console.error('Error:', error);
-
-                        // Hide loading indicator
                         $('#loading-indicator').hide();
-
-                        // Show error message if needed
-                        alert('An error occurred while filtering orders. Please try again.');
                     }
                 });
-            }
-
-            // Function to initialize pagination click events
-            function initPaginationEvents() {
-                $('.pagination a').off('click').on('click', function(e) {
-                    e.preventDefault();
-
-                    // Save current scroll position
-                    lastScrollPosition = $(window).scrollTop();
-
-                    const url = $(this).attr('href');
-
-                    // Show loading indicator
-                    $('#loading-indicator').show();
-
-                    $.ajax({
-                        url: url,
-                        type: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        success: function(response) {
-                            // Update table content
-                            $('#js-orders-partial-target').html(response.orders);
-
-                            // Update pagination
-                            $('#js-orders-partial-target-pagination').html(response.pagination);
-
-                            // Hide loading indicator
-                            $('#loading-indicator').hide();
-
-                            // Update browser URL without page reload
-                            window.history.pushState({}, '', url);
-
-                            // Reinitialize tooltips
-                            initTooltips();
-
-                            // Reinitialize pagination events
-                            initPaginationEvents();
-
-                            // Restore scroll position
-                            $(window).scrollTop(lastScrollPosition);
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('Error:', error);
-
-                            // Hide loading indicator
-                            $('#loading-indicator').hide();
-                        }
-                    });
-                });
-            }
-
-            // Add change event listeners to the filter dropdowns
-            $('#status, #time_slot').on('change', function() {
-                performFilter();
             });
+        }
 
-            // Initialize tooltips and pagination events on page load
-            initTooltips();
-            initPaginationEvents();
+        $('#status, #time_slot').on('change', function () {
+            performFilter();
         });
-    </script>
+
+        initTooltips();
+        initPaginationEvents();
+    });
+</script>
 @endpush

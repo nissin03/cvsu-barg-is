@@ -20,8 +20,8 @@
         </div>
 
         <div class="wg-box">
-            <div class="flex items-center justify-between gap10 flex-wrap">
-                <a class="tf-button style-1 w208" href="{{route('admin.product-attribute-add')}}"><i
+            <div class="d-flex align-items-end justify-content-end gap10 flex-wrap">
+                <a class="tf-button w-auto" href="{{route('admin.product-attribute-add')}}"><i
                         class="icon-plus"></i>Add new</a>
             </div>
             <div class="wg-table table-all-user">

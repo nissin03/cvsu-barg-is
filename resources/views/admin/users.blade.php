@@ -35,7 +35,7 @@
 
                     <div class="filter-dropdowns flex items-center gap10">
                         <!-- Year Level Dropdown -->
-                        <select name="year_level" id="year_level" class="form-select">
+                        <select name="year_level" id="year_level" class="w-auto">
                             <option value="">Year Level</option>
                             <option value="1st Year" {{ request('year_level') == '1st Year' ? 'selected' : '' }}>1st Year
                             </option>
@@ -48,7 +48,7 @@
                         </select>
 
                         <!-- Colleges Dropdown -->
-                        <select name="department" id="department" class="form-select">
+                        <select name="department" id="department" class="w-auto">
                             <option value="">Select College</option>
                             <option value="CEIT" {{ request('department') == 'CEIT' ? 'selected' : '' }}>CEIT</option>
                             <option value="GSOLC" {{ request('department') == 'GSOLC' ? 'selected' : '' }}>GSOLC</option>
@@ -63,7 +63,7 @@
                     </div>
 
                     <div>
-                        <a class="tf-button style-1 w208" href="{{ route('admin.users.add') }}"><i
+                        <a class="tf-button w-auto" href="{{ route('admin.users.add') }}"><i
                                 class="icon-plus"></i>Add new</a>
                     </div>
                 </div>

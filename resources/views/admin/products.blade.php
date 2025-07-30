@@ -203,17 +203,14 @@
                             </fieldset>
                             <div class="button-submit">
                                 <button type="button" style="display:none;"> <i class="icon-search"></i></button>
-                                <!-- Hidden button -->
                             </div>
                         </form>
                     </div>
-                    <a class="tf-button style-1 w208" href="{{ route('admin.categories') }}"><i class="icon-plus"></i>Add
-                        Categories</a>
-                    <a class="tf-button style-1 w208" href="{{ route('admin.product-attribute-add') }}"><i
-                            class="icon-plus"></i>Add Variations</a>
-                    <a class="tf-button style-1 w208" href="{{ route('admin.product.add') }}"><i class="icon-plus"></i>Add
+                    <a class="tf-button w-auto" href="{{ route('admin.product.add') }}"><i class="icon-plus"></i>Add
                         new</a>
-                    <a class="tf-button style-1 w208" href="{{ route('admin.archived-products') }}"><i
+                    <a class="tf-button w-auto" href="{{ route('admin.product-attribute-add') }}"><i
+                            class="icon-plus"></i>Add Variations</a>
+                    <a class="tf-button w-auto" href="{{ route('admin.archived-products') }}"><i
                             class="icon-archive"></i> Archived Products</a>
                 </div>
                 <div class="table-responsive">
@@ -224,7 +221,7 @@
                         <thead>
                             <tr>
                                 <th scope="col">Name</th>
-                                <th scope="col">Quantity</th>
+                                <th scope="col" width="15%">Quantity</th>
                                 <th scope="col">Price</th>
                                 <th scope="col">Category</th>
                                 <th scope="col">Action</th>

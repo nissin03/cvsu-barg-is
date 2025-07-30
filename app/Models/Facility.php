@@ -13,13 +13,12 @@ class Facility extends Model
 
     protected $fillable = [
         'name',
-        'description',
+        'slug',
         'facility_type',
+        'facility_selection_both',
+        'description',
         'image',
         'images',
-        'slug',
-        'featured',
-        'status',
         'created_by',
         'rules_and_regulations',
         'requirements',

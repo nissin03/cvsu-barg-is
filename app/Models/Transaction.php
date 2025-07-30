@@ -9,9 +9,10 @@ class Transaction extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'user_id',
         'order_id',
         'status',
+        'amount_paid',
+        'change',
     ];
 
     public function order()

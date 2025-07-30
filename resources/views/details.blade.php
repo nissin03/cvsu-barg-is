@@ -2,6 +2,7 @@
 @extends('layouts.app')
 
 @section('content')
+
     @php
         $user = auth()->user();
         $currentRoute = request()->route()->getName();
@@ -27,8 +28,11 @@
         }
     @endphp
 
+=======
+
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
+
 
     <main class="container my-5">
         @if (session('incomplete_profile'))
@@ -45,6 +49,19 @@
                 });
             </script>
         @endif
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
+            <div id="cartToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive"
+                aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body" id="toast-body">
+                        <!-- Toast message will go here -->
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                        aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+
 
         <div id="loading-overlay" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
              style="background: rgba(255,255,255,0.8); z-index: 9999; display: none !important;">
@@ -190,7 +207,7 @@
                                         @if (isset($groupedAttributes[$attributeId]))
                                             @foreach ($groupedAttributes[$attributeId] as $variant)
                                                 <button type="button"
-                                                    class="btn btn-outline-primary variant-button me-2 mb-2"
+                                                    class="btn btn-outline-success variant-button me-2 mb-2"
                                                     data-attribute-id="{{ $attributeId }}"
                                                     data-variant-id="{{ $variant->id }}"
                                                     data-variant-price="{{ $variant->price }}"
@@ -229,6 +246,7 @@
                     <form id="add-to-cart-form" action="{{ route('cart.add') }}" method="POST" class="mb-4">
                         @csrf
                         <div class="product-single__addtocart">
+
                             <div class="quantity-selector-container d-flex align-items-center gap-3 w-100 mb-3">
                                 <div class="quantity-selector d-flex align-items-center">
                                     <button type="button" class="btn p-1" onclick="this.parentNode.querySelector('input').stepDown()">
@@ -254,14 +272,36 @@
                                         @endif    
                                     </span>
                                 </div>
+                          <div class="qty-control position-relative">
+                                <input type="number" name="quantity" value="1" min="1"
+                                    class="qty-control__number text-center">
+                                <div class="qty-control__reduce">-</div>
+                                <div class="qty-control__increase">+</div>
+                            </div>
+                            <div class="meta-item">
+                                <span style="font-size: 14px" id="available-quantity">
+                                    @if ($product->attributeValues->isNotEmpty() && isset($product->attributeValues[0]->quantity))
+                                        {{ $product->attributeValues[0]->quantity > 0 }}
+                                    @else
+                                    {{ $product->quantity }}
+                                    @endif
+                                </span>
+
                             </div>
                             <input type="hidden" name="id" value="{{ $product->id }}" />
                             <input type="hidden" name="name" value="{{ $product->name }}" />
                             <input type="hidden" name="price" id="selected-price" value="{{ $product->price }}" />
                             <input type="hidden" name="variant_id" id="selected-variant-id" value="" />
+
                             <button type="submit" class="btn btn-shop btn-addtocart w-100" id="add-to-cart-button">
                                 <i class="fas fa-shopping-cart me-2"></i>
                                 Add to Cart
+
+                            <button type="submit" class="btn btn-shop btn-addtocart" id="add-to-cart-button"
+                                {{ $isOutOfStock ? 'disabled' : '' }}
+                            >
+                            {{ $isOutOfStock ? 'Out of Stock' : 'Add to Cart' }}
+
                             </button>
                         </div>
                     </form>
@@ -1128,6 +1168,9 @@
             const errorMessage = document.getElementById('error-message');
             const selectedVariantIdInput = document.getElementById('selected-variant-id');
             const variantButtons = document.querySelectorAll('.variant-button');
+            const toastElement = document.getElementById('cartToast');
+            const toastBody = document.getElementById('toast-body');
+            const toast = new bootstrap.Toast(toastElement);
             const hasVariants = variantButtons.length > 0;
             let activeButton = null;
 
@@ -1164,27 +1207,25 @@
                         if (xhr.status === 401) {
                             window.location.href = "{{ route('login') }}";
                         } else if (xhr.status === 403) {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: JSON.parse(xhr.responseText).message,
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
+                            toastr.error(
+                        JSON.parse(xhr.responseText).message || "Unauthorized action.",
+                            "Error",
+                            {timeOut: 3000}
+                        );
                         } else if (xhr.status === 200) {
-                            Swal.fire({
-                                title: 'Added to Cart!',
-                                icon: 'success',
-                                confirmButtonText: 'OK'
-                            }).then(() => {
-                                window.location.href = "{{ route('cart.index') }}";
-                            });
+                            toastr.success(
+                        "Added to Cart!",
+                        "Success",
+                        {timeOut: 1500, onHidden: function() {
+                            window.location.href = "{{ route('cart.index') }}";
+                        }}
+                    );
                         } else {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: 'There was an issue adding the product to your cart.',
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
+                            toastr.error(
+                        "There was an issue adding the product to your cart.",
+                        "Error",
+                        {timeOut: 3000}
+                    );
                         }
                     }
                 };
@@ -1196,14 +1237,14 @@
                 variantButtons.forEach(button => {
                     button.addEventListener('click', function() {
                         if (activeButton) {
-                            activeButton.classList.remove('btn-primary');
-                            activeButton.classList.add('btn-outline-primary');
+                            activeButton.classList.remove('btn-success');
+                            activeButton.classList.add('btn-outline-success');
                         }
 
                         const variantId = this.dataset.variantId;
                         selectedVariantIdInput.value = variantId;
-                        this.classList.remove('btn-outline-primary');
-                        this.classList.add('btn-primary');
+                        this.classList.remove('btn-outline-success');
+                        this.classList.add('btn-success');
                         activeButton = this;
 
                         const variantPrice = parseFloat(this.dataset.variantPrice);
@@ -1216,7 +1257,8 @@
                             availableQuantitySpan.textContent = maxAvailableQty > 0 ?
                                 `${maxAvailableQty} pieces available` :
                                 'Out of Stock';
-                            addToCartButton.disabled = maxAvailableQty <= 0;
+                                addToCartButton.disabled = maxAvailableQty <= 0;
+                                addToCartButton.textContent = maxAvailableQty > 0 ? 'Add to Cart' : 'Out of Stock';
                         }
 
                         errorMessage.style.display = 'none';

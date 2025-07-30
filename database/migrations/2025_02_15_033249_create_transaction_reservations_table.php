@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('availability_id')->constrained('availabilities')->onDelete('cascade');
             $table->foreignId('facility_attribute_id')->nullable()->constrained('facility_attributes')->onDelete('cascade');
+            $table->foreignId('payment_id')->nullable()->constrained('payments')->onDelete('cascade');
             $table->foreignId('price_id')->constrained('prices')->onDelete('cascade');
             $table->unsignedInteger('quantity')->default(0);
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');

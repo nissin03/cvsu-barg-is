@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     use HasFactory;
-    protected $fillable = ['user_id', 'subtotal', 'total', 'name', 'phone_number', 'year_level', 'department', 'course', 'email', 'reservation_date', 'time_slot'];
-    
+    protected $fillable = ['user_id', 'total', 'reservation_date', 'time_slot', 'status', 'picked_up_date', 'canceled_date'];
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -20,8 +20,8 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    public function transactions()
+    public function transaction()
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasOne(Transaction::class);
     }
 }

@@ -1,0 +1,306 @@
+.facilities-single__rules {
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+.rules-header {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.rules-header:hover {
+    transform: translateY(-1px);
+}
+
+.rules-container {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+}
+
+.rules-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.rules-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.rules-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.rules-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.rule-item {
+    transition: all 0.2s ease;
+}
+
+.rule-item:hover {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 8px;
+    margin: -8px;
+    margin-bottom: 12px;
+}
+
+.rule-number .badge {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.rule-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #4a4a4a;
+}
+
+.rules-footer {
+    font-size: 0.9rem;
+}
+
+.chevron-icon {
+    transition: transform 0.3s ease;
+}
+
+.collapsed .chevron-icon {
+    transform: rotate(-90deg);
+}
+
+.rules-toggle-text {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .rules-container {
+        max-height: 300px;
+    }
+
+    .rule-text {
+        font-size: 0.9rem;
+    }
+}
+
+/* Animation for collapse */
+.collapse {
+    transition: all 0.35s ease;
+}
+
+.collapse:not(.show) {
+    display: none;
+}
+
+.collapsing {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.35s ease;
+}
+
+/* Styling for the thumbnails */
+.thumbnail-img {
+    cursor: pointer;
+    width: 100%;
+    height: auto;
+    transition: transform 0.3s ease-in-out;
+    border-radius: 8px;
+    /* Optional: Rounded corners */
+}
+
+/* Card-like effect for thumbnails */
+.thumbnail-card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    margin: 5px;
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* Light shadow */
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+}
+
+.thumbnail-card:hover {
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+    /* Slightly stronger shadow on hover */
+    transform: translateY(-5px);
+    /* Lift the card slightly on hover */
+}
+
+/* Optional: Styling for the navigation buttons */
+.swiper-button-next,
+.swiper-button-prev {
+    color: #000;
+    /* Navigation arrows color */
+    background-color: rgba(255, 255, 255, 0.5);
+    /* Semi-transparent background for arrows */
+    border-radius: 50%;
+    padding: 10px;
+}
+
+/* Styling for the main image */
+.main-image img {
+    width: 100%;
+    /* Ensures the main image fills the container */
+    height: auto;
+    border-radius: 5px;
+    /* Optional: Rounded corners for the main image */
+}
+
+/* Style the date input field */
+.styled-date-input {
+    display: block;
+    width: 100%;
+    max-width: 300px;
+    padding: 10px;
+    font-size: 16px;
+    color: #333;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.2s;
+}
+
+.styled-date-input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Selected date display */
+#selected-date-display {
+    font-weight: bold;
+    color: #0769d2;
+}
+
+p {
+    margin: 0;
+}
+
+#calendar {
+    width: 100%;
+    max-width: 370px;
+}
+
+.fc .fc-toolbar {
+    font-size: 12px;
+}
+
+.fc .fc-button {
+    font-size: 12px;
+
+    padding: 4px 8px;
+}
+
+.fc .fc-daygrid-day-number {
+    font-size: 14px;
+}
+
+.fc .fc-daygrid-day {
+    padding: 5px;
+}
+
+.fc .fc-daygrid {
+    height: auto;
+}
+
+.fc-view-dayGridWeek-button {
+    display: none;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1em;
+}
+
+/* Responsive behavior */
+@media (max-width: 768px) {
+    #calendar {
+        max-width: 100%;
+        /* Make it responsive on smaller screens */
+        padding: 0;
+    }
+
+    .fc .fc-button {
+        font-size: 10px;
+        /* Smaller buttons for mobile */
+        padding: 2px 4px;
+        /* Reduce button size */
+    }
+
+    .fc .fc-daygrid-day-number {
+        font-size: 12px;
+    }
+}
+
+/* Ensure the rest of the form remains readable */
+.reservation-section label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.reservation-section #selected-date {
+    font-size: 14px;
+    /* Adjust selected date font size */
+}
+
+#total-price {
+    margin-top: 10px;
+    font-size: 16px;
+}
+
+/* Basic styling for the reservation section */
+.reservation-section {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+.my-2 {
+    margin-bottom: 10px;
+}
+
+.select-date {
+    font-size: 14px;
+    color: #333;
+}
+
+#selected-date {
+    margin-top: 10px;
+}
+
+#reset-button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: #ff6f61;
+    /* Red background for reset button */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+#reset-button:hover {
+    background-color: #ff3b2d;
+    /* Darker red on hover */
+}
+
+.text-danger {
+    color: red;
+}
+
+/* Styling for the calendar */
+#calendar {
+    margin-bottom: 20px;
+}
