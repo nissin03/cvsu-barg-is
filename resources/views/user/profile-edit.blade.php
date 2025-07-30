@@ -243,7 +243,6 @@
         const courseSelect = document.getElementById('course');
         const phoneInput = document.getElementById('phoneNumber');
 
-        // Courses based on department
         const courses = {
             CEIT: ['BS Agricultural and Biosystems Engineering', 'BS Architecture', 'BS Civil Engineering',
                 'BS Computer Engineering', 'BS Computer Science', 'BS Electrical Engineering',
@@ -277,7 +276,6 @@
             CVMBS: ['Doctor of Veterinary Medicine']
         };
         
-        // Phone number input validation
         if (phoneInput) {
             phoneInput.addEventListener('input', function() {
                 this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
@@ -286,7 +284,7 @@
                 }
             });
         }
-        // Update courses dropdown
+
         function updateCourseOptions() {
             const department = studentDepartmentSelect.value;
             courseSelect.innerHTML = '<option value="" disabled selected>Select Course</option>';
@@ -305,36 +303,32 @@
                 }
             }
         }
-         // Call updateCourseOptions when the department is changed
+
         studentDepartmentSelect.addEventListener('change', updateCourseOptions);
 
-        // Call it initially to populate the courses if there's an old value
         updateCourseOptions();
+
         function updateFieldsVisibility(role) {
             if (!role) {
-                return; // Ensure role is defined
+                return;
             }
 
             studentFields.style.display = 'none';
                 othersFields.style.display = 'none';
 
-            // Show fields based on role
             if (role === 'student') {
                 studentFields.style.display = 'block';
             } else if (role === 'employee' || role === 'non-employee') {
-                othersFields.style.display = 'block'; // Optional fields for non-employees can be handled here
+                othersFields.style.display = 'block';
             }
     }
 
-        // Initialize visibility on page load (with correct role)
         updateFieldsVisibility(currentRole);
 
-        // Listen for role changes to toggle fields dynamically
         roleSelect.addEventListener('change', function() {
             updateFieldsVisibility(this.value);
         });
 
-        // Confirmation dialog for deleting records
         $(function() {
             $('.delete').on('click', function(e) {
                 e.preventDefault();
@@ -354,6 +348,46 @@
                 });
             });
         });
+    });
+</script>
+
+
+{{-- Validation scripts --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const updateBtn = document.getElementById('updateProfileBtn');
+        const phoneInput = document.getElementById('phoneNumber');
+        const sexSelect = document.getElementById('sex');
+        const roleSelect = document.getElementById('role');
+        const yearLevelSelect = document.getElementById('yearLevel');
+        const departmentSelect = document.getElementById('studentDepartment');
+        const courseSelect = document.getElementById('course');
+
+        function validateForm() {
+            const phoneValue = phoneInput.value.trim();
+            const sexValue = sexSelect.value;
+            const roleValue = roleSelect.value;
+
+            let isValid = phoneValue.length === 10 && phoneValue.match(/^9\d{9}$/) && sexValue;
+
+            if (roleValue === 'student') {
+                const yearLevelValue = yearLevelSelect.value;
+                const departmentValue = departmentSelect.value;
+                const courseValue = courseSelect.value;
+                isValid = isValid && yearLevelValue && departmentValue && courseValue;
+            }
+
+            updateBtn.disabled = !isValid;
+        }
+
+        phoneInput.addEventListener('input', validateForm);
+        sexSelect.addEventListener('change', validateForm);
+        roleSelect.addEventListener('change', validateForm);
+        yearLevelSelect.addEventListener('change', validateForm);
+        departmentSelect.addEventListener('change', validateForm);
+        courseSelect.addEventListener('change', validateForm);
+
+        validateForm();
     });
 </script>
 @endpush

@@ -49,7 +49,6 @@ Route::get('/user/reservations', [UserFacilityController::class, 'account_reserv
 Route::get('/user/reservatio_history', [UserFacilityController::class, 'reservation_history'])->name('user.reservations_history');
 Route::get('/user/reservation_details/{availability_id}', [UserFacilityController::class, 'account_reservation_details'])->name('user.reservation_details');
 
-
 // Route::post('/checkout', [UserFacilityController::class, 'post_checkout'])->name('user.post_checkout');
 
 

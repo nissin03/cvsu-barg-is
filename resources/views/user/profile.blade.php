@@ -116,6 +116,27 @@
                                 </script>
                             @endif
 
+                            @if (session('error'))
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        Swal.fire({
+                                            title: 'Profile Incomplete',
+                                            text: "{{ session('error') }}",
+                                            icon: 'warning',
+                                            confirmButtonText: 'Complete Now'
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                const editButton = document.querySelector('a[href*="profile.edit"]');
+                                                if (editButton) {
+                                                    editButton.scrollIntoView({ behavior: 'smooth' });
+                                                    editButton.focus();
+                                                }
+                                            }
+                                        });
+                                    });
+                                </script>
+                            @endif
+
                             @if ($user->role === 'student')
                                 <!-- Profile Details for Student -->
                                 <div class="row mb-4">
@@ -183,8 +204,8 @@
         </div>
     </div>
 @endsection
-
+{{-- 
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-@endpush
+@endpush --}}

@@ -13,6 +13,8 @@ class Availability extends Model
         'facility_attribute_id',
         'date_from',
         'date_to',
+        'time_end',
+        'time_start',
         'remaining_capacity',
     ];
     public function facility()
