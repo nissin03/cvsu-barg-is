@@ -40,7 +40,6 @@ Route::get('/user/checkout', [UserFacilityController::class, 'checkout'])->name(
 Route::post('user/facilities/place-reservation', [UserFacilityController::class, 'place_reservation'])->name('user.facilities.placeReservation');
 Route::get('/user/reservations', [UserFacilityController::class, 'account_reservation'])->name('user.reservations');
 Route::get('/user/reservatio_history', [UserFacilityController::class, 'reservation_history'])->name('user.reservations_history');
-Route::get('/user/reservation_details/{payment_id}', [UserFacilityController::class, 'account_reservation_details'])->name('user.reservation_details');
 
 Route::get('/about-us', [AboutController::class, 'index'])->name('about.index');
 
