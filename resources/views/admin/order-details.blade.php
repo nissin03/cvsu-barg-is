@@ -90,28 +90,28 @@
                                 <div class="d-flex align-items-center gap-2 mb-5">
                                     <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Name:</p>
                                     <p class="body-text mb-2">
-                                        {{ $order->user->name }}</p>
+                                        {{ $order->user->name  ??  '--'}}</p>
                                 </div>
                                 <div class="d-flex align-items-center gap-2 mb-5">
                                     <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Year
                                         Level:</p>
                                     <p class="body-text mb-2">
-                                        {{ $order->user->year_level }}</p>
+                                        {{ $order->user->year_level ??  '--' }}</p>
                                 </div>
                                 <div class="d-flex align-items-center gap-2 mb-5">
                                     <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Department:
                                     <p class="body-text mb-2">
-                                        {{ $order->user->department }}</p>
+                                        {{ $order->user->department ??  '--' }}</p>
                                 </div>
                                 <div class="d-flex align-items-center gap-2 mb-5">
                                     <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Course:
                                     <p class="body-text mb-2">
-                                        {{ $order->user->course }}</p>
+                                        {{ $order->user->course ??  '--' }}</p>
                                 </div>
                                 <div class="d-flex align-items-center gap-2 mb-5">
                                     <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Mobile:
                                     <p class="body-text mb-2">
-                                        {{ $order->user->phone_number }}</p>
+                                        {{ $order->user->phone_number ??  '--' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -160,6 +160,12 @@
                                                     Canceled
                                                 </option>
                                             </select>
+                                            {{-- <select name="order_status" id="order_status" onchange="checkStatus()"
+                                            {{ $order->status === 'canceled' ? 'disabled' : '' }}>
+                                            <option value="reserved" {{ $order->status === 'reserved' ? 'selected' : '' }}>Reserved</option>
+                                            <option value="canceled" {{ $order->status === 'canceled' ? 'selected' : '' }}>Canceled</option>
+                                        </select> --}}
+
                                         </div>
                                     </div>
 
@@ -178,7 +184,7 @@
                 <div class="col-md-5">
                     <div class="wg-box">
                         <h5 class="mb-2">Ordered Items</h5>
-                        @foreach ($orderItems as $item)
+                        @foreach ($order->orderItems as $item)
                             <div class="d-flex align-items-center gap-3 mb-3">
                                 <img src="{{ asset('uploads/products/thumbnails/' . $item->product->image) }}"
                                     alt="Product Image" style="width: 60px; height: 60px; object-fit: cover;">
@@ -188,7 +194,7 @@
                                     <div class="body-text">Qty: {{ $item->quantity }}</div>
                                     <div class="divider my-1"></div>
                                     <div class="d-flex justify-content-start align-items-center gap-2 body-text mb-4">
-                                        <span>{{ number_format($item->product->price, 2) }}</span>
+                                        <span>{{ number_format($item->price, 2) }}</span>
                                         <span>x</span>
                                         <span>{{ $item->quantity }}</span>
                                     </div>
@@ -202,7 +208,7 @@
                         </div>
                         <div class="divider my-3"></div>
 
-                        <form method="POST" id="payment-form" class="gap-2"
+                        <form method="POST" id="payment-form" class="gap-2" 
                             action="{{ route('admin.order.complete-payment', $order->id) }}">
                             @csrf
                             <div class="mb-5">

@@ -4,13 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Category extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = ['name', 'slug', 'image', 'parent_id'];
-
     public function products()
     {
         return $this->hasMany(Product::class);
@@ -23,5 +23,11 @@ class Category extends Model
     public function children()
     {
         return $this->hasMany(Category::class, 'parent_id');
+    }
+    protected static function booted()
+    {
+        static::restoring(function ($category) {
+            $category->children()->withTrashed()->get()->each->restore();
+        });
     }
 }

@@ -36,37 +36,29 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function setupEchoListeners() {
-    window.Echo.private("admin-notification").listen(
-        "ContactMessageReceived",
-        (e) => {
-            console.log("Broadcasted and connected successfully!", e);
-            const contactMessage = e.contactMessage;
-            toastr.info(
-                `<strong>${
-                    contactMessage.name
-                }</strong>: ${contactMessage.message.substring(0, 50)}${
-                    contactMessage.message.length > 50 ? "..." : ""
-                }`,
-                "New Contact Message",
-                {
-                    timeOut: "7000",
-                }
-            );
+    window.Echo.private(`App.Models.User.${userId}`).notification(
+        (notification) => {
+            console.log("New Notification received:", notification);
+
+            if (notification.hasOwnProperty("contact_id")) {
+                toastr.info(
+                    `<strong>${
+                        notification.name
+                    }</strong>: ${notification.message.substring(0, 50)}${
+                        notification.message.length > 50 ? "..." : ""
+                    }`,
+                    "New Contact Message"
+                );
+            }
+
+            if (notification.hasOwnProperty("product_id")) {
+                toastr.warning(
+                    `<strong>${notification.name}</strong> is running low on stock. Current quantity: ${notification.quantity}`,
+                    "Low Stock Alert"
+                );
+            }
+
             fetchNotifications();
         }
     );
-
-    window.Echo.private("admin-notification").listen("LowStockEvent", (e) => {
-        console.log("Low stock event received!", e);
-        const productData = e.product;
-
-        toastr.warning(
-            `<strong>${productData.name}</strong> is running low on stock. Current quantity: ${productData.quantity}`,
-            "Low Stock Alert",
-            {
-                timeOut: "7000",
-            }
-        );
-        fetchNotifications();
-    });
 }

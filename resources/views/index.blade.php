@@ -125,7 +125,7 @@
                         <div class="card border-0 text-center category-card">
                             <a href="{{ route('shop.index', ['categories' => $category->id]) }}"
                                 title="{{ $category->name }}" class="text-decoration-none text-success">
-                                <img src="{{ asset('uploads/categories/' . $category->image) }}"
+                                <img src="{{ asset('uploads/categories' . $category->image) }}"
                                     class="category-img mb-2 object-fit-cover rounded" loading="lazy">
                                 <h6 class="fw-semibold mb-0">{{ $category->name }}</h6>
                             </a>

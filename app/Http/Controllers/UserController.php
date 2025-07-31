@@ -88,43 +88,35 @@ class UserController extends Controller
     public function profile_update(Request $request)
     {
         $user = Auth::user();
-        $role = $request->input('role', $user->role); 
+        $role = $request->input('role', $user->role);
 
-        // Basic validation for all users
         $validationRules = [
             'phone_number' => 'required|numeric|digits:10',
-             'sex' => 'required|in:male,female',
+            'sex' => 'required|in:male,female',
         ];
 
-        // Conditionally validate role change if allowed
         if ($user->role_change_allowed) {
             $validationRules['role'] = 'required|string|in:student,employee,non-employee';
         }
-        
 
-        // Additional validations for specific roles
         if ($role === 'student') {
             $validationRules['department'] = 'required|string';
-            $validationRules['year_level'] = 'required|string|in:1st Year,2nd Year,3rd Year,4th Year, 5th Year';
+            $validationRules['year_level'] = 'required|string|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
             $validationRules['course'] = 'required|string';
         } elseif ($role === 'professor') {
             $validationRules['department'] = 'required|string';
         }
 
-        // Validate the request
         $validatedData = $request->validate($validationRules);
 
-        // If role changes, disable future role changes
         if ($user->role !== $role && $user->role_change_allowed) {
             $user->role = $role;
-            $user->role_change_allowed = false; // Prevent future role changes
+            $user->role_change_allowed = false;
         }
 
-        // Update user fields
         $user->phone_number = $validatedData['phone_number'];
         $user->sex = $validatedData['sex'];
 
-        // Handle role-specific data updates
         if ($role === 'student') {
             $user->year_level = $validatedData['year_level'];
             $user->department = $validatedData['department'];
@@ -134,21 +126,24 @@ class UserController extends Controller
             $user->department = $validatedData['department'];
             $user->course = null;
         } else {
-            // Clear fields for 'others'
             $user->year_level = null;
             $user->department = null;
             $user->course = null;
         }
 
-        // Save the user data
         $user->save();
 
-        // Redirect to the appropriate page
+        if (session()->has('url.intended')) {
+                $intendedUrl = session()->pull('url.intended');
+                return redirect()->to($intendedUrl)
+                    ->with('profile_completed', 'Your profile has been successfully updated!');
+            }
+
         if (Cart::instance('cart')->count() > 0) {
             return redirect()->route('cart.checkout')->with('success', 'Profile updated successfully.');
-        } else {
-            return redirect()->route('shop.index')->with('success', 'Profile updated successfully.');
         }
+
+        return redirect()->route('shop.index')->with('success', 'Profile updated successfully.');
     }
 
 

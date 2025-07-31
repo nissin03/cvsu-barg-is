@@ -21,24 +21,59 @@ class BreadcrumbComposer
         };
 
         $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
+        $namedRoutes = [
+            'shop.index' => 'Shop',
+            'shop.product.details' => 'Product Details',
+            'about.index' => 'About Us',
+            'contact.index' => 'Contact Us',
 
-        switch ($currentRoute) {
-            case 'shop.index':
-                $breadcrumbs[] = ['url' => null, 'label' => 'Shop'];
-                break;
-            case 'shop.product.details':
-                $breadcrumbs[] = ['url' => route('shop.index'), 'label' => 'Shop'];
-                $breadcrumbs[] = ['url' => null, 'label' => 'Product Details'];
-                break;
-            case 'about.index':
-                $breadcrumbs[] = ['url' => null, 'label' => 'About Us'];
-                break;
-            case 'contact.index':
-                $breadcrumbs[] = ['url' => null, 'label' => 'Contact Us'];
-                break;
-            default:
-                $breadcrumbs[] = ['url' => null, 'label' => ucwords(str_replace('.', ' ', $currentRoute))];
+            'user.profile' => 'My Profile',
+            'user.profile.edit' => 'Edit Profile',
+            'user.profile.update' => 'Update Profile',
+            'user.profile.image.edit' => 'Edit Profile Image',
+            'user.profile.image.update' => 'Update Profile Image',
+            'user.profile.image.delete' => 'Delete Profile Image',
+
+            'user.facilities.index' => 'Facilities',
+            'user.facilities.details' => 'Facility Details',
+            'user.facilities.placeReservation' => 'Place Reservation',
+
+            'user.reservations' => 'My Reservations',
+            'user.reservations_history' => 'Reservation History',
+            'user.reservation.history' => 'Reservation History',
+            'user.reservation' => 'My Reservation',
+            'user.reservation-details' => 'Reservation Details',
+            'user.account_cancel_reservation' => 'Cancel Reservation',
+
+            'facility.reserve' => 'Reserve Facility',
+            'facility.checkout' => 'Checkout',
+
+            'cart.index' => 'Cart',
+            'cart.add' => 'Add to Cart',
+            'cart.item.updateVariant' => 'Update Cart Item',
+            'cart.item.remove' => 'Remove Item',
+            'cart.empty' => 'Clear Cart',
+            'cart.checkout' => 'Checkout',
+            'cart.place.an.order' => 'Place Order',
+            'cart.order.confirmation' => 'Order Confirmation',
+
+            'slots.available' => 'Time Slots',
+            'preorders.accept' => 'Accept Pre-Order',
+            'preorders.cancel' => 'Cancel Pre-Order',
+
+            'google-auth' => 'Login with Google',
+            'google-auth-callback' => 'Google Callback',
+
+            'user.order.history' => 'Order History',
+            'user.account.rentals' => 'My Rentals',
+        ];
+
+        if ($currentRoute === 'shop.product.details') {
+            $breadcrumbs[] = ['url' => route('shop.index'), 'label' => 'Shop'];
         }
+
+        $label = $namedRoutes[$currentRoute] ?? ucwords(str_replace(['.', '-'], ' ', $currentRoute));
+        $breadcrumbs[] = ['url' => null, 'label' => $label];
 
         $view->with('breadcrumbs', $breadcrumbs);
     }

@@ -466,14 +466,13 @@
                                             <div class="text">Facilties Reports</div>
                                         </a>
                                         <ul class="sub-menu">
-                                            {{-- <li class="sub-menu-item">
-                                                <a href="{{ route('admin.report.facilities') }}">
-                                                    <div class="text">Sales Reports</div>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.facility.reports') }}">
+                                                    <div class="text">Facilities Reports</div>
                                                 </a>
-                                            </li> --}}
-
-
+                                            </li>
                                         </ul>
+                                        
                                     </li>
 
 
@@ -709,6 +708,9 @@
 
 
     @stack('scripts')
+    <script>
+           window.userId = @json(Auth::id());
+    </script>
 </body>
 
 </html>

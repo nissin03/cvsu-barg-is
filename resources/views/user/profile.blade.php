@@ -1,5 +1,34 @@
 @extends('layouts.app')
 
+@php
+    $user = auth()->user();
+    $currentRoute = request()->route()->getName();
+
+    // Determine the base home route based on user type
+    $homeRoute = match ($user->utype ?? 'guest') {
+        'USR' => route('user.index'),
+        'ADM' => route('admin.index'),
+        default => route('home.index'),
+    };
+
+    // Initialize breadcrumbs array with the Home link
+    $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
+
+    // Handle breadcrumbs for current routes
+    if ($currentRoute === 'shop.index') {
+        $breadcrumbs[] = ['url' => null, 'label' => 'Shop'];
+    } elseif ($currentRoute === 'shop.product.details') {
+        $breadcrumbs[] = ['url' => route('shop.index'), 'label' => 'Shop'];
+        $breadcrumbs[] = ['url' => null, 'label' => 'Product Details'];
+    } elseif ($currentRoute === 'about.index') {
+        $breadcrumbs[] = ['url' => null, 'label' => 'About Us'];
+    } elseif ($currentRoute === 'contact.index') {
+        $breadcrumbs[] = ['url' => null, 'label' => 'Contact Us'];
+    } else {
+        $breadcrumbs[] = ['url' => null, 'label' => ucwords(str_replace('.', ' ', $currentRoute))];
+    }
+@endphp
+
 <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
     :breadcrumbs="$breadcrumbs" />
 
@@ -72,16 +101,38 @@
                                 </div>
                             @endif
 
-                            @if (request()->query('swal') && session('message'))
+                            @if (session('incomplete_profile'))
+                                <script>
+                                    Swal.fire({
+                                        title: 'Incomplete Profile',
+                                        text: "{{ session('message') }}",
+                                        icon: 'warning',
+                                        confirmButtonText: 'Complete Profile'
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            window.location.href = "{{ route('user.profile') }}";
+                                        }
+                                    });
+                                </script>
+                            @endif
+
+                            {{-- facilities --}}
+                            @if (session('error'))
                                 <script>
                                     document.addEventListener('DOMContentLoaded', function() {
                                         Swal.fire({
-                                            title: 'Incomplete Profile',
-                                            text: "{{ session('message') }}",
+                                            title: 'Profile Incomplete',
+                                            text: "{{ session('error') }}",
                                             icon: 'warning',
-                                            confirmButtonText: 'Complete Profile',
-                                            allowOutsideClick: false,
-                                            allowEscapeKey: false,
+                                            confirmButtonText: 'Complete Now'
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                const editButton = document.querySelector('a[href*="profile.edit"]');
+                                                if (editButton) {
+                                                    editButton.scrollIntoView({ behavior: 'smooth' });
+                                                    editButton.focus();
+                                                }
+                                            }
                                         });
                                     });
                                 </script>
@@ -145,8 +196,7 @@
 
                             <!-- Edit Button -->
                             <div class="text-end mb-3">
-                                <a href="{{ route('user.profile.edit', ['id' => $user->id]) }}" class="btn btn-black">Edit
-                                    Profile</a>
+                                <a href="{{ route('user.profile.edit', ['id' => $user->id]) }}" class="btn btn-black">Edit Profile</a>
                             </div>
                         </div>
                     </div>
@@ -155,12 +205,8 @@
         </div>
     </div>
 @endsection
-
+{{-- 
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        if (window.location.hash === '#swal-done') {
-            history.replaceState(null, null, ' ');
-        }
-    </script>
-@endpush
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@endpush --}}

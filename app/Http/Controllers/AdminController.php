@@ -21,8 +21,10 @@ use Illuminate\Http\Request;
 use App\Models\DormitoryRoom;
 use App\Models\ContactReplies;
 use Illuminate\Support\Carbon;
+use App\Helpers\TimeSlotHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProductAttribute;
+use App\Services\ImageProcessor;
 use App\Notifications\StockUpdate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -33,12 +35,17 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\ProductAttributeValue;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Notification;
-use App\Services\ImageProcessor;
 use Intervention\Image\Laravel\Facades\Image;
 
 
 class AdminController extends Controller
 {
+
+    protected $imageProcessor;
+    public function __construct(ImageProcessor $imageProcessor)
+    {
+        $this->imageProcessor = $imageProcessor;
+    }
     public function index(Request $request)
     {
         $currentYear = Carbon::now()->year;
@@ -371,7 +378,7 @@ class AdminController extends Controller
         return view('admin.category-add', compact('pageTitle', 'parentCategories'));
     }
 
-    public function category_store(Request $request, ImageProcessor $imageProcessor)
+    public function category_store(Request $request)
     {
         $request->validate([
             'name' => 'required',
@@ -394,7 +401,7 @@ class AdminController extends Controller
         $file_extention = $image->extension();
         $file_name = now()->timestamp . '.' . $file_extention;
 
-        $imageProcessor->process($image, $file_name, [
+        $this->imageProcessor->process($image, $file_name, [
             [
                 'path' => public_path('uploads/categories'),
                 'cover' => [300, 300, 'top']
@@ -414,7 +421,7 @@ class AdminController extends Controller
         return view('admin.category-edit', compact('category', 'parentCategories'));
     }
 
-    public function category_update(Request $request, ImageProcessor $imageProcessor)
+    public function category_update(Request $request)
     {
         $request->validate([
             'name' => 'required',
@@ -437,7 +444,7 @@ class AdminController extends Controller
             $file_extention = $image->extension();
             $file_name = now()->timestamp . '.' . $file_extention;
 
-            $imageProcessor->process($image, $file_name, [
+            $this->imageProcessor->process($image, $file_name, [
                 [
                     'path' => public_path('uploads/categories'),
                     'cover' => [300, 300, 'top']
@@ -449,16 +456,31 @@ class AdminController extends Controller
         return redirect()->route('admin.categories')->with('status', 'Category has been updated successfully!');
     }
 
-    public function category_delete($id)
+    public function category_archive($id)
     {
-        $category = Category::find($id);
-        if (File::exists(public_path('uploads/categories') . '/' . $category->image)) {
-            File::delete(public_path('uploads/categories') . '/' . $category->image);
-        }
+        $category = Category::findOrFail($id);
         $category->delete();
-        return redirect()->route('admin.categories')->with('status', 'Category has been deleted successfully!');
+        return redirect()->route('admin.categories')->with('status', 'Category has been archived successfully!');
     }
 
+    public function archived_categories()
+    {
+        $archivedCategories = Category::onlyTrashed()
+            ->whereNull('parent_id')
+            ->with('children')
+            ->orderBy('id', 'DESC')
+            ->paginate(5);
+
+        $pageTitle = 'Archived Categories';
+        return view('admin.archived-categories', compact('archivedCategories', 'pageTitle'));
+    }
+
+    public function restore_categories($id)
+    {
+        $category = Category::onlyTrashed()->findOrFail($id);
+        $category->restore();
+        return redirect()->route('admin.archived-categories')->with('status', 'Category restored successfully!');
+    }
 
     public function products(Request $request)
     {
@@ -523,7 +545,7 @@ class AdminController extends Controller
         return view('admin.product-add', compact('categories', 'productAttributes'));
     }
 
-    public function product_store(Request $request, ImageProcessor $imageProcessor)
+    public function product_store(Request $request)
     {
         $hasVariant = $request->filled('variant_name') &&
             $request->filled('product_attribute_id') &&
@@ -569,7 +591,7 @@ class AdminController extends Controller
             $image = $request->file('image');
             $imageName = $current_timestamp . '.' . $image->extension();
 
-            $imageProcessor->process($image, $imageName, [
+            $this->imageProcessor->process($image, $imageName, [
                 ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
                 ['path' => public_path('uploads/products/thumbnails'), 'resize' => [300, 300]]
             ]);
@@ -586,7 +608,7 @@ class AdminController extends Controller
                 if (in_array($gext, $allowedFileExtension)) {
                     $gFileName = $current_timestamp . '.' . $counter . '.' . $gext;
 
-                    $imageProcessor->process($file, $gFileName, [
+                    $this->imageProcessor->process($file, $gFileName, [
                         ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
                         ['path' => public_path('uploads/products/thumbnails'), 'resize' => [300, 300]]
                     ]);
@@ -661,7 +683,7 @@ class AdminController extends Controller
 
 
 
-    public function product_update(Request $request, ImageProcessor $imageProcessor)
+    public function product_update(Request $request)
     {
         $product = Product::findOrFail($request->input('id'));
         $hasVariant = !empty($request->variant_name) && is_array($request->variant_name);
@@ -689,7 +711,7 @@ class AdminController extends Controller
             }
             $image = $request->file('image');
             $imageName = "{$current_timestamp}.{$image->extension()}";
-            $imageProcessor->process($image, $imageName, [
+            $this->imageProcessor->process($image, $imageName, [
                 ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
                 ['path' => public_path('uploads/products/thumbnails'), 'resize' => [300, 300]],
             ]);
@@ -714,7 +736,7 @@ class AdminController extends Controller
 
                     $gfilename = "{$current_timestamp}-" . ($index + 1) . ".{$file->extension()}";
 
-                    $imageProcessor->process($file, $gfilename, [
+                    $this->imageProcessor->process($file, $gfilename, [
                         ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
                         ['path' => public_path('uploads/products/thumbnails'), 'resize' => [204, 204]],
                     ]);
@@ -872,6 +894,7 @@ class AdminController extends Controller
     {
         $status = $request->input('status');
         $timeSlot = $request->input('time_slot');
+        $timeSlots = TimeSlotHelper::time();
 
         $query = Order::query();
 
@@ -892,7 +915,7 @@ class AdminController extends Controller
             ]);
         }
 
-        return view('admin.orders', compact('orders'));
+        return view('admin.orders', compact('orders', 'timeSlots'));
     }
 
     // This route handles the filter functionality
@@ -926,24 +949,49 @@ class AdminController extends Controller
 
     public function order_details($order_id)
     {
-        $order = Order::find($order_id);
-        $orderItems = OrderItem::where('order_id', $order_id)->orderBy('id')->paginate(12);
+        // $order = Order::find($order_id);
+        $order = Order::with('orderItems.product')->findOrFail($order_id);
+        // $orderItems = OrderItem::where('order_id', $order_id)->orderBy('id')->paginate(12);
         $transaction = Transaction::where('order_id', $order_id)->first();
-        return view('admin.order-details', compact('order', 'orderItems', 'transaction'));
+        return view('admin.order-details', compact('order',  'transaction'));
     }
 
+    private function restoreQuantity(Order $order)
+    {
+        foreach ($order->orderItems as $item) {
+            if ($item->variant_id) {
+                $variant = ProductAttributeValue::find($item->variant_id);
+                if ($variant) {
+                    $variant->quantity += $item->quantity;
+                    $variant->stock_status = $variant->quantity > 0 ? 'instock' : 'outofstock';
+                    $variant->save();
+                }
+            } else {
+                $product = Product::find($item->product_id);
+                if ($product) {
+                    $product->quantity += $item->quantity;
+                    $product->stock_status = $product->quantity > 0 ? 'instock' : 'outofstock';
+                    $product->save();
+                }
+            }
+        }
+    }
     public function update_order_status(Request $request)
     {
         $request->validate([
+            'order_id' => 'required|exists:orders,id',
             'order_status' => 'required|in:reserved,canceled'
         ]);
-        $order = Order::findOrFail($request->order_id);
-        $order->status = $request->order_status;
 
+        $order = Order::with('orderItems')->findOrFail($request->order_id);
+        $originalStatus = $order->status;
 
-        if ($request->order_status === 'canceled') {
+        if ($request->order_status === 'canceled' && $originalStatus !== 'canceled') {
+            $this->restoreQuantity($order);
             $order->canceled_date = Carbon::now();
         }
+
+        $order->status = $request->order_status;
         $order->save();
         return back()->with('status', 'Status updated successfully!');
     }
@@ -1030,20 +1078,12 @@ class AdminController extends Controller
         $image = $request->file('image');
         $file_extention = $request->file('image')->extension();
         $file_name = Carbon::now()->timestamp . '.' . $file_extention;
-        $this->GenerateSlideThumbnailsImage($image, $file_name);
+        $this->imageProcessor->process($image, $file_name, [
+            ['path' => public_path('uploads/slides'), 'cover' => [1920, 1080, 'top'], 'resize' => [1920, 1080]]
+        ]);
         $slide->image = $file_name;
         $slide->save();
         return redirect()->route('admin.slides')->with('status', 'Slide   added successfully!');
-    }
-
-    public function GenerateSlideThumbnailsImage($image, $imageName)
-    {
-        $destinationPath = public_path('uploads/slides');
-        $img = Image::read($image->getRealPath());
-        $img->cover(1920, 1080, "top");
-        $img->resize(1920, 1080, function ($constraint) {
-            $constraint->aspectRatio();
-        })->save($destinationPath . '/' . $imageName);
     }
 
 
@@ -1078,7 +1118,9 @@ class AdminController extends Controller
             $image = $request->file('image');
             $file_extention = $request->file('image')->extension();
             $file_name = Carbon::now()->timestamp . '.' . $file_extention;
-            $this->GenerateSlideThumbnailsImage($image, $file_name);
+            $this->imageProcessor->process($image, $file_name, [
+                ['path' => public_path('uploads/slides'), 'cover' => [1920, 1080, 'top'], 'resize' => [1920, 1080]]
+            ]);
             $slide->image = $file_name;
         }
         $slide->save();

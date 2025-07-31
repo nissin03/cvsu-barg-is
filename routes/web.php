@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AuthUser;
 use App\Http\Middleware\AuthAdmin;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,7 @@ use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserFacilityController;
+use App\Http\Controllers\FacilityReportController;
 use App\Http\Controllers\FacilityReservationController;
 
 Auth::routes(['reset' => true]);
@@ -38,7 +40,6 @@ Route::get('/user/checkout', [UserFacilityController::class, 'checkout'])->name(
 Route::post('user/facilities/place-reservation', [UserFacilityController::class, 'place_reservation'])->name('user.facilities.placeReservation');
 Route::get('/user/reservations', [UserFacilityController::class, 'account_reservation'])->name('user.reservations');
 Route::get('/user/reservatio_history', [UserFacilityController::class, 'reservation_history'])->name('user.reservations_history');
-Route::get('/user/reservation_details/{payment_id}', [UserFacilityController::class, 'account_reservation_details'])->name('user.reservation_details');
 
 Route::get('/about-us', [AboutController::class, 'index'])->name('about.index');
 
@@ -71,7 +72,7 @@ Route::post('/contact-us', [HomeController::class, 'contact_store'])->name('home
 
 Route::get('/search', [HomeController::class, 'search'])->name('home.search');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', AuthUser::class])->group(function () {
     Route::get('/account-dashboard', [UserController::class, 'index'])->name('user.index');
     Route::get('/account-order', [UserController::class, 'orders'])->name('user.orders');
     Route::get('/account-order/{order_id}/details', [UserController::class, 'order_details'])->name('user.order.details');
@@ -113,7 +114,9 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::post('/category/store', [AdminController::class, 'category_store'])->name('admin.category.store');
         Route::get('/category/edit/{id}', [AdminController::class, 'category_edit'])->name('admin.category.edit');
         Route::put('/category/update', [AdminController::class, 'category_update'])->name('admin.category.update');
-        Route::delete('/category/{id}/delete', [AdminController::class, 'category_delete'])->name('admin.category.delete');
+        Route::delete('/category/{id}/archive', [AdminController::class, 'category_archive'])->name('admin.category.archive');
+        Route::get('/archived-categories', [AdminController::class, 'archived_categories'])->name('admin.archived-categories');
+        Route::put('/categories/{id}/restore', [AdminController::class, 'restore_categories'])->name('admin.category.restore');
 
 
         // api
@@ -122,6 +125,8 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/api/weeks', [AdminController::class, 'getAvailableWeeks'])->name('admin.api.weeks');
 
         Route::get('/profile', [AdminProfileController::class, 'show_profile'])->name('admin.profile.index');
+        Route::put('/profile/update', [AdminProfileController::class, 'update_profile'])->name('admin.profile.update');
+        Route::post('/profile/update-image', [AdminProfileController::class, 'update_profile_image'])->name('admin.profile.update-image');
 
         Route::get('/facilities', [FacilityController::class, 'index'])->name('admin.facilities.index');
         Route::get('/facilities/search', [FacilityController::class, 'search'])->name('admin.facilities.search');
@@ -134,6 +139,13 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/reservation/events/{availability_id}', [FacilityController::class, 'events'])->name('admin.facilities.reservations-events');
         Route::get('/{availability_id}/reservation-history', [FacilityController::class, 'reservationHistory'])->name('admin.facilities.reservations-history');
 
+
+        Route::get('/facility/reports', [FacilityReportController::class, 'index'])->name('admin.facility.reports');
+        Route::get('/facilities/reports/data', [FacilityReportController::class, 'data'])->name('admin.facility.reports.data');
+        Route::get('/facilities/reports/filter-options', [FacilityReportController::class, 'getFilterOptions'])->name('admin.facility.reports.filter-options');
+        Route::get('/facilities/reports/summary', [FacilityReportController::class, 'summary'])->name('admin.facility.reports.summary');
+
+        Route::get('/facility/reports/download-facility-pdf', [FacilityReportController::class, 'downloadFacilityPdf'])->name('admin.facility.reports.downloadFacilityPdf');
 
         Route::post('/prices/store', [FacilityController::class, 'price_store'])->name('prices.store');
         // archive routes

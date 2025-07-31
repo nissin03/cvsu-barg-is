@@ -166,13 +166,13 @@
                             <p><strong>Order No:</strong> {{ $order->id }}</p>
                             <p><strong>Order Date:</strong> {{ $order->created_at->format('M d, Y H:i') }}</p>
                             <p><strong>Reservation Date:</strong>
-                                {{ $order->reservation_date ? \Carbon\Carbon::parse($order->reservation_date)->format('M d, Y') : 'N/A' }}
+                                {{ $order->reservation_date ? \Carbon\Carbon::parse($order->reservation_date)->format('M d, Y') : '—' }}
                             </p>
                             <p><strong>Picked Up Date:</strong>
-                                {{ $order->picked_up_date ? \Carbon\Carbon::parse($order->picked_up_date)->format('M d, Y') : 'N/A' }}
+                                {{ $order->picked_up_date ? \Carbon\Carbon::parse($order->picked_up_date)->format('M d, Y') : '—' }}
                             </p>
                             <p><strong>Canceled Date:</strong>
-                                {{ $order->canceled_date ? \Carbon\Carbon::parse($order->canceled_date)->format('M d, Y') : 'N/A' }}
+                                {{ $order->canceled_date ? \Carbon\Carbon::parse($order->canceled_date)->format('M d, Y') : '—' }}
                             </p>
                         </div>
                     </div>
@@ -180,18 +180,18 @@
                     <!-- Right Section -->
                     <div class="right-section">
                         <div class="order-info">
-                            <p><strong>Name:</strong> {{ $order->name }}</p>
-                            <p><strong>Phone:</strong> {{ $order->phone_number }}</p>
-                            <p><strong>Year Level:</strong> {{ $order->year_level }}</p>
-                            <p><strong>Department:</strong> {{ $order->department }}</p>
-                            <p><strong>Course:</strong> {{ $order->course }}</p>
-                            <p><strong>Time Slot:</strong> {{ $order->time_slot ?? 'N/A' }}</p>
+                            <p><strong>Name:</strong> {{ $order->user->name  ?? '—'  }}</p>
+                            <p><strong>Phone:</strong> {{ $order->user->phone_number ?? '—'  }}</p>
+                            <p><strong>Year Level:</strong> {{ $order->user->year_level ?? '—'  }}</p>
+                            <p><strong>Department:</strong> {{ $order->user->department ?? '—'  }}</p>
+                            <p><strong>Course:</strong> {{ $order->user->course ?? '—'  }}</p>
+                            <p><strong>Time Slot:</strong> {{ $order->time_slot ?? '—' }}</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="text-end">
-                    <a class="btn btn-custom btn-primary" href="{{ route('user.orders') }}">Back to Orders</a>
+                    <a class="btn btn-custom btn-success" href="{{ route('user.orders') }}">Back to Orders</a>
                 </div>
             </div>
 
@@ -206,7 +206,6 @@
                             <th>Unit Price</th>
                             <th>Quantity</th>
                             <th>Total</th>
-                            <th>Return Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -239,12 +238,6 @@
                                 <td>&#8369; {{ number_format($item->price, 2) }}</td>
                                 <td>{{ $item->quantity }}</td>
                                 <td>&#8369; {{ number_format($item->price * $item->quantity, 2) }}</td>
-                                <td>
-                                    @if ($item->rstatus == 0)
-                                        <span class="badge badge-success">No Return</span>
-                                    @else
-                                        <span class="badge badge-warning">Returned</span>
-                                    @endif
                                 </td>
                                 <td>
                                     <a href="{{ route('shop.product.details', ['product_slug' => $item->product->slug]) }}"
@@ -266,10 +259,6 @@
                 <h5>Transactions</h5>
                 <table class="table-custom">
                     <tr>
-                        <th>Subtotal</th>
-                        <td>&#8369; {{ number_format($order->subtotal, 2) }}</td>
-                    </tr>
-                    <tr>
                         <th>Total</th>
                         <td>&#8369; {{ number_format($order->total, 2) }}</td>
                     </tr>
@@ -286,16 +275,6 @@
                         </td>
                     </tr>
                 </table>
-                {{-- @if ($order->status == 'reserved')
-                    <div class="text-end">
-                        <form action="{{ route('user.order.cancel') }}" method="post" style="display: inline;">
-                            @csrf
-                            @method('PUT')
-                            <input type="hidden" name="order_id" value="{{ $order->id }}" />
-                            <button type="button" class="btn btn-custom btn-danger cancel-order">Cancel Order</button>
-                        </form>
-                    </div>
-                @endif --}}
             </div>
         </section>
     </main>

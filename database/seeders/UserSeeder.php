@@ -19,6 +19,17 @@ class UserSeeder extends Seeder
 
         $departments = ['CEIT', 'GSOLC', 'CAFENR', 'CAS', 'CCJ', 'CEMDS', 'CED', 'CON', 'CVMBS'];
         $yearLevels = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
+        $courses = [
+            'CEIT' => ['BS Agricultural and Biosystems Engineering', 'BS Architecture', 'BS Civil Engineering', 'BS Computer Science', 'BS Information Technology'],
+            'GSOLC' => ['PhD in Agriculture', 'PhD in Management', 'Master of Arts in Education', 'MS Agriculture'],
+            'CAFENR' => ['BS Agriculture', 'BS Environmental Science', 'BS Food Technology'],
+            'CAS' => ['BA Political Science', 'BS Psychology', 'BS Biology'],
+            'CCJ' => ['BS Criminology'],
+            'CEMDS' => ['BS Accountancy', 'BS Business Management'],
+            'CED' => ['Bachelor of Elementary Education', 'Bachelor of Secondary Education'],
+            'CON' => ['BS Nursing'],
+            'CVMBS' => ['Doctor of Veterinary Medicine']
+        ];
 
         // Create Admin User
         $createdAt = $faker->dateTimeBetween('2025-01-01', '2025-12-31');
@@ -64,6 +75,8 @@ class UserSeeder extends Seeder
         // Create Regular Users
         for ($i = 1; $i <= 50; $i++) {
             $createdAt = $faker->dateTimeBetween('2024-01-01', '2025-12-31');
+            $department = $faker->randomElement($departments);
+            $course = $faker->randomElement($courses[$department]);
             User::create([
                 'name'              => $faker->name,
                 'email'             => "user{$i}@cvsu.edu.ph",
@@ -73,8 +86,8 @@ class UserSeeder extends Seeder
                 'password_set'      => false,
                 'phone_number'      => '9' . $faker->numerify('#########'),
                 'year_level'        => $faker->randomElement($yearLevels),
-                'department'        => $faker->randomElement($departments),
-                'course'            => $faker->words(3, true),
+                'department'        => $department,
+                'course'            => $course,
                 'profile_image'     => null,
                 'role'              => 'student',
                 'sex'               => $faker->randomElement(['male', 'female']),

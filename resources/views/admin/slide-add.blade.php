@@ -31,24 +31,41 @@
         </div>
         <!-- new-category -->
         <div class="wg-box">
-            <form class="form-new-product form-style-1" action="{{route('admin.slide.store')}}" method="POST" enctype="multipart/form-data">
+            @if($errors->any()) 
+                <div class="container mx-auto">
+                    <ul class="alert alert-danger text-start">
+                    @foreach ($errors->all() as $error)
+                        <li class="mb-5" style="font-size: 1.07rem;">{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+            <form class="form-new-product form-style-1" action="{{route('admin.slide.store')}}" method="POST" enctype="multipart/form-data" novalidate  >
                 @csrf 
                 <fieldset class="name">
                     <div class="body-title">Tagline <span class="tf-color-1">*</span></div>
                     <input class="flex-grow" type="text" placeholder="tagline" name="tagline"tabindex="0" value="{{old('tagline')}}" aria-required="true" required="">
                 </fieldset>
+                
+                
                 <fieldset class="name">
                     <div class="body-title">Title<span class="tf-color-1">*</span></div>
                     <input class="flex-grow" type="text" placeholder="title" name="title"tabindex="0" value="{{old('title')}}" aria-required="true" required="">
                 </fieldset>
+                
+                
                 <fieldset class="name">
                     <div class="body-title">Subtitle<span class="tf-color-1">*</span></div>
                     <input class="flex-grow" type="text" placeholder="subtitle" name="subtitle"tabindex="0" value="{{old('subtitle')}}" aria-required="true" required="">
                 </fieldset>
+                
+                
                 <fieldset class="name">
                     <div class="body-title">Link<span class="tf-color-1">*</span></div>
                     <input class="flex-grow" type="text" placeholder="link" name="link" tabindex="0" value="{{old('link')}}" aria-required="true" required="">
                 </fieldset>
+                
+                
                 <fieldset>
                     <div class="body-title">Upload images <span class="tf-color-1">*</span>
                     </div>
@@ -67,6 +84,8 @@
                         </div>
                     </div>
                 </fieldset>
+                
+                
                 <fieldset class="category">
                     <div class="body-title">Status</div>
                     <div class="select flex-grow">
@@ -77,6 +96,8 @@
                         </select>
                     </div>
                 </fieldset>
+                
+                
                 <div class="bot">
                     <div></div>
                     <button class="tf-button w208" type="submit">Save</button>

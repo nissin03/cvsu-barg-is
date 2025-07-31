@@ -8,15 +8,20 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
-use App\Services\ImageProcessor;
 use App\Models\FacilityAttribute;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Intervention\Image\Laravel\Facades\Image;
+use App\Services\ImageProcessor;
 
 class FacilityController extends Controller
 {
+    protected $imageProcessor;
+    public function __construct(ImageProcessor $imageProcessor)
+    {
+        $this->imageProcessor = $imageProcessor;
+    }
     public function index(Request $request)
     {
         $archived = $request->query('archived', 0);
@@ -53,7 +58,7 @@ class FacilityController extends Controller
         return view('admin.facilities.create');
     }
 
-    public function store(Request $request, ImageProcessor $imageProcessor)
+    public function store(Request $request)
     {
         // dd($request->all());
         $facilityAttributes = json_decode($request->facility_attributes_json, true) ?? [];
@@ -155,7 +160,7 @@ class FacilityController extends Controller
                 $image = $request->file('image');
                 $imageName = $current_timestamp . '.' . $image->extension();
 
-                $imageProcessor->process($image, $imageName, [
+                $this->imageProcessor->process($image, $imageName, [
                     ['path' => storage_path('app/public/facilities'), 'cover' => [689, 689, 'center']],
                     ['path' => storage_path('app/public/facilities/thumbnails'), 'resize' => [300, 300]],
                 ]);
@@ -176,7 +181,7 @@ class FacilityController extends Controller
                     if ($gcheck) {
                         $gFileName = $current_timestamp . "." . $counter . '.' . $gextension;
 
-                        $imageProcessor->process($file, $gFileName, [
+                        $this->imageProcessor->process($file, $gFileName, [
                             ['path' => storage_path('app/public/facilities'), 'cover' => [689, 689, 'center']],
                             ['path' => storage_path('app/public/facilities/thumbnails'), 'resize' => [300, 300]],
                         ]);
@@ -532,30 +537,5 @@ class FacilityController extends Controller
             ->paginate(10);
         $facilities = Facility::all();
         return view('admin.facilities.archive.index', compact('archivedFacilities', 'facilities'));
-    }
-
-    public function GenerateFacilityThumbnailsImage($image, $imageName)
-    {
-        try {
-            $destinationPathThumbnail = storage_path('app/public/facilities/thumbnails');
-            $destinationPath = storage_path('app/public/facilities');
-
-            File::makeDirectory($destinationPathThumbnail, 0755, true, true);
-            File::makeDirectory($destinationPath, 0755, true, true);
-
-            $img = Image::read($image->getRealPath());
-            $img->cover(689, 689, "center");
-            $img->resize(689, 689, function ($constraint) {
-                $constraint->aspectRatio();
-            })->save($destinationPath . '/' . $imageName);
-
-            $img->resize(204, 204, function ($constraint) {
-                $constraint->aspectRatio();
-            })->save($destinationPathThumbnail . '/' . $imageName);
-
-            Log::info('Saving image to: ' . $destinationPath . '/' . $imageName);
-        } catch (\Exception $e) {
-            Log::error('Image processing failed: ' . $e->getMessage());
-        }
     }
 }
