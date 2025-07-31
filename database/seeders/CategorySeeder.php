@@ -1,5 +1,4 @@
 <?php
-
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
@@ -9,22 +8,18 @@ use File;
 
 class CategorySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-
         $categories = [
             'Accessories' => [
-                'image' => 'lace_6.jpg',  // Parent category image
+                'image' => 'lace_6.jpg',
                 'Umbrella' => 'semi_golf_umbrella_manual.jpg',
                 'Keychain' => 'key_holder.jpg',
                 'Lace' => 'lace.jpg',
                 'Pin' => 'cvsu_pin.jpg',
             ],
             'Apparel' => [
-                'image' => 'IMG_0136.jpg', // Parent category image
+                'image' => 'IMG_0136.jpg',
                 'T-Shirt' => 'IMG_0137.jpg',
                 'Cap' => 'IMG_0125.jpg',
                 'Bonnet' => 'IMG_0123.jpg',
@@ -32,12 +27,12 @@ class CategorySeeder extends Seeder
                 'Polo' => 'polo.jpg',
                 'NSTP' => 'NSTP_t-shirt.jpg',
                 'PE' => [
-                    'image' => 'pe_category.jpg', // Added image for PE parent category
+                    'image' => 'pe_category.jpg',
                     'pe tshirt' => 'pe_t-shirt.jpg',
                     'pe short' => 'pe_short.jpg',
                 ],
                 'Cspear' => [
-                    'image' => 'cspear_logo.jpg', // Added image for Cspear parent category
+                    'image' => 'cspear_logo.jpg',
                     'cspear tshirt' => 'cspear_t-shirt.jpg',
                     'cspear short' => 'cspear_shorts.jpg',
                     'cspear jogging pants' => 'cspear_jogging-pants.jpg',
@@ -46,7 +41,7 @@ class CategorySeeder extends Seeder
                 'Female Uniform' => 'blouse.jpg',
             ],
             'Home & Kitchen' => [
-                'image' => 'IMG_0113_2.jpg', // Parent category image
+                'image' => 'IMG_0113_2.jpg',
                 'Mug' => 'IMG_0113.jpg',
                 'Utensils' => 'IMG_0147.jpg',
                 'Coffee Blend' => 'blend_coffee.jpg',
@@ -54,60 +49,59 @@ class CategorySeeder extends Seeder
                 'Tumbler' => 'tumbler.jpg',
             ],
             'Stationery' => [
-                'image' => 'cat_stationary.jpg', // Parent category image
+                'image' => 'cat_stationary.jpg',
                 'Notebook' => 'IMG_0148.jpg',
                 'Ballpens' => 'IMG_0163.jpg',
                 'Books' => 'IMG_0171.jpg',
             ],
         ];
 
-        // Loop through top-level categories.
         foreach ($categories as $parentName => $children) {
-            // Check if the parent category has an image.
-            $parentImage = isset($children['image']) ? $this->getImageName($children['image']) : null;
-
-            // Create the parent category
+            $parentImage = $this->getImageName($children['image'] ?? null);
+            $parentSlug = $this->generateUniqueSlug($parentName);
+            
             $parentCategory = Category::create([
                 'name' => $parentName,
-                'slug' => Str::slug($parentName),
-                'image' => $parentImage, // Store the parent category image if it exists
+                'slug' => $parentSlug,
+                'image' => $parentImage,
                 'parent_id' => null,
             ]);
 
-            // Remove the 'image' key from children to loop correctly
             unset($children['image']);
 
-            // Loop through children.
             foreach ($children as $childKey => $childValue) {
                 if (is_array($childValue)) {
-                    // For subcategories
-                    $childImage = isset($childValue['image']) ? $this->getImageName($childValue['image']) : null;
+                    $childImage = $this->getImageName($childValue['image'] ?? null);
+                    $childSlug = $this->generateUniqueSlug($childKey, $parentSlug);
+                    
                     $childCategory = Category::create([
                         'name' => $childKey,
-                        'slug' => Str::slug($childKey),
-                        'image' => $childImage, // Use the subcategory image if it exists
+                        'slug' => $childSlug,
+                        'image' => $childImage,
                         'parent_id' => $parentCategory->id,
                     ]);
 
-                    // Create grandchildren (subcategories with images)
                     foreach ($childValue as $grandchildName => $imageName) {
                         if ($grandchildName !== 'image') {
-                            $imageName = $this->getImageName($imageName); // Just the image name
+                            $imageName = $this->getImageName($imageName);
+                            $grandchildSlug = $this->generateUniqueSlug($grandchildName, $childSlug);
+                            
                             Category::create([
                                 'name' => $grandchildName,
-                                'slug' => Str::slug($grandchildName),
-                                'image' => $imageName, // Store only the image name
+                                'slug' => $grandchildSlug,
+                                'image' => $imageName,
                                 'parent_id' => $childCategory->id,
                             ]);
                         }
                     }
                 } else {
-                    // For simple children (with image paths)
-                    $imageName = $this->getImageName($childValue); // Just the image name
+                    $imageName = $this->getImageName($childValue);
+                    $childSlug = $this->generateUniqueSlug($childKey, $parentSlug);
+                    
                     Category::create([
                         'name' => $childKey,
-                        'slug' => Str::slug($childKey),
-                        'image' => $imageName, // Store only the image name
+                        'slug' => $childSlug,
+                        'image' => $imageName,
                         'parent_id' => $parentCategory->id,
                     ]);
                 }
@@ -115,23 +109,30 @@ class CategorySeeder extends Seeder
         }
     }
 
-    /**
-     * Helper function to get only the image name
-     */
     private function getImageName($imageName)
     {
-        // Image path relative to the 'public' folder
-        $imagePath = 'uploads/categories/' . $imageName;
-
-        // Check if the image exists in the directory
+        if (!$imageName) return null;
+        
         $sourcePath = public_path('uploads/categories');
         if (!File::exists($sourcePath . '/' . $imageName)) {
-            $this->command->error('Image does not exist: ' . $imagePath);
+            $this->command->error('Image does not exist: ' . $imageName);
             return null;
         }
 
-        // Return the image name only
-        return $imageName; // Just return the image name (e.g., semi_golf_umbrella_manual.jpg)
+        return $imageName;
     }
 
+    private function generateUniqueSlug($name, $parentSlug = null)
+    {
+        $baseSlug = Str::slug($name);
+        $slug = $parentSlug ? "{$parentSlug}-{$baseSlug}" : $baseSlug;
+        $count = 1;
+
+        while (Category::where('slug', $slug)->exists()) {
+            $slug = $parentSlug ? "{$parentSlug}-{$baseSlug}-{$count}" : "{$baseSlug}-{$count}";
+            $count++;
+        }
+
+        return $slug;
+    }
 }
