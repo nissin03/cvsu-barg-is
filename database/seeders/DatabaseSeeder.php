@@ -20,9 +20,10 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             ContactSeeder::class,
             CategorySeeder::class,
-            // FacilitySeeder::class,
+            FacilitySeeder::class,
             ProductSeeder::class,
-            // OrderSeeder::class,
+            // FacilityReportSeeder::class,
+            OrderSeeder::class,
         ]);
     }
 }

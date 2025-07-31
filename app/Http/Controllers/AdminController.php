@@ -40,6 +40,12 @@ use Intervention\Image\Laravel\Facades\Image;
 
 class AdminController extends Controller
 {
+
+    protected $imageProcessor;
+    public function __construct(ImageProcessor $imageProcessor)
+    {
+        $this->imageProcessor = $imageProcessor;
+    }
     public function index(Request $request)
     {
         $currentYear = Carbon::now()->year;
@@ -372,7 +378,7 @@ class AdminController extends Controller
         return view('admin.category-add', compact('pageTitle', 'parentCategories'));
     }
 
-    public function category_store(Request $request, ImageProcessor $imageProcessor)
+    public function category_store(Request $request)
     {
         $request->validate([
             'name' => 'required',
@@ -395,7 +401,7 @@ class AdminController extends Controller
         $file_extention = $image->extension();
         $file_name = now()->timestamp . '.' . $file_extention;
 
-        $imageProcessor->process($image, $file_name, [
+        $this->imageProcessor->process($image, $file_name, [
             [
                 'path' => public_path('uploads/categories'),
                 'cover' => [300, 300, 'top']
@@ -415,7 +421,7 @@ class AdminController extends Controller
         return view('admin.category-edit', compact('category', 'parentCategories'));
     }
 
-    public function category_update(Request $request, ImageProcessor $imageProcessor)
+    public function category_update(Request $request)
     {
         $request->validate([
             'name' => 'required',
@@ -438,7 +444,7 @@ class AdminController extends Controller
             $file_extention = $image->extension();
             $file_name = now()->timestamp . '.' . $file_extention;
 
-            $imageProcessor->process($image, $file_name, [
+            $this->imageProcessor->process($image, $file_name, [
                 [
                     'path' => public_path('uploads/categories'),
                     'cover' => [300, 300, 'top']
@@ -539,7 +545,7 @@ class AdminController extends Controller
         return view('admin.product-add', compact('categories', 'productAttributes'));
     }
 
-    public function product_store(Request $request, ImageProcessor $imageProcessor)
+    public function product_store(Request $request)
     {
         $hasVariant = $request->filled('variant_name') &&
             $request->filled('product_attribute_id') &&
@@ -585,7 +591,7 @@ class AdminController extends Controller
             $image = $request->file('image');
             $imageName = $current_timestamp . '.' . $image->extension();
 
-            $imageProcessor->process($image, $imageName, [
+            $this->imageProcessor->process($image, $imageName, [
                 ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
                 ['path' => public_path('uploads/products/thumbnails'), 'resize' => [300, 300]]
             ]);
@@ -602,7 +608,7 @@ class AdminController extends Controller
                 if (in_array($gext, $allowedFileExtension)) {
                     $gFileName = $current_timestamp . '.' . $counter . '.' . $gext;
 
-                    $imageProcessor->process($file, $gFileName, [
+                    $this->imageProcessor->process($file, $gFileName, [
                         ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
                         ['path' => public_path('uploads/products/thumbnails'), 'resize' => [300, 300]]
                     ]);
@@ -677,7 +683,7 @@ class AdminController extends Controller
 
 
 
-    public function product_update(Request $request, ImageProcessor $imageProcessor)
+    public function product_update(Request $request)
     {
         $product = Product::findOrFail($request->input('id'));
         $hasVariant = !empty($request->variant_name) && is_array($request->variant_name);
@@ -705,7 +711,7 @@ class AdminController extends Controller
             }
             $image = $request->file('image');
             $imageName = "{$current_timestamp}.{$image->extension()}";
-            $imageProcessor->process($image, $imageName, [
+            $this->imageProcessor->process($image, $imageName, [
                 ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
                 ['path' => public_path('uploads/products/thumbnails'), 'resize' => [300, 300]],
             ]);
@@ -730,7 +736,7 @@ class AdminController extends Controller
 
                     $gfilename = "{$current_timestamp}-" . ($index + 1) . ".{$file->extension()}";
 
-                    $imageProcessor->process($file, $gfilename, [
+                    $this->imageProcessor->process($file, $gfilename, [
                         ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
                         ['path' => public_path('uploads/products/thumbnails'), 'resize' => [204, 204]],
                     ]);
@@ -1072,20 +1078,12 @@ class AdminController extends Controller
         $image = $request->file('image');
         $file_extention = $request->file('image')->extension();
         $file_name = Carbon::now()->timestamp . '.' . $file_extention;
-        $this->GenerateSlideThumbnailsImage($image, $file_name);
+        $this->imageProcessor->process($image, $file_name, [
+            ['path' => public_path('uploads/slides'), 'cover' => [1920, 1080, 'top'], 'resize' => [1920, 1080]]
+        ]);
         $slide->image = $file_name;
         $slide->save();
         return redirect()->route('admin.slides')->with('status', 'Slide   added successfully!');
-    }
-
-    public function GenerateSlideThumbnailsImage($image, $imageName)
-    {
-        $destinationPath = public_path('uploads/slides');
-        $img = Image::read($image->getRealPath());
-        $img->cover(1920, 1080, "top");
-        $img->resize(1920, 1080, function ($constraint) {
-            $constraint->aspectRatio();
-        })->save($destinationPath . '/' . $imageName);
     }
 
 
@@ -1120,7 +1118,9 @@ class AdminController extends Controller
             $image = $request->file('image');
             $file_extention = $request->file('image')->extension();
             $file_name = Carbon::now()->timestamp . '.' . $file_extention;
-            $this->GenerateSlideThumbnailsImage($image, $file_name);
+            $this->imageProcessor->process($image, $file_name, [
+                ['path' => public_path('uploads/slides'), 'cover' => [1920, 1080, 'top'], 'resize' => [1920, 1080]]
+            ]);
             $slide->image = $file_name;
         }
         $slide->save();

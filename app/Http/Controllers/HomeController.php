@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\Facility;
 use Illuminate\Http\Request;
+use App\Helpers\ProfileHelper;
 use Illuminate\Support\Carbon;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -47,10 +48,9 @@ class HomeController extends Controller
                 'no_account' => 'You need to log in to send a message.'
             ]);
         }
-
-        if (!$user->name || !$user->email || !$user->phone_number) {
-            return redirect()->back()->withErrors([
-                'user_info' => 'Your profile information is incomplete. Please update your profile (name, email, and phone number) to send a message.'
+        if ($user->utype === 'USR' && ProfileHelper::isProfileIncomplete($user)) {
+            return redirect()->route('user.profile', ['swal' => 1])->with([
+                'message' => 'Your profile information is incomplete. Please update your profile (name, email, and phone number) to send a message.'
             ]);
         }
 

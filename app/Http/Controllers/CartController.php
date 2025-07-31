@@ -11,6 +11,7 @@ use App\Models\CourseDept;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use App\Events\LowStockEvent;
+use App\Helpers\ProfileHelper;
 use Illuminate\Support\Carbon;
 use App\Helpers\TimeSlotHelper;
 use Illuminate\Support\Facades\DB;
@@ -278,7 +279,7 @@ class CartController extends Controller
         }
         $user = Auth::user();
 
-        if ($user->utype === 'USR' && $this->isProfileIncomplete($user)) {
+        if ($user->utype === 'USR' && ProfileHelper::isProfileIncomplete($user)) {
             return redirect()->route('user.profile', ['swal' => 1])->with([
                 'message' => 'Please complete your profile to proceed with the checkout.'
             ]);
@@ -395,15 +396,6 @@ class CartController extends Controller
             }
 
             $orderItem->variant_id = null;
-        }
-    }
-
-    private function isProfileIncomplete($user)
-    {
-        if ($user->role === 'student') {
-            return !$user->name || !$user->email || !$user->phone_number || !$user->year_level || !$user->department || !$user->course;
-        } else {
-            return !$user->name || !$user->email || !$user->phone_number;
         }
     }
 
