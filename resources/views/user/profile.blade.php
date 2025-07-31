@@ -116,6 +116,7 @@
                                 </script>
                             @endif
 
+                            {{-- facilities --}}
                             @if (session('error'))
                                 <script>
                                     document.addEventListener('DOMContentLoaded', function() {

@@ -348,3 +348,156 @@
         });
     </script>
 @endpush
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleSelect = document.getElementById('role');
+        const studentFields = document.getElementById('studentFields');
+        const professorFields = document.getElementById('professorFields');
+        const othersFields = document.getElementById('othersFields');
+        const currentRole = '{{ old('role', $user->role) }}';
+        const studentDepartmentSelect = document.getElementById('studentDepartment');
+        const courseSelect = document.getElementById('course');
+        const phoneInput = document.getElementById('phoneNumber');
+        const updateBtn = document.getElementById('updateProfileBtn');
+        const sexSelect = document.getElementById('sex');
+        const yearLevelSelect = document.getElementById('yearLevel');
+        const departmentSelect = document.getElementById('studentDepartment');
+
+        const courses = {
+            CEIT: ['BS Agricultural and Biosystems Engineering', 'BS Architecture', 'BS Civil Engineering',
+                'BS Computer Engineering', 'BS Computer Science', 'BS Electrical Engineering',
+                'BS Electronics Engineering', 'BS Industrial Technology Major in Automotive Technology',
+                'BS Industrial Technology Major in Electrical Technology',
+                'BS Industrial Technology Major in Electronics Technology', 'BS Information Technology'
+            ],
+            GSOLC: ['PhD in Agriculture', 'PhD in Education', 'PhD in Management',
+                'Master in Business Administration', 'Master in Agriculture',
+                'Master of Arts in Education', 'Master in Engineering', 'Master of Management',
+                'Master of Professional Studies', 'MS Agriculture', 'MS Biology', 'MS Food Science',
+                'Master in Information Technology'
+            ],
+            CAFENR: ['Bachelor of Agricultural Entrepreneurship', 'BS Agriculture',
+                'BS Environmental Science', 'BS Food Technology'
+            ],
+            CAS: ['BA English Language Studies', 'BA Journalism', 'BA Political Science',
+                'BA Applied Mathematics', 'BS Biology', 'BS Psychology', 'BS Social Work'
+            ],
+            CCJ: ['BS Criminology', 'BS Industrial Security Management'],
+            CEMDS: ['BS Accountancy', 'BS Business Management', 'BS Economics', 'BS International Studies',
+                'BS Office Administration'
+            ],
+            CED: ['Bachelor of Early Childhood Education', 'Bachelor of Elementary Education',
+                'Bachelor of Secondary Education', 'Bachelor of Special Needs Education',
+                'Bachelor of Technology and Livelihood Education', 'BS Hospitality Management',
+                'BS Tourism Management', 'Teacher Certificate Program', 'Science High School',
+                'Elementary Education', 'Pre-Elementary Education'
+            ],
+            CON: ['BS Medical Technology', 'BS Midwifery', 'BS Nursing', 'Diploma in Midwifery'],
+            CVMBS: ['Doctor of Veterinary Medicine']
+        };
+        
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+                if (this.value.length > 0 && this.value[0] !== '9') {
+                    this.value = '9' + this.value.slice(1);
+                }
+            });
+        }
+
+        function updateCourseOptions() {
+            const department = studentDepartmentSelect.value;
+            courseSelect.innerHTML = '<option value="" disabled selected>Select Course</option>';
+
+            if (courses[department]) {
+                courses[department].forEach(function(course) {
+                    const option = document.createElement('option');
+                    option.value = course;
+                    option.textContent = course;
+                    courseSelect.appendChild(option);
+                });
+
+                const oldValue = '{{ old('course', $user->course) }}';
+                if (oldValue) {
+                    courseSelect.value = oldValue;
+                }
+            }
+        }
+
+        studentDepartmentSelect.addEventListener('change', updateCourseOptions);
+
+        updateCourseOptions();
+
+        function updateFieldsVisibility(role) {
+            if (!role) {
+                return;
+            }
+
+            studentFields.style.display = 'none';
+                othersFields.style.display = 'none';
+
+            if (role === 'student') {
+                studentFields.style.display = 'block';
+            } else if (role === 'employee' || role === 'non-employee') {
+                othersFields.style.display = 'block';
+            }
+        }
+
+        updateFieldsVisibility(currentRole);
+
+        roleSelect.addEventListener('change', function() {
+            updateFieldsVisibility(this.value);
+        });
+
+        $(function() {
+            $('.delete').on('click', function(e) {
+                e.preventDefault();
+                var form = $(this).closest('form');
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You want to delete this record?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+
+        function validateForm() {
+            const phoneValue = phoneInput.value.trim();
+            const sexValue = sexSelect.value;
+            const roleValue = roleSelect.value;
+
+            let isValid = phoneValue.length === 10 && phoneValue.match(/^9\d{9}$/) && sexValue;
+
+            if (roleValue === 'student') {
+                const yearLevelValue = yearLevelSelect.value;
+                const departmentValue = departmentSelect.value;
+                const courseValue = courseSelect.value;
+                isValid = isValid && yearLevelValue && departmentValue && courseValue;
+            }
+
+            updateBtn.disabled = !isValid;
+        }
+
+        phoneInput.addEventListener('input', validateForm);
+        sexSelect.addEventListener('change', validateForm);
+        roleSelect.addEventListener('change', validateForm);
+        yearLevelSelect.addEventListener('change', validateForm);
+        departmentSelect.addEventListener('change', validateForm);
+        courseSelect.addEventListener('change', validateForm);
+
+        validateForm();
+    });
+</script>
+@endpush
+
+
