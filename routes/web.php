@@ -18,6 +18,7 @@ use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserFacilityController;
+use App\Http\Controllers\FacilityReportController;
 use App\Http\Controllers\FacilityReservationController;
 
 Auth::routes(['reset' => true]);
@@ -138,6 +139,13 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/reservation/events/{availability_id}', [FacilityController::class, 'events'])->name('admin.facilities.reservations-events');
         Route::get('/{availability_id}/reservation-history', [FacilityController::class, 'reservationHistory'])->name('admin.facilities.reservations-history');
 
+
+        Route::get('/facility/reports', [FacilityReportController::class, 'index'])->name('admin.facility.reports');
+        Route::get('/facilities/reports/data', [FacilityReportController::class, 'data'])->name('admin.facility.reports.data');
+        Route::get('/facilities/reports/filter-options', [FacilityReportController::class, 'getFilterOptions'])->name('admin.facility.reports.filter-options');
+        Route::get('/facilities/reports/summary', [FacilityReportController::class, 'summary'])->name('admin.facility.reports.summary');
+
+        Route::get('/facility/reports/download-facility-pdf', [FacilityReportController::class, 'downloadFacilityPdf'])->name('admin.facility.reports.downloadFacilityPdf');
 
         Route::post('/prices/store', [FacilityController::class, 'price_store'])->name('prices.store');
         // archive routes

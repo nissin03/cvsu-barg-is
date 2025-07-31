@@ -274,65 +274,6 @@
 
                                 {{-- Admin Menu Items --}}
                                 @if (auth()->user()->utype === 'ADM')
-                                <li class="menu-item has-children">
-                                    <a href="javascript:void(0);" class="menu-item-button">
-                                        <div class="icon"><i class="icon-layers"></i></div>
-                                        <div class="text">Category</div>
-                                    </a>
-                                    <ul class="sub-menu">
-                                        <li class="sub-menu-item">
-                                            <a href="{{ route('admin.category.add') }}">
-                                                <div class="text">Add Category</div>
-                                            </a>
-                                        </li>
-                                        <li class="sub-menu-item">
-                                            <a href="{{ route('admin.categories') }}">
-                                                <div class="text">Categories</div>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-
-                                <li class="menu-item has-children">
-                                    <a href="javascript:void(0);" class="menu-item-button">
-                                        <div class="icon"><i class="icon-shopping-bag"></i></div>
-                                        <div class="text">Products</div>
-                                    </a>
-                                    <ul class="sub-menu">
-                                        <li class="sub-menu-item">
-                                            <a href="{{ route('admin.product.add') }}">
-                                                <div class="text">Add Product</div>
-                                            </a>
-                                        </li>
-                                        <li class="sub-menu-item">
-                                            <a href="{{ route('admin.products') }}">
-                                                <div class="text">View Products</div>
-                                            </a>
-                                        </li>
-                                   
-                                    </ul>
-                                </li>
-                                <li class="menu-item has-children">
-                                    <a href="javascript:void(0);" class="menu-item-button">
-                                        <div class="icon"><i class="icon-shopping-bag"></i></div>
-                                        <div class="text">Product Attributes</div>
-                                    </a>
-                                    <ul class="sub-menu">
-                                        <li class="sub-menu-item">
-                                            <a href="{{ route('admin.product-attribute-add') }}">
-                                                <div class="text">Add Product Attribute</div>
-                                            </a>
-                                        </li>
-                                        <li class="sub-menu-item">
-                                            <a href="{{ route('admin.product-attributes') }}">
-                                                <div class="text">View Product Attributes</div>
-                                            </a>
-                                        </li>
-</ul>
-                                </li>
-
-
-
                                     <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
                                             <div class="icon"><i class="icon-layers"></i></div>
@@ -366,7 +307,54 @@
                                         </a>
                                     </li> --}}
 
-                                   
+                                    <li class="menu-item has-children">
+                                        <a href="javascript:void(0);" class="menu-item-button">
+                                            <div class="icon"><i class="icon-layers"></i></div>
+                                            <div class="text">Category</div>
+                                        </a>
+                                        <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.category.add') }}">
+                                                    <div class="text">Add Category</div>
+                                                </a>
+                                            </li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.categories') }}">
+                                                    <div class="text">Categories</div>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
+
+                                    <li class="menu-item has-children">
+                                        <a href="javascript:void(0);" class="menu-item-button">
+                                            <div class="icon"><i class="icon-shopping-bag"></i></div>
+                                            <div class="text">Products</div>
+                                        </a>
+                                        <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.product.add') }}">
+                                                    <div class="text">Add Product</div>
+                                                </a>
+                                            </li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.products') }}">
+                                                    <div class="text">View Products</div>
+                                                </a>
+                                            </li>
+                                            <li class="divider mb-10"></li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.product-attribute-add') }}">
+                                                    <div class="text">Add Product Attributes</div>
+                                                </a>
+                                            </li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.product-attributes') }}">
+                                                    <div class="text">View Product Attributes</div>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
 
                                     <li class="menu-item">
                                         <a href="{{ route('admin.orders') }}">
@@ -478,14 +466,13 @@
                                             <div class="text">Facilties Reports</div>
                                         </a>
                                         <ul class="sub-menu">
-                                            {{-- <li class="sub-menu-item">
-                                                <a href="{{ route('admin.report.facilities') }}">
-                                                    <div class="text">Sales Reports</div>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.facility.reports') }}">
+                                                    <div class="text">Facilities Reports</div>
                                                 </a>
-                                            </li> --}}
-
-
+                                            </li>
                                         </ul>
+                                        
                                     </li>
 
 

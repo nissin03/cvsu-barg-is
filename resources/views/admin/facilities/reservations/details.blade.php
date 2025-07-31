@@ -167,7 +167,7 @@
                     <div class="row">
                         <div class="col-md-3 mt-2 mb-4">
                             <div class="select">
-                                <select name="status" id="status" class="" @disabled(in_array($reservation->status, ['completed', 'canceled']) || $reservation->updated_by !== null)>
+                                <select name="status" id="status" class="" @disabled(in_array($reservation->status, ['completed', 'canceled']))>
                                     <option value="pending" {{ $reservation->status === 'pending' ? 'selected' : '' }}>
                                         Pending</option>
                                     <option value="reserved" {{ $reservation->status === 'reserved' ? 'selected' : '' }}>
@@ -181,7 +181,7 @@
                         </div>
                         <div class="col-md-3">
                             <button type="submit" class="btn btn-primary tf-button w208" id="submit-button"
-                                @disabled(in_array($reservation->status, ['completed', 'canceled']) || $reservation->updated_by !== null)>
+                                @disabled(in_array($reservation->status, ['completed', 'canceled']))>
                                 Update Status
                             </button>
                         </div>
