@@ -1139,7 +1139,7 @@ ol.breadcrumb li + li::before {
 .form-control {
     display: block;
     width: 100%;
-    padding: 0.9375 rem 0.9375 rem 0.75rem !;
+    padding: 0.9375rem 0.9375rem 0.75rem !important;
     font-size: 0.875rem;
     font-weight: 400;
     line-height: 1.7143;
