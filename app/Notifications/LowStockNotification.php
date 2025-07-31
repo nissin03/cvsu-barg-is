@@ -21,8 +21,7 @@ class LowStockNotification extends Notification
     public function __construct($product, $quantity)
     {
         $this->product = $product;
-        $this->quantity = $quantity;
-      
+        $this->quantity = $product->quantity;
     }
     /**
      * Get the notification's delivery channels.
@@ -34,27 +33,21 @@ class LowStockNotification extends Notification
         return ['database', 'broadcast'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
-    
-     public function toDatabase($notifiable): array
-     {
-         return [
-             'product_name' => $this->product->name,
-             'quantity' => $this->quantity,
-             'message' => "{$this->product->name} stock is low. Only {$this->quantity} left in stock.",
-         ];
-     }
-
-     public function toBroadcast($notifiable)
+    protected function getVariant()
     {
-        return new BroadcastMessage([
-            'product_name' => $this->product->name,
-            'quantity' => $this->quantity,
-            'message' => "{$this->product->name} stock is low. Only {$this->quantity} left in stock.",
-        ]);
+        $variants = [];
+
+        $attributeValues =  $this->product->attributeValues()->with('productAttribute')->get();
+
+        foreach ($attributeValues as $attributeValue) {
+            if ($attributeValue->productAttribute) {
+                $variants[] = $attributeValue->productAttribute->name . ': ' . $attributeValue->value;
+            }
+        }
+
+        return count($variants) ? implode(', ', $variants) : "Doesn't have any variant";
     }
+
     /**
      * Get the array representation of the notification.
      *
@@ -63,9 +56,28 @@ class LowStockNotification extends Notification
     public function toArray($notifiable): array
     {
         return [
-            'product_name' => $this->product->name,
+            'product_id' => $this->product->id,
+            'name' => $this->product->name,
+            'variant' => $this->getVariant(),
             'quantity' => $this->quantity,
             'message' => "{$this->product->name} stock is low. Only {$this->quantity} left in stock.",
         ];
+    }
+
+    /**
+     * Get the broadcastable representation of the notification.
+     *
+     * @param  mixed  $notifiable
+     * @return BroadcastMessage
+     */
+    public function toBroadcast($notifiable)
+    {
+        return new BroadcastMessage([
+            'product_id' => $this->product->id,
+            'name' => $this->product->name,
+            'variant' => $this->getVariant(),
+            'quantity' => $this->quantity,
+            'message' => "{$this->product->name} stock is low. Only {$this->quantity} left in stock.",
+        ]);
     }
 }

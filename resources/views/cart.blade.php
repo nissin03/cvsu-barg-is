@@ -1,45 +1,25 @@
 @extends('layouts.app')
 @section('content')
-    @php
-        $user = auth()->user();
-        $currentRoute = request()->route()->getName();
-
-        // Determine the base home route based on user type
-        $homeRoute = match ($user->utype ?? 'guest') {
-            'USR' => route('user.index'),
-            'DIR' => route('director.index'),
-            'ADM' => route('admin.index'),
-            default => route('home.index'),
-        };
-
-        // Initialize breadcrumbs array with the Home link
-        $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
-
-        // Handle Shop pages
-        if ($currentRoute === 'shop.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'Shop'];
-        } elseif ($currentRoute === 'shop.product.details') {
-            $breadcrumbs[] = ['url' => route('shop.index'), 'label' => 'Shop'];
-            $breadcrumbs[] = ['url' => null, 'label' => 'Product Details'];
-        } elseif ($currentRoute === 'about.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'About Us'];
-        } elseif ($currentRoute === 'cart.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'Cart Page'];
-        } elseif ($currentRoute === 'contact.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'Contact Us'];
-        } else {
-            $breadcrumbs[] = ['url' => null, 'label' => ucwords(str_replace('.', ' ', $currentRoute))];
-        }
-    @endphp
-
-    <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
-        :breadcrumbs="$breadcrumbs" />
-
+    <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="Shopping Cart" />
     <main class="container my-5">
         <h2 class="mb-4">Shopping Cart</h2>
+        @if (session('error'))
+            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
+                <div id="errorToast" class="toast align-items-center text-bg-danger border-0 show" role="alert"
+                    aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            {{ session('error') }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                            aria-label="Close"></button>
+                    </div>
+                </div>
+            </div>
+        @endif
         <div class="row">
+
             <div class="col-md-12">
-                
                 @if ($items->count() > 0)
                     <div class="table-responsive">
                         <table class="table cart-table align-middle">
@@ -142,7 +122,7 @@
                                                         ? $item->options['variant_quantity']
                                                         : $item->model->quantity;
                                             @endphp
-                                             <div class="product-single__qtytocart" id="cart-item-{{ $item->rowId }}">
+                                            <div class="product-single__qtytocart" id="cart-item-{{ $item->rowId }}">
                                                 <div class="qty-control cart-qty-control position-relative">
                                                     <input type="number" name="quantity" value="{{ $item->qty }}"
                                                         min="1" max="{{ $maxQuantity }}"
@@ -196,12 +176,9 @@
                 </div>
                 <div class="cart-total-container">
                     <div class="cart-total">
-                        <h5>Cart Totals</h5>
-                        <p>Subtotal: <span id="subtotal">{{ Cart::subtotal() }}</span></p>
+                        <h5>Cart Total</h5>
                         <p>Total: <span id="total">{{ Cart::total() }}</span></p>
-
-                        <button class="btn btn-black w-100"
-                            onclick="window.location.href='{{ route('cart.checkout') }}'">Process Checkout</button>
+                        <a href="{{ route('cart.checkout') }}" class="btn btn-black w-100">Process Checkout</a>
                     </div>
                 </div>
             </div>
@@ -242,13 +219,13 @@
 
                     // Handle form submission for updating the variant
                     form.querySelector('.confirm-variant').addEventListener('click', function(
-                    event) {
+                        event) {
                         event.preventDefault();
                         form.submit();
                     });
 
                     form.querySelector('.cancel-variant').addEventListener('click', function(
-                    event) {
+                        event) {
                         event.preventDefault();
                         variantActions.style.display = 'none';
                     });
@@ -271,7 +248,7 @@
                                 .newQty;
                             document.querySelector(`#cart-item-${rowId} .item-total`).textContent =
                                 `₱${data.itemTotal}`;
-                           // document.querySelector('#subtotal').textContent = `₱${data.subtotal}`;
+
                             document.querySelector('#total').textContent = `₱${data.total}`;
                         } else {
                             alert(data.error);

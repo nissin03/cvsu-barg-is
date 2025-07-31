@@ -1,39 +1,36 @@
 @extends('layouts.app')
 @section('content')
-<style>
-    
-.divider-wrapper {
-    display: flex;
-    flex-direction: row;
-    text-transform: uppercase;
-    border: none;
-    font-size: 12px;
-    font-weight: 400;
-    margin: 10px 0 0;
-    padding: 0;
-    align-items: center;
-    justify-content: center;
-    width: 100%; 
-}
+    <style>
+        .divider-wrapper {
+            display: flex;
+            flex-direction: row;
+            text-transform: uppercase;
+            border: none;
+            font-size: 12px;
+            font-weight: 400;
+            margin: 10px 0 0;
+            padding: 0;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
 
-.divider-wrapper::before,
-.divider-wrapper::after {
-    content: "";
-    border-bottom: 1px solid #c2c8d0;
-    flex: 1 0 auto;
-    height: 0.5em;
-    margin: 0;
-}
+        .divider-wrapper::before,
+        .divider-wrapper::after {
+            content: "";
+            border-bottom: 1px solid #c2c8d0;
+            flex: 1 0 auto;
+            height: 0.5em;
+            margin: 0;
+        }
 
-.divider {
-    text-align: center;    
-    flex: 0 1 auto;
-    margin: 20px 16px;
-    height: 12px;
-}
-
-
-</style>
+        .divider {
+            text-align: center;
+            flex: 0 1 auto;
+            margin: 20px 16px;
+            height: 12px;
+        }
+    </style>
     <main class="pt-90">
         <div class="mb-4 pb-4"></div>
         <div class="container" style="padding-top: 100px;">
@@ -42,6 +39,17 @@
                     <div class="card border-0">
                         <div class="card-header border-0 text-center fw-bold">
                             <span class="title-form">{{ __('Login') }}</span>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        @if(session('error'))
+                                        <div class="alert alert-danger">
+                                            {{ session('error') }}
+                                        </div>
+                                    @endif
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="card-body">
                             <form method="POST" action="{{ route('login') }}" name="login-form" class="needs-validation"
@@ -62,13 +70,13 @@
                                     @enderror
                                 </div>
 
-                                <!-- Continue Button -->
+                                {{-- <!-- Continue Button -->
                                 <button type="button"
                                     class="btn btn-btn-dark form-control bg-dark text-white mb-3 w-100 text-uppercase"
-                                    id="continue-btn">Continue</button>
+                                    id="continue-btn">Continue</button> --}}
 
                                 <!-- Password Input Container -->
-                                <div id="password-container" style="display: none;">
+                                <div id="password-container">  
                                     <div class="form-floating mb-3">
                                         <input id="password" type="password"
                                             class="form-control form-control_gray @error('password') is-invalid @enderror"
@@ -88,7 +96,8 @@
                                     <div class="d-flex justify-content-between mt-3">
                                         <!-- Remember Me Checkbox -->
                                         <div class="form-check mb-3">
-                                            <input type="checkbox" class="form-check-input custom-checkbox" id="rememberMe" name="remember">
+                                            <input type="checkbox" class="form-check-input custom-checkbox" id="rememberMe"
+                                                name="remember">
                                             <label class="form-check-label" for="rememberMe">{{ __('Remember Me') }}</label>
                                         </div>
 
@@ -100,8 +109,6 @@
                                             </a>
                                         </div>
                                     </div>
-
-
                                     <!-- Submit Button -->
                                     <button
                                         class="btn btn-btn-dark form-control bg-dark text-white mb-1 w-100 text-uppercase"
@@ -151,45 +158,44 @@
         new bootstrap.Tooltip(toggleButton);
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    //     var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+    //         return new bootstrap.Tooltip(tooltipTriggerEl);
+    //     });
 
-        const emailInput = document.getElementById('email');
-        const passwordContainer = document.getElementById('password-container');
-        const continueBtn = document.getElementById('continue-btn');
+    //     const emailInput = document.getElementById('email');
+    //     const passwordContainer = document.getElementById('password-container');
+    //     const continueBtn = document.getElementById('continue-btn');
 
-        continueBtn.addEventListener('click', function() {
-            const email = emailInput.value;
-            if (email.endsWith('@cvsu.edu.ph') || email.endsWith('@gmail.com')) {
-                passwordContainer.style.display = 'block';
-                continueBtn.style.display = 'none';
-            } else {
-                Swal.fire({
-                    title: 'Invalid Email',
-                    text: 'Please use your CVSU or Gmail email address.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Go to Register',
-                    cancelButtonText: 'Login',
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = '/register';  // Redirect to register page
-                    }
-                });
-            }
-        });
-    });
+    //     continueBtn.addEventListener('click', function() {
+    //         const email = emailInput.value;
+    //         if (email.endsWith('@cvsu.edu.ph') || email.endsWith('@gmail.com')) {
+    //             passwordContainer.style.display = 'block';
+    //             continueBtn.style.display = 'none';
+    //         } else {
+    //             Swal.fire({
+    //                 title: 'Invalid Email',
+    //                 text: 'Please use your CVSU or Gmail email address.',
+    //                 icon: 'warning',
+    //                 showCancelButton: true,
+    //                 confirmButtonText: 'Go to Register',
+    //                 cancelButtonText: 'Login',
+    //             }).then((result) => {
+    //                 if (result.isConfirmed) {
+    //                     window.location.href = '/register'; // Redirect to register page
+    //                 }
+    //             });
+    //         }
+    //     });
+    // });
 
-        // Handle form submission
-        document.getElementById('login-form').addEventListener('submit', function(event) {
-            const password = document.getElementById('password').value;
-            if (!password) {
-                event.preventDefault();
-                alert('Please enter your password.');
-            }
-        });
-
+    // // Handle form submission
+    // document.getElementById('login-form').addEventListener('submit', function(event) {
+    //     const password = document.getElementById('password').value;
+    //     if (!password) {
+    //         event.preventDefault();
+    //         alert('Please enter your password.');
+    //     }
+    // });
 </script>

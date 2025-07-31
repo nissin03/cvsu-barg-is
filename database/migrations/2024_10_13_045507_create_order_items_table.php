@@ -9,21 +9,19 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   
-     public function up(): void
-     {
-         Schema::create('order_items', function (Blueprint $table) {
-             $table->id();
-             $table->foreignId('product_id')->constrained()->onDelete('cascade');
-             $table->foreignId('variant_id')->nullable()->constrained('product_attribute_values')->onDelete('cascade');
-             $table->foreignId('order_id')->constrained()->onDelete('cascade');
-             $table->decimal('price', 10, 2);
-             $table->integer('quantity');
-             $table->longText('options')->nullable();
-             $table->boolean('rstatus')->default(false);
-             $table->timestamps();
-         });
-     }
+
+    public function up(): void
+    {
+        Schema::create('order_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->foreignId('variant_id')->nullable()->constrained('product_attribute_values')->onDelete('cascade');
+            $table->foreignId('order_id')->constrained()->onDelete('cascade');
+            $table->decimal('price', 10, 2);
+            $table->integer('quantity');
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

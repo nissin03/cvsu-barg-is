@@ -32,7 +32,7 @@
                         </div>
                     </form>
                 </div>
-                <a class="tf-button style-1 w208" href="{{route('admin.slide.add')}}"><i
+                <a class="tf-button w-auto" href="{{route('admin.slide.add')}}"><i
                         class="icon-plus"></i>Add new</a>
             </div>
             <div class="wg-table table-all-user">
@@ -43,7 +43,7 @@
                     <table class="table table-striped table-bordered">
                         <thead>
                             <tr>
-                                {{-- <th>#</th> --}}
+                                <th>#</th>
                                 <th>Image</th>
                                 <th>Tagline</th>
                                 <th>Title</th>
@@ -55,14 +55,12 @@
                         <tbody>
                             @foreach ($slides as $slide)
                             <tr>
-                                {{-- <td>{{$slide->id}}</td> --}}
-                               <td class="pname">
+                                <td>{{$slide->id}}</td>
+                                <td class="pname">
                                     <div class="image">
-                                        <img src="{{ asset('uploads/slides/' . $slide->image) }}" alt="{{ $slide->title }}" class="img-fluid" style="max-width: 100px; height: auto;">
+                                        <img src="{{asset('uploads/slides')}}/{{$slide->image}}" alt="{{$slide->title}}" class="image">
                                     </div>
                                 </td>
-
-
                                 <td>{{$slide->tagline}}</td>
                                 <td>{{$slide->title}}</td>
                                 <td>{{$slide->subtitle}}</td>

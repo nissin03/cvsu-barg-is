@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
-use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Gate;
 use App\Models\User;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Event;
+use App\Events\ContactMessageReceived;
+use App\Listeners\ContactMessageListener;
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 
 class AppServiceProvider extends ServiceProvider
@@ -20,16 +23,5 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
-    {
-        $this->registerPolicies();
-
-        Gate::define('view-all', function (User $user){
-            return $user->role === 'ADM';
-        });
-
-        Gate::define('view-reports', function (User $user) {
-            return in_array($user->role, ['ADM', 'DIR']);
-        });
-    }
+    public function boot(): void {}
 }

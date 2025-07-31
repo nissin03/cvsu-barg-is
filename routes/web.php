@@ -1,16 +1,10 @@
 <?php
 
-use App\Models\Contact;
-use App\Models\Product;
-use App\Events\LowStockEvent;
+use App\Http\Middleware\AuthUser;
 use App\Http\Middleware\AuthAdmin;
-use Livewire\Livewire;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Middleware\AuthDirector;
 use Illuminate\Support\Facades\Route;
-use App\Events\ContactMessageReceived;
+use App\Http\Controllers\PosController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ShopController;
@@ -18,15 +12,16 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\RentalController;
-use App\Http\Controllers\DirectorController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\AdminProfileController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserFacilityController;
-use App\Http\Controllers\ReportController;
+use App\Http\Controllers\FacilityReservationController;
 
 Auth::routes(['reset' => true]);
+
 
 Auth::routes();
 
@@ -35,39 +30,15 @@ Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 Route::get('/shop/{product_slug}', [ShopController::class, 'product_details'])->name('shop.product.details');
 
 
-
 Route::get('/user/facilities', [UserFacilityController::class, 'index'])->name('user.facilities.index');
 Route::get('/user/facilities/{slug}', [UserFacilityController::class, 'show'])->name('user.facilities.details');
-
 Route::post('/facilities/calculate-price', [UserFacilityController::class, 'calculatePrice'])->name('facilities.calculatePrice');
-
 
 Route::post('/reserve', [UserFacilityController::class, 'reserve'])->name('facility.reserve');
 Route::get('/user/checkout', [UserFacilityController::class, 'checkout'])->name('facility.checkout');
 Route::post('user/facilities/place-reservation', [UserFacilityController::class, 'place_reservation'])->name('user.facilities.placeReservation');
 Route::get('/user/reservations', [UserFacilityController::class, 'account_reservation'])->name('user.reservations');
 Route::get('/user/reservatio_history', [UserFacilityController::class, 'reservation_history'])->name('user.reservations_history');
-Route::get('/user/reservation_details/{availability_id}', [UserFacilityController::class, 'account_reservation_details'])->name('user.reservation_details');
-
-// Route::post('/checkout', [UserFacilityController::class, 'post_checkout'])->name('user.post_checkout');
-
-
-
-Route::get('/rentals', [RentalController::class, 'index'])->name('rentals.index');
-Route::get('/rentals/{rental_slug}', [RentalController::class, 'show'])->name('rentals.details');
-Route::post('/rentals/reserve', [RentalController::class, 'add_to_reserved'])->name('rentals.reserve');
-// Route::post('/rentals/{facility_id}/checkout', [RentalController::class, 'checkout_details'])->name('rentals.checkout.details');
-// Route::get('/rentals/checkout', [RentalController::class, 'checkout'])->name('rentals.checkout');
-// Route::get('/rentals/{facility_id}/checkout', [RentalController::class, 'checkout'])->name('rentals.checkout');
-
-
-Route::post('/reserve/{rentalId}', [RentalController::class, 'placeReservation'])->name('rentals.reserve.events');
-
-// Route::get('/checkout/{rental_id}', [RentalController::class, 'checkout'])->name('rentals.checkout');
-Route::get('/api/check-pool-capacity/{rentalId}/{date}', [RentalController::class, 'checkPoolCapacity'])->name('check.pool.capacity');
-Route::get('/api/rentals/{rentalId}/reservations', [RentalController::class, 'getReservations']);
-Route::get('/rental/checkout/{rentalId}/reservations', [RentalController::class, 'getReservations'])->name('rental.checkout');
-Route::get('/api/holidays', [RentalController::class, 'getHolidays']);
 
 Route::get('/about-us', [AboutController::class, 'index'])->name('about.index');
 
@@ -82,7 +53,7 @@ Route::delete('/cart/clear', [CartController::class, 'empty_cart'])->name('cart.
 
 Route::get('/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
 Route::post('/place-an-order', [CartController::class, 'place_an_order'])->name('cart.place.an.order');
-
+Route::get('/api/slots', [CartController::class, 'getAvailableTimeSlots'])->name('slots.available');
 
 
 Route::get('/order-confirmation', [CartController::class, 'order_confirmation'])->name('cart.order.confirmation');
@@ -100,9 +71,7 @@ Route::post('/contact-us', [HomeController::class, 'contact_store'])->name('home
 
 Route::get('/search', [HomeController::class, 'search'])->name('home.search');
 
-
-
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', AuthUser::class])->group(function () {
     Route::get('/account-dashboard', [UserController::class, 'index'])->name('user.index');
     Route::get('/account-order', [UserController::class, 'orders'])->name('user.orders');
     Route::get('/account-order/{order_id}/details', [UserController::class, 'order_details'])->name('user.order.details');
@@ -113,7 +82,6 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/user/profile/update', [UserController::class, 'profile_update'])->name('user.profile.update');
     // Route::get('user/profile/edit/{id}', [UserController::class, 'edit'])->name('user.profile.edit');
 
-
     Route::get('/user/profile-image/edit', [UserController::class, 'profile_image_edit'])->name('user.profile.image.edit');
     Route::put('/user/profile-image/update', [UserController::class, 'profile_image_update'])->name('user.profile.image.update');
     Route::delete('/user/profile-image/delete', [UserController::class, 'profile_image_delete'])->name('user.profile.image.delete');
@@ -121,227 +89,198 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/order-history', [UserController::class, 'order_history'])->name('user.order.history');
     Route::get('/reservation-history', [UserController::class, 'reservation_history'])->name('user.reservation.history');
 
-
     Route::get('/user/reservation', [UserController::class, 'account_reservation'])->name('user.reservation');
     Route::get('/user/reservation-details/{reservation_id}', [UserController::class, 'account_reservation_details'])->name('user.reservation-details');
-
-
 
     Route::post('/user/reservation-details/cancel-reservation', [UserController::class, 'account_cancel_reservation'])->name('user.account_cancel_reservation');
     Route::get('/api/check-pool-capacity/{rentalId}/{quantity}', [RentalController::class, 'checkPoolCapacity']);
 
-
-
-
-
-
     Route::get('/account-rentals', [UserController::class, 'account_rentals'])->name('user.account.rentals');
 });
-
-
 
 Route::get('password/set', [PasswordController::class, 'showSetPasswordForm'])->name('password.set');
 Route::post('password/set', [PasswordController::class, 'setPassword']);
 
 
-Route::middleware(['auth', AuthAdmin::class])->group(function () {
-    Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
-    Route::get('/admin/categories', [AdminController::class, 'categories'])->name('admin.categories');
-    Route::get('/admin/category/add', [AdminController::class, 'category_add'])->name('admin.category.add');
-    Route::post('/admin/category/store', [AdminController::class, 'category_store'])->name('admin.category.store');
-    Route::get('/admin/category/edit/{id}', [AdminController::class, 'category_edit'])->name('admin.category.edit');
-    Route::put('/admin/category/update', [AdminController::class, 'category_update'])->name('admin.category.update');
-    Route::delete('/admin/category/{id}/delete', [AdminController::class, 'category_delete'])->name('admin.category.delete');
 
 
-    // Profile for the admin
-    Route::get('/admin/profile', [AdminProfileController::class, 'show_profile'])->name('admin.profile.index');
-
-
-    Route::get('/admin/facilities', [FacilityController::class, 'index'])->name('admin.facilities.index');
-    Route::get('/admin/facility/create', [FacilityController::class, 'create'])->name('admin.facility.create');
-    Route::post('/admin/facility/store', [FacilityController::class, 'store'])->name('admin.facilities.store');
-    Route::get('/admin/facility/edit/{id}', [FacilityController::class, 'edit'])->name('admin.facilities.edit');
-    // Route::put('/admin/facility/update', [FacilityController::class, 'update'])->name('admin.facilities.update');
-    Route::put('/admin/facility/update/{id}', [FacilityController::class, 'update'])->name('admin.facilities.update');
-    Route::get('/admin/facility/reservation', [FacilityController::class, 'reservations'])->name('admin.facilities.reservations');
-    Route::get('/admin/reservation/events/{availability_id}', [FacilityController::class, 'events'])->name('admin.facilities.reservations-events');
-    Route::get('/admin/{availability_id}/reservation-history', [FacilityController::class, 'reservationHistory'])->name('admin.facilities.reservations-history');
-
-
-
-
-
-    Route::post('/prices/store', [FacilityController::class, 'price_store'])->name('prices.store');
-    // archive routes
-    Route::get('/admin/facility/archive/show', [FacilityController::class, 'showFacilities'])->name('admin.facilities.archive.index');
-    Route::delete('/admin/facility/{id}/archive', [FacilityController::class, 'archivedFacilities'])->name('admin.facilities.archive');
-    Route::post('/admin/facility/restore', [FacilityController::class, 'restoreFacilities'])->name('admin.facility.restore');
-
-
-
-    // Route::post('/admin/facility/room/store', [FacilityController::class, 'room_store'])->name('admin.facilities.room.store');
-    // Route::post('/admin/facility/rooms-range/store', [FacilityController::class, 'room_store_range'])->name('admin.facilities.store.range');
-
-
-
-
-
-    //update status
-    Route::put('/admin/facilities/reservation/{id}/update-status', [FacilityController::class, 'updateStatus'])
-        ->name('admin.facilities.reservation.updateStatus');
-    // Route for saving rooms
-    Route::post('/facility/{facilityId}/rooms', [FacilityController::class, 'storeRooms'])
-        ->name('facility.rooms.store');
-
-    // Route for fetching rooms
-    Route::get('/facility/{facilityId}/rooms', [FacilityController::class, 'getRooms'])
-        ->name('facility.rooms.get');
-
-    Route::get('/admin/products', [AdminController::class, 'products'])->name('admin.products');
-    Route::get('/admin/product/add', [AdminController::class, 'product_add'])->name('admin.product.add');
-    Route::post('/admin/product/store', [AdminController::class, 'product_store'])->name('admin.product.store');
-    Route::get('/admin/product/edit/{id}', [AdminController::class, 'product_edit'])->name('admin.product.edit');
-    Route::put('/admin/product/update', [AdminController::class, 'product_update'])->name('admin.product.update');
-    // Route::delete('/admin/product/{id}/delete', [AdminController::class, 'product_delete'])->name('admin.product.delete');
-    Route::delete('/admin/product/{id}/archived', [AdminController::class, 'archivedProducts'])->name('admin.product.archive');
-    Route::get('/admin/archived-products', [AdminController::class, 'showArchivedProducts'])->name('admin.archived-products');
-    Route::post('/admin/product/restore', [AdminController::class, 'restoreProducts'])->name('admin.product.restore');
-    Route::post('/admin/product/delete', [AdminController::class, 'deleteProducts'])->name('admin.product.delete');
-    Route::get('/admin/products/search', [AdminController::class, 'searchProducts'])->name('admin.products.search');
-
-    Route::get('/admin/product-attributes', [AdminController::class, 'prod_attributes'])->name('admin.product-attributes');
-    Route::get('/admin/product-attribute/add', [AdminController::class, 'prod_attribute_add'])->name('admin.product-attribute-add');
-    Route::post('/admin/product-attributes/store', [AdminController::class, 'prod_attribute_store'])->name('admin.product.attribute.store');
-    Route::get('/admin/product-attribute/edit/{id}', [AdminController::class, 'product_attribute_edit'])->name('admin.product.attribute.edit');
-    Route::put('/admin/product-attribute/update', [AdminController::class, 'product_attribute_update'])->name('admin.product.attribute.update');
-    Route::delete('/admin/product-attribute/{id}/delete', [AdminController::class, 'product_attribute_delete'])->name('admin.product.attribute.delete');
-
-
-    Route::get('/admin/orders', [AdminController::class, 'orders'])->name('admin.orders');
-    Route::get('/orders/filter', [AdminController::class, 'order_filter'])->name('orders.filter');
-    Route::get('/admin/filter-reservations', [AdminController::class, 'filterReservations']);
-
-
-    Route::get('/admin/order/{order_id}/details', [AdminController::class, 'order_details'])->name('admin.order.details');
-    // Route::get('/admin/order/{order_id}/details', [AdminController::class, 'showOrderDetails'])->name('admin.order.details');
-    Route::put('/admin/order/update-status', [AdminController::class, 'update_order_status'])->name('admin.order.status.update');
-    Route::get('/admin/orders/filter', [AdminController::class, 'filterOrders'])->name('admin.orders.filter');
-
-
-    Route::get('/admin/slide', [AdminController::class, 'slides'])->name('admin.slides');
-    Route::get('/admin/slide/add', [AdminController::class, 'slide_add'])->name('admin.slide.add');
-    Route::post('/admin/slide/store', [AdminController::class, 'slide_store'])->name('admin.slide.store');
-    Route::get('/admin/slide/{id}/edit', [AdminController::class, 'slide_edit'])->name('admin.slide.edit');
-    Route::put('/admin/slide/update', [AdminController::class, 'slide_update'])->name('admin.slide.update');
-    Route::delete('/admin/slide/{id}/delete', [AdminController::class, 'slide_delete'])->name('admin.slide.delete');
-
-    Route::get('/admin/contact', [AdminController::class, 'contacts'])->name('admin.contacts');
-    Route::delete('/admin/contact/{id}/delete', [AdminController::class, 'contact_delete'])->name('admin.contact.delete');
-    Route::post('/admin/contact/{id}/reply', [AdminController::class, 'contact_reply'])->name('admin.contact.reply');
-    // Route::post('/notifications/{id}/mark-read', [AdminController::class, 'markAsRead']);
-    // Route::post('/notifications/mark-read-multiple', [AdminController::class, 'markMultipleAsRead']);
-    Route::get('/notifications/count', [AdminController::class, 'getUnreadNotificationCount']);
-    Route::post('/notifications/mark-read-multiple', [AdminController::class, 'markMultipleAsRead']);
-    Route::post('/notifications/mark-read/{id}', [AdminController::class, 'markAsRead']);
-    Route::get('/notifications/unread-count', [AdminController::class, 'unreadCount']);
-    Route::post('/notifications/delete-multiple', [AdminController::class, 'deleteMultipleNotifications']);
-    Route::get('/notifications/latest', [AdminController::class, 'latest']);
-
-
-
-
-
-    Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
-    Route::get('/user/filter', [AdminController::class, 'filter'])->name('admin.users.filter');
-    Route::get('/user/search', [AdminController::class, 'search'])->name('admin.users.search');
-    Route::delete('/users/{id}', [AdminController::class, 'users_destroy'])->name('admin.users.destroy');
-    Route::get('admin/users/{id}/edit', [AdminController::class, 'users_edit'])->name('admin.users.edit');
-    Route::put('admin/users/{id}/update', [AdminController::class, 'users_update'])->name('admin.users.update');
-    Route::get('/admin/add', [AdminController::class, 'users_add'])->name('admin.users.add');
-    Route::post('/admin/store', [AdminController::class, 'users_store'])->name('admin.users.store');
-    Route::get('/admin/search', [AdminController::class, 'searchproduct'])->name('admin.searchproduct');
-
-
-    // REPORTS
-    Route::get('/admin/index-weekly', [ReportController::class, 'indexWeekly'])->name('admin.index-weekly');
-    Route::get('/admin/getWeeklyData', [ReportController::class, 'getWeeklyData'])->name('admin.getWeeklyData');
-    Route::get('/admin/index-daily', [ReportController::class, 'indexDaily'])->name('admin.index-daily');
-
-    Route::get('/admin/reports', [ReportController::class, 'generateReport'])->name('admin.reports');
-    Route::get('/admin/report-user', [ReportController::class, 'generateUser'])->name('admin.report-user');
-    Route::get('/admin/report-product', [ReportController::class, 'generateProduct'])->name('admin.report-product');
-    Route::get('/admin/report-inventory', [ReportController::class, 'generateInventory'])->name('admin.report-inventory');
-    Route::get('/admin/report-statements', [ReportController::class, 'listBillingStatements'])->name('admin.report-statements');
-    Route::get('/admin/report-statement/{orderId}', [ReportController::class, 'generateBillingStatement'])->name('admin.report-statement');
-    // Route::get('/admin/report-statement/{orderId}', [ReportController::class, 'generateBillingStatement'])->name('admin.report-statement');
-
-     Route::get('/admin/facilities-sales', [ReportController::class, 'listSalesFacilities'])->name('admin.facilties.stataments');
-     Route::get('admin/payment-details/{paymentId}', [ReportController::class, 'showPaymentDetails'])->name('admin.sales-report-details');
-
-
-
-
-    // Route::get('/user-reports', [ReportController::class, 'showUserReports'])->name('admin.user-reports');
-    // Route::post('/user-reports/generate', [ReportController::class, 'generateUserReports'])->name('admin.user-reports.generate');
-
-    Route::post('/admin/sales-report', [ReportController::class, 'generateInputSales'])->name('admin.generate-input-sales');
-    Route::get('/admin/sales-report', function () { return view('admin.reports.input-sales'); });
-
-    Route::post('/admin/user-report', [ReportController::class, 'generateInputUsers'])->name('admin.generate-input-users');
-    Route::get('/admin/user-report', function () {return view('admin.reports.input-user'); });
-
-
-
-
-
-
-
-    Route::post('/admin/sales-report/download', [AdminController::class, 'downloadInputSales'])->name('admin.download-input-sales');
-    Route::post('/admin/user-report/download', [AdminController::class, 'downloadInputUsers'])->name('admin.download-input-users');
-
-
-    // Route::post('/rentals-reports/generate', [AdminController::class, 'generateInputRentalReports'])->name('admin.generate-input-rentals-reports');
-    // Route::get('/rentals-reports', function () {
-    //     return view('admin.input-rentals-reports');
-    // })->name('admin.rentals-reports');
-    // Route::post('/rentals-reports/download', [AdminController::class, 'downloadInputRentalsReports'])->name('admin.download-input-rentals-reports');
-
-
-    Route::get('/admin/report-statements/download', [AdminController::class, 'downloadBillingStatements'])->name('admin.report-statements.download');
-    Route::post('/admin/downloadPdf', [AdminController::class, 'downloadPdf'])->name('admin.downloadPdf');
-    Route::post('/admin/report-user/pdf', [AdminController::class, 'downloadUserReportPdf'])->name('admin.report-user.pdf');
-    Route::get('/admin/report-inventory/pdf', [AdminController::class, 'downloadInventoryReportPdf'])->name('admin.report-inventory.pdf');
-
-    // Route::get('/admin/rentals', [AdminController::class, 'rentals'])->name('admin.rentals');
-    // Route::get('/admin/rentals/add', [AdminController::class, 'rental_add'])->name('admin.rental.add');
-    // Route::post('/admin/rentals/store', [AdminController::class, 'rental_store'])->name('admin.rental.store');
-    // Route::get('/admin/rental/edit/{id}', [AdminController::class, 'rental_edit'])->name('admin.rental.edit');
-    // Route::put('/admin/rental/update', [AdminController::class, 'rental_update'])->name('admin.rental.update');
-    // Route::delete('/admin/rental/delete/{id}', [AdminController::class, 'rental_delete'])->name('admin.rental.delete');
-
-    // Route::get('/admin/rentals_reports', [AdminController::class, 'rentalsReports'])->name('admin.rentals_reports');
-    // Route::post('/admin/rentals-reports/download-pdf', [AdminController::class, 'downloadPdfRentals'])->name('admin.downloadPdfRentals');
-    // Route::get('admin/rentals-reports-name', [AdminController::class, 'rentalsReportsName'])->name('admin.rentalsReportsName');
-    // Route::post('admin/download-pdf-rentals-name', [AdminController::class, 'downloadPdfRentalsName'])->name('admin.downloadPdfRentalsName');
-
-
-    Route::get('/admin/report-product/download', [AdminController::class, 'downloadProduct'])->name('admin.report-product.download');
-
-
-    // Route::get('admin/report/facilities', [AdminController::class, 'generateFacilitespayment'])->name('admin.report.facilities');
-
-
-
-    Route::get('/admin/reservation/{reservation_id}/events', [AdminController::class, 'event_items'])->name('admin.reservation-events');
-    Route::get('/admin/reservation-history/{reservation_id}', [AdminController::class, 'reservationHistory'])->name('admin.reservation-history');
-    Route::post('/admin/update-reservation-status/', [AdminController::class, 'updateStatus'])->name('admin.updateReservationStatus');
-    Route::post('/admin/update-payment-status', [AdminController::class, 'updatePaymentStatus'])->name('admin.updatePaymentStatus');
-    // Route::post('/admin/reservation/{reservation}/update-status', [AdminController::class, 'updateStatus'])->name('admin.update-status');
-    // Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.reservatioiindex');
-
-    Route::post('/admin/reservation/{reservation_id}/update-status', [AdminController::class, 'updateReservationStatus'])->name('admin.update-reservation-status');
-
-
-    Route::get('/admin/reservation', [AdminController::class, 'reservations'])->name('admin.reservation');
-});
+Route::middleware(['auth', AuthAdmin::class])
+    ->prefix('admin')
+    ->group(function () {
+        Route::get('/', [AdminController::class, 'index'])->name('admin.index');
+        Route::get('/categories', [AdminController::class, 'categories'])->name('admin.categories');
+        Route::get('/category/add', [AdminController::class, 'category_add'])->name('admin.category.add');
+        Route::post('/category/store', [AdminController::class, 'category_store'])->name('admin.category.store');
+        Route::get('/category/edit/{id}', [AdminController::class, 'category_edit'])->name('admin.category.edit');
+        Route::put('/category/update', [AdminController::class, 'category_update'])->name('admin.category.update');
+        Route::delete('/category/{id}/archive', [AdminController::class, 'category_archive'])->name('admin.category.archive');
+        Route::get('/archived-categories', [AdminController::class, 'archived_categories'])->name('admin.archived-categories');
+        Route::put('/categories/{id}/restore', [AdminController::class, 'restore_categories'])->name('admin.category.restore');
+
+
+        // api
+        Route::get('/api/dashboard-data', [AdminController::class, 'getDashboardData'])->name('admin.api.dashboard-data');
+        Route::get('/api/months', [AdminController::class, 'getAvailableMonths'])->name('admin.api.months');
+        Route::get('/api/weeks', [AdminController::class, 'getAvailableWeeks'])->name('admin.api.weeks');
+
+        Route::get('/profile', [AdminProfileController::class, 'show_profile'])->name('admin.profile.index');
+        Route::put('/profile/update', [AdminProfileController::class, 'update_profile'])->name('admin.profile.update');
+        Route::post('/profile/update-image', [AdminProfileController::class, 'update_profile_image'])->name('admin.profile.update-image');
+
+        Route::get('/facilities', [FacilityController::class, 'index'])->name('admin.facilities.index');
+        Route::get('/facilities/search', [FacilityController::class, 'search'])->name('admin.facilities.search');
+        Route::get('/facility/create', [FacilityController::class, 'create'])->name('admin.facility.create');
+        Route::post('/facility/store', [FacilityController::class, 'store'])->name('admin.facilities.store');
+        Route::get('/facility/edit/{id}', [FacilityController::class, 'edit'])->name('admin.facilities.edit');
+        // Route::put('/facility/update', [FacilityController::class, 'update'])->name('admin.facilities.update');
+        Route::put('/facility/update/{id}', [FacilityController::class, 'update'])->name('admin.facilities.update');
+        // Route::get('/facility/reservation', [FacilityController::class, 'reservations'])->name('admin.facilities.reservations');
+        Route::get('/reservation/events/{availability_id}', [FacilityController::class, 'events'])->name('admin.facilities.reservations-events');
+        Route::get('/{availability_id}/reservation-history', [FacilityController::class, 'reservationHistory'])->name('admin.facilities.reservations-history');
+
+
+        Route::post('/prices/store', [FacilityController::class, 'price_store'])->name('prices.store');
+        // archive routes
+        Route::get('/facility/archive/show', [FacilityController::class, 'showFacilities'])->name('admin.facilities.archive.index');
+        Route::delete('/facility/{id}/archive', [FacilityController::class, 'archivedFacilities'])->name('admin.facilities.archive');
+        Route::post('/facility/restore', [FacilityController::class, 'restoreFacilities'])->name('admin.facility.restore');
+
+        // Route::post('/facility/room/store', [FacilityController::class, 'room_store'])->name('admin.facilities.room.store');
+        // Route::post('/facility/rooms-range/store', [FacilityController::class, 'room_store_range'])->name('admin.facilities.store.range');
+
+        //update status
+        Route::put('/facilities/reservation/{id}/update-status', [FacilityController::class, 'updateStatus'])
+            ->name('admin.facilities.reservation.updateStatus');
+        Route::post('/facility/{facilityId}/rooms', [FacilityController::class, 'storeRooms'])
+            ->name('facility.rooms.store');
+        Route::get('/facility/{facilityId}/rooms', [FacilityController::class, 'getRooms'])
+            ->name('facility.rooms.get');
+
+        Route::middleware(['auth'])->prefix('notifications')->group(function () {
+            Route::get('/', [NotificationController::class, 'allNotifications'])->name('notifications.all');
+            Route::get('/unread', [NotificationController::class, 'unread'])->name('notifications.unread');
+            Route::post('/mark-as-read/{id}', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+            Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
+            Route::post('/mark-multiple-as-read', [NotificationController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-as-read');
+            Route::delete('/destroy/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+            Route::delete('/destroy-all', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
+            Route::get('/count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+        });
+
+        Route::get('/products', [AdminController::class, 'products'])->name('admin.products');
+        Route::get('/product/add', [AdminController::class, 'product_add'])->name('admin.product.add');
+        Route::post('/product/store', [AdminController::class, 'product_store'])->name('admin.product.store');
+        Route::get('/product/edit/{id}', [AdminController::class, 'product_edit'])->name('admin.product.edit');
+        Route::put('/product/update', [AdminController::class, 'product_update'])->name('admin.product.update');
+        // Route::delete('/product/{id}/delete', [AdminController::class, 'product_delete'])->name('admin.product.delete');
+        Route::delete('/product/{id}/archived', [AdminController::class, 'archivedProducts'])->name('admin.product.archive');
+        Route::get('/archived-products', [AdminController::class, 'showArchivedProducts'])->name('admin.archived-products');
+        Route::post('/product/restore', [AdminController::class, 'restoreProducts'])->name('admin.product.restore');
+        Route::post('/product/delete', [AdminController::class, 'deleteProducts'])->name('admin.product.delete');
+        Route::get('/products/search', [AdminController::class, 'searchProducts'])->name('admin.products.search');
+
+        Route::get('/product-attributes', [AdminController::class, 'prod_attributes'])->name('admin.product-attributes');
+        Route::get('/product-attribute/add', [AdminController::class, 'prod_attribute_add'])->name('admin.product-attribute-add');
+        Route::post('/product-attributes/store', [AdminController::class, 'prod_attribute_store'])->name('admin.product.attribute.store');
+        Route::get('/product-attribute/edit/{id}', [AdminController::class, 'product_attribute_edit'])->name('admin.product.attribute.edit');
+        Route::put('/product-attribute/update', [AdminController::class, 'product_attribute_update'])->name('admin.product.attribute.update');
+        Route::delete('/product-attribute/{id}/delete', [AdminController::class, 'product_attribute_delete'])->name('admin.product.attribute.delete');
+
+        // Route::get('/pos', [PosController::class, 'index'])->name('admin.pos.index');
+        // Route::get('/pos/{order?}', [PosController::class, 'index'])->name('admin.pos');
+
+
+
+        Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders');
+        Route::get('/orders/filters', [AdminController::class, 'filterOrders'])->name('admin.orders.filter');
+        Route::get('/order/{order_id}/details', [AdminController::class, 'order_details'])->name('admin.order.details');
+        Route::put('/order/update-status', [AdminController::class, 'update_order_status'])->name('admin.order.status.update');
+        Route::post('/order/{order_id}/complete-payment', [AdminController::class, 'completePayment'])->name('admin.order.complete-payment');
+        Route::get('/order/{order}/receipt-pdf', [AdminController::class, 'downloadReceipt'])->name('admin.order-receipt.pdf');
+        // Route::get('/order/{order}/receipt-preview', [AdminController::class, 'previewReceipt'])
+        //     ->name('admin.order.receipt-preview');
+
+
+
+        Route::get('/facilities/reservations', [FacilityReservationController::class, 'index'])->name('admin.facilities.reservations');
+        Route::get('/facilities/reservations/{id}', [FacilityReservationController::class, 'show'])->name('admin.facilities.reservations.show');
+        Route::patch('/facilities/reservations/{reservation}/status', [FacilityReservationController::class, 'update'])->name('admin.facilities.reservations.update');
+
+
+        Route::get('/slide', [AdminController::class, 'slides'])->name('admin.slides');
+        Route::get('/slide/add', [AdminController::class, 'slide_add'])->name('admin.slide.add');
+        Route::post('/slide/store', [AdminController::class, 'slide_store'])->name('admin.slide.store');
+        Route::get('/slide/{id}/edit', [AdminController::class, 'slide_edit'])->name('admin.slide.edit');
+        Route::put('/slide/update', [AdminController::class, 'slide_update'])->name('admin.slide.update');
+        Route::delete('/slide/{id}/delete', [AdminController::class, 'slide_delete'])->name('admin.slide.delete');
+
+        Route::get('/contact', [AdminController::class, 'contacts'])->name('admin.contacts');
+        Route::delete('/contact/{id}/delete', [AdminController::class, 'contact_delete'])->name('admin.contact.delete');
+        Route::post('/contact/{id}/reply', [AdminController::class, 'contact_reply'])->name('admin.contact.reply');
+
+        Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
+        Route::get('/user/filter', [AdminController::class, 'filter'])->name('admin.users.filter');
+        Route::get('/user/search', [AdminController::class, 'search'])->name('admin.users.search');
+        Route::delete('/users/{id}', [AdminController::class, 'users_destroy'])->name('admin.users.destroy');
+        Route::get('/users/{id}/edit', [AdminController::class, 'users_edit'])->name('admin.users.edit');
+        Route::put('/users/{id}/update', [AdminController::class, 'users_update'])->name('admin.users.update');
+        Route::get('/add', [AdminController::class, 'users_add'])->name('admin.users.add');
+        Route::post('/store', [AdminController::class, 'users_store'])->name('admin.users.store');
+
+        Route::get('/search', [AdminController::class, 'searchproduct'])->name('admin.searchproduct');
+
+        Route::get('/index-weekly', [AdminController::class, 'indexWeekly'])->name('admin.index-weekly');
+        Route::get('/getWeeklyData', [AdminController::class, 'getWeeklyData'])->name('admin.getWeeklyData');
+        Route::get('/index-daily', [AdminController::class, 'indexDaily'])->name('admin.index-daily');
+
+        Route::get('/reports', [AdminController::class, 'generateReport'])->name('admin.reports');
+        Route::get('/report-user', [AdminController::class, 'generateUser'])->name('admin.report-user');
+        Route::get('/report-product', [AdminController::class, 'generateProduct'])->name('admin.report-product');
+        Route::get('/report-inventory', [AdminController::class, 'generateInventory'])->name('admin.report-inventory');
+        Route::get('/report-statements', [AdminController::class, 'listBillingStatements'])->name('admin.report-statements');
+        Route::get('/report-statement/{orderId}', [AdminController::class, 'generateBillingStatement'])->name('admin.report-statement');
+
+        Route::get('/user-reports', [AdminController::class, 'showUserReports'])->name('admin.user-reports');
+        Route::post('/user-reports/generate', [AdminController::class, 'generateUserReports'])->name('admin.user-reports.generate');
+        Route::post('/sales-report', [AdminController::class, 'generateInputSales'])->name('admin.generate-input-sales');
+        Route::get('/sales-report', function () {
+            return view('admin.input-sales');
+        });
+        Route::post('/user-report', [AdminController::class, 'generateInputUsers'])->name('admin.generate-input-users');
+        Route::get('/user-report', function () {
+            return view('admin.input-user');
+        });
+
+
+        Route::post('/sales-report/download', [AdminController::class, 'downloadInputSales'])->name('admin.download-input-sales');
+        Route::post('/user-report/download', [AdminController::class, 'downloadInputUsers'])->name('admin.download-input-users');
+
+
+        Route::post('/rentals-reports/generate', [AdminController::class, 'generateInputRentalReports'])->name('admin.generate-input-rentals-reports');
+        Route::get('/rentals-reports', function () {
+            return view('admin.input-rentals-reports');
+        })->name('admin.rentals-reports');
+        Route::post('/rentals-reports/download', [AdminController::class, 'downloadInputRentalsReports'])->name('admin.download-input-rentals-reports');
+
+        Route::get('/report-statement/{orderId}', [AdminController::class, 'generateBillingStatement'])->name('admin.report-statement');
+        Route::get('/report-statements/download', [AdminController::class, 'downloadBillingStatements'])->name('admin.report-statements.download');
+        Route::post('/downloadPdf', [AdminController::class, 'downloadPdf'])->name('admin.downloadPdf');
+        Route::post('/report-user/pdf', [AdminController::class, 'downloadUserReportPdf'])->name('admin.report-user.pdf');
+        Route::get('/report-inventory/pdf', [AdminController::class, 'downloadInventoryReportPdf'])->name('admin.report-inventory.pdf');
+
+        Route::get('/rentals', [AdminController::class, 'rentals'])->name('admin.rentals');
+        Route::get('/rentals/add', [AdminController::class, 'rental_add'])->name('admin.rental.add');
+        Route::post('/rentals/store', [AdminController::class, 'rental_store'])->name('admin.rental.store');
+        Route::get('/rental/edit/{id}', [AdminController::class, 'rental_edit'])->name('admin.rental.edit');
+        Route::put('/rental/update', [AdminController::class, 'rental_update'])->name('admin.rental.update');
+        Route::delete('/rental/delete/{id}', [AdminController::class, 'rental_delete'])->name('admin.rental.delete');
+
+        Route::get('/rentals_reports', [AdminController::class, 'rentalsReports'])->name('admin.rentals_reports');
+        Route::post('/rentals-reports/download-pdf', [AdminController::class, 'downloadPdfRentals'])->name('admin.downloadPdfRentals');
+        Route::get('/rentals-reports-name', [AdminController::class, 'rentalsReportsName'])->name('admin.rentalsReportsName');
+        Route::post('/download-pdf-rentals-name', [AdminController::class, 'downloadPdfRentalsName'])->name('admin.downloadPdfRentalsName');
+        Route::get('/report-product/download', [AdminController::class, 'downloadProduct'])->name('admin.report-product.download');
+
+
+        Route::get('/report/facilities', [AdminController::class, 'generateFacilitespayment'])->name('admin.report.facilities');
+    });

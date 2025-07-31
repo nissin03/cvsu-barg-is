@@ -31,62 +31,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     @vite('resources/js/app.js')
-    {{-- <script>
-        // console.log('Hello from Vite!')
-        Echo.channel('chats')
-            .listen('Example', (e) => {
-                console.log(e);
-            });
-    </script> --}}
-
-    {{--
-    <script>
-        toastr.options = {
-            "progressBar": true,
-            "positionClass": "toast-top-right",
-            "timeOut": "5000",
-            "extendedTimeOut": "0"
-        };
-
-        const notificationCount = $('.notification-count');
-        const notificationList = $('#notifications-list');
-
-        // CSRF Token for AJAX Requests
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            },
-        });
-
-        Pusher.logToConsole = true;
-
-        var pusher = new Pusher('bfb378da684dcc605648', {
-            cluster: 'ap1',
-            encrypted: true
-        });
-
-        var channel = pusher.subscribe('admin-notification');
-        // channel.bind('low-stock-event', function(data) {
-        //     console.log("Received data from Pusher:", data);
-        //     if (data && data.product) {
-        //         const productName = data.product.name;
-        //         const productQuantity = data.product.quantity;
-        //         toastr.warning(`${productName} stock is low. Only ${productQuantity} left in stock.`);
-        //     } else {
-        //         console.error('Product data is missing:', data);
-        //     }
-        // });
-
-        channel.bind('contact-message-event', function(data) {
-            console.log("Received contact-message-event from Pusher:", data);
-            const contactMessage = data.contactMessage;
-            toastr.success(
-                `New message from ${contactMessage.name} (${contactMessage.email}): ${contactMessage.message}`
-            );
-
-        });
-    </script> --}}
-
+  
     <style>
         .modal-backdrop {
             position: fixed;
@@ -121,6 +66,17 @@
         .notification-heading {
             margin: 0;
             font-size: 18px;
+        }
+
+
+        /* Add this to your CSS file */
+        .notification-item.read {
+            background-color: #f8f9fa;
+            opacity: 0.8;
+        }
+
+        .notification-item.read .notification-text {
+            font-weight: normal !important;
         }
 
         .mark-read {
@@ -318,6 +274,65 @@
 
                                 {{-- Admin Menu Items --}}
                                 @if (auth()->user()->utype === 'ADM')
+                                <li class="menu-item has-children">
+                                    <a href="javascript:void(0);" class="menu-item-button">
+                                        <div class="icon"><i class="icon-layers"></i></div>
+                                        <div class="text">Category</div>
+                                    </a>
+                                    <ul class="sub-menu">
+                                        <li class="sub-menu-item">
+                                            <a href="{{ route('admin.category.add') }}">
+                                                <div class="text">Add Category</div>
+                                            </a>
+                                        </li>
+                                        <li class="sub-menu-item">
+                                            <a href="{{ route('admin.categories') }}">
+                                                <div class="text">Categories</div>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+
+                                <li class="menu-item has-children">
+                                    <a href="javascript:void(0);" class="menu-item-button">
+                                        <div class="icon"><i class="icon-shopping-bag"></i></div>
+                                        <div class="text">Products</div>
+                                    </a>
+                                    <ul class="sub-menu">
+                                        <li class="sub-menu-item">
+                                            <a href="{{ route('admin.product.add') }}">
+                                                <div class="text">Add Product</div>
+                                            </a>
+                                        </li>
+                                        <li class="sub-menu-item">
+                                            <a href="{{ route('admin.products') }}">
+                                                <div class="text">View Products</div>
+                                            </a>
+                                        </li>
+                                   
+                                    </ul>
+                                </li>
+                                <li class="menu-item has-children">
+                                    <a href="javascript:void(0);" class="menu-item-button">
+                                        <div class="icon"><i class="icon-shopping-bag"></i></div>
+                                        <div class="text">Product Attributes</div>
+                                    </a>
+                                    <ul class="sub-menu">
+                                        <li class="sub-menu-item">
+                                            <a href="{{ route('admin.product-attribute-add') }}">
+                                                <div class="text">Add Product Attribute</div>
+                                            </a>
+                                        </li>
+                                        <li class="sub-menu-item">
+                                            <a href="{{ route('admin.product-attributes') }}">
+                                                <div class="text">View Product Attributes</div>
+                                            </a>
+                                        </li>
+</ul>
+                                </li>
+
+
+
                                     <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
                                             <div class="icon"><i class="icon-layers"></i></div>
@@ -336,6 +351,13 @@
                                             </li>
                                         </ul>
                                     </li>
+                                    <li class="menu-item">
+                                        <a href="{{ route('admin.facilities.reservations') }}">
+                                            <div class="icon"><i class="icon-file-plus"></i></div>
+                                            <div class="text">Facility Reservation</div>
+                                        </a>
+                                    </li>
+
 
                                     {{-- <li class="menu-item">
                                         <a href="{{ route('admin.facilities.reservations') }}">
@@ -344,54 +366,7 @@
                                         </a>
                                     </li> --}}
 
-                                    <li class="menu-item has-children">
-                                        <a href="javascript:void(0);" class="menu-item-button">
-                                            <div class="icon"><i class="icon-layers"></i></div>
-                                            <div class="text">Category</div>
-                                        </a>
-                                        <ul class="sub-menu">
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.category.add') }}">
-                                                    <div class="text">Add Category</div>
-                                                </a>
-                                            </li>
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.categories') }}">
-                                                    <div class="text">Categories</div>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </li>
-
-                                    <li class="menu-item has-children">
-                                        <a href="javascript:void(0);" class="menu-item-button">
-                                            <div class="icon"><i class="icon-shopping-bag"></i></div>
-                                            <div class="text">Products</div>
-                                        </a>
-                                        <ul class="sub-menu">
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.product.add') }}">
-                                                    <div class="text">Add Product</div>
-                                                </a>
-                                            </li>
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.products') }}">
-                                                    <div class="text">View Products</div>
-                                                </a>
-                                            </li>
-                                            <li class="divider mb-10"></li>
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.product-attribute-add') }}">
-                                                    <div class="text">Add Product Attributes</div>
-                                                </a>
-                                            </li>
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.product-attributes') }}">
-                                                    <div class="text">View Product Attributes</div>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </li>
+                                   
 
                                     <li class="menu-item">
                                         <a href="{{ route('admin.orders') }}">
@@ -399,6 +374,7 @@
                                             <div class="text">Product Orders</div>
                                         </a>
                                     </li>
+
 
                                     {{-- <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
@@ -482,17 +458,17 @@
                                                     <div class="text">Statements</div>
                                                 </a>
                                             </li>
-                                            {{-- <li class="sub-menu-item">
+                                            <li class="sub-menu-item">
                                                 <a href="{{ route('admin.generate-input-users') }}">
                                                     <div class="text">Input User</div>
                                                 </a>
-                                            </li> --}}
+                                            </li>
 
-                                            {{-- <li class="sub-menu-item">
+                                            <li class="sub-menu-item">
                                                 <a href="{{ route('admin.generate-input-sales') }}">
                                                     <div class="text">Input Sales</div>
                                                 </a>
-                                            </li> --}}
+                                            </li>
                                         </ul>
                                     </li>
 
@@ -502,11 +478,11 @@
                                             <div class="text">Facilties Reports</div>
                                         </a>
                                         <ul class="sub-menu">
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.facilties.stataments') }}">
-                                                    <div class="text">Statement</div>
+                                            {{-- <li class="sub-menu-item">
+                                                <a href="{{ route('admin.report.facilities') }}">
+                                                    <div class="text">Sales Reports</div>
                                                 </a>
-                                            </li>
+                                            </li> --}}
 
 
                                         </ul>
@@ -569,112 +545,55 @@
                                             aria-labelledby="dropdownMenuButton2">
                                             <div class="dropdown-header">
                                                 <div class="notification-actions">
-                                                    <button type="button" class="mark-read">Mark all as read</button>
+                                                    <button type="button" id="markAllReadBtn" class="mark-read">Mark all as read</button>
                                                     <button type="button" class="remove-all">Remove all</button>
                                                 </div>
                                             </div>
 
                                             <div id="notification-list">
-                                                <div class="notification-item">
-                                                    <div class="notification-content">
-                                                        <p class="notification-text text-center">No notifications
-                                                        </p>
+                                                @if (Auth::user()->unreadNotifications->isEmpty())
+                                                    <div class="notification-item">
+                                                        <div class="notification-content">
+                                                            <p class="notification-text text-center">No notifications
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                @else
+                                                    @foreach (Auth::user()->unreadNotifications->take(5) as $notification)
+                                                        <div class="notification-item"
+                                                            data-notification-id="{{ $notification->id }}">
+                                                            <div class="badge-icon h5">
+                                                                <i class="fas fa-envelope text-dark"></i>
+                                                            </div>
+                                                            <div class="notification-content">
+                                                                <p class="notification-text fw-bold">
+                                                                    {{ $notification->data['name'] }}</p>
+                                                                <p class="notification-subtext">
+                                                                <div class="unread-indicator"></div>
+                                                                {{ Str::limit($notification->data['message'], 30) }}
+                                                                </p>
+                                                            </div>
+                                                            <div class="remove-notification"
+                                                                data-id="{{ $notification->id }}">
+                                                                <i class="fas fa-times"></i>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                @endif
                                             </div>
 
                                             <div id="all-notification-list"
                                                 class="notification-list-container all-notifications"
                                                 style="display: none;">
-                                                <!-- All notifications will be loaded here -->
+                                                <!-- All notifications will be loaded here dynamically -->
                                             </div>
                                             <div class="dropdown-footer">
                                                 <button id="toggle-notifications" class="btn">See all
                                                     notifications</button>
                                             </div>
-                                            {{-- <div class="dropdown-footer">
-                                                <button class="btn" data-bs-toggle="modal"
-                                                    data-bs-target="#notificationsModal">See previous
-                                                    notifications</button>
-                                            </div> --}}
                                         </div>
                                     </div>
                                 </div>
-
-                                <div class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false"
-                                    id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel"
-                                    aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-scrollable">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="notificationsModalLabel">
-                                                    Previous
-                                                    Notifications</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="dropdown-header border-bottom mb-3">
-                                                    <h6 class="notification-heading">Old Notifications</h6>
-                                                    <button type="button" class="mark-read">Mark all as
-                                                        read</button>
-                                                </div>
-                                                <div class="notification-item">
-                                                    <div class="badge-icon h5">
-                                                        <i class="fas fa-bell text-dark"></i>
-                                                    </div>
-                                                    <div class="notification-content">
-                                                        <p class="notification-text fw-bold">Project Update
-                                                        </p>
-                                                        <p class="notification-subtext">Your project has
-                                                            been reviewed
-                                                        </p>
-                                                    </div>
-                                                    <div class="unread-indicator"></div>
-                                                </div>
-                                                <div class="notification-item">
-                                                    <div class="badge-icon">
-                                                        <span class="text-primary"
-                                                            style="font-weight: bold; font-size: 12px">INFO</span>
-                                                    </div>
-                                                    <div class="notification-content">
-                                                        <p class="notification-text fw-bold">System Update
-                                                        </p>
-                                                        <p class="notification-subtext">System maintenance
-                                                            completed
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <!-- New notification header -->
-                                                <div class="dropdown-header border-bottom my-3">
-                                                    <h6 class="notification-heading">New Notifications</h6>
-                                                </div>
-
-                                                <!-- New notification item -->
-                                                <div class="notification-item">
-                                                    <div class="badge-icon h5">
-                                                        <i class="fas fa-envelope text-dark"></i>
-                                                    </div>
-                                                    <div class="notification-content">
-                                                        <p class="notification-text fw-bold">New Message
-                                                        </p>
-                                                        <p class="notification-subtext">You have received a
-                                                            new message
-                                                        </p>
-                                                    </div>
-                                                    <div class="unread-indicator"></div>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary"
-                                                    data-bs-dismiss="modal">Close</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-
                                 <div class="popup-wrap user type-header">
                                     <div class="dropdown">
                                         @if ((Auth::check() && Auth::user()->utype == 'ADM') || (Auth::check() && Auth::user()->utype == 'DIR'))
@@ -802,6 +721,9 @@
 
 
     @stack('scripts')
+    <script>
+           window.userId = @json(Auth::id());
+    </script>
 </body>
 
 </html>

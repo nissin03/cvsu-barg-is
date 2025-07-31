@@ -44,15 +44,30 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
+
     <!-- Swiper -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     <!-- Local Assets -->
+
+    <!-- Sweet Alert JS -->
+    <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11.13.1/dist/sweetalert2.all.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <link rel="stylesheet" href="{{ asset('./font-awesome-6-pro-main/css/all.min.css') }}">
+    {{-- <link rel="stylesheet" href="{{ asset('css/facilities.css') }}"> --}}
+
     <link rel="stylesheet" href="{{ asset('owl_carousel/owl.theme.default.css') }}">
     <link rel="stylesheet" href="{{ asset('owl_carousel/owl.carousel.css') }}">
     <link rel="stylesheet" href="{{ asset('css/plugins/swiper.min.css') }}">
     <link rel="stylesheet" href="{{ asset('plugins/ijaboCropTool/ijaboCropTool.min.css') }}">
+
+
+        
+
+    <!-- Custom CSS -->
+
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('./font-awesome-6-pro-main/css/all.min.css') }}">
 
@@ -261,7 +276,18 @@
     <script src="{{ asset('owl_carousel/owl.carousel.js') }}"></script>
     <script src="{{ asset('js/index.js') }}"></script>
     <script src="{{ asset('js/countdown.js') }}"></script>
+
     <script src="{{ asset('js/main.js') }}"></script>
+
+  
+    <!-- bootstrap bundle js  -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- fullcalendar js  -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales-all.min.js"></script>
+
+
+
 
     <script>
         $(document).ready(function() {
@@ -320,6 +346,20 @@
             $('[data-toggle="tooltip"]').tooltip();
         });
     </script>
+
+
+
+    <!-- main js  -->
+    <script src="{{ asset('js/main.js') }}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var errorToast = document.getElementById('errorToast');
+            if (errorToast) {
+                new bootstrap.Toast(errorToast).show();
+            }
+        });
+    </script>
+
 
     @stack('scripts')
 </body>
