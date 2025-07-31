@@ -299,6 +299,7 @@
             0% {
                 background-position: 200% 0;
             }
+
             100% {
                 background-position: -200% 0;
             }
@@ -326,8 +327,13 @@
         }
 
         @keyframes float {
-            0% { transform: translateY(0px) translateX(0px); }
-            100% { transform: translateY(-100px) translateX(100px); }
+            0% {
+                transform: translateY(0px) translateX(0px);
+            }
+
+            100% {
+                transform: translateY(-100px) translateX(100px);
+            }
         }
 
         .page-title {
@@ -374,38 +380,38 @@
                 gap: 1.5rem;
                 padding: 0 0.5rem;
             }
-            
+
             .facility-content {
                 padding: 1.5rem;
             }
-            
+
             .page-title {
                 font-size: 2rem;
             }
-            
+
             .page-subtitle {
                 font-size: 1rem;
             }
-            
+
             .facility-image {
                 height: 220px;
             }
-            
+
             .facility-badge {
                 top: 12px;
                 right: 12px;
                 padding: 8px 14px;
                 font-size: 10px;
             }
-            
+
             .detail-item {
                 padding: 0.875rem;
             }
-            
+
             .capacity-list {
                 gap: 0.375rem;
             }
-            
+
             .capacity-item {
                 padding: 0.375rem 0.75rem;
                 font-size: 0.8rem;
@@ -418,24 +424,24 @@
                 gap: 1rem;
                 padding: 0 0.25rem;
             }
-            
+
             .facility-content {
                 padding: 1.25rem;
             }
-            
+
             .facility-title {
                 font-size: 1.25rem;
             }
-            
+
             .facility-description {
                 font-size: 0.9rem;
             }
-            
+
             .no-facilities {
                 padding: 3rem 1rem;
                 margin: 1rem 0.5rem;
             }
-            
+
             .no-facilities-icon {
                 font-size: 3rem;
             }
@@ -475,32 +481,6 @@
             outline-offset: 2px;
         }
     </style>
-
-    @php
-        $user = auth()->user();
-        $currentRoute = request()->route()->getName();
-        $homeRoute = match ($user->utype ?? 'guest') {
-            'USR' => route('user.index'),
-            'ADM' => route('admin.index'),
-            default => route('home.index'),
-        };
-        $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
-        if ($currentRoute === 'shop.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'Shop'];
-        } elseif ($currentRoute === 'shop.product.details') {
-            $breadcrumbs[] = ['url' => route('shop.index'), 'label' => 'Shop'];
-            $breadcrumbs[] = ['url' => null, 'label' => 'Product Details'];
-        } elseif ($currentRoute === 'about.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'About Us'];
-        } elseif ($currentRoute === 'contact.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'Contact Us'];
-        } elseif ($currentRoute === 'rentals.index') {
-            $breadcrumbs[] = ['url' => null, 'label' => 'Rentals'];
-        } else {
-            $breadcrumbs[] = ['url' => null, 'label' => ucwords(str_replace('.', ' ', $currentRoute))];
-        }
-    @endphp
-
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
 
@@ -514,7 +494,7 @@
                 </div>
             @endif
 
-            @if($facilities->isEmpty())
+            @if ($facilities->isEmpty())
                 <div class="no-facilities">
                     <div class="no-facilities-icon">🏢</div>
                     <h3>No Facilities Available</h3>
@@ -523,11 +503,14 @@
             @else
                 <div class="facility-grid">
                     @foreach ($facilities as $facility)
-                        <div class="facility-card" onclick="window.location.href='{{ route('user.facilities.details', ['slug' => $facility->slug]) }}'" tabindex="0" role="button" aria-label="View details for {{ $facility->name }}">
+                        <div class="facility-card"
+                            onclick="window.location.href='{{ route('user.facilities.details', ['slug' => $facility->slug]) }}'"
+                            tabindex="0" role="button" aria-label="View details for {{ $facility->name }}">
                             <div class="facility-image">
-                                <img src="{{ asset('storage/' . $facility->image) }}" alt="{{ $facility->name }}" loading="lazy">
+                                <img src="{{ asset('storage/' . $facility->image) }}" alt="{{ $facility->name }}"
+                                    loading="lazy">
                                 <div class="facility-badge">
-                                    @if($facility->facility_type === 'whole_place')
+                                    @if ($facility->facility_type === 'whole_place')
                                         Whole Place Reservation
                                     @elseif($facility->facility_type === 'individual')
                                         Individual Reservation
@@ -538,22 +521,26 @@
                                     @endif
                                 </div>
                             </div>
-                            
+
                             <div class="facility-content">
                                 <h2 class="facility-title">{{ $facility->name }}</h2>
                                 <p class="facility-description">{{ $facility->description }}</p>
-                                
+
                                 <div class="facility-details">
                                     @if ($facility->prices->isNotEmpty())
                                         <div class="detail-item">
-                                            <svg class="detail-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                            <svg class="detail-icon" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1">
+                                                </path>
                                             </svg>
                                             <div class="detail-content">
                                                 <div class="detail-label">Pricing</div>
                                                 <div class="detail-value">
                                                     @foreach ($facility->prices as $price)
-                                                        <span class="price-tag">{{ $price->name }}: ₱{{ number_format($price->value, 2) }}</span>
+                                                        <span class="price-tag">{{ $price->name }}:
+                                                            ₱{{ number_format($price->value, 2) }}</span>
                                                     @endforeach
                                                 </div>
                                             </div>
@@ -562,12 +549,17 @@
 
                                     @if ($facility->facilityAttributes->first() && $facility->facilityAttributes->first()->whole_capacity)
                                         <div class="detail-item">
-                                            <svg class="detail-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                            <svg class="detail-icon" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                                                </path>
                                             </svg>
                                             <div class="detail-content">
                                                 <div class="detail-label">Total Capacity</div>
-                                                <div class="detail-value">{{ $facility->facilityAttributes->first()->whole_capacity }} People</div>
+                                                <div class="detail-value">
+                                                    {{ $facility->facilityAttributes->first()->whole_capacity }} People
+                                                </div>
                                             </div>
                                         </div>
                                     @endif
@@ -584,11 +576,19 @@
                                                 ->values();
 
                                             $roomDetails = $facility->facilityAttributes
-                                                ->filter(fn($attribute) => $attribute->room_name && $attribute->capacity)
-                                                ->map(fn($attribute) => [
-                                                    'room_number' => preg_replace('/[^0-9]/', '', $attribute->room_name),
-                                                    'capacity' => $attribute->capacity,
-                                                ])
+                                                ->filter(
+                                                    fn($attribute) => $attribute->room_name && $attribute->capacity,
+                                                )
+                                                ->map(
+                                                    fn($attribute) => [
+                                                        'room_number' => preg_replace(
+                                                            '/[^0-9]/',
+                                                            '',
+                                                            $attribute->room_name,
+                                                        ),
+                                                        'capacity' => $attribute->capacity,
+                                                    ],
+                                                )
                                                 ->sortBy('room_number')
                                                 ->values();
 
@@ -597,13 +597,17 @@
 
                                         @if ($roomNumbers->isNotEmpty())
                                             <div class="detail-item">
-                                                <svg class="detail-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                                <svg class="detail-icon" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                                    </path>
                                                 </svg>
                                                 <div class="detail-content">
                                                     <div class="detail-label">Room Range</div>
                                                     <div class="detail-value">
-                                                        Room {{ $roomNumbers->first() }}{{ $roomNumbers->first() != $roomNumbers->last() ? ' - ' . $roomNumbers->last() : '' }}
+                                                        Room
+                                                        {{ $roomNumbers->first() }}{{ $roomNumbers->first() != $roomNumbers->last() ? ' - ' . $roomNumbers->last() : '' }}
                                                     </div>
                                                 </div>
                                             </div>
@@ -611,20 +615,29 @@
 
                                         @if ($groupedRooms->isNotEmpty())
                                             <div class="detail-item">
-                                                <svg class="detail-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                                <svg class="detail-icon" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                                    </path>
                                                 </svg>
                                                 <div class="detail-content">
                                                     <div class="detail-label">Room Capacities</div>
                                                     <div class="capacity-list">
                                                         @foreach ($groupedRooms as $capacity => $rooms)
                                                             @php
-                                                                $roomNumbers = $rooms->pluck('room_number')->map(fn($num) => "R{$num}");
-                                                                $range = $roomNumbers->count() > 1
-                                                                    ? $roomNumbers->first() . '-' . $roomNumbers->last()
-                                                                    : $roomNumbers->first();
+                                                                $roomNumbers = $rooms
+                                                                    ->pluck('room_number')
+                                                                    ->map(fn($num) => "R{$num}");
+                                                                $range =
+                                                                    $roomNumbers->count() > 1
+                                                                        ? $roomNumbers->first() .
+                                                                            '-' .
+                                                                            $roomNumbers->last()
+                                                                        : $roomNumbers->first();
                                                             @endphp
-                                                            <span class="capacity-item">{{ $range }}: {{ $capacity }} People</span>
+                                                            <span class="capacity-item">{{ $range }}:
+                                                                {{ $capacity }} People</span>
                                                         @endforeach
                                                     </div>
                                                 </div>
@@ -646,9 +659,9 @@
         // @if (session('success'))
         //     Swal.fire({
         //         icon: 'success',
-        //         title: '{{ session("title", "Success!") }}',
+        //         title: '{{ session('title', 'Success!') }}',
         //         text: "{{ session('success') }}",
-        //         @if(session('showConfirmButton', true))
+        //         @if (session('showConfirmButton', true))
         //             showConfirmButton: true,
         //         @else
         //             showConfirmButton: false,
@@ -663,7 +676,7 @@
             Swal.fire({
                 toast: true,
                 icon: 'success',
-                title: '{{ session("title", "Success!") }}',
+                title: '{{ session('title', 'Success!') }}',
                 text: "{{ session('success') }}",
                 position: 'top-end',
                 showConfirmButton: false, // Force-disable button
@@ -677,7 +690,7 @@
                 }
             });
         @endif
-        
+
         @if (session('profile_completed'))
             Swal.fire({
                 toast: true,
@@ -694,7 +707,7 @@
                 }
             });
         @endif
-        
+
         @if (session('error'))
             Swal.fire({
                 icon: 'error',

@@ -15,34 +15,27 @@ use Illuminate\Support\Carbon;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Events\ContactMessageReceived;
+use App\Notifications\NewContactMessage;
+use Illuminate\Support\Facades\Notification;
 use App\Notifications\ContactMessageNotification;
 
 class HomeController extends Controller
 {
-        public function index(Request $request)
+    public function index()
     {
-        $slides = Slide::where('status', 1)->take(3)->get();
-         
-        $categories = Category::whereNotNull('parent_id')->take(3)->get();
-        
-        $fproducts = Product::where('featured', 1)
-        ->where('stock_status', '!=', 'outofstock')
-        ->where('quantity', '>', 0)
-        ->get()
-        ->take(8);
-
-        return view('index', compact('slides', 'categories','fproducts'));  
-
+        $slides = Slide::where('status', 1)->get()->take(3);
+        $categories = Category::orderBy('name')->get();
+        $fproducts = Product::where('featured', 1)->get()->take(8);
+        return view('index', compact('slides', 'categories', 'fproducts'));
     }
-  
     public function contact()
     {
-        return view('contact');
+        $user = Auth::user();
+        return view('contact', compact('user'));
     }
     public function contact_store(Request $request)
     {
         $user = Auth::user();
-
         if (!$user) {
             return redirect()->back()->withErrors([
                 'no_account' => 'You need to log in to send a message.'
@@ -61,16 +54,15 @@ class HomeController extends Controller
             'message.max' => 'The message must not exceed 65535 characters.'
         ]);
 
-        $todaysMessagesCount = Contact::where('user_id', $user->id)
-                                    ->whereDate('created_at', today())
-                                    ->count();
+        $lastContact = Contact::where('user_id', $user->id)
+            ->latest()
+            ->first();
+        $timeWindow = 60;
 
-        if ($todaysMessagesCount >= 3) {
-            return redirect()->back()->withErrors([
-                'message_limit' => 'You have reached your daily limit of 3 messages. Please try again tomorrow.'
-            ]);
+        if ($lastContact && Carbon::parse($lastContact->created_at)->diffInMinutes(Carbon::now()) < $timeWindow) {
+            return redirect()->back()->with('error', 'You can only send one message every ' . $timeWindow . ' minutes.');
         }
-        // Save the contact message
+
         $contact = new Contact();
         $contact->name = $user->name;
         $contact->email = $user->email;
@@ -79,15 +71,8 @@ class HomeController extends Controller
         $contact->user_id = $user->id;
         $contact->save();
 
-        // Notify admin (uncomment if you have this functionality)
-        // $admin = User::where('utype', 'ADM')->first();
-        // if ($admin) {
-        //     $admin->notify(new ContactMessageNotification($contact));
-        // }
-
-        // Broadcast event (uncomment if you're using broadcasting)
-        // broadcast(new ContactMessageReceived($contact));
-
+        $admin = User::where('utype', 'ADM')->get();
+        Notification::send($admin, new NewContactMessage($contact));
         return redirect()->back()->with('success', 'Your message has been sent successfully.');
     }
 

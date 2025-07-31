@@ -8,7 +8,7 @@
     <meta name="author" content="barg unit">
 
     <title>{{ config('app.name', 'Information System') }}</title>
-    
+
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ asset('../images/favicon-logo.png') }}" type="image/x-icon">
 
@@ -37,9 +37,9 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.13.1/dist/sweetalert2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-     <!-- ApexCharts -->
+    <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    
+
     <!-- Toastr -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
@@ -64,7 +64,7 @@
     <link rel="stylesheet" href="{{ asset('plugins/ijaboCropTool/ijaboCropTool.min.css') }}">
 
 
-        
+
 
     <!-- Custom CSS -->
 
@@ -95,7 +95,8 @@
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white py-4 fixed-top">
         <div class="container">
-            <a href="{{ route('home.index') }}" class="navbar-brand d-flex justify-content-between align-items-center order-lg-0">
+            <a href="{{ route('home.index') }}"
+                class="navbar-brand d-flex justify-content-between align-items-center order-lg-0">
                 <img src="{{ asset('images/logo.png') }}" alt="Site Logo" class="navbar-logo">
             </a>
 
@@ -108,15 +109,18 @@
                         </a>
                     </div>
 
-                    <button type="button" class="btn position-relative" onclick="window.location.href='{{ route('cart.index') }}'">
+                    <button type="button" class="btn position-relative"
+                        onclick="window.location.href='{{ route('cart.index') }}'">
                         <i class="fa-sharp fa-regular fa-bag-shopping"></i>
                         @if (Cart::instance('cart')->content()->count() > 0)
-                            <span class="cart-amount d-block position-absolute js-cart-items-count">{{ Cart::instance('cart')->content()->count() }}</span>
+                            <span
+                                class="cart-amount d-block position-absolute js-cart-items-count">{{ Cart::instance('cart')->content()->count() }}</span>
                         @endif
                     </button>
-                    
+
                     @guest
-                        <button type="button" class="btn position-relative" onclick="location.href='{{ route('login') }}'">
+                        <button type="button" class="btn position-relative"
+                            onclick="location.href='{{ route('login') }}'">
                             <i class="fa-regular fa-user"></i>
                         </button>
                     @else
@@ -152,7 +156,8 @@
                         <a href="{{ route('shop.index') }}" class="nav-link text-uppercase text-dark">Shop</a>
                     </li>
                     <li class="nav-item px-2 py-2">
-                        <a href="{{ route('user.facilities.index') }}" class="nav-link text-uppercase text-dark">Facilities</a>
+                        <a href="{{ route('user.facilities.index') }}"
+                            class="nav-link text-uppercase text-dark">Facilities</a>
                     </li>
                     <li class="nav-item px-2 py-2">
                         <a href="{{ route('about.index') }}" class="nav-link text-uppercase text-dark">About Us</a>
@@ -279,7 +284,7 @@
 
     <script src="{{ asset('js/main.js') }}"></script>
 
-  
+
     <!-- bootstrap bundle js  -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- fullcalendar js  -->
@@ -298,15 +303,19 @@
                     $.ajax({
                         type: "GET",
                         url: "{{ route('home.search') }}",
-                        data: { query: searchQuery },
+                        data: {
+                            query: searchQuery
+                        },
                         dataType: 'json',
                         success: function(data) {
                             $("#box-content-search").empty();
 
                             if (data.length > 0) {
                                 $.each(data, function(index, item) {
-                                    var urlTemplate = "{{ route('shop.product.details', ['product_slug' => 'product_slug_pls']) }}";
-                                    var productUrl = urlTemplate.replace('product_slug_pls', item.slug);
+                                    var urlTemplate =
+                                        "{{ route('shop.product.details', ['product_slug' => 'product_slug_pls']) }}";
+                                    var productUrl = urlTemplate.replace(
+                                        'product_slug_pls', item.slug);
 
                                     $("#box-content-search").append(
                                         `<li>
