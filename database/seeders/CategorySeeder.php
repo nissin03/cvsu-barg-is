@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use App\Models\Category;
+use File;
 
 class CategorySeeder extends Seeder
 {
@@ -13,115 +14,124 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
-        // Define the category hierarchy.
-        // Under Apparel, we add two subcategories: "PE" and "Cspear".
+
         $categories = [
             'Accessories' => [
-                'Umbrella',
-                'Keychain' => [
-                    'Keychain for Car',
-                ],
-                'Lace',
-                'Pin',
+                'image' => 'lace_6.jpg',  // Parent category image
+                'Umbrella' => 'semi_golf_umbrella_manual.jpg',
+                'Keychain' => 'key_holder.jpg',
+                'Lace' => 'lace.jpg',
+                'Pin' => 'cvsu_pin.jpg',
             ],
             'Apparel' => [
-                'T-Shirt',
-                'Cap',
-                'Bonnet',
-                'Jacket',
-                'Polo',
-                'NSTP',
+                'image' => 'IMG_0136.jpg', // Parent category image
+                'T-Shirt' => 'IMG_0137.jpg',
+                'Cap' => 'IMG_0125.jpg',
+                'Bonnet' => 'IMG_0123.jpg',
+                'Jacket' => 'IMG_0161.jpg',
+                'Polo' => 'polo.jpg',
+                'NSTP' => 'NSTP_t-shirt.jpg',
                 'PE' => [
-                    'pe tshirt',
-                    'pe short',
+                    'image' => 'pe_category.jpg', // Added image for PE parent category
+                    'pe tshirt' => 'pe_t-shirt.jpg',
+                    'pe short' => 'pe_short.jpg',
                 ],
                 'Cspear' => [
-                    'Cspear tshirt',
-                    'Cspear short',
-                    'Cspear jogging pants',
+                    'image' => 'cspear_logo.jpg', // Added image for Cspear parent category
+                    'cspear tshirt' => 'cspear_t-shirt.jpg',
+                    'cspear short' => 'cspear_shorts.jpg',
+                    'cspear jogging pants' => 'cspear_jogging-pants.jpg',
                 ],
-                'Male Uniform',
-                'Female Uniform',
+                'Male Uniform' => 'polo.jpg',
+                'Female Uniform' => 'blouse.jpg',
             ],
             'Home & Kitchen' => [
-                'Mug',
-                'Utensils',
-                'Coffee Blend',
-                'Fans',
-                'Tumbler',
+                'image' => 'IMG_0113_2.jpg', // Parent category image
+                'Mug' => 'IMG_0113.jpg',
+                'Utensils' => 'IMG_0147.jpg',
+                'Coffee Blend' => 'blend_coffee.jpg',
+                'Fans' => 'IMG_0159.jpg',
+                'Tumbler' => 'tumbler.jpg',
             ],
             'Stationery' => [
-                'Notebook',
-                'Ballpens',
-                'Books',
+                'image' => 'cat_stationary.jpg', // Parent category image
+                'Notebook' => 'IMG_0148.jpg',
+                'Ballpens' => 'IMG_0163.jpg',
+                'Books' => 'IMG_0171.jpg',
             ],
-        ];
-
-        // Map categories to their respective images
-        $categoryImages = [
-            'Accessories' => '/IMG_0121.jpg',
-            'Apparel' => '/IMG_0123.jpg',
-            'Home & Kitchen' => '/coffee.jpg',
-            'Stationery' => '/IMG_0125.jpg',
-            'T-Shirt' => '/IMG_0127.jpg',
-            'Cap' => '/IMG_0130.jpg',
-            'Bonnet' => '/IMG_0132.jpg',
-            'Jacket' => '/IMG_0134.jpg',
-            'Polo' => '/IMG_0136.jpg',
-            'NSTP' => '/IMG_0137.jpg',
-            'PE' => '/IMG_0140.jpg',
-            'Cspear' => '/IMG_0142.jpg',
-            'Male Uniform' => '/IMG_0145.jpg',
-            'Female Uniform' => '/IMG_0147.jpg',
-            'Mug' => '/coffee2.jpg',
-            'Utensils' => '/IMG_0148.jpg',
-            'Coffee Blend' => '/coffee3.jpg',
-            'Fans' => '/IMG_0150.jpg',
-            'Tumbler' => '/IMG_0152.jpg',
-            'Notebook' => '/IMG_0155.jpg',
-            'Ballpens' => '/IMG_0156.jpg',
-            'Books' => '/IMG_0159.jpg',
         ];
 
         // Loop through top-level categories.
         foreach ($categories as $parentName => $children) {
+            // Check if the parent category has an image.
+            $parentImage = isset($children['image']) ? $this->getImageName($children['image']) : null;
+
+            // Create the parent category
             $parentCategory = Category::create([
                 'name' => $parentName,
                 'slug' => Str::slug($parentName),
-                'image' => $categoryImages[$parentName] ?? '/IMG_0161.jpg', // Fallback image if not found
+                'image' => $parentImage, // Store the parent category image if it exists
                 'parent_id' => null,
             ]);
+
+            // Remove the 'image' key from children to loop correctly
+            unset($children['image']);
 
             // Loop through children.
             foreach ($children as $childKey => $childValue) {
                 if (is_array($childValue)) {
-                    // For subcategories: $childKey is the subcategory name.
+                    // For subcategories
+                    $childImage = isset($childValue['image']) ? $this->getImageName($childValue['image']) : null;
                     $childCategory = Category::create([
                         'name' => $childKey,
                         'slug' => Str::slug($childKey),
-                        'image' => $categoryImages[$childKey] ?? '/IMG_0161.jpg',
+                        'image' => $childImage, // Use the subcategory image if it exists
                         'parent_id' => $parentCategory->id,
                     ]);
 
-                    // Create grandchildren.
-                    foreach ($childValue as $grandchildName) {
-                        Category::create([
-                            'name' => $grandchildName,
-                            'slug' => Str::slug($grandchildName),
-                            'image' => $categoryImages[$grandchildName] ?? '/IMG_0161.jpg',
-                            'parent_id' => $childCategory->id,
-                        ]);
+                    // Create grandchildren (subcategories with images)
+                    foreach ($childValue as $grandchildName => $imageName) {
+                        if ($grandchildName !== 'image') {
+                            $imageName = $this->getImageName($imageName); // Just the image name
+                            Category::create([
+                                'name' => $grandchildName,
+                                'slug' => Str::slug($grandchildName),
+                                'image' => $imageName, // Store only the image name
+                                'parent_id' => $childCategory->id,
+                            ]);
+                        }
                     }
                 } else {
-                    // For simple children.
+                    // For simple children (with image paths)
+                    $imageName = $this->getImageName($childValue); // Just the image name
                     Category::create([
-                        'name' => $childValue,
-                        'slug' => Str::slug($childValue),
-                        'image' => $categoryImages[$childValue] ?? '/IMG_0161.jpg',
+                        'name' => $childKey,
+                        'slug' => Str::slug($childKey),
+                        'image' => $imageName, // Store only the image name
                         'parent_id' => $parentCategory->id,
                     ]);
                 }
             }
         }
     }
+
+    /**
+     * Helper function to get only the image name
+     */
+    private function getImageName($imageName)
+    {
+        // Image path relative to the 'public' folder
+        $imagePath = 'uploads/categories/' . $imageName;
+
+        // Check if the image exists in the directory
+        $sourcePath = public_path('uploads/categories');
+        if (!File::exists($sourcePath . '/' . $imageName)) {
+            $this->command->error('Image does not exist: ' . $imagePath);
+            return null;
+        }
+
+        // Return the image name only
+        return $imageName; // Just return the image name (e.g., semi_golf_umbrella_manual.jpg)
+    }
+
 }
