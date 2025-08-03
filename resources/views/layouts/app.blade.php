@@ -91,100 +91,324 @@
             width: 100%;
             height: 1px;
         }
+
     </style>
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-white py-4 fixed-top">
-        <div class="container">
-            <a href="{{ route('home.index') }}"
-                class="navbar-brand d-flex justify-content-between align-items-center order-lg-0">
-                <img src="{{ asset('images/logo.png') }}" alt="Site Logo" class="navbar-logo">
-            </a>
 
-            <div class="order-lg-2 nav-btns header-tools__item header-tools__cart">
-                <div class="header-tools d-flex align-items-center">
-                    <div class="header-tools__item hover-container">
-                        <a class="js-search-popup search-field__actor" href="#" id="searchToggle">
-                            <i class="fa-regular fa-magnifying-glass" id="searchIcon"></i>
-                            <i class="fa-solid fa-times d-none" id="closeIcon"></i>
-                        </a>
-                    </div>
 
-                    <button type="button" class="btn position-relative"
-                        onclick="window.location.href='{{ route('cart.index') }}'">
-                        <i class="fa-sharp fa-regular fa-bag-shopping"></i>
-                        @if (Cart::instance('cart')->content()->count() > 0)
-                            <span
-                                class="cart-amount d-block position-absolute js-cart-items-count">{{ Cart::instance('cart')->content()->count() }}</span>
-                        @endif
-                    </button>
+<nav class="navbar navbar-expand-lg navbar-light bg-white py-4 fixed-top">
+    <div class="container position-relative">
+        <a href="{{ route('home.index') }}" class="navbar-brand d-flex justify-content-between align-items-center order-lg-0">
+            <img src="{{ asset('images/logo.png') }}" alt="Site Logo" class="navbar-logo">
+        </a>
 
-                    @guest
-                        <button type="button" class="btn position-relative"
-                            onclick="location.href='{{ route('login') }}'">
-                            <i class="fa-regular fa-user"></i>
-                        </button>
-                    @else
-                        <button type="button" class="btn d-flex align-items-center position-relative"
-                            onclick="location.href='{{ Auth::user()->utype == 'ADM' ? route('admin.index') : (Auth::user()->utype == 'DIR' ? route('admin.index') : route('user.index')) }}'">
-                            <div class="profile-image d-flex justify-content-center me-2">
-                                @if (Auth::user()->profile_image)
-                                    <img src="{{ asset('storage/' . Auth::user()->profile_image) }}" alt="Profile Image"
-                                        class="img-fluid rounded-circle"
-                                        style="width: 40px; height: 40px; object-fit: cover;">
-                                @else
-                                    <img src="{{ asset('images/profile.jpg') }}" loading="lazy" alt="Default Profile Image"
-                                        class="img-fluid rounded-circle"
-                                        style="width: 40px; height: 40px; object-fit: cover;">
-                                @endif
-                            </div>
-                            <span class="d-none d-md-inline">{{ strtok(Auth::user()->name, ' ') }}</span>
-                        </button>
-                    @endguest
+        <div class="order-lg-2 nav-btns header-tools__item header-tools__cart">
+            <div class="header-tools d-flex align-items-center">
+                <div class="header-tools__item hover-container">
+                    <a class="js-search-popup search-field__actor" href="#" id="searchToggle">
+                        <i class="fa-regular fa-magnifying-glass" id="searchIcon"></i>
+                        <i class="fa-solid fa-times d-none" id="closeIcon"></i>
+                    </a>
                 </div>
-            </div>
+                
+                <button type="button" class="btn position-relative" onclick="window.location.href='{{ route('cart.index') }}'">
+                    <i class="fa-sharp fa-regular fa-bag-shopping"></i>
+                    @if (Cart::instance('cart')->content()->count() > 0)
+                        <span class="cart-amount d-block position-absolute js-cart-items-count">{{ Cart::instance('cart')->content()->count() }}</span>
+                    @endif
+                </button>
 
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse order-lg-1" id="navMenu">
-                <ul class="navbar-nav mx-auto text-center">
-                    <li class="nav-item px-2 py-2">
-                        <a href="{{ route('home.index') }}" class="nav-link text-uppercase text-dark">Home</a>
-                    </li>
-                    <li class="nav-item px-2 py-2">
-                        <a href="{{ route('shop.index') }}" class="nav-link text-uppercase text-dark">Shop</a>
-                    </li>
-                    <li class="nav-item px-2 py-2">
-                        <a href="{{ route('user.facilities.index') }}"
-                            class="nav-link text-uppercase text-dark">Facilities</a>
-                    </li>
-                    <li class="nav-item px-2 py-2">
-                        <a href="{{ route('about.index') }}" class="nav-link text-uppercase text-dark">About Us</a>
-                    </li>
-                    <li class="nav-item px-2 py-2 border-0">
-                        <a href="{{ route('home.contact') }}" class="nav-link text-uppercase text-dark">Contact</a>
-                    </li>
-                </ul>
+                @guest
+                    <button type="button" class="btn position-relative" onclick="location.href='{{ route('login') }}'">
+                        <i class="fa-regular fa-user"></i>
+                    </button>
+                @else
+                    <button type="button" class="btn d-flex align-items-center position-relative"
+                        onclick="location.href='{{ Auth::user()->utype == 'ADM' ? route('admin.index') : (Auth::user()->utype == 'DIR' ? route('admin.index') : route('user.index')) }}'">
+                        <div class="profile-image d-flex justify-content-center me-2">
+                            @if (Auth::user()->profile_image)
+                                <img src="{{ asset('storage/' . Auth::user()->profile_image) }}" alt="Profile Image"
+                                    class="img-fluid rounded-circle"
+                                    style="width: 40px; height: 40px; object-fit: cover;">
+                            @else
+                                <img src="{{ asset('images/profile.jpg') }}" loading="lazy" alt="Default Profile Image"
+                                    class="img-fluid rounded-circle"
+                                    style="width: 40px; height: 40px; object-fit: cover;">
+                            @endif
+                        </div>
+                        <span class="d-none d-md-inline">{{ strtok(Auth::user()->name, ' ') }}</span>
+                    </button>
+                @endguest
             </div>
+        </div>
+
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse order-lg-1" id="navMenu">
+            <ul class="navbar-nav mx-auto text-center">
+                <li class="nav-item px-2 py-2">
+                    <a href="{{ route('home.index') }}" class="nav-link text-uppercase text-dark">Home</a>
+                </li>
+                <li class="nav-item px-2 py-2">
+                    <a href="{{ route('shop.index') }}" class="nav-link text-uppercase text-dark">Shop</a>
+                </li>
+                <li class="nav-item px-2 py-2">
+                    <a href="{{ route('user.facilities.index') }}" class="nav-link text-uppercase text-dark">Facilities</a>
+                </li>
+                <li class="nav-item px-2 py-2">
+                    <a href="{{ route('about.index') }}" class="nav-link text-uppercase text-dark">About Us</a>
+                </li>
+                <li class="nav-item px-2 py-2 border-0">
+                    <a href="{{ route('home.contact') }}" class="nav-link text-uppercase text-dark">Contact</a>
+                </li>
+            </ul>
         </div>
 
         <div class="search-popup js-hidden-content">
-            <form action="#" method="GET" class="search-field container">
-                <p class="text-uppercase text-secondary fw-medium mb-4">What are you looking for?</p>
-                <div class="position-relative">
-                    <input class="search-field__input search-popup__input w-100 fw-medium" id="search-input"
-                        type="text" name="search-keyword" placeholder="Search products" />
-                    <button class="search-popup__submit" type="submit">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </button>
-                </div>
-                <div class="search-popup__results">
-                    <ul id="box-content-search"></ul>
-                </div>
-            </form>
+            <div class="container">
+                <form action="#" method="GET" class="search-field" id="searchForm">
+                    <div class="position-relative">
+                        <input class="search-field__input search-popup__input w-100 fw-medium" id="search-input"
+                            type="text" name="search-keyword" placeholder="Search products or facilities..." autocomplete="off"/>
+                        <button class="search-popup__submit" type="submit">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                    <div class="search-popup__results">
+                        <ul id="box-content-search"></ul>
+                    </div>
+                </form>
+            </div>
         </div>
-    </nav>
+    </div>
+</nav>
+
+<style>
+    .search-popup {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        display: none;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        padding: 15px 0;
+        border-top: 1px solid #f0f0f0;
+    }
+    
+    .search-popup.active {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .search-popup .container {
+        padding: 0 15px;
+    }
+    
+    .search-popup__input {
+        padding: 12px 50px 12px 20px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        width: 100%;
+    }
+    
+    .search-popup__submit {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #666;
+        font-size: 18px;
+    }
+    
+    .search-popup__results {
+        max-height: 400px;
+        overflow-y: auto;
+        margin-top: 15px;
+        border-top: 1px solid #f0f0f0;
+        padding-top: 10px;
+    }
+    
+    .search-result-item {
+        padding: 12px 0;
+        border-bottom: 1px solid #f5f5f5;
+    }
+    
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+    
+    .search-result-item a {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: #333;
+        transition: all 0.2s ease;
+    }
+    
+    .search-result-item a:hover {
+        color: #0066cc;
+    }
+    
+    .search-result-item .image {
+        width: 40px;
+        height: 40px;
+        margin-right: 15px;
+        border-radius: 4px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    
+    .search-result-item .image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .search-result-item .info {
+        flex-grow: 1;
+    }
+    
+    .search-result-item .name {
+        font-size: 15px;
+        font-weight: 500;
+        margin-bottom: 3px;
+    }
+    
+    .search-result-item .type {
+        font-size: 13px;
+        color: #888;
+    }
+    
+    .no-results {
+        padding: 20px;
+        text-align: center;
+        color: #888;
+        font-size: 15px;
+    }
+</style>
+
+<script>
+    $(document).ready(function() {
+        $('#searchToggle').on('click', function(e) {
+            e.preventDefault();
+            $('.search-popup').toggleClass('active');
+            $('#searchIcon').toggleClass('d-none');
+            $('#closeIcon').toggleClass('d-none');
+            
+            if ($('.search-popup').hasClass('active')) {
+                $('#search-input').focus();
+            }
+        });
+
+        $("#search-input").on("keyup", function() {
+            var searchQuery = $(this).val().trim();
+            if (searchQuery.length > 2) {
+                performSearch(searchQuery);
+            } else {
+                $("#box-content-search").empty();
+            }
+        });
+
+        $("#searchForm").on("submit", function(e) {
+            e.preventDefault();
+            var searchQuery = $("#search-input").val().trim();
+            if (searchQuery.length > 0) {
+                performSearch(searchQuery);
+            }
+        });
+
+        function performSearch(query) {
+            $.ajax({
+                type: "GET",
+                url: "{{ route('home.search') }}",
+                data: { query: query },
+                dataType: 'json',
+                success: function(data) {
+                    console.log('Search response:', data);
+                    $("#box-content-search").empty();
+
+                    if (data.products.length > 0 || data.facilities.length > 0) {
+                        $.each(data.products, function(index, item) {
+                            var productUrl = "{{ route('shop.product.details', ['product_slug' => ':slug']) }}".replace(':slug', item.slug);
+                            var imageUrl = item.image ? "{{ asset('uploads/products/thumbnails') }}/" + item.image : "{{ asset('images/default-product.png') }}";
+                            var priceDisplay = item.price ? '₱' + parseFloat(item.price).toFixed(2) : '₱0.00';
+
+                            $("#box-content-search").append(
+                                `<li class="search-result-item">
+                                    <a href="${productUrl}">
+                                        <div class="image">
+                                            <img src="${imageUrl}" alt="${item.name}" loading="lazy">
+                                        </div>
+                                        <div class="info">
+                                            <div class="name">${item.name}</div>
+                                            <div class="type">Product • ${priceDisplay}</div>
+                                        </div>
+                                    </a>
+                                </li>`
+                            );
+                        });
+
+                        $.each(data.facilities, function(index, item) {
+                            var facilityUrl = "{{ route('user.facilities.details', ['slug' => ':slug']) }}".replace(':slug', item.slug || item.id);
+                            var imageUrl = item.image ? "{{ asset('uploads/facilities') }}/" + item.image : "{{ asset('images/default-facility.png') }}";
+
+                            $("#box-content-search").append(
+                                `<li class="search-result-item">
+                                    <a href="${facilityUrl}">
+                                        <div class="image">
+                                            <img src="${imageUrl}" alt="${item.name}" loading="lazy">
+                                        </div>
+                                        <div class="info">
+                                            <div class="name">${item.name}</div>
+                                            <div class="type">Facility</div>
+                                        </div>
+                                    </a>
+                                </li>`
+                            );
+                        });
+                    } else {
+                        $("#box-content-search").html('<li class="no-results">No results found for "' + query + '"</li>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Search error:', xhr.responseText);
+                    $("#box-content-search").html('<li class="no-results">Error loading results. Please try again.</li>');
+                }
+            });
+        }
+
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('.search-popup, #searchToggle').length) {
+                closeSearch();
+            }
+        });
+
+        $(document).on('keyup', function(e) {
+            if (e.key === "Escape") {
+                closeSearch();
+            }
+        });
+
+        function closeSearch() {
+            $('.search-popup').removeClass('active');
+            $('#searchIcon').removeClass('d-none');
+            $('#closeIcon').addClass('d-none');
+            $("#search-input").val('');
+            $("#box-content-search").empty();
+        }
+    });
+</script>
 
     <div id="goTop">
         <a href="#topbar" id="goTopbtn"><i class="fa-solid fa-chevron-up"></i></a>
@@ -293,68 +517,6 @@
 
 
 
-
-    <script>
-        $(document).ready(function() {
-            $("#search-input").on("keyup", function() {
-                var searchQuery = $(this).val().trim();
-
-                if (searchQuery.length > 2) {
-                    $.ajax({
-                        type: "GET",
-                        url: "{{ route('home.search') }}",
-                        data: {
-                            query: searchQuery
-                        },
-                        dataType: 'json',
-                        success: function(data) {
-                            $("#box-content-search").empty();
-
-                            if (data.length > 0) {
-                                $.each(data, function(index, item) {
-                                    var urlTemplate =
-                                        "{{ route('shop.product.details', ['product_slug' => 'product_slug_pls']) }}";
-                                    var productUrl = urlTemplate.replace(
-                                        'product_slug_pls', item.slug);
-
-                                    $("#box-content-search").append(
-                                        `<li>
-                                            <ul>
-                                                <li class="product-item-search gap14 mb-10">
-                                                    <div class="image no-bg">
-                                                        <img src="{{ asset('uploads/products/thumbnails/') }}/${item.image}" alt="${item.name}">
-                                                    </div>
-                                                    <div class="flex items-center justify-between gap20 flex-grow">
-                                                        <div class="name">
-                                                            <a href="${productUrl}" class="body-text">${item.name}</a>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                                <li class="mb-10">
-                                                    <div class="divider"></div>
-                                                </li>
-                                            </ul>
-                                        </li>`
-                                    );
-                                });
-                            } else {
-                                $("#box-content-search").html('<p>No results found</p>');
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('AJAX Error:', status, error);
-                        }
-                    });
-                } else {
-                    $("#box-content-search").empty();
-                }
-            });
-        });
-
-        $(function() {
-            $('[data-toggle="tooltip"]').tooltip();
-        });
-    </script>
 
 
 

@@ -19,8 +19,13 @@ class FacilitySeeder extends Seeder
             'description' => 'Comfortable dormitory rooms for male students',
             'rules_and_regulations' => '1. No smoking\n2. Quiet hours from 10 PM to 6 AM\n3. No pets allowed',
             'requirements' => 'Valid student ID, Medical certificate',
-            'image' => 'facilities/male-dormitory.jpg',
-            'images' => json_encode(['facilities/male-dormitory1.jpg', 'facilities/male-dormitory2.jpg']),
+            'image' => 'facilities_seeder/Male Dormitory/image (4).png',
+            'images' => json_encode([
+                'facilities_seeder/Male Dormitory/image (1).png',
+                'facilities_seeder/Male Dormitory/image (2).png',
+                'facilities_seeder/Male Dormitory/image (3).png',
+                'facilities_seeder/Male Dormitory/image (5).png'
+            ]),
             'archived' => false,
             'created_by' => 1,
             'created_at' => now(),
@@ -61,8 +66,14 @@ class FacilitySeeder extends Seeder
             'description' => 'Comfortable dormitory rooms for female students',
             'rules_and_regulations' => '1. No smoking\n2. Quiet hours from 10 PM to 6 AM\n3. No pets allowed',
             'requirements' => 'Valid student ID, Medical certificate',
-            'image' => 'facilities/female-dormitory.jpg',
-            'images' => json_encode(['facilities/female-dormitory.jpg', 'facilities/female-dormitory.jpg']),
+            'image' => 'facilities_seeder/Female Dormitory/main.png',
+            'images' => json_encode([
+                'facilities_seeder/Female Dormitory/image (1).png',
+                'facilities_seeder/Female Dormitory/image (2).png',
+                'facilities_seeder/Female Dormitory/image (3).png',
+                'facilities_seeder/Female Dormitory/image (4).png',
+                'facilities_seeder/Female Dormitory/image (5).png'
+            ]),
             'archived' => false,
             'created_by' => 1,
             'created_at' => now(),
@@ -103,8 +114,12 @@ class FacilitySeeder extends Seeder
             'description' => 'Large hall for events and gatherings',
             'rules_and_regulations' => '1. No food and drinks\n2. Clean up after use\n3. Maximum capacity must be observed',
             'requirements' => 'Reservation form, Security deposit',
-            'image' => 'facilities/rolle-hall.jpg',
-            'images' => json_encode(['facilities/rolle-hall.jpg', 'facilities/rolle-hall.jpg']),
+            'image' => 'facilities_seeder/Rolle Hall/image (2).png',
+            'images' => json_encode([
+                'facilities_seeder/Rolle Hall/image (1).png',
+                'facilities_seeder/Rolle Hall/image (3).png',
+                'facilities_seeder/Rolle Hall/image (4).png'
+            ]),
             'archived' => false,
             'created_by' => 1,
             'created_at' => now(),
@@ -154,8 +169,13 @@ class FacilitySeeder extends Seeder
             'description' => 'Modern event space for various occasions',
             'rules_and_regulations' => '1. No food and drinks\n2. Clean up after use\n3. Maximum capacity must be observed',
             'requirements' => 'Reservation form, Security deposit',
-            'image' => 'facilities/rolle-hall.jpg',
-            'images' => json_encode(['facilities/rolle-hall.jpg', 'facilities/rolle-hall.jpg']),
+            'image' => 'facilities_seeder/Icon/image (5).png',
+            'images' => json_encode([
+                'facilities_seeder/Icon/image (1).png',
+                'facilities_seeder/Icon/image (2).png',
+                'facilities_seeder/Icon/image (3).png',
+                'facilities_seeder/Icon/image (4).png'
+            ]),
             'archived' => false,
             'created_by' => 1,
             'created_at' => now(),
@@ -205,8 +225,13 @@ class FacilitySeeder extends Seeder
             'description' => 'International student housing with individual rooms and whole facility rental',
             'rules_and_regulations' => '1. International student ID required\n2. Follow house rules\n3. Respect cultural differences',
             'requirements' => 'International student ID, Visa documents',
-            'image' => 'facilities/international-house.jpg',
-            'images' => json_encode(['facilities/international-house.jpg', 'facilities/international-house.jpg']),
+            'image' => 'facilities_seeder/International House II/image (5).png',
+            'images' => json_encode([
+                'facilities_seeder/International House II/image (1).png',
+                'facilities_seeder/International House II/image (2).png',
+                'facilities_seeder/International House II/image (3).png',
+                'facilities_seeder/International House II/image (4).png'
+            ]),
             'archived' => false,
             'created_by' => 1,
             'created_at' => now(),
@@ -260,8 +285,11 @@ class FacilitySeeder extends Seeder
             'description' => 'Olympic-sized swimming pool with whole facility rental options',
             'rules_and_regulations' => '1. Shower before entering\n2. No diving in shallow areas\n3. Proper swimwear required',
             'requirements' => 'Swimming ID, Health certificate',
-            'image' => 'facilities/swimming-pool.jpg',
-            'images' => json_encode(['facilities/swimming-pool.jpg', 'facilities/swimming-pool.jpg']),
+            'image' => 'facilities_seeder/Swimming Pool/image (2).png',
+            'images' => json_encode([
+                'facilities_seeder/Swimming Pool/image (1).png',
+                'facilities_seeder/Swimming Pool/image (3).png'
+            ]),
             'archived' => false,
             'created_by' => 1,
             'created_at' => now(),

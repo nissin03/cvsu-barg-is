@@ -90,10 +90,63 @@ class HomeController extends Controller
         return redirect()->back()->with('success', 'Your message has been sent successfully.');
     }
 
-    public function search(Request  $request)
+    public function search(Request $request)
     {
         $query = $request->input('query');
-        $results = Product::where('name', 'LIKE', "%{$query}%")->get()->take(8);
-        return response()->json($results);
+        
+        if (empty($query)) {
+            return response()->json([
+                'products' => [],
+                'facilities' => []
+            ]);
+        }
+        
+        $products = Product::query()
+            ->with(['attributeValues'])
+            ->where(function($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                ->orWhere('short_description', 'LIKE', "%{$query}%");
+            })
+            ->where('archived', false)
+            ->take(5)
+            ->get()
+            ->map(function($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'image' => $product->image,
+                    'short_description' => $product->short_description,
+                    'price' => $product->attributeValues->isNotEmpty() 
+                        ? $product->attributeValues->first()->price 
+                        : $product->price
+                ];
+            });
+
+        $facilities = Facility::query()
+            ->where(function($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                ->orWhere('description', 'LIKE', "%{$query}%");
+            })
+            ->where('archived', false)
+            ->take(5)
+            ->get()
+            ->map(function($facility) {
+                return [
+                    'id' => $facility->id,
+                    'name' => $facility->name,
+                    'slug' => $facility->slug,
+                    'image' => $facility->image,
+                    'description' => $facility->description
+                ];
+            });
+
+        return response()->json([
+            'products' => $products,
+            'facilities' => $facilities
+        ]);
     }
+
+
+
 }
