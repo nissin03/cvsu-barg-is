@@ -60,7 +60,6 @@ class FacilityController extends Controller
 
     public function store(Request $request)
     {
-        // dd($request->all());
         $facilityAttributes = json_decode($request->facility_attributes_json, true) ?? [];
         $prices = json_decode($request->prices_json, true) ?? [];
         $rules = [
