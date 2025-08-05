@@ -2449,17 +2449,7 @@ class AdminController extends Controller
     }
 
 
-    public function users()
-    {
-        $users = User::all();
-        return view('admin.users', compact('users'));
-    }
-    public function users_destroy($id)
-    {
-        $user = User::findOrFail($id);
-        $user->delete();
-        return redirect()->route('admin.users')->with('success', 'User deleted successfully');
-    }
+
 
     // public function filterOrders(Request $request)
     // {
@@ -2537,12 +2527,11 @@ class AdminController extends Controller
     public function users_update(Request $request, $id)
     {
         $request->validate([
-            'phone_number' => 'nullable|string|max:15',
-            'year_level' => 'nullable|string|max:10',
-            'department' => 'nullable|string|max:50',
-            'course' => 'nullable|string|max:50',
+            'phone_number' => 'nullable',
+            'year_level' => 'nullable',
+            'department' => 'nullable',
+            'course' => 'nullable',
         ]);
-
         $user = User::findOrFail($id);
         $user->phone_number = $request->phone_number;
         $user->year_level = $request->year_level;
@@ -2555,39 +2544,98 @@ class AdminController extends Controller
 
     public function users_add()
     {
+        return view("admin.user-add");
+    }
 
-        $users = User::all();
+    public function users(Request $request)
+    {
+        $query = User::query();
 
-        return view("admin.user-add", compact('users'));
+        if ($request->filled('year_level')) {
+            $query->where('year_level', $request->year_level);
+        }
+
+        if ($request->filled('department')) {
+            $query->where('department', $request->department);
+        }
+
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
+        $users = $query->paginate(10);
+        if ($request->ajax()) {
+            return response()->json([
+                'users' => $users->items(),
+                'links' => (string) $users->links('pagination::bootstrap-5'),
+            ]);
+        }
+
+        return view('admin.users', compact('users'));
     }
 
 
     public function users_store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'nullable',
-            'role' => 'required',
-            'phone_number' => 'nullable',
-            'year_level' => 'nullable',
-            'department' => 'nullable',
-            'course' => 'nullable',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
+        $isAdmin = $request->form_type === 'admin';
+        $validationRules = [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email|ends_with:@cvsu.edu.ph',
+            'phone_number' => 'nullable|string|regex:/^9\d{9}$/',
+        ];
+        if ($isAdmin) {
+            $validationRules['form_type'] = 'required|in:admin';
+        } else {
+            $validationRules['role'] = 'required|in:student,employee,non-employee';
+            $validationRules['year_level'] = 'nullable|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
+            $validationRules['department'] = 'nullable|in:CEIT,GSOLC,CAFENR,CAS,CCJ,CEMDS,CED,CON,CVMBS';
+            $validationRules['course'] = 'nullable|string|max:255';
+            $validationRules['form_type'] = 'nullable|in:user';
+            if ($request->role === 'student') {
+                $validationRules['year_level'] = 'required|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
+                $validationRules['department'] = 'required|in:CEIT,GSOLC,CAFENR,CAS,CCJ,CEMDS,CED,CON,CVMBS';
+                $validationRules['course'] = 'required|string|max:255';
+            }
+        }
+        $customMessages = [
+            'email.ends_with' => 'The email must be a @cvsu.edu.ph email address.',
+            'phone_number.regex' => 'Phone number must start with 9 and be exactly 10 digits.',
+            'year_level.required' => 'Year level is required for students.',
+            'department.required' => 'Department is required for students.',
+            'course.required' => 'Course is required for students.',
+        ];
+        $validated = $request->validate($validationRules, $customMessages);
+        if ($isAdmin) {
+            $validated['password'] = Hash::make('cvsu-barg-password');
+            $validated['utype'] = 'ADM';
+            $validated['role'] = 'employee';
+            $validated['password_set'] = true;
+        } else {
+            $validated['password'] = Hash::make($request->password ?? 'defaultpassword');
+            $validated['utype'] = 'USR';
+            $validated['password_set'] = false;
+        }
+        unset($validated['form_type']);
 
-        $user = new User();
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->password = Hash::make('defaultpassword');
-        $user->role = $request->role;
-        $user->phone_number = $request->phone_number;
-        $user->year_level = $request->year_level;
-        $user->department = $request->department;
-        $user->course = $request->course;
+        if (!$isAdmin && in_array($validated['role'], ['employee', 'non-employee'])) {
+            $validated['year_level'] = null;
+            $validated['course'] = null;
+        }
+        $validated['email_verified_at'] = now();
 
-        $user->save();
-        return redirect()->route('admin.users')->with('status', 'User has been added successfully!');
+        $validated['sex'] = $validated['sex'] ?? 'male';
+        $validated['isDefault'] = false;
+        try {
+            $user = User::create($validated);
+            $message = $isAdmin
+                ? 'Admin has been added successfully!'
+                : 'User has been added successfully!';
+
+            return redirect()->route('admin.users')->with('status', $message);
+        } catch (\Exception $e) {
+            \Log::error('User creation failed: ' . $e->getMessage());
+            return back()->withInput()->withErrors(['error' => 'Failed to create user. Please try again.']);
+        }
     }
 
     public function searchProducts(Request $request)
