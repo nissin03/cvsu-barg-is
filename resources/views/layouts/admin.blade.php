@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     @vite('resources/js/app.js')
-  
+
     <style>
         .modal-backdrop {
             position: fixed;
@@ -472,7 +472,7 @@
                                                 </a>
                                             </li>
                                         </ul>
-                                        
+
                                     </li>
 
 
@@ -501,9 +501,7 @@
                                 <div class="button-show-hide">
                                     <i class="icon-menu-left"></i>
                                 </div>
-
-
-                                <form class="form-search flex-grow" id="searchForm"
+                                {{-- <form class="form-search flex-grow" id="searchForm"
                                     action="{{ route('admin.searchproduct') }}" method="GET">
                                     <fieldset class="name">
                                         <input type="text" placeholder="Search here..." class="show-search"
@@ -512,9 +510,7 @@
                                     <div class="button-submit">
                                         <button type="submit"><i class="icon-search"></i></button>
                                     </div>
-                                </form>
-
-
+                                </form> --}}
                             </div>
                             <div class="header-grid">
                                 <div class="popup-wrap message type-header">
@@ -532,7 +528,8 @@
                                             aria-labelledby="dropdownMenuButton2">
                                             <div class="dropdown-header">
                                                 <div class="notification-actions">
-                                                    <button type="button" id="markAllReadBtn" class="mark-read">Mark all as read</button>
+                                                    <button type="button" id="markAllReadBtn" class="mark-read">Mark
+                                                        all as read</button>
                                                     <button type="button" class="remove-all">Remove all</button>
                                                 </div>
                                             </div>
@@ -709,7 +706,7 @@
 
     @stack('scripts')
     <script>
-           window.userId = @json(Auth::id());
+        window.userId = @json(Auth::id());
     </script>
 </body>
 

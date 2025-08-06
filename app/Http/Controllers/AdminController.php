@@ -894,12 +894,22 @@ class AdminController extends Controller
     {
         $status = $request->input('status');
         $timeSlot = $request->input('time_slot');
+        $search = $request->input('search');
         $timeSlots = TimeSlotHelper::time();
 
-        $query = Order::query();
+        $query = Order::with('user');
 
         $query->when($status, fn($q) => $q->where('status', $status))
-            ->when($timeSlot, fn($q) => $q->where('time_slot', $timeSlot));
+            ->when($timeSlot, fn($q) => $q->where('time_slot', $timeSlot))
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($subQuery) use ($search) {
+                    $subQuery->where('id', $search)
+                        ->orWhereHas('user', function ($userQuery) use ($search) {
+                            $userQuery->where('name', 'LIKE', "%{$search}%")
+                                ->orWhere('email', 'LIKE', "%{$search}%");
+                        });
+                });
+            });
 
         $orders = $query
             ->orderByRaw("FIELD(status, 'reserved', 'canceled', 'pickedup')")
@@ -2582,6 +2592,7 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|ends_with:@cvsu.edu.ph',
             'phone_number' => 'nullable|string|regex:/^9\d{9}$/',
+            'sex' => 'required|in:male,female',
         ];
         if ($isAdmin) {
             $validationRules['form_type'] = 'required|in:admin';

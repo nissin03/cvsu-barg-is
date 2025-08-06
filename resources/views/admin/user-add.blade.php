@@ -177,6 +177,26 @@
                         <span class="alert alert-danger text-center">{{ $message }}</span>
                     @enderror
 
+                    <fieldset class="sex">
+                        <div class="body-title mb-10">Sex <span class="tf-color-1">*</span></div>
+                        <div class="d-flex gap-20 align-items-center">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="sex" id="sexMale"
+                                    value="male" {{ old('sex') == 'male' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="sexMale">Male</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="sex" id="sexFemale"
+                                    value="female" {{ old('sex') == 'female' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="sexFemale">Female</label>
+                            </div>
+                        </div>
+                        @error('sex')
+                            <div class="text-danger mt-1">{{ $message }}</div>
+                        @enderror
+                    </fieldset>
+
+
                     <fieldset class="email">
                         <div class="body-title mb-10">Email <span class="tf-color-1">*</span></div>
                         <input class="mb-10" type="email" placeholder="Enter admin email" name="email" required>
@@ -185,7 +205,6 @@
                         <span class="alert alert-danger text-center">{{ $message }}</span>
                     @enderror
 
-                    <!-- Password Display (read-only) -->
                     <fieldset class="password">
                         <div class="body-title mb-10">Default Password</div>
                         <div class="password-display-wrapper">
