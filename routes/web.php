@@ -260,6 +260,8 @@ Route::middleware(['auth', AuthAdmin::class])
      Route::get('/admin/facilities-sales', [ReportController::class, 'listSalesFacilities'])->name('admin.facilties.stataments');
      Route::get('admin/payment-details/{paymentId}', [ReportController::class, 'showPaymentDetails'])->name('admin.sales-report-details');
 
+     Route::get('facility-statement', [ReportController::class, 'facilitiesStatement'])->name('admin.facility-statement');
+
     //  PDF
     Route::get('/admin/report-statements/download', [PdfController::class, 'downloadBillingStatements'])->name('admin.report-statements.download');
     Route::post('/admin/downloadPdf', [PdfController::class, 'downloadPdf'])->name('admin.downloadPdf');
@@ -268,7 +270,7 @@ Route::middleware(['auth', AuthAdmin::class])
     Route::get('/admin/report-product/download', [PdfController::class, 'downloadProduct'])->name('admin.report-product.download');
         Route::post('/admin/sales-report/download', [PdfController::class, 'downloadInputSales'])->name('admin.download-input-sales');
     Route::post('/admin/user-report/download', [PdfController::class, 'downloadInputUsers'])->name('admin.download-input-users');
-
+    Route::get('/admin/facility-statement/download', [PdfController::class, 'facilityStatement'])->name('admin.facility-statement.download');
 
     // Route::get('/user-reports', [ReportController::class, 'showUserReports'])->name('admin.user-reports');
     // Route::post('/user-reports/generate', [ReportController::class, 'generateUserReports'])->name('admin.user-reports.generate');

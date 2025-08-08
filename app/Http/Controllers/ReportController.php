@@ -12,7 +12,7 @@ use App\Models\Order;
 use App\Models\User;
 use App\Models\Product;
 use Dompdf\Options;
-
+use App\Models\Payment;
 
 class ReportController extends Controller
 {
@@ -856,12 +856,37 @@ public function generateInputSales(Request $request)
         ));
     }
 
-    
 
+    public function facilitiesStatement(Request $request)
+    {
+        $query = Payment::with(['user', 'availability.facility', 'paymentDetails'])
+            ->orderBy('created_at', 'desc');
 
+        // Apply filters if provided
+        if ($request->has('facility_id') && $request->facility_id) {
+            $query->whereHas('availability', function($q) use ($request) {
+                $q->where('facility_id', $request->facility_id);
+            });
+        }
 
+        if ($request->has('date_from') && $request->date_from) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
 
+        if ($request->has('date_to') && $request->date_to) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
 
+        if ($request->has('status') && $request->status) {
+            $query->where('status', $request->status);
+        }
 
+        $payments = $query->get();
+
+        return view('admin.reports.facility_statement', [
+            'payments' => $payments,
+            'filters' => $request->all()
+        ]);
+    }
 
 }
