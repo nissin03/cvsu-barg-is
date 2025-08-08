@@ -156,53 +156,7 @@ class FacilitySeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // Individual Facility Type - Female Dormitory Tertiary
-        $femaleDormitoryTertiary = DB::table('facilities')->insertGetId([
-            'name' => 'Female Dormitory Tertiary',
-            'facility_type' => 'individual',
-            'slug' => Str::slug('Female Dormitory Tertiary'),
-            'description' => 'Comfortable dormitory rooms for female tertiary students',
-            'rules_and_regulations' => '1. No smoking\n2. Quiet hours from 10 PM to 6 AM\n3. No pets allowed',
-            'requirements' => 'Valid student ID, Medical certificate',
-            'image' => 'facilities/Female_Dormitory (6).png',
-            'images' => implode(',', [
-                'facilities/thumbnails/Female_Dormitory (1).png',
-                'facilities/thumbnails/Female_Dormitory (2).png',
-                'facilities/thumbnails/Female_Dormitory (3).png',
-                'facilities/thumbnails/Female_Dormitory (4).png',
-                'facilities/thumbnails/Female_Dormitory (5).png'
-            ]),
-            'archived' => false,
-            'created_by' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
 
-        // Female Dormitory Tertiary - 10 Rooms
-        for ($i = 1; $i <= 10; $i++) {
-            DB::table('facility_attributes')->insert([
-                'facility_id' => $femaleDormitoryTertiary,
-                'room_name' => "Room $i",
-                'capacity' => 8,
-                'sex_restriction' => 'female',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        // Female Dormitory Tertiary Prices
-        DB::table('prices')->insert([
-            'facility_id' => $femaleDormitoryTertiary,
-            'name' => 'Individual Price',
-            'value' => 500.00,
-            'price_type' => 'individual',
-            'is_based_on_days' => false,
-            'is_there_a_quantity' => false,
-            'date_from' => Carbon::now(),
-            'date_to' => Carbon::now()->addMonths(6),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
 
         // Whole Place Facility Type - Rolle Hall
         $rolleHall = DB::table('facilities')->insertGetId([

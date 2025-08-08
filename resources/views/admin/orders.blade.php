@@ -206,6 +206,17 @@
 
             <div class="wg-box">
                 <div class="flex items-center justify-between gap10 flex-wrap">
+                    <div class="wg-filter flex-grow">
+                        <form class="form-search" onsubmit="return false;">
+                            <fieldset class="name">
+                                <input type="text" id="order-search" placeholder="Search here..." name="search"
+                                    aria-required="true" value="{{ request('search') }}">
+                            </fieldset>
+                            <div class="button-submit">
+                                <button type="button" style="display:none;"> <i class="icon-search"></i></button>
+                            </div>
+                        </form>
+                    </div>
                     <div class="filter-dropdowns flex items-center gap10">
                         <!-- Time Slot Dropdown -->
                         <select name="time_slot" id="time_slot" class="w-auto">
@@ -216,7 +227,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        
+
 
                         <!-- Status Dropdown -->
                         <select name="status" id="status" class="w-auto">
@@ -260,74 +271,49 @@
     </div>
 @endsection
 @push('scripts')
-<script>
-    $(document).ready(function () {
-        let lastScrollPosition = 0;
-        const tooltip = $('<div class="custom-tooltip"></div>').appendTo('body');
+    <script>
+        $(document).ready(function() {
+            let lastScrollPosition = 0;
+            const tooltip = $('<div class="custom-tooltip"></div>').appendTo('body');
 
-        function initTooltips() {
-            $('.reservation-date').hover(function () {
-                const timeSlot = $(this).data('time-slot');
-                tooltip.text(timeSlot).fadeIn('fast');
-            }, function () {
-                tooltip.hide();
-            }).mousemove(function (e) {
-                tooltip.css({
-                    top: e.pageY + 10 + 'px',
-                    left: e.pageX + 10 + 'px'
+            function initTooltips() {
+                $('.reservation-date').hover(function() {
+                    const timeSlot = $(this).data('time-slot');
+                    tooltip.text(timeSlot).fadeIn('fast');
+                }, function() {
+                    tooltip.hide();
+                }).mousemove(function(e) {
+                    tooltip.css({
+                        top: e.pageY + 10 + 'px',
+                        left: e.pageX + 10 + 'px'
+                    });
                 });
-            });
-        }
+            }
 
-        function performFilter() {
-            lastScrollPosition = $(window).scrollTop();
-
-            const status = $('#status').val();
-            const timeSlot = $('#time_slot').val();
-
-            $('#loading-indicator').show();
-
-            let url = '{{ route('admin.orders') }}';
-            const params = [];
-
-            if (status) params.push('status=' + encodeURIComponent(status));
-            if (timeSlot) params.push('time_slot=' + encodeURIComponent(timeSlot));
-            if (params.length > 0) url += '?' + params.join('&');
-
-            $.ajax({
-                url: url,
-                type: 'GET',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                success: function (response) {
-                    $('#js-orders-partial-target').html(response.orders);
-                    $('#js-orders-partial-target-pagination').html(response.pagination);
-                    $('#loading-indicator').hide();
-                    window.history.pushState({}, '', url);
-                    initTooltips();
-                    initPaginationEvents();
-                    $(window).scrollTop(lastScrollPosition);
-                },
-                error: function (xhr, status, error) {
-                    console.error('Error:', error);
-                    $('#loading-indicator').hide();
-                    alert('An error occurred while filtering orders. Please try again.');
-                }
-            });
-        }
-
-        function initPaginationEvents() {
-            $('.pagination a').off('click').on('click', function (e) {
-                e.preventDefault();
+            function performFilter() {
                 lastScrollPosition = $(window).scrollTop();
 
-                const url = $(this).attr('href');
+                const status = $('#status').val();
+                const timeSlot = $('#time_slot').val();
+                const searchTerm = $('#order-search').val();
+
                 $('#loading-indicator').show();
 
+                let url = '{{ route('admin.orders') }}';
+                const params = [];
+
+                if (status) params.push('status=' + encodeURIComponent(status));
+                if (timeSlot) params.push('time_slot=' + encodeURIComponent(timeSlot));
+                if (searchTerm) params.push('search=' + encodeURIComponent(searchTerm));
+
+                if (params.length > 0) url += '?' + params.join('&');
                 $.ajax({
                     url: url,
                     type: 'GET',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    success: function (response) {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
                         $('#js-orders-partial-target').html(response.orders);
                         $('#js-orders-partial-target-pagination').html(response.pagination);
                         $('#loading-indicator').hide();
@@ -336,20 +322,65 @@
                         initPaginationEvents();
                         $(window).scrollTop(lastScrollPosition);
                     },
-                    error: function (xhr, status, error) {
+                    error: function(xhr, status, error) {
                         console.error('Error:', error);
                         $('#loading-indicator').hide();
+                        alert('An error occurred while filtering orders. Please try again.');
                     }
                 });
+            }
+
+            function debounce(func, wait) {
+                let timeout;
+                return function() {
+                    const context = this;
+                    const args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                        func.apply(context, args);
+                    }, wait);
+                };
+            }
+
+            $('#order-search').on('keyup', debounce(performFilter, 500));
+
+            function initPaginationEvents() {
+                $('.pagination a').off('click').on('click', function(e) {
+                    e.preventDefault();
+                    lastScrollPosition = $(window).scrollTop();
+
+                    const url = $(this).attr('href');
+                    $('#loading-indicator').show();
+
+                    $.ajax({
+                        url: url,
+                        type: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        success: function(response) {
+                            $('#js-orders-partial-target').html(response.orders);
+                            $('#js-orders-partial-target-pagination').html(response.pagination);
+                            $('#loading-indicator').hide();
+                            window.history.pushState({}, '', url);
+                            initTooltips();
+                            initPaginationEvents();
+                            $(window).scrollTop(lastScrollPosition);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                            $('#loading-indicator').hide();
+                        }
+                    });
+                });
+            }
+
+            $('#status, #time_slot').on('change', function() {
+                performFilter();
             });
-        }
 
-        $('#status, #time_slot').on('change', function () {
-            performFilter();
+            initTooltips();
+            initPaginationEvents();
         });
-
-        initTooltips();
-        initPaginationEvents();
-    });
-</script>
+    </script>
 @endpush

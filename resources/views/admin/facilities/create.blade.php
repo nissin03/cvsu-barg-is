@@ -128,8 +128,8 @@
                 </ul>
             </div>
             <!-- form-add-rental -->
-            <form action="{{ route('admin.facilities.store') }}" class="tf-section-2 form-add-rental" method="POST"
-                enctype="multipart/form-data" novalidate>
+            <form action="{{ route('admin.facilities.store') }}" id="facilityForm" class="tf-section-2 form-add-rental"
+                method="POST" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" id="facilityAttributesJson" name="facility_attributes_json">
                 <input type="hidden" id="pricesJson" name="prices_json">
@@ -439,6 +439,10 @@
                         <button id="facilitySubmitBtn" class="tf-button w-full" type="submit">
                             <span class="btn-text">Create Facility</span>
                         </button>
+                        {{-- <button type="button" id="resetFormBtn" class="tf-button w-full"
+                            style="background-color: #6c757d; margin-top: 10px;">
+                            <span class="btn-text">Reset Form</span>
+                        </button> --}}
                     </div>
                 </div>
 
@@ -588,6 +592,137 @@
         let priceEditIndex = -1;
 
         $(document).ready(function() {
+            // Submit button handler with proper reset functionality
+            $('#facilityForm').on('submit', function(e) {
+                e.preventDefault();
+
+                // Disable submit button and show submitting state
+                const submitBtn = $('#facilitySubmitBtn');
+                const originalText = submitBtn.find('.btn-text').text();
+
+                submitBtn.prop('disabled', true)
+                    .find('.btn-text').text('Submitting...');
+
+                // Client-side validation
+                const facilityType = $('#rentalType').val();
+                let hasValidationError = false;
+                let errorMessage = '';
+
+                // Basic required field validation
+                if (!$('input[name="name"]').val().trim()) {
+                    hasValidationError = true;
+                    errorMessage = 'Facility name is required.';
+                } else if (!facilityType) {
+                    hasValidationError = true;
+                    errorMessage = 'Facility type is required.';
+                } else if (!$('textarea[name="description"]').val().trim()) {
+                    hasValidationError = true;
+                    errorMessage = 'Description is required.';
+                } else if (!$('textarea[name="rules_and_regulations"]').val().trim()) {
+                    hasValidationError = true;
+                    errorMessage = 'Rules and regulations are required.';
+                } else if (!$('input[name="requirements"]')[0].files.length) {
+                    hasValidationError = true;
+                    errorMessage = 'Requirements file is required.';
+                } else if (!$('input[name="image"]')[0].files.length) {
+                    hasValidationError = true;
+                    errorMessage = 'Main image is required.';
+                }
+
+                // Facility type specific validation
+                if (!hasValidationError) {
+                    if (facilityType === 'both') {
+                        const hasRooms = rooms && rooms.length > 0;
+                        const hasWholeCapacity = $('#roomCapacityWhole').val() && $('#roomCapacityWhole')
+                            .val().trim() !== '';
+
+                        if (!hasRooms && !hasWholeCapacity) {
+                            hasValidationError = true;
+                            errorMessage =
+                                'For "Both" facility type, you must provide either individual rooms OR whole capacity.';
+                        } else if (hasRooms) {
+                            for (let room of rooms) {
+                                if (!room.room_name || !room.capacity || !room.sex_restriction) {
+                                    hasValidationError = true;
+                                    errorMessage =
+                                        'All rooms must have a name, capacity, and sex restriction.';
+                                    break;
+                                }
+                            }
+                        }
+                    } else if (facilityType === 'individual') {
+                        if (!rooms || rooms.length === 0) {
+                            hasValidationError = true;
+                            errorMessage =
+                                'For "Individual" facility type, you must add at least one room.';
+                        } else {
+                            for (let room of rooms) {
+                                if (!room.room_name || !room.capacity || !room.sex_restriction) {
+                                    hasValidationError = true;
+                                    errorMessage =
+                                        'All rooms must have a name, capacity, and sex restriction.';
+                                    break;
+                                }
+                            }
+                        }
+                    } else if (facilityType === 'whole_place') {
+                        const wholeCapacity = $('#roomCapacityWhole').val();
+                        if (!wholeCapacity || wholeCapacity.trim() === '') {
+                            hasValidationError = true;
+                            errorMessage =
+                                'For "Whole Place" facility type, you must provide a whole capacity.';
+                        }
+                    }
+                }
+
+                // Price validation
+                if (!hasValidationError && prices.length === 0) {
+                    hasValidationError = true;
+                    errorMessage = 'At least one price must be added.';
+                }
+
+                // If validation fails, reset button and show error
+                if (hasValidationError) {
+                    submitBtn.prop('disabled', false)
+                        .find('.btn-text').text(originalText);
+
+                    alert(errorMessage);
+                    return false;
+                }
+
+                // Set hidden form data
+                if (facilityType === 'both') {
+                    const hasRooms = rooms && rooms.length > 0;
+                    if (hasRooms) {
+                        $('#facilityAttributesJson').val(JSON.stringify(rooms));
+                    } else {
+                        $('#facilityAttributesJson').val(JSON.stringify([]));
+                    }
+                } else if (facilityType === 'individual') {
+                    $('#facilityAttributesJson').val(JSON.stringify(rooms));
+                } else if (facilityType === 'whole_place') {
+                    $('#facilityAttributesJson').val(JSON.stringify([]));
+                }
+
+                $('#pricesJson').val(JSON.stringify(prices));
+
+                // Submit the form
+                this.submit();
+            });
+
+            // Reset modals when closed
+            $('#addMultipleRoomsModal').on('hidden.bs.modal', function() {
+                $('.room-name, .room-capacity').val('');
+                $('.room-sex-restriction').val('');
+            });
+
+            $('#addPrice').on('hidden.bs.modal', function() {
+                priceEditMode = false;
+                priceEditIndex = -1;
+                resetPriceModal();
+            });
+
+
             $(document).on('change', '#checkAllRooms input[type="checkbox"]', function() {
                 const isChecked = $(this).is(':checked');
                 $('.edit-selected-btn, .delete-selected-btn').toggle(isChecked);
@@ -1013,11 +1148,13 @@
                 $('#addPrice').modal('show');
             });
 
-            // Always reset modal to single empty form and add mode on close
-            $('#addPrice').on('hidden.bs.modal', function() {
-                priceEditMode = false;
-                priceEditIndex = -1;
-                resetPriceModal();
+            // Delete price
+            $(document).on('click', '.delete-price', function() {
+                if (confirm('Are you sure you want to delete this price?')) {
+                    const index = $(this).data('index');
+                    prices.splice(index, 1);
+                    renderPriceList();
+                }
             });
 
             function resetPriceModal() {
@@ -1135,72 +1272,6 @@
                     $('#dateFieldsContainer').hide();
                     $(".price-type").val('');
                 }
-            });
-
-            // Form submission handler
-            $('.form-add-rental').on('submit', function(e) {
-                e.preventDefault();
-                const facilityType = $('#rentalType').val();
-
-                if (facilityType === 'both') {
-                    const hasRooms = rooms && rooms.length > 0;
-                    const hasWholeCapacity = $('#roomCapacityWhole').val() && $('#roomCapacityWhole').val()
-                        .trim() !== '';
-
-                    if (!hasRooms && !hasWholeCapacity) {
-                        alert(
-                            'For "Both" facility type, you must provide either individual rooms OR whole capacity.'
-                        );
-                        return false;
-                    }
-
-                    if (hasRooms) {
-                        for (let room of rooms) {
-                            if (!room.room_name || !room.capacity || !room.sex_restriction) {
-                                alert('All rooms must have a name, capacity, and sex restriction.');
-                                return false;
-                            }
-                        }
-                    }
-                }
-
-                if (facilityType === 'individual') {
-                    if (!rooms || rooms.length === 0) {
-                        alert('For "Individual" facility type, you must add at least one room.');
-                        return false;
-                    }
-
-                    for (let room of rooms) {
-                        if (!room.room_name || !room.capacity || !room.sex_restriction) {
-                            alert('All rooms must have a name, capacity, and sex restriction.');
-                            return false;
-                        }
-                    }
-                }
-
-                if (facilityType === 'whole_place') {
-                    const wholeCapacity = $('#roomCapacityWhole').val();
-                    if (!wholeCapacity || wholeCapacity.trim() === '') {
-                        alert('For "Whole Place" facility type, you must provide a whole capacity.');
-                        return false;
-                    }
-                }
-
-                if (facilityType === 'both') {
-                    const hasRooms = rooms && rooms.length > 0;
-                    if (hasRooms) {
-                        $('#facilityAttributesJson').val(JSON.stringify(rooms));
-                    } else {
-                        $('#facilityAttributesJson').val(JSON.stringify([]));
-                    }
-                } else if (facilityType === 'individual') {
-                    $('#facilityAttributesJson').val(JSON.stringify(rooms));
-                } else if (facilityType === 'whole_place') {
-                    $('#facilityAttributesJson').val(JSON.stringify([]));
-                }
-
-                $('#pricesJson').val(JSON.stringify(prices));
-                this.submit();
             });
         });
     </script>
