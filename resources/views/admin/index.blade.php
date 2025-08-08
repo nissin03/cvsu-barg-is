@@ -4,95 +4,123 @@
         <div class="main-content-inner">
             <div class="container mt-6">
 
-                <div class="container my-4">
-                    <div class="row row-cols-1 row-cols-md-3 g-4">
-
-                        <!-- Total Payment Amount -->
-                        <div class="col">
-                            <div class="card p-4 text-center shadow-sm border-0 ">
-                                <div class="image ic-bg me-3">
-                                    <i class="icon-shopping-bag"></i>
-                                </div>
-                                <div>
-                                    <div class="body-text mb-2">Total Reservation</div>
-                                    <h4>{{ $dashboardData[0]->Total }}</h4>
-
-                                </div>
-                            </div>
+                <div class="container my-5">
+    <div class="row g-4">
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="stats-card card border-0 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="icon-wrapper">
+                            <i class="fas fa-shopping-bag text-blue-500"></i>
                         </div>
-
-                        <!-- Total Amount of Reserve Items -->
-                        <div class="col">
-                            <div class="card p-4 text-center shadow-sm border-0 ">
-                                <div class="image ic-bg me-3">
-                                     ₱
-                                </div>
-                                <div>
-                                    <div class="body-text mb-2">Total Amount of Reserve Items</div>
-                                     <h4>₱{{ number_format($dashboardData[0]->TotalReservedAmount, 2) }}</h4>
-                                </div>
-                            </div>
+                        <div class="trend-indicator positive">
+                            <i class="fas fa-trending-up"></i>
                         </div>
-
-                        <!-- Total Claimed Items -->
-                        <div class="col">
-                            <div class="card p-4 text-center shadow-sm border-0 ">
-                                <div class="image ic-bg me-3">
-                                    <i class="icon-shopping-bag"></i>
-                                </div>
-                                <div>
-                                    <div class="body-text mb-2">Total Claimed Items</div>
-                                    <h4>{{ $dashboardData[0]->TotalPickedUp }}</h4>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Total Amount of Claimed Items -->
-                        <div class="col">
-                            <div class="card p-4 text-center shadow-sm border-0 ">
-                                <div class="image ic-bg me-3">
-                                     ₱
-                                </div>
-                                <div>
-                                    <div class="body-text mb-2">Total Amount of Claimed Items</div>
-                                  <h4>₱{{ number_format($dashboardData[0]->TotalPickedUpAmount, 2) }}</h4>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Total Canceled Orders -->
-                        <div class="col">
-                            <div class="card p-4 text-center shadow-sm border-0 ">
-                                <div class="image ic-bg me-3">
-                                    <i class="icon-shopping-bag"></i>
-                                </div>
-                                <div>
-                                    <div class="body-text mb-2">Total Canceled Orders</div>
-                                    <h4>{{ $dashboardData[0]->TotalCanceled }}</h4>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Total Amount of Cancelled Orders -->
-                        <div class="col">
-                            <div class="card p-4 text-center shadow-sm border-0 ">
-                                <div class="image ic-bg me-3">
-                                     ₱
-                                </div>
-                                <div>
-                                    <div class="body-text mb-2">Total Amount of Cancelled Orders</div>
-                                     <h4>₱{{ number_format($dashboardData[0]->TotalCanceledAmount, 2) }}</h4>
-                                </div>
-                            </div>
-                        </div>
-
-
                     </div>
-
-
-
-
+                    <div class="stats-content">
+                        <p class="stats-label mb-2">Total Reservation</p>
+                        <h3 class="stats-value mb-0">{{ $dashboardData[0]->Total }}</h3>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="stats-card card border-0 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="icon-wrapper">
+                            <i class="fas fa-peso-sign text-green-500"></i>
+                        </div>
+                        <div class="trend-indicator positive">
+                            <i class="fas fa-trending-up"></i>
+                        </div>
+                    </div>
+                    <div class="stats-content">
+                        <p class="stats-label mb-2">Total Amount of Reserve Items</p>
+                        <h3 class="stats-value mb-0">₱{{ number_format($dashboardData[0]->TotalReservedAmount, 2) }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="stats-card card border-0 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="icon-wrapper">
+                            <i class="fas fa-check-circle text-purple-500"></i>
+                        </div>
+                        <div class="trend-indicator positive">
+                            <i class="fas fa-trending-up"></i>
+                        </div>
+                    </div>
+                    <div class="stats-content">
+                        <p class="stats-label mb-2">Total Claimed Items</p>
+                        <h3 class="stats-value mb-0">{{ $dashboardData[0]->TotalPickedUp }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="stats-card card border-0 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="icon-wrapper">
+                            <i class="fas fa-coins text-yellow-500"></i>
+                        </div>
+                        <div class="trend-indicator positive">
+                            <i class="fas fa-trending-up"></i>
+                        </div>
+                    </div>
+                    <div class="stats-content">
+                        <p class="stats-label mb-2">Total Amount of Claimed Items</p>
+                        <h3 class="stats-value mb-0">₱{{ number_format($dashboardData[0]->TotalPickedUpAmount, 2) }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="stats-card card border-0 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="icon-wrapper">
+                            <i class="fas fa-times-circle text-red-500"></i>
+                        </div>
+                        <div class="trend-indicator negative">
+                            <i class="fas fa-trending-down"></i>
+                        </div>
+                    </div>
+                    <div class="stats-content">
+                        <p class="stats-label mb-2">Total Canceled Orders</p>
+                        <h3 class="stats-value mb-0">{{ $dashboardData[0]->TotalCanceled }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="stats-card card border-0 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="icon-wrapper">
+                            <i class="fas fa-ban text-gray-500"></i>
+                        </div>
+                        <div class="trend-indicator negative">
+                            <i class="fas fa-trending-down"></i>
+                        </div>
+                    </div>
+                    <div class="stats-content">
+                        <p class="stats-label mb-2">Total Amount of Cancelled Orders</p>
+                        <h3 class="stats-value mb-0">₱{{ number_format($dashboardData[0]->TotalCanceledAmount, 2) }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             </div>
 
             <div class="main-content-wrap">
@@ -100,7 +128,6 @@
                     <div class="flex gap20 flex-wrap-mobile">
 
                         <div class="wg-box p-4 bg-light shadow-sm rounded-lg w-100" style="max-width: 100%;">
-                            <!-- Header Controls -->
                             <div class="d-flex align-items-center justify-content-between mb-3">
                                 <div class="dropdown">
                                     <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center"
@@ -130,9 +157,7 @@
                                     </ul>
                                 </div>
 
-                                <!-- Dynamic Filter Controls -->
                                 <div class="d-flex flex-grow-1 align-items-center ms-3" id="filter-controls">
-                                    <!-- Year selector (always visible) -->
                                     <select id="year-select" class="form-select me-2">
                                         @foreach ($yearRange as $year)
                                             <option value="{{ $year }}" {{ $year == date('Y') ? 'selected' : '' }}>
@@ -141,17 +166,14 @@
                                         @endforeach
                                     </select>
 
-                                    <!-- Month selector (for weekly and daily views) -->
                                     <select id="month-select" class="form-select me-2" style="display: none;">
                                         <option value="">Select Month</option>
                                     </select>
 
-                                    <!-- Week selector (for daily view only) -->
                                     <select id="week-select" class="form-select me-2" style="display: none;">
                                         <option value="">Select Week</option>
                                     </select>
 
-                                    <!-- Loading indicator -->
                                     <div id="loading-spinner" class="spinner-border spinner-border-sm me-2" role="status"
                                         style="display: none;">
                                         <span class="visually-hidden">Loading...</span>
@@ -159,7 +181,6 @@
                                 </div>
                             </div>
 
-                            <!-- Summary Cards -->
                             <div class="row mb-4" id="summary-cards">
                                 <div class="col-md-6">
                                     <div class="mb-2">
@@ -210,20 +231,17 @@
                                 </div>
                             </div>
 
-                            <!-- Chart Container -->
                             <div id="dashboard-chart"></div>
                         </div>
 
                     </div>
 
-                    <!-- Stock Status Table Container -->
                     <div class="container p-4"
                         style="background-color: #f8f9fc; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
                         <div class="d-flex justify-content-between align-items-center mb-3">
 
                         </div>
                         <div style="overflow-x: auto;">
-                            <!-- Updated Stock Status Table -->
                             <table class="table table-bordered table-hover" style="table-layout: auto;">
                                 <thead class="bg-light">
                                     <tr>
@@ -253,7 +271,6 @@
                                             @endphp
 
                                             @if ($currentStock == 0)
-                                                <!-- Check if the stock is 0 -->
                                                 <tr>
                                                     <td class="text-center">{{ $product->id }}</td>
                                                     <td class="text-center">{{ $product->name }}</td>
@@ -263,7 +280,6 @@
                                                     <td class="text-center">{{ $currentStock }}</td>
                                                 </tr>
                                             @elseif($currentStock <= $product->reorder_quantity)
-                                                <!-- Display 'Reorder' and 'Low Stock' items -->
                                                 <tr>
                                                     <td class="text-center">{{ $product->id }}</td>
                                                     <td class="text-center">{{ $product->name }}</td>
@@ -282,7 +298,6 @@
                                 </tbody>
 
                             </table>
-                            <!-- End of Updated Stock Status Table -->
                         </div>
                     </div>
 
@@ -400,16 +415,12 @@
             display: flex;
             flex-direction: row;
             gap: 20px;
-            /* Adjust gap as needed */
             flex-wrap: wrap;
-            /* Allows wrapping if items don't fit in one row */
         }
 
         .wg-chart-default {
             flex: 1;
-            /* Distributes available space equally */
             min-width: 200px;
-            /* Ensures a minimum width for each item */
         }
 
         .container {
@@ -518,7 +529,6 @@
             font-size: 1.1rem;
         }
 
-        /* Modern Table Styles for Recent Orders */
         .table-modern {
             background: #fff;
             border-radius: 12px;
@@ -565,7 +575,6 @@
             vertical-align: middle;
         }
 
-        /* Customer Info Cell */
         .customer-info {
             display: flex;
             flex-direction: column;
@@ -586,7 +595,6 @@
             margin-top: 4px;
         }
 
-        /* Badge Styles */
         .badge-picked-up {
             background: linear-gradient(45deg, #48bb78, #38a169);
             color: white;
@@ -631,14 +639,12 @@
             letter-spacing: 0.2px;
         }
 
-        /* Course Cell */
         .course-text {
             color: #333;
             font-weight: 500;
             font-size: 1.3rem;
         }
 
-        /* Date Cells */
         .reservation-date {
             color: #333;
             font-weight: 500;
@@ -662,7 +668,6 @@
             font-size: 1.1rem;
         }
 
-        /* Items and Price Cells */
         .items-count {
             background: #6c757d;
             color: white;
@@ -684,7 +689,6 @@
             background-clip: text;
         }
 
-        /* Column Width Controls */
         .name-column {
             min-width: 200px;
             width: 25%;
@@ -715,7 +719,6 @@
             width: 10%;
         }
 
-        /* Action Button Styles */
         .action-btn {
             display: inline-flex;
             align-items: center;
@@ -759,7 +762,6 @@
             display: inline-block;
         }
 
-        /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .table-header-modern th {
                 padding: 12px 8px;
@@ -839,7 +841,6 @@
             }
         }
 
-        /* Enhanced Hover Effects */
         .table-row-modern:hover .customer-name {
             color: #333;
         }
@@ -854,7 +855,31 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             transition: all 0.2s ease;
         }
-    </style>
+
+        .text-blue-500 { color: #3b82f6 !important; }
+        .text-green-500 { color: #10b981 !important; }
+        .text-purple-500 { color: #8b5cf6 !important; }
+        .text-yellow-500 { color: #f59e0b !important; }
+        .text-red-500 { color: #ef4444 !important; }
+        .text-gray-500 { color: #6b7280 !important; }
+
+        .icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.25s ease;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .stats-card:hover .icon-wrapper {
+            transform: scale(1.05);
+            background: rgba(0, 0, 0, 0.08);
+        }
+</style>
 @endpush
 
 @push('scripts')
@@ -879,7 +904,6 @@
             }
 
             bindEvents() {
-                // View switcher
                 document.querySelectorAll('[data-view]').forEach(item => {
                     item.addEventListener('click', (e) => {
                         e.preventDefault();
@@ -887,7 +911,6 @@
                     });
                 });
 
-                // Filter changes
                 document.getElementById('year-select').addEventListener('change', () => {
                     this.currentFilters.year = document.getElementById('year-select').value;
                     this.loadDashboardData();
@@ -915,7 +938,6 @@
             }
 
             updateUI() {
-                // Update title
                 const titles = {
                     'monthly': 'Monthly Earnings Revenue',
                     'weekly': 'Weekly Earnings Revenue',
@@ -923,7 +945,6 @@
                 };
                 document.getElementById('chart-title').textContent = titles[this.currentView];
 
-                // Show/hide filter controls
                 const monthSelect = document.getElementById('month-select');
                 const weekSelect = document.getElementById('week-select');
 
@@ -1093,9 +1114,15 @@
             }
         }
 
-        // Initialize dashboard when page loads
         document.addEventListener('DOMContentLoaded', function() {
             window.dashboardManager = new DashboardManager();
         });
     </script>
+@endpush
+
+
+@push('styles')
+    <style>
+
+        </style>
 @endpush
