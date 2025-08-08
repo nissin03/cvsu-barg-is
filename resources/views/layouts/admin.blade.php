@@ -319,12 +319,7 @@
                                     </li>
 
 
-                                    {{-- <li class="menu-item">
-                                        <a href="{{ route('admin.facilities.reservations') }}">
-                                            <div class="icon"><i class="icon-calendar"></i></div>
-                                            <div class="text">Reservations</div>
-                                        </a>
-                                    </li> --}}
+                                  
 
                                     <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
@@ -485,10 +480,10 @@
                                             <div class="text">Facilties Reports</div>
                                         </a>
                                         <ul class="sub-menu">
-                                            <li class="sub-menu-item">
-                                                {{-- <a href="{{ route('admin.facilities.dashboard') }}">
-                                                    <div class="text">Facilities Reports</div>
-                                                </a> --}}
+                                            <li class="menu-item">
+                                                <a href="{{ route('admin.facility-statement') }}">
+                                                    <div class="text">Statement</div>
+                                                </a>
                                             </li>
                                             <li class="sub-menu-item">
                                                 {{-- <a href="{{ route('admin.facilities.analytics') }}">

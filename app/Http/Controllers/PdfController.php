@@ -12,7 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Order;
 use App\Models\User;
-
+use App\Models\Payment;
 
 class PdfController extends Controller
 {
@@ -496,4 +496,53 @@ class PdfController extends Controller
 
         return $pdf->stream('user-report.pdf');
     }
+
+
+    public function facilityStatement(Request $request)
+{
+    // Get filter parameters from request
+    $dateFrom = $request->input('date_from');
+    $dateTo = $request->input('date_to');
+    $status = $request->input('status');
+
+    // Build the query for payments
+    $paymentsQuery = Payment::with(['user', 'availability.facility', 'availability.facilityAttribute']);
+
+    // Apply date filter if dates are provided
+    if ($dateFrom && $dateTo) {
+        $start = Carbon::parse($dateFrom)->startOfDay();
+        $end = Carbon::parse($dateTo)->endOfDay();
+        $paymentsQuery->whereHas('availability', function($query) use ($start, $end) {
+            $query->whereBetween('date_from', [$start, $end])
+                  ->orWhereBetween('date_to', [$start, $end]);
+        });
+    }
+
+    // Apply status filter if provided
+    if ($status) {
+        $paymentsQuery->where('status', $status);
+    }
+
+    $payments = $paymentsQuery->orderBy('created_at', 'desc')->get();
+
+    // Format dates for display
+    $formattedDateFrom = $dateFrom ? Carbon::parse($dateFrom)->format('F j, Y') : 'N/A';
+    $formattedDateTo = $dateTo ? Carbon::parse($dateTo)->format('F j, Y') : 'N/A';
+
+    // Load the view for PDF rendering
+    $pdf = PDF::loadView('admin.pdf.pdf-facility-billing', [
+        'payments' => $payments,
+        'dateFrom' => $formattedDateFrom,
+        'dateTo' => $formattedDateTo
+    ])->setPaper('A4', 'portrait');
+
+    // Generate filename
+    $filename = 'facility_billing_statements_';
+    $filename .= $dateFrom ? Carbon::parse($dateFrom)->format('Y-m-d') : 'all';
+    $filename .= '_to_';
+    $filename .= $dateTo ? Carbon::parse($dateTo)->format('Y-m-d') : 'all';
+    $filename .= '.pdf';
+
+    return $pdf->download($filename);
+}
 }
