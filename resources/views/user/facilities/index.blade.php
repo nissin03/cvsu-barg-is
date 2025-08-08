@@ -679,7 +679,7 @@
                 title: '{{ session('title', 'Success!') }}',
                 text: "{{ session('success') }}",
                 position: 'top-end',
-                showConfirmButton: false, // Force-disable button
+                showConfirmButton: false, 
                 timer: 3000,
                 timerProgressBar: true,
                 background: '#f8f9fa',
