@@ -8,10 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class DailyName extends Model
 {
     use HasFactory;
-
-    // protected $table = 'daily_names';
-    // protected $fillable = ['name'];
-
-    // public $timestamps = false;
 }
 

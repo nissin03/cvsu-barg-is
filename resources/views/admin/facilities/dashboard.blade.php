@@ -118,7 +118,6 @@
                 </div>
 
                 <!-- Analytics Section -->
-                 <!-- Analytics Section -->
                 <div class="tf-section analytics-dashboard mb-5">
                     <div class="section-title mb-2">
                         <h2 class="fw-bold fs-3 text-gray-800">Reservation Analytics</h2>
