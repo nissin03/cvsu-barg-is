@@ -89,7 +89,7 @@
                                 <input type="hidden" name="end_date" value="{{ old('end_date', request('end_date')) }}">
                                 <input type="hidden" name="today" value="{{ request('today') ? '1' : '' }}">
                                 <button type="submit" class="btn btn-outline-dark btn-lg fs-5 px-4">
-                                  <i class="fas fa-file-pdf me-1"></i> Download PDF
+                                  <i class="fas fa-file-pdf me-1"></i> PDF
                                 </button>
                             </form>
                             </div>
