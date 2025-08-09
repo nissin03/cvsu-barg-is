@@ -19,13 +19,32 @@ class AdminProfileController extends Controller
         return view('admin.profile', compact('user'));
     }
 
+    public function update_phone(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate(
+            [
+                'phone_number' => ['required', 'regex:/^9\d{9}$/'],
+            ],
+            [
+                'phone_number.required' => 'Phone number is required.',
+                'phone_number.regex' => 'Phone number must start with 9 and be exactly 10 digits.',
+            ]
+        );
+        $normalizedPhone = preg_replace('/^(?:\+?63|0)/', '', $request->phone_number);
+        $normalizedPhone = '+63' . $normalizedPhone;
+        $user->update(['phone_number' => $normalizedPhone]);
+
+        return redirect()->route('admin.profile.index')->with('success', 'Phone Number updated successfully!');
+    }
+
     public function update_profile(Request $request)
     {
         $user = Auth::user();
-
         $request->validate([
             'current_password' => ['required', 'string'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+
         ], [
             'current_password.required' => 'Current password is required.',
             'password.required' => 'New password is required.',
@@ -36,8 +55,12 @@ class AdminProfileController extends Controller
         if (!Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'Current password is incorrect.'])->withInput();
         }
+        $normalizedPhone = $request->phone_number;
+        $normalizedPhone = preg_replace('/^(?:\+?63|0)/', '', $normalizedPhone);
+        $normalizedPhone = '+63' . $normalizedPhone;
 
         $user->update([
+            'phone_number' => $normalizedPhone,
             'password' => Hash::make($request->password),
         ]);
 
@@ -46,6 +69,9 @@ class AdminProfileController extends Controller
 
     public function update_profile_image(Request $request)
     {
+        $user = Auth::user();
+        abort_if($user->utype !== 'ADM', 403, 'Unauthorized.');
+
         $request->validate([
             'profile_image' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
         ], [
@@ -54,8 +80,6 @@ class AdminProfileController extends Controller
             'profile_image.mimes' => 'The image must be a file of type: jpeg, png, jpg, gif.',
             'profile_image.max' => 'The image may not be greater than 2MB.',
         ]);
-
-        $user = Auth::user();
 
         if ($user->profile_image) {
             Storage::disk('public')->delete($user->profile_image);
