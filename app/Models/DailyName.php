@@ -9,3 +9,4 @@ class DailyName extends Model
 {
     use HasFactory;
 }
+

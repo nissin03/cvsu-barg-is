@@ -95,7 +95,7 @@
     </style>
 </head>
 <body>
-    <!-- Header Section (Centered) -->
+
     <div class="header">
         <table class="header-table">
             <tr>
@@ -119,16 +119,16 @@
             </tr>
         </table>
     </div>
-    <!-- End Header Section -->
+ 
 
-    <!-- Report Title and Download Timestamp -->
+
     <h2 style="text-align: center;">Sales Report of Business and Resource Generation</h2>
     <p style="text-align: center; font-size: 14px;">
         Downloaded on: {{ \Carbon\Carbon::now()->setTimezone('Asia/Manila')->format('F j, Y, g:i a') }}
     </p>
 
     <!-- Monthly Earned Sales -->
-    <h3>Monthly Earned Sales for {{ $selectedYear }}</h3>
+    <h3>Total Earned Sales for {{ $selectedYear }}</h3>
     <table>
         <tr>
             <th>Description</th>
@@ -153,7 +153,7 @@
     </table>
 
     <!-- Weekly Earned Sales -->
-    <h3>Weekly Earnings for {{ $selectedMonth->name }} {{ $selectedYear }}</h3>
+    <h3>Total Earned Sales for {{ $selectedMonth->name }} {{ $selectedYear }}</h3>
     <table>
         <tr>
             <th>Description</th>
@@ -178,7 +178,7 @@
     </table>
 
     <!-- Daily Earned Sales -->
-    <h3>Daily Earned Sales for {{ $selectedMonth->name }} {{ $selectedYear }} (Week {{ $selectedWeekId }})</h3>
+    <h3>Total Earned Sales for {{ $selectedMonth->name }} {{ $selectedYear }} (Week {{ $selectedWeekId }})</h3>
     <table>
         <tr>
             <th>Description</th>

@@ -11,9 +11,8 @@
             font-style: normal;
         }
         @page {
-            margin: 0.25in 0.75in 0.75in 0.75in; /* top, right, bottom, left */
+            margin: 0.25in 0.75in 0.75in 0.75in;
         }
-        /* General PDF Styles */
         body {
             font-family: 'DejaVu Sans', Arial, sans-serif;
             font-size: 12px;
@@ -44,8 +43,6 @@
             text-align: center;
             margin-top: 20px;
         }
-        
-        /* Header Styles */
         .header {
             width: 100%;
             margin-top: 20px;
@@ -73,14 +70,13 @@
         .logo-left img {
         height: 80px;
         max-width: 80px;
-        margin-right: -100px; /* adjust as needed */
+        margin-right: -100px; 
         }
         .logo-right img {
         height: 80px;
         max-width: 110px;
-        margin-left: -110px; /* adjust as needed */
+        margin-left: -110px; 
         }
-        /* Center cell styles */
         .center-cell {
         text-align: center;
         vertical-align: middle;
@@ -101,11 +97,15 @@
             font-size: 12px;
             margin: 0;
         }
+        .total-row {
+            font-weight: bold;
+            background-color: #f4f4f4;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header Section -->
+ 
         <div class="header">
             <table class="header-table">
                 <tr>
@@ -129,7 +129,7 @@
                 </tr>
             </table>
         </div>
-        <!-- End Header Section -->
+   
         
         <h2>Sales Report</h2>
         <p>
@@ -139,14 +139,6 @@
             Downloaded on: {{ \Carbon\Carbon::now()->setTimezone('Asia/Manila')->format('F j, Y, g:i a') }}
         </p>
         
-        <!-- Chart Section (if needed) -->
-        {{-- @if(isset($chartImage) && $chartImage)
-        <div class="chart-container">
-            <img src="{{ $chartImage }}" alt="Sales Chart" style="max-width: 100%; height: auto;">
-        </div>
-        @endif --}}
-        
-        <!-- Data Table -->
         <table>
             <thead>
                 <tr>
@@ -167,6 +159,14 @@
                     <td>&#8369;{{ number_format($chartData['canceled_sales'][$index], 2) }}</td>
                 </tr>
                 @endforeach
+                
+                <tr class="total-row">
+                    <td><strong>Total</strong></td>
+                    <td>&#8369;{{ number_format(array_sum($chartData['total_sales']), 2) }}</td>
+                    <td>&#8369;{{ number_format(array_sum($chartData['reserved_sales']), 2) }}</td>
+                    <td>&#8369;{{ number_format(array_sum($chartData['pickedup_sales']), 2) }}</td>
+                    <td>&#8369;{{ number_format(array_sum($chartData['canceled_sales']), 2) }}</td>
+                </tr>
             </tbody>
         </table>
     </div>

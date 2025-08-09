@@ -19,44 +19,36 @@ class OrderSeeder extends Seeder
         $users = User::where('utype', 'USR')->get();
         $products = Product::all();
 
-        // Define our date ranges
         $startDate = Carbon::create(2024, 1, 1);
-        $endDate = Carbon::create(2025, 12, 31);
+        $endDate = Carbon::now();
         $reservationStart = Carbon::create(2025, 1, 1);
 
         foreach ($users as $user) {
-            $numOrders = $faker->numberBetween(1, 3);
+            $numOrders = $faker->numberBetween(3, 5);
             
             for ($i = 0; $i < $numOrders; $i++) {
-                // Safe creation date within our range
                 $createdAt = Carbon::instance($faker->dateTimeBetween(
                     $startDate->format('Y-m-d'),
                     $endDate->format('Y-m-d')
                 ));
 
-                // Determine the earliest possible reservation date
                 $earliestReservation = $createdAt->greaterThan($reservationStart) 
                     ? $createdAt 
                     : $reservationStart;
 
-                // Ensure we don't try to generate dates beyond our end date
                 if ($earliestReservation->greaterThan($endDate)) {
-                    continue; // Skip this iteration if dates would be invalid
+                    continue;
                 }
 
-                // Generate reservation date safely
                 $reservationDate = Carbon::instance($faker->dateTimeBetween(
                     $earliestReservation->format('Y-m-d'),
                     $endDate->format('Y-m-d')
                 ))->format('Y-m-d');
 
-                // Time slot between 7:00 AM and 5:00 PM (simpler approach)
                 $timeSlot = sprintf('%02d:%02d', $faker->numberBetween(7, 16), $faker->numberBetween(0, 59));
 
-                // Determine status
                 $status = $this->determineStatus($faker);
                 
-                // Set dates based on status
                 $pickedUpDate = null;
                 $canceledDate = null;
                 
@@ -78,10 +70,9 @@ class OrderSeeder extends Seeder
                     }
                 }
 
-                // Create the order
                 $order = Order::create([
                     'user_id' => $user->id,
-                    'total' => 0, // Will be updated
+                    'total' => 0,
                     'reservation_date' => $reservationDate,
                     'time_slot' => $timeSlot,
                     'picked_up_date' => $pickedUpDate,
@@ -91,7 +82,6 @@ class OrderSeeder extends Seeder
                     'updated_at' => $createdAt,
                 ]);
 
-                // Add order items
                 $orderTotal = 0;
                 $numItems = $faker->numberBetween(1, 5);
 
@@ -117,11 +107,9 @@ class OrderSeeder extends Seeder
                     ]);
                 }
 
-                // Update order total
                 $order->total = $orderTotal;
                 $order->save();
 
-                // Create transaction
                 Transaction::create([
                     'order_id' => $order->id,
                     'amount_paid' => $orderTotal,
@@ -132,8 +120,6 @@ class OrderSeeder extends Seeder
                 ]);
             }
         }
-
-
     }
 
     private function determineStatus($faker): string
@@ -141,9 +127,9 @@ class OrderSeeder extends Seeder
         $rand = $faker->numberBetween(1, 100);
         
         return match(true) {
-            $rand <= 10 => 'canceled',   // 10% chance
-            $rand <= 80 => 'pickedup',   // 70% chance
-            default => 'reserved'        // 20% chance
+            $rand <= 10 => 'canceled',
+            $rand <= 80 => 'pickedup',
+            default => 'reserved'
         };
     }
 }

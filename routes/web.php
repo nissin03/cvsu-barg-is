@@ -11,7 +11,7 @@ use App\Http\Controllers\ShopController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\RentalController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\SocialAuthController;
@@ -20,6 +20,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserFacilityController;
 use App\Http\Controllers\FacilityReportController;
 use App\Http\Controllers\FacilityReservationController;
+use App\Http\Controllers\PdfController;
 
 Auth::routes(['reset' => true]);
 
@@ -141,6 +142,11 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/{availability_id}/reservation-history', [FacilityController::class, 'reservationHistory'])->name('admin.facilities.reservations-history');
 
 
+        Route::get('/facilities/dashboard', [FacilityController::class, 'facilityDashboard'])->name('admin.facilities.dashboard');
+        // Route::get('/facilities/analytics', [FacilityController::class, 'analytics'])->name('admin.facilities.analytics');
+        // Route::get('/admin/facilities/analytics', [FacilityController::class, 'facilityDashboard']);
+
+        
         Route::get('/facility/reports', [FacilityReportController::class, 'index'])->name('admin.facility.reports');
         Route::get('/facilities/reports/data', [FacilityReportController::class, 'data'])->name('admin.facility.reports.data');
         Route::get('/facilities/reports/filter-options', [FacilityReportController::class, 'getFilterOptions'])->name('admin.facility.reports.filter-options');
@@ -242,53 +248,40 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/getWeeklyData', [AdminController::class, 'getWeeklyData'])->name('admin.getWeeklyData');
         Route::get('/index-daily', [AdminController::class, 'indexDaily'])->name('admin.index-daily');
 
-        Route::get('/reports', [AdminController::class, 'generateReport'])->name('admin.reports');
-        Route::get('/report-user', [AdminController::class, 'generateUser'])->name('admin.report-user');
-        Route::get('/report-product', [AdminController::class, 'generateProduct'])->name('admin.report-product');
-        Route::get('/report-inventory', [AdminController::class, 'generateInventory'])->name('admin.report-inventory');
-        Route::get('/report-statements', [AdminController::class, 'listBillingStatements'])->name('admin.report-statements');
-        Route::get('/report-statement/{orderId}', [AdminController::class, 'generateBillingStatement'])->name('admin.report-statement');
+// REPORTS
 
-        Route::get('/user-reports', [AdminController::class, 'showUserReports'])->name('admin.user-reports');
-        Route::post('/user-reports/generate', [AdminController::class, 'generateUserReports'])->name('admin.user-reports.generate');
-        Route::post('/sales-report', [AdminController::class, 'generateInputSales'])->name('admin.generate-input-sales');
-        Route::get('/sales-report', function () {
-            return view('admin.input-sales');
-        });
-        Route::post('/user-report', [AdminController::class, 'generateInputUsers'])->name('admin.generate-input-users');
-        Route::get('/user-report', function () {
-            return view('admin.input-user');
-        });
+    Route::get('/admin/reports', [ReportController::class, 'generateReport'])->name('admin.reports');
+    Route::get('/admin/report-user', [ReportController::class, 'generateUser'])->name('admin.report-user');
+    Route::get('/admin/report-product', [ReportController::class, 'generateProduct'])->name('admin.report-product');
+    Route::get('/admin/report-inventory', [ReportController::class, 'generateInventory'])->name('admin.report-inventory');
+    Route::get('/admin/report-statements', [ReportController::class, 'listBillingStatements'])->name('admin.report-statements');
+    Route::get('/admin/report-statement/{orderId}', [ReportController::class, 'generateBillingStatement'])->name('admin.report-statement');
+    // Route::get('/admin/report-statement/{orderId}', [ReportController::class, 'generateBillingStatement'])->name('admin.report-statement');
 
+     Route::get('/admin/facilities-sales', [ReportController::class, 'listSalesFacilities'])->name('admin.facilties.stataments');
+     Route::get('admin/payment-details/{paymentId}', [ReportController::class, 'showPaymentDetails'])->name('admin.sales-report-details');
 
-        Route::post('/sales-report/download', [AdminController::class, 'downloadInputSales'])->name('admin.download-input-sales');
-        Route::post('/user-report/download', [AdminController::class, 'downloadInputUsers'])->name('admin.download-input-users');
+     Route::get('facility-statement', [ReportController::class, 'facilitiesStatement'])->name('admin.facility-statement');
 
+    //  PDF
+    Route::get('/admin/report-statements/download', [PdfController::class, 'downloadBillingStatements'])->name('admin.report-statements.download');
+    Route::post('/admin/downloadPdf', [PdfController::class, 'downloadPdf'])->name('admin.downloadPdf');
+    Route::post('/admin/report-user/pdf', [PdfController::class, 'downloadUserReportPdf'])->name('admin.report-user.pdf');
+    Route::get('/admin/report-inventory/pdf', [PdfController::class, 'downloadInventoryReportPdf'])->name('admin.report-inventory.pdf');
+    Route::get('/admin/report-product/download', [PdfController::class, 'downloadProduct'])->name('admin.report-product.download');
+        Route::post('/admin/sales-report/download', [PdfController::class, 'downloadInputSales'])->name('admin.download-input-sales');
+    Route::post('/admin/user-report/download', [PdfController::class, 'downloadInputUsers'])->name('admin.download-input-users');
+    Route::get('/admin/facility-statement/download', [PdfController::class, 'facilityStatement'])->name('admin.facility-statement.download');
 
-        Route::post('/rentals-reports/generate', [AdminController::class, 'generateInputRentalReports'])->name('admin.generate-input-rentals-reports');
-        Route::get('/rentals-reports', function () {
-            return view('admin.input-rentals-reports');
-        })->name('admin.rentals-reports');
-        Route::post('/rentals-reports/download', [AdminController::class, 'downloadInputRentalsReports'])->name('admin.download-input-rentals-reports');
+    // Route::get('/user-reports', [ReportController::class, 'showUserReports'])->name('admin.user-reports');
+    // Route::post('/user-reports/generate', [ReportController::class, 'generateUserReports'])->name('admin.user-reports.generate');
 
-        Route::get('/report-statement/{orderId}', [AdminController::class, 'generateBillingStatement'])->name('admin.report-statement');
-        Route::get('/report-statements/download', [AdminController::class, 'downloadBillingStatements'])->name('admin.report-statements.download');
-        Route::post('/downloadPdf', [AdminController::class, 'downloadPdf'])->name('admin.downloadPdf');
-        Route::post('/report-user/pdf', [AdminController::class, 'downloadUserReportPdf'])->name('admin.report-user.pdf');
-        Route::get('/report-inventory/pdf', [AdminController::class, 'downloadInventoryReportPdf'])->name('admin.report-inventory.pdf');
+    Route::post('/admin/sales-report', [ReportController::class, 'generateInputSales'])->name('admin.generate-input-sales');
+    Route::get('/admin/sales-report', function () { return view('admin.reports.input-sales'); });
 
-        Route::get('/rentals', [AdminController::class, 'rentals'])->name('admin.rentals');
-        Route::get('/rentals/add', [AdminController::class, 'rental_add'])->name('admin.rental.add');
-        Route::post('/rentals/store', [AdminController::class, 'rental_store'])->name('admin.rental.store');
-        Route::get('/rental/edit/{id}', [AdminController::class, 'rental_edit'])->name('admin.rental.edit');
-        Route::put('/rental/update', [AdminController::class, 'rental_update'])->name('admin.rental.update');
-        Route::delete('/rental/delete/{id}', [AdminController::class, 'rental_delete'])->name('admin.rental.delete');
+    Route::post('/admin/user-report', [ReportController::class, 'generateInputUsers'])->name('admin.generate-input-users');
+    Route::get('/admin/user-report', function () {return view('admin.reports.input-user'); });
 
-        Route::get('/rentals_reports', [AdminController::class, 'rentalsReports'])->name('admin.rentals_reports');
-        Route::post('/rentals-reports/download-pdf', [AdminController::class, 'downloadPdfRentals'])->name('admin.downloadPdfRentals');
-        Route::get('/rentals-reports-name', [AdminController::class, 'rentalsReportsName'])->name('admin.rentalsReportsName');
-        Route::post('/download-pdf-rentals-name', [AdminController::class, 'downloadPdfRentalsName'])->name('admin.downloadPdfRentalsName');
-        Route::get('/report-product/download', [AdminController::class, 'downloadProduct'])->name('admin.report-product.download');
 
 
         Route::get('/report/facilities', [AdminController::class, 'generateFacilitespayment'])->name('admin.report.facilities');
