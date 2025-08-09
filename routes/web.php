@@ -126,6 +126,7 @@ Route::middleware(['auth', AuthAdmin::class])
 
         Route::get('/profile', [AdminProfileController::class, 'show_profile'])->name('admin.profile.index');
         Route::put('/profile/update', [AdminProfileController::class, 'update_profile'])->name('admin.profile.update');
+        Route::put('/phone/update', [AdminProfileController::class, 'update_phone'])->name('admin.phone.update');
         Route::post('/profile/update-image', [AdminProfileController::class, 'update_profile_image'])->name('admin.profile.update-image');
 
         Route::get('/facilities', [FacilityController::class, 'index'])->name('admin.facilities.index');
