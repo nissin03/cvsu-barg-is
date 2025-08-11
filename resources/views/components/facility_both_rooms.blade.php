@@ -1,10 +1,8 @@
-{{-- both rooms working --}}
-
 @php
     $hasAvailableRooms = false;
     
     $filteredAttributes = $facility->facilityAttributes->filter(function($attribute) {
-        if (is_null($attribute->sex_restriction)) {
+        if (auth()->user()->utype === 'ADM' || is_null($attribute->sex_restriction)) {
             return true;
         }
         
@@ -28,9 +26,9 @@
         
         $isAvailable = !$availability || 
                     ($availability->remaining_capacity >= $room->capacity);
-        
+
         $sexAllowed = true;
-        if ($room->sex_restriction) {
+        if ($room->sex_restriction && auth()->user()->utype === 'USR') {
             $sexAllowed = $room->sex_restriction === auth()->user()->sex;
         }
         
@@ -39,6 +37,8 @@
     
     $hasAvailableWholeRooms = $availableRooms->isNotEmpty();
 @endphp
+
+<link href="{{ asset('css/facility/both_rooms.css') }}" rel="stylesheet">
 
 <div class="facility-booking-container mb-4">
      <div class="mb-3">
@@ -278,7 +278,7 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="updateClientTypeDisplay()">Save Selections</button>
+                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="updateClientTypeDisplay()">Save Changes</button>
                                 </div>
                             </div>
                         </div>
@@ -414,7 +414,7 @@
                         <select name="selected_room" id="selected_room" class="client-type-select" required>
                             <option value="">Select a Room</option>
                             @foreach ($allRooms as $room)
-                                @if(!$room->sex_restriction || $room->sex_restriction === auth()->user()->sex)
+                                @if(auth()->user()->utype === 'ADM' || !$room->sex_restriction || $room->sex_restriction === auth()->user()->sex)
                                     <option value="{{ $room->id }}" 
                                         data-capacity="{{ $room->capacity }}"
                                         data-room-name="{{ $room->room_name }}">
@@ -539,7 +539,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <!-- Hidden field to store the selected price value (optional) -->
+                
                     <input type="hidden" id="selected_whole_price_value" name="selected_whole_price" value="">
                 </div>
             </div>
@@ -552,1163 +552,64 @@
     </div>
 </div>
 
-<style>
-    .booking-type-header{
-        color: #3b82f6;
-    }
-    .facility-booking-container {
-        max-width: 100%;
-        margin: 0 auto;
-        padding: 16px;
-        background: #ffffff;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
-    }
-
-    .alert {
-        border-radius: 6px;
-        border: none;
-        padding: 12px;
-        margin-bottom: 16px;
-        font-weight: 500;
-    }
-
-    .alert-warning {
-        background-color: #fef3c7;
-        color: #92400e;
-    }
-
-    .capacity-info {
-        margin-bottom: 16px;
-    }
-
-    .capacity-card {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        background: #f8fafc;
-        border-radius: 6px;
-        border: 1px solid #e2e8f0;
-        gap: 8px;
-    }
-
-    .capacity-card i {
-        color: #3b82f6;
-        font-size: 16px;
-    }
-
-    .capacity-text {
-        font-weight: 600;
-        color: #1e293b;
-    }
-
-    .capacity-value {
-        background: #3b82f6;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 14px;
-        font-weight: 500;
-    }
-
-    .booking-section {
-        margin-bottom: 16px;
-        background: #ffffff;
-        border-radius: 6px;
-        border: 1px solid #e5e7eb;
-        overflow: hidden;
-    }
-
-    .section-header {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        background: #f8fafc;
-        border-bottom: 1px solid #e5e7eb;
-        gap: 8px;
-    }
-
-    .section-header i {
-        color: #3b82f6;
-        font-size: 14px;
-    }
-
-    .section-header span {
-        margin: 0;
-        font-size: 14px;
-        font-weight: 600;
-        color: #1e293b;
-    }
-
-    .section-content {
-        padding: 16px;
-    }
-
-    .date-range-display {
-        display: flex;
-        gap: 16px;
-        flex-wrap: wrap;
-    }
-
-    .date-item {
-        flex: 1;
-        min-width: 150px;
-        color: #1e293b;
-        font-size: 14px;
-    }
-
-    .selected-dates-display {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-    }
-
-    .date-selection-item {
-        flex: 1;
-        min-width: 150px;
-        color: #1e293b;
-        font-size: 14px;
-    }
-
-    .time-input-group {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 12px;
-    }
-
-    .time-label {
-        font-size: 14px;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 6px;
-    }
-
-    .time-input {
-        padding: 8px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 4px;
-        font-size: 14px;
-        transition: border-color 0.2s ease;
-        background: #ffffff;
-    }
-
-    .time-input:focus {
-        outline: none;
-        border-color: #3b82f6;
-    }
-
-    .time-input:read-only {
-        background-color: #f9fafb;
-        color: #6b7280;
-        cursor: not-allowed;
-    }
-
-    .client-type-select {
-        width: 100%;
-        padding: 8px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 4px;
-        font-size: 14px;
-        background: #ffffff;
-        transition: border-color 0.2s ease;
-    }
-
-    .client-type-select:focus {
-        outline: none;
-        border-color: #3b82f6;
-    }
-
-    .total-price-section {
-        background: #5a5b5d;
-        border-radius: 6px;
-        padding: 16px;
-        margin-top: 16px;
-    }
-
-    .total-price-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .total-price-label {
-        display: flex;
-        align-items: center;
-        color: #e2e8f0;
-        font-size: 14px;
-        font-weight: 600;
-        gap: 8px;
-    }
-
-    .total-price-label i {
-        color: #60a5fa;
-        font-size: 16px;
-    }
-
-    .total-price-value {
-        font-size: 18px;
-        font-weight: 700;
-        color: #ffffff;
-    }
-
-    .badge {
-        display: inline-block;
-        padding: 4px 8px;
-        font-size: 12px;
-        font-weight: 600;
-        line-height: 1;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: baseline;
-        border-radius: 4px;
-    }
-
-    .bg-info {
-        background-color: #3b82f6;
-        color: white;
-    }
-
-    .bg-success {
-        background-color: #10b981;
-        color: white;
-    }
-
-    .quantity-input {
-        width: 100%;
-    }
-
-    .selected-dates-card {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        height: 100%;
-    }
-    
-    .fc-daygrid-day-number {
-        font-size: 12px;
-    }
-    
-    .availability-indicator .badge {
-        font-size: 9px;
-        padding: 2px 4px;
-    }
-    
-    .fc .fc-daygrid-day.fc-day-today {
-        background-color: rgba(13, 110, 253, 0.1);
-    }
-    
-    .selected-start-date {
-        background-color: rgba(25, 135, 84, 0.3) !important;
-    }
-    
-    .selected-end-date {
-        background-color: rgba(25, 135, 84, 0.3) !important;
-    }
-    
-    .selected-range-date {
-        background-color: rgba(25, 135, 84, 0.15) !important;
-    }
-    
-    .fully-booked-date {
-        background-color: rgba(220, 53, 69, 0.1) !important;
-        position: relative;
-    }
-    
-    .fully-booked-date::after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background-color: #dc3545;
-        transform: rotate(-5deg);
-    }
-
-    @media (max-width: 768px) {
-        .facility-booking-container {
-            padding: 12px;
-        }
-        
-        .section-header {
-            padding: 10px 12px;
-        }
-        
-        .section-content {
-            padding: 12px;
-        }
-        
-        .date-range-display {
-            flex-direction: column;
-        }
-        
-        .selected-dates-display {
-            flex-direction: column;
-        }
-        
-        .total-price-content {
-            flex-direction: column;
-            gap: 8px;
-            text-align: center;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .time-slot-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    /* Calendar specific styles */
-    .fc-day-capacity {
-        position: absolute !important;
-        bottom: -10px !important;
-        left: 50% !important;
-        transform: translateX(-85%) !important;
-        font-size: 9px !important;
-        color: white !important;
-        padding: 2px 6px !important;
-        border-radius: 10px !important;
-        pointer-events: none !important;
-        white-space: nowrap !important;
-        text-transform: lowercase !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.2px !important;
-        line-height: 1 !important;
-        z-index: 10 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-    }
-
-    .fc-day-status {
-        position: absolute !important;
-        bottom: -10px !important;
-        left: 50% !important;
-        transform: translateX(-70%) !important;
-        font-size: 9px !important;
-        color: white !important;
-        padding: 2px 6px !important;
-        border-radius: 10px !important;
-        pointer-events: none !important;
-        white-space: nowrap !important;
-        text-transform: lowercase !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.2px !important;
-        line-height: 1 !important;
-        z-index: 10 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-    }
-
-    .fc-capacity-success {
-        background: #198754 !important;
-        background: linear-gradient(135deg, #198754, #157347) !important;
-    }
-
-    .fc-capacity-warning {
-        background: #ffc107 !important;
-        background: linear-gradient(135deg, #ffc107, #e0a800) !important;
-        color: #000 !important;
-        animation: pulse-warning 2s infinite;
-    }
-
-    .fc-status-booked {
-        background: linear-gradient(135deg, #dc3545, #c82333) !important;
-        color: white !important;
-        /* left: 1px !important; */
-        transform: translateX(-85%) !important;
-        font-size: 9px !important;
-        position: absolute !important;
-        bottom: -10px !important;
-        padding: 2px 6px !important;
-        border-radius: 10px !important;
-        pointer-events: none !important;
-        white-space: nowrap !important;
-        text-transform: lowercase !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.2px !important;
-        line-height: 1 !important;
-        z-index: 10 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-    }
-
-    .fc-status-occupied {
-        background: #fd7e14 !important;
-        background: linear-gradient(135deg, #fd7e14, #e36209) !important;
-        color: white !important;
-        /* left: 1px !important;   */
-        transform: translateX(-75%) !important;  
-        font-size: 9px !important;
-        position: absolute !important;
-        bottom: -10px !important;
-        padding: 2px 6px !important;
-        border-radius: 10px !important;
-        pointer-events: none !important;
-        white-space: nowrap !important;
-        text-transform: lowercase !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.2px !important;
-        line-height: 1 !important;
-        z-index: 10 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-    }
-
-    @keyframes pulse-warning {
-        0% { opacity: 0.9; }
-        50% { opacity: 1; }
-        100% { opacity: 0.9; }
-    }
-
-    /* Modal Styles */
-        .selected-client-types {
-        display: none;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 12px;
-    }
-    
-    .client-type-item {
-        flex: 1;
-        min-width: 120px;
-        max-width: calc(50% - 6px);
-        color: #1e293b;
-        font-size: 14px;
-        background: #f8fafc;
-        padding: 10px;
-        border-radius: 6px;
-        border: 1px solid #e5e7eb;
-    }
-
-    .client-type-item strong {
-        display: block;
-        margin-bottom: 4px;
-    }
-    
-    @media (max-width: 576px) {
-        .selected-client-types {
-            gap: 8px;
-        }
-        
-        .client-type-item {
-            font-size: 13px;
-            padding: 8px;
-            min-width: 100px;
-            max-width: calc(50% - 4px);
-        }
-    }
-
-    
-    /* Modal Structure */
-    .modal .modal-dialog {
-        transition: transform 0.3s ease-out;
-        transform: translate(0, -50px);
-    }
-    
-    .modal.show .modal-dialog {
-        transform: none;
-    }
-    
-    .modal-header {
-        border-bottom: 1px solid #e5e7eb;
-        padding-bottom: 1rem;
-    }
-    
-    .modal-footer {
-        border-top: 1px solid #e5e7eb;
-        padding-top: 1rem;
-    }
-    
-    /* Price Quantity Cards */
-    .price-quantity-card {
-        background: #f8fafc;
-        border-radius: 8px;
-        padding: 16px;
-        border: 1px solid #e5e7eb;
-        transition: all 0.2s ease;
-    }
-    
-    .price-quantity-card:hover {
-        border-color: #d1d5db;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-    
-    .price-header {
-        padding-bottom: 8px;
-        border-bottom: 1px dashed #e5e7eb;
-    }
-    
-    .price-title {
-        font-size: 16px;
-        font-weight: 600;
-        color: #1f2937;
-    }
-    
-    .price-value {
-        padding: 6px 10px;
-        border-radius: 6px;
-        font-size: 14px;
-    }
-    
-    .badge.bg-primary-light {
-        background-color: #eff6ff;
-        color: #3b82f6;
-    }
-    
-    /* Quantity Input */
-    .quantity-control {
-        margin-top: 12px;
-    }
-    
-    .quantity-label {
-        font-size: 14px;
-        font-weight: 500;
-        color: #4b5563;
-        background-color: #f8fafc;
-        border: 1px solid #e5e7eb;
-    }
-    
-    .quantity-input {
-        padding: 10px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        font-size: 14px;
-        transition: all 0.2s ease;
-    }
-    
-    .quantity-input:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-        .price-quantity-card {
-            padding: 12px;
-        }
-        
-        .price-title {
-            font-size: 15px;
-        }
-        
-        .price-value {
-            font-size: 13px;
-        }
-    }
-</style>
-
-<script>
-   document.addEventListener('DOMContentLoaded', function() {
-    var dateFromInput = document.getElementById('date_from');
-    var dateToInput = document.getElementById('date_to');
-    var wholeDateFromInput = document.getElementById('whole_date_from');
-    var wholeDateToInput = document.getElementById('whole_date_to');
-    var sharedDateFromInput = document.getElementById('date_from');
-    var sharedDateToInput = document.getElementById('date_to');
-
-    var today = new Date();
-    var tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
-    
-    if (dateFromInput) dateFromInput.min = tomorrowFormatted;
-    if (dateToInput) dateToInput.min = tomorrowFormatted;
-    if (wholeDateFromInput) wholeDateFromInput.min = tomorrowFormatted;
-    if (wholeDateToInput) wholeDateToInput.min = tomorrowFormatted;
-    if (sharedDateFromInput) sharedDateFromInput.min = tomorrowFormatted;
-    if (sharedDateToInput) sharedDateToInput.min = tomorrowFormatted;
-
-    var availabilities = @json($facility->availabilities ?? []);
-    var facilityAttributes = @json($facility->facilityAttributes ?? []);
-    var wholeCalendarInitialized = false;
-    var sharedCalendarInitialized = false;
-    var currentSelectedRoom = null;
-    var currentSelectedWholeRoom = null;
-
-    document.getElementById('shared_selected_room')?.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        currentSelectedRoom = selectedOption.value ? facilityAttributes.find(attr => attr.id == selectedOption.value) : null;
-        
-        if (selectedOption.value) {
-            document.getElementById('shared_selected_room_name').value = selectedOption.getAttribute('data-room-name');
-            document.getElementById('shared_selected_room_capacity').value = selectedOption.getAttribute('data-capacity');
-        } else {
-            document.getElementById('shared_selected_room_name').value = '';
-            document.getElementById('shared_selected_room_capacity').value = '';
-        }
-        
-        if (sharedCalendarInitialized) {
-            const calendarEl = document.getElementById('calendar');
-            if (calendarEl && calendarEl._fullCalendar) {
-                const calendar = calendarEl._fullCalendar;
-                calendar.render();
-                calendar.refetchEvents();
-            }
-        }
-        
-        updateTotalPrice();
-    });
-
-    document.getElementById('selected_room')?.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        currentSelectedWholeRoom = selectedOption.value ? facilityAttributes.find(attr => attr.id == selectedOption.value) : null;
-        
-        if (selectedOption.value) {
-            document.getElementById('selected_room_name').value = selectedOption.getAttribute('data-room-name');
-            document.getElementById('selected_room_capacity').value = selectedOption.getAttribute('data-capacity');
-        } else {
-            document.getElementById('selected_room_name').value = '';
-            document.getElementById('selected_room_capacity').value = '';
-        }
-        
-        if (wholeCalendarInitialized) {
-            const calendarEl = document.getElementById('whole-calendar');
-            if (calendarEl && calendarEl._fullCalendar) {
-                const calendar = calendarEl._fullCalendar;
-                calendar.render();
-                calendar.refetchEvents();
-            }
-        }
-        
-        updateTotalPrice();
-    });
-
-    function getAvailabilityForDate(dateStr) {
-        if (!currentSelectedRoom) return null;
-        
-        const checkDate = new Date(dateStr);
-        const matchingAvailabilities = availabilities.filter(avail => {
-            // Only consider availabilities for the currently selected room
-            if (avail.facility_attribute_id !== currentSelectedRoom.id) return false;
-            
-            const availFrom = avail.date_from ? new Date(avail.date_from) : null;
-            const availTo = avail.date_to ? new Date(avail.date_to) : null;
-            
-            if (avail.date_from && !avail.date_to && new Date(avail.date_from).toDateString() === checkDate.toDateString()) {
-                return true;
-            }
-            if (availFrom && availTo && checkDate >= availFrom && checkDate <= availTo) {
-                return true;
-            }
-            return false;
-        });
-        
-        // Return the most recent availability (assuming availabilities are sorted by date)
-        return matchingAvailabilities[0];
-    }
-
-    function isDateFullyBooked(dateStr) {
-        const availability = getAvailabilityForDate(dateStr);
-        if (!availability) return false;
-        return availability.remaining_capacity <= 0;
-    }
-
-    function isDateOccupied(dateStr) {
-        if (!currentSelectedWholeRoom) return false;
-        const availability = availabilities.find(avail => {
-            const availFrom = avail.date_from ? new Date(avail.date_from) : null;
-            const availTo = avail.date_to ? new Date(avail.date_to) : null;
-            const checkDate = new Date(dateStr);
-            
-            const dateInRange = availFrom && availTo && checkDate >= availFrom && checkDate <= availTo;
-            const singleDate = avail.date_from && !avail.date_to && new Date(avail.date_from).toDateString() === checkDate.toDateString();
-            
-            return (dateInRange || singleDate) && 
-                   avail.facility_attribute_id === currentSelectedWholeRoom.id && 
-                   avail.remaining_capacity < currentSelectedWholeRoom.capacity;
-        });
-        return !!availability;
-    }
-
-    function formatDate(dateStr) {
-        if (!dateStr) return 'Not selected';
-        const date = new Date(dateStr + 'T00:00:00+08:00');
-        return date.toLocaleDateString('en-PH', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        });
-    }
-
-    function updateModalDateDisplay(startDisplay, endDisplay, startDate, endDate) {
-        if (startDisplay) {
-            startDisplay.textContent = formatDate(startDate);
-        }
-        if (endDisplay) {
-            endDisplay.textContent = formatDate(endDate);
-        }
-    }
-
-    function initializeCalendar(section) {
-        const isWhole = section === 'whole';
-        const modalId = isWhole ? 'wholeCalendarModal' : 'calendarModal';
-        const calendarElId = isWhole ? 'whole-calendar' : 'calendar';
-        const dateFromInput = isWhole ? wholeDateFromInput : sharedDateFromInput;
-        const dateToInput = isWhole ? wholeDateToInput : sharedDateToInput;
-        const startDisplay = document.getElementById(isWhole ? 'start-date-display' : 'shared-start-date-display');
-        const endDisplay = document.getElementById(isWhole ? 'end-date-display' : 'shared-end-date-display');
-        const confirmBtnId = isWhole ? 'whole-confirm-dates' : 'confirm-dates';
-        const modalStartDisplay = document.getElementById(isWhole ? 'whole-modal-start-date' : 'modal-start-date');
-        const modalEndDisplay = document.getElementById(isWhole ? 'whole-modal-end-date' : 'modal-end-date');
-        
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.addEventListener('shown.bs.modal', function() {
-                const calendarEl = document.getElementById(calendarElId);
-                if (calendarEl && !calendarEl._fullCalendar) {
-                    let selectedDates = [];
-                    let startDate = dateFromInput?.value || null;
-                    let endDate = dateToInput?.value || null;
-                    
-                    if (startDate && endDate) {
-                        selectedDates = getDatesInRange(startDate, endDate);
-                    }
-                    
-                    const calendar = new FullCalendar.Calendar(calendarEl, {
-                        timeZone: 'Asia/Manila',
-                        locale: 'en',
-                        initialView: 'dayGridMonth',
-                        initialDate: new Date(),
-                        headerToolbar: {
-                            left: 'prev,next today',
-                            center: 'title',
-                            right: 'dayGridMonth'
-                        },
-                        selectable: true,
-                        selectMirror: true,
-                        dayMaxEvents: false,
-                        weekends: true,
-                        validRange: { start: tomorrowFormatted },
-                        moreLinkClick: function(info) { return false; },
-                        dateClick: function(info) {
-                            const clickedDate = info.dateStr;
-                            if (isDateFullyBooked(clickedDate)) {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Not Available',
-                                    text: 'This date is fully reserved and unavailable for booking.',
-                                    confirmButtonColor: '#3085d6',
-                                });
-                                return;
-                            }
-                            if (isWhole && isDateOccupied(clickedDate)) {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: 'Partially Occupied',
-                                    text: 'This date is partially occupied. Please select dates that are completely available.',
-                                    confirmButtonColor: '#3085d6',
-                                });
-                                return;
-                            }
-                            if (typeof calendar.clickCount === 'undefined') calendar.clickCount = 0;
-                            calendar.clickCount++;
-                            if (calendar.clickCount % 2 === 1) {
-                                startDate = clickedDate;
-                                selectedDates = [clickedDate];
-                                endDate = null;
-                            } else {
-                                if (startDate) {
-                                    const start = new Date(startDate);
-                                    const end = new Date(clickedDate);
-                                    if (end >= start) {
-                                        const dateRange = getDatesInRange(startDate, clickedDate);
-                                        const hasReservedDate = dateRange.some(date => isDateFullyBooked(date));
-                                        const hasOccupiedDate = isWhole ? dateRange.some(date => isDateOccupied(date)) : false;
-                                        if (hasReservedDate) {
-                                            Swal.fire({
-                                                icon: 'error',
-                                                title: 'Reserved Dates',
-                                                text: 'One or more dates in your selected range are fully reserved.',
-                                                confirmButtonColor: '#3085d6',
-                                            });
-                                            calendar.clickCount--;
-                                            return;
-                                        }
-                                        if (hasOccupiedDate) {
-                                            Swal.fire({
-                                                icon: 'warning',
-                                                title: 'Occupied Dates',
-                                                text: 'One or more dates in your selected range are partially occupied. Please select a different range.',
-                                                confirmButtonColor: '#3085d6',
-                                            });
-                                            calendar.clickCount--;
-                                            return;
-                                        }
-                                        endDate = clickedDate;
-                                        selectedDates = dateRange;
-                                    } else {
-                                        startDate = clickedDate;
-                                        selectedDates = [clickedDate];
-                                        endDate = null;
-                                        calendar.clickCount = 1;
-                                    }
-                                } else {
-                                    startDate = clickedDate;
-                                    selectedDates = [clickedDate];
-                                    endDate = null;
-                                    calendar.clickCount = 1;
-                                }
-                            }
-                            updateModalDateDisplay(modalStartDisplay, modalEndDisplay, startDate, endDate);
-                            calendar.render();
-                        },
-                        dayCellClassNames: function(info) {
-                            let classes = [];
-                            if (isDateFullyBooked(info.dateStr)) classes.push('fully-booked-date');
-                            if (isWhole && isDateOccupied(info.dateStr)) classes.push('occupied-date');
-                            if (selectedDates.includes(info.dateStr) && !isDateFullyBooked(info.dateStr) && !(isWhole && isDateOccupied(info.dateStr))) {
-                                if (info.dateStr === startDate) classes.push('selected-start-date');
-                                else if (info.dateStr === endDate) classes.push('selected-end-date');
-                                else classes.push('selected-range-date');
-                            }
-                            return classes;
-                        },
-                        dayCellContent: function(args) {
-                            const dateStr = args.date.toISOString().split('T')[0];
-                            const dayNumberEl = document.createElement('div');
-                            dayNumberEl.className = 'fc-daygrid-day-number';
-                            dayNumberEl.textContent = args.dayNumberText;
-                            
-                            if (!isWhole) {
-                                // Shared section logic
-                                if (!currentSelectedRoom) {
-                                    return { domNodes: [dayNumberEl] };
-                                }
-                                
-                                const availability = getAvailabilityForDate(dateStr);
-                                
-                                if (availability) {
-                                    if (availability.remaining_capacity <= 0) {
-                                        const statusEl = document.createElement('div');
-                                        statusEl.className = 'fc-day-status fc-status-booked';
-                                        statusEl.textContent = 'Booked';
-                                        return { domNodes: [dayNumberEl, statusEl] };
-                                    } else {
-                                        const capacityEl = document.createElement('div');
-                                        capacityEl.className = 'fc-day-capacity';
-                                        const capacityClass = availability.remaining_capacity < 3 ? 'fc-capacity-warning' : 'fc-capacity-success';
-                                        capacityEl.classList.add(capacityClass);
-                                        capacityEl.textContent = `${availability.remaining_capacity} left`;
-                                        return { domNodes: [dayNumberEl, capacityEl] };
-                                    }
-                                } else {
-                                    // No availability record means full capacity is available
-                                    const capacityEl = document.createElement('div');
-                                    capacityEl.className = 'fc-day-capacity fc-capacity-success';
-                                    capacityEl.textContent = `${currentSelectedRoom.capacity} left`;
-                                    return { domNodes: [dayNumberEl, capacityEl] };
-                                }
-                            } else {
-                                const availability = availabilities.find(avail => {
-                                    const availFrom = avail.date_from ? new Date(avail.date_from) : null;
-                                    const availTo = avail.date_to ? new Date(avail.date_to) : null;
-                                    const checkDate = new Date(dateStr);
-                                    
-                                    const dateInRange = availFrom && availTo && checkDate >= availFrom && checkDate <= availTo;
-                                    const singleDate = avail.date_from && !avail.date_to && new Date(avail.date_from).toDateString() === checkDate.toDateString();
-                                    
-                                    return (dateInRange || singleDate) && avail.facility_attribute_id === currentSelectedWholeRoom?.id;
-                                });
-                                
-                                if (availability) {
-                                    if (availability.remaining_capacity <= 0) {
-                                        const statusEl = document.createElement('div');
-                                        statusEl.className = 'fc-day-status fc-status-booked';
-                                        statusEl.textContent = 'Booked';
-                                        return { domNodes: [dayNumberEl, statusEl] };
-                                    } else if (availability.remaining_capacity < currentSelectedWholeRoom.capacity) {
-                                        const statusEl = document.createElement('div');
-                                        statusEl.className = 'fc-day-status fc-status-occupied';
-                                        statusEl.textContent = 'Occupied';
-                                        return { domNodes: [dayNumberEl, statusEl] };
-                                    } else {
-                                        const capacityEl = document.createElement('div');
-                                        capacityEl.className = 'fc-day-capacity fc-capacity-success';
-                                        capacityEl.textContent = `${currentSelectedWholeRoom.capacity} left`;
-                                        return { domNodes: [dayNumberEl, capacityEl] };
-                                    }
-                                } else {
-                                    if (currentSelectedWholeRoom) {
-                                        const capacityEl = document.createElement('div');
-                                        capacityEl.className = 'fc-day-capacity fc-capacity-success';
-                                        capacityEl.textContent = `${currentSelectedWholeRoom.capacity} left`;
-                                        return { domNodes: [dayNumberEl, capacityEl] };
-                                    }
-                                    return { domNodes: [dayNumberEl] };
-                                }
-                            }
-                        },
-                        events: function(fetchInfo, successCallback, failureCallback) {
-                            const events = availabilities.map(avail => ({
-                                id: `avail-${avail.id}`,
-                                start: avail.date_from,
-                                end: avail.date_to ? new Date(new Date(avail.date_to).setDate(new Date(avail.date_to).getDate() + 1)) : null,
-                                display: 'background',
-                                backgroundColor: avail.remaining_capacity <= 0 ? 'rgba(220, 53, 69, 0.2)' : (avail.remaining_capacity < (facilityAttributes.find(attr => attr.id === avail.facility_attribute_id)?.capacity || 0) ? 'rgba(253, 126, 20, 0.2)' : 'transparent'),
-                                extendedProps: {
-                                    remaining_capacity: avail.remaining_capacity
-                                }
-                            }));
-                            successCallback(events);
-                        }
-                    });
-                    
-                    calendar.render();
-                    calendarEl._fullCalendar = calendar;
-                    
-                    if (isWhole) {
-                        wholeCalendarInitialized = true;
-                    } else {
-                        sharedCalendarInitialized = true;
-                    }
-                    
-                    if (startDate && endDate) {
-                        updateModalDateDisplay(modalStartDisplay, modalEndDisplay, startDate, endDate);
-                    }
-                    
-                    document.getElementById(confirmBtnId)?.addEventListener('click', function() {
-                        if (startDate && endDate) {
-                            dateFromInput.value = startDate;
-                            dateToInput.value = endDate;
-                            updateDateDisplay(startDisplay, endDisplay, startDate, endDate);
-                            updateTotalPrice();
-                        }
-                    });
-                } else if (calendarEl && calendarEl._fullCalendar) {
-                    const calendar = calendarEl._fullCalendar;
-                    calendar.gotoDate(new Date());
-                    calendar.render();
-                }
-            });
-        }
-    }
-
-    function getDatesInRange(start, end) {
-        const dates = [];
-        const startDate = new Date(start);
-        const endDate = new Date(end);
-        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-            dates.push(d.toISOString().split('T')[0]);
-        }
-        return dates;
-    }
-
-    function updateDateDisplay(startDisplay, endDisplay, startDate, endDate) {
-        if (startDisplay) {
-            startDisplay.textContent = formatDate(startDate);
-        }
-        if (endDisplay) {
-            endDisplay.textContent = formatDate(endDate);
-        }
-    }
-
-    function updateRequiredFields(activeSection) {
-        document.querySelectorAll('#shared-section [required], #whole-section [required]').forEach(field => {
-            field.removeAttribute('required');
-        });
-        if (activeSection === 'shared') {
-            const sharedFields = document.querySelectorAll('#shared-section input[type="date"], #shared-section select');
-            sharedFields.forEach(field => {
-                if (field.style.display !== 'none' && !field.closest('[style*="display: none"]')) {
-                    field.setAttribute('required', 'required');
-                }
-            });
-        } else if (activeSection === 'whole') {
-            if (wholeDateFromInput) wholeDateFromInput.setAttribute('required', 'required');
-            if (wholeDateToInput) wholeDateToInput.setAttribute('required', 'required');
-        }
-    }
-
-    document.querySelectorAll('input[name="booking_type"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.value === 'shared') {
-                document.getElementById('shared-section').style.display = 'block';
-                document.getElementById('whole-section').style.display = 'none';
-                updateRequiredFields('shared');
-                if (!sharedCalendarInitialized) initializeCalendar('shared');
-            } else {
-                document.getElementById('shared-section').style.display = 'none';
-                document.getElementById('whole-section').style.display = 'block';
-                updateRequiredFields('whole');
-                if (!wholeCalendarInitialized) initializeCalendar('whole');
-            }
-            updateTotalPrice();
-        });
-    });
-
-    const defaultBookingType = document.querySelector('input[name="booking_type"]:checked');
-    if (defaultBookingType) {
-        const activeSection = defaultBookingType.value;
-        updateRequiredFields(activeSection);
-        if (activeSection === 'whole' && !wholeCalendarInitialized) {
-            initializeCalendar('whole');
-        } else if (activeSection === 'shared' && !sharedCalendarInitialized) {
-            initializeCalendar('shared');
-        }
-    }
-
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            const activeBookingType = document.querySelector('input[name="booking_type"]:checked');
-            if (activeBookingType) {
-                if (activeBookingType.value === 'whole') {
-                    if (!validateWholeForm()) {
-                        e.preventDefault();
-                        return false;
-                    }
-                } else if (activeBookingType.value === 'shared') {
-                    if (!validateSharedForm()) {
-                        e.preventDefault();
-                        return false;
-                    }
-                }
-            }
-        });
-    }
-});
-
-function updateTotalPrice() {
-    let totalPrice = 0;
-    const bookingType = document.querySelector('input[name="booking_type"]:checked')?.value;
-    
-    if (bookingType === 'shared') {
-        document.querySelectorAll('.quantity-input').forEach(input => {
-            const quantity = parseInt(input.value) || 0;
-            const priceId = input.name.match(/\[(\d+)\]/)[1];
-            const priceValue = parseFloat(document.querySelector(`input[name="price_values[${priceId}]"]`).value) || 0;
-
-            if (!isNaN(priceValue)) {
-                let itemTotal = priceValue * quantity;
-                const dateFrom = document.getElementById('date_from');
-                const dateTo = document.getElementById('date_to');
-
-                if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
-                    const startDate = new Date(dateFrom.value);
-                    const endDate = new Date(dateTo.value);
-                    const diffTime = Math.abs(endDate - startDate);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                    itemTotal = itemTotal * diffDays;
-                }
-                totalPrice += itemTotal;
-            }
-        });
-        
-        const priceSelect = document.getElementById('price_id');
-        if (priceSelect && priceSelect.value) {
-            const selectedOption = priceSelect.options[priceSelect.selectedIndex];
-            const selectedPrice = parseFloat(selectedOption.getAttribute('data-value')) || 0;
-            document.getElementById('selected_price_value').value = selectedPrice;
-            
-            const dateFrom = document.getElementById('date_from');
-            const dateTo = document.getElementById('date_to');
-            
-            if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
-                const startDate = new Date(dateFrom.value);
-                const endDate = new Date(dateTo.value);
-                const diffTime = Math.abs(endDate - startDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                totalPrice += selectedPrice * diffDays;
-            } else {
-                totalPrice += selectedPrice;
-            }
-        }
-    } else if (bookingType === 'whole') {
-        const priceSelect = document.getElementById('whole_price_id');
-        if (priceSelect && priceSelect.value) {
-            const selectedOption = priceSelect.options[priceSelect.selectedIndex];
-            const selectedPrice = parseFloat(selectedOption.getAttribute('data-value')) || 0;
-            
-            document.getElementById('selected_whole_price_value').value = selectedPrice;
-            
-            const dateFrom = document.getElementById('whole_date_from');
-            const dateTo = document.getElementById('whole_date_to');
-            
-            if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
-                const startDate = new Date(dateFrom.value);
-                const endDate = new Date(dateTo.value);
-                const diffTime = Math.abs(endDate - startDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                totalPrice += selectedPrice * diffDays;
-            } else {
-                totalPrice += selectedPrice;
-            }
-        }
-    }
-    
-    const formattedTotal = '₱' + totalPrice.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
-    document.getElementById('computed-total').textContent = formattedTotal;
-    
-    const totalPriceField = document.getElementById('total-price-field');
-    if (totalPriceField) {
-        totalPriceField.value = totalPrice.toFixed(2);
-    }
-}
-
-document.querySelectorAll('.quantity-input').forEach(input => {
-    input.addEventListener('input', updateTotalPrice);
-});
-
-
-
- function updateClientTypeDisplay() {
-        const container = document.getElementById('selected-client-types');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        let hasSelection = false;
-        
-        document.querySelectorAll('.quantity-input').forEach(input => {
-            const quantity = parseInt(input.value) || 0;
-            if (quantity > 0) {
-                hasSelection = true;
-                const priceId = input.name.match(/\[(\d+)\]/)[1];
-                const priceName = document.querySelector(`input[name="price_names[${priceId}]"]`).value;
-                const priceValue = parseFloat(document.querySelector(`input[name="price_values[${priceId}]"]`).value);
-                const total = (quantity * priceValue).toFixed(2);
-                
-                const item = document.createElement('div');
-                item.className = 'client-type-item';
-                item.innerHTML = `
-                    <strong class="fw-bold">${priceName}</strong>
-                    <span>Price:₱${total}</span><br>
-                    <span>Qty: ${quantity}</span>
-                `;
-                container.appendChild(item);
-            }
-        });
-        
-        if (hasSelection) {
-            container.style.display = 'flex'; 
-        } else {
-            container.style.display = 'none';
-        }
-        updateTotalPrice();
-    }
-
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        updateClientTypeDisplay();
-    });
-</script>
-
-
 
 {{-- Validation --}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Function to get the minimum remaining capacity across selected dates
+    const reserveBtn = document.getElementById('reserve-btn');
+    reserveBtn.disabled = true;
+
+    function checkFormValidity() {
+        const bookingType = document.querySelector('input[name="booking_type"]:checked')?.value;
+        let isValid = true;
+
+        if (bookingType === 'shared') {
+            const hasQuantityPrices = @json($facility->prices->where('price_type', 'individual')->where('is_there_a_quantity', true)->isNotEmpty());
+            const hasNonQuantityPrices = @json($facility->prices->where('price_type', 'individual')->where('is_there_a_quantity', false)->isNotEmpty());
+            const isBasedOnDays = @json($facility->prices->where('price_type', 'individual')->first()?->is_based_on_days ?? false);
+
+            if (isBasedOnDays) {
+                const dateFrom = document.getElementById('date_from')?.value;
+                const dateTo = document.getElementById('date_to')?.value;
+                if (!dateFrom || !dateTo) isValid = false;
+            }
+
+            const roomSelect = document.getElementById('shared_selected_room');
+            if (roomSelect && roomSelect.value === "") isValid = false;
+
+            if (hasQuantityPrices) {
+                let hasQuantity = false;
+                document.querySelectorAll('.quantity-input').forEach(input => {
+                    if (parseInt(input.value) > 0) hasQuantity = true;
+                });
+                if (!hasQuantity) isValid = false;
+            }
+
+            if (hasNonQuantityPrices) {
+                const priceSelect = document.getElementById('price_id');
+                if (!priceSelect || priceSelect.value === "") isValid = false;
+            }
+        } 
+        else if (bookingType === 'whole') {
+            const dateFrom = document.getElementById('whole_date_from')?.value;
+            const dateTo = document.getElementById('whole_date_to')?.value;
+            const roomSelect = document.getElementById('selected_room');
+            const priceSelect = document.getElementById('whole_price_id');
+
+            if (!dateFrom || !dateTo) isValid = false;
+            if (!roomSelect || roomSelect.value === "") isValid = false;
+            if (!priceSelect || priceSelect.value === "") isValid = false;
+        }
+
+        if (isValid) {
+            isValid = validateQuantitiesAgainstCapacity();
+        }
+
+        reserveBtn.disabled = !isValid;
+    }
+
     function getMinRemainingCapacity(selectedDates) {
         let minCapacity = Infinity;
-        
-        // This would need to be populated with actual availability data from your backend
         const availabilities = @json($facility->availabilities ?? []);
         const selectedRoomId = document.getElementById('shared_selected_room')?.value;
         
@@ -1722,7 +623,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (availability) {
                 minCapacity = Math.min(minCapacity, availability.remaining_capacity);
             } else {
-                // If no availability record, use the room's full capacity
                 const roomSelect = document.getElementById('shared_selected_room');
                 const roomCapacity = roomSelect ? 
                     parseInt(roomSelect.options[roomSelect.selectedIndex]?.getAttribute('data-capacity')) : 0;
@@ -1733,7 +633,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return minCapacity === Infinity ? 0 : minCapacity;
     }
 
-    // Function to validate quantities against capacity
     function validateQuantitiesAgainstCapacity() {
         const bookingType = document.querySelector('input[name="booking_type"]:checked')?.value;
         
@@ -1743,11 +642,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const dateTo = document.getElementById('date_to')?.value;
             
             if (dateFrom && dateTo) {
-                // Date range selected - check capacity for each date
                 const selectedDates = getDatesInRange(dateFrom, dateTo);
                 maxCapacity = getMinRemainingCapacity(selectedDates);
             } else {
-                // No dates selected - use room capacity
                 const roomSelect = document.getElementById('shared_selected_room');
                 const assignedRoom = document.querySelector('.capacity-card');
                 
@@ -1759,13 +656,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Update capacity display
             const capacityValueElement = document.querySelector('.alert-info .capacity-value');
             if (capacityValueElement) {
                 capacityValueElement.textContent = maxCapacity;
             }
             
-            // Validate quantities
             let totalQuantity = 0;
             document.querySelectorAll('.quantity-input').forEach(input => {
                 totalQuantity += parseInt(input.value) || 0;
@@ -1779,7 +674,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     confirmButtonColor: '#3085d6',
                 });
                 
-                // Reset quantities to zero
                 document.querySelectorAll('.quantity-input').forEach(input => {
                     input.value = '';
                 });
@@ -1792,7 +686,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     }
 
-    // Helper function to get dates in range
     function getDatesInRange(startDate, endDate) {
         const dates = [];
         const currentDate = new Date(startDate);
@@ -1806,20 +699,40 @@ document.addEventListener('DOMContentLoaded', function() {
         return dates;
     }
 
-    // Add event listeners
     document.querySelectorAll('.quantity-input').forEach(input => {
-        input.addEventListener('input', validateQuantitiesAgainstCapacity);
+        input.addEventListener('input', function() {
+            validateQuantitiesAgainstCapacity();
+            checkFormValidity();
+        });
     });
     
-    document.getElementById('shared_selected_room')?.addEventListener('change', validateQuantitiesAgainstCapacity);
+    document.getElementById('shared_selected_room')?.addEventListener('change', function() {
+        validateQuantitiesAgainstCapacity();
+        checkFormValidity();
+    });
     
     document.querySelectorAll('input[name="booking_type"]').forEach(radio => {
-        radio.addEventListener('change', validateQuantitiesAgainstCapacity);
+        radio.addEventListener('change', function() {
+            validateQuantitiesAgainstCapacity();
+            checkFormValidity();
+        });
     });
     
-    // Also validate when dates are selected
     document.getElementById('confirm-dates')?.addEventListener('click', function() {
-        setTimeout(validateQuantitiesAgainstCapacity, 100);
+        setTimeout(function() {
+            validateQuantitiesAgainstCapacity();
+            checkFormValidity();
+        }, 100);
     });
+
+    document.getElementById('price_id')?.addEventListener('change', checkFormValidity);
+    document.getElementById('whole_price_id')?.addEventListener('change', checkFormValidity);
+    document.getElementById('selected_room')?.addEventListener('change', checkFormValidity);
+    document.getElementById('whole-confirm-dates')?.addEventListener('click', function() {
+        setTimeout(checkFormValidity, 100);
+    });
+
+    // Initial check
+    checkFormValidity();
 });
 </script>

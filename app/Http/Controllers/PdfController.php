@@ -18,41 +18,34 @@ class PdfController extends Controller
 {
     public function downloadBillingStatements(Request $request)
     {
-        // Validate the date inputs
         $validator = Validator::make($request->all(), [
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
             'today' => 'nullable|boolean',
         ]);
 
-        // If validation fails, redirect back with errors and input
         if ($validator->fails()) {
             return redirect()->route('admin.report-statements')
                 ->withErrors($validator)
                 ->withInput();
         }
 
-        // Check if "Today" filter is applied
         if ($request->has('today') && $request->input('today') == '1') {
             $startDate = Carbon::today()->toDateString();
             $endDate = Carbon::today()->toDateString();
         } else {
-            // Get start_date and end_date from the request
             $startDate = $request->input('start_date');
             $endDate = $request->input('end_date');
         }
 
-        // Additional validation: Ensure end_date is after or equal to start_date
         if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
             return redirect()->route('admin.report-statements')
                 ->withErrors(['end_date' => 'The end date must be after or equal to the start date.'])
                 ->withInput();
         }
 
-        // Build the query for orders
         $ordersQuery = Order::with('user');
 
-        // Apply date filter if dates are provided
         if ($startDate && $endDate) {
             $start = Carbon::parse($startDate)->startOfDay();
             $end = Carbon::parse($endDate)->endOfDay();
@@ -62,7 +55,6 @@ class PdfController extends Controller
 
         $orders = $ordersQuery->orderBy('created_at', 'desc')->get();
 
-        // Load the view for PDF rendering
         $pdf = PDF::loadView('admin.pdf.pdf-billing', [
             'orders' => $orders,
             'startDate' => $startDate,
@@ -70,16 +62,11 @@ class PdfController extends Controller
         ])
             ->setPaper('A4', 'portrait');
 
-
-
-
-        // Return the generated PDF for download
         return $pdf->download('billing_statements.pdf');
     }
 
     public function downloadPdf(Request $request)
     {
-        // Fetch values from the form submission
         $data = [
             'total_amount' => $request->input('total_amount'),
             'total_reserved_amount' => $request->input('total_reserved_amount'),
@@ -98,19 +85,14 @@ class PdfController extends Controller
             'selectedWeekId'           => $request->input('selected_week_id'),
         ];
 
-        // Generate the PDF using the data only (no graph images)
         $pdf = PDF::loadView('admin.pdf.pdf-reports', $data)
-            ->setPaper('A4', 'portrait'); // Set paper size to A4, portrait orientation
+            ->setPaper('A4', 'portrait');
 
-        // Download the PDF
         return $pdf->download('sales_report.pdf');
     }
 
-
-
     public function downloadProduct(Request $request)
     {
-        // Get the data again for the PDF (same logic as in generateProduct)
         $currentYear = Carbon::now()->year;
         $currentMonth = Carbon::now()->month;
         $selectedYear = $request->input('year', $currentYear);
@@ -139,21 +121,17 @@ class PdfController extends Controller
             ->limit(10)
             ->get();
 
-        // Prepare data for the PDF view
         $mostFrequentLabels = $mostFrequentProducts->pluck('name');
         $mostFrequentData = $mostFrequentProducts->pluck('total_orders');
         $leastBoughtLabels = $leastBoughtProducts->pluck('name');
         $leastBoughtData = $leastBoughtProducts->pluck('total_orders');
 
-        // Initialize DomPDF
         $dompdf = new Dompdf();
         $options = new Options();
         $options->set("isHtml5ParserEnabled", true);
-        // Uncomment the following line if you need to load remote images:
         $options->setIsRemoteEnabled(true);
         $dompdf->setOptions($options);
 
-        // Load HTML content from the view (which now includes the header and images)
         $html = view('admin.pdf.pdf-products', compact(
             'mostFrequentLabels',
             'mostFrequentData',
@@ -161,17 +139,14 @@ class PdfController extends Controller
             'leastBoughtData'
         ))->render();
 
-        // Load HTML and render PDF
         $dompdf->loadHtml($html);
         $dompdf->render();
 
-        // Output the generated PDF to browser
         return $dompdf->stream('product-report.pdf');
     }
 
     public function getMonthlyRegisteredUsers($month, $year)
     {
-        // Fetch the number of users registered in the specified month and year
         return User::whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->count() ?: 0;
@@ -179,7 +154,6 @@ class PdfController extends Controller
 
     public function getWeeklyRegisteredUsers($month, $year)
     {
-
         return User::whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->count() ?: 0;
@@ -198,13 +172,13 @@ class PdfController extends Controller
     {
         return User::latest()->take(5)->get() ?: [];
     }
+
     public function downloadUserReportPdf(Request $request)
     {
         $selectedYear  = $request->input('selectedYear');
         $selectedMonth = $request->input('selectedMonth');
         $selectedWeekId = $request->input('week', 1);
 
-        // --- Recompute Monthly Data ---
         $userRegistrations = DB::select("
             SELECT COUNT(*) AS TotalUsers, MONTH(created_at) AS MonthNo
             FROM users
@@ -219,7 +193,6 @@ class PdfController extends Controller
         }
         $userRegistrationsByMonth = implode(',', $monthlyData);
 
-        // --- Recompute Weekly Data ---
         $weeklyData = array_fill(1, 6, 0);
         $userCounts = DB::table('users')
             ->selectRaw('WEEK(created_at, 1) - WEEK(DATE_SUB(created_at, INTERVAL DAYOFMONTH(created_at)-1 DAY), 1) + 1 as week_number')
@@ -237,7 +210,6 @@ class PdfController extends Controller
         }
         $weeklyChartData = implode(',', $weeklyData);
 
-        // --- Recompute Daily Data (for the selected week) ---
         $startOfMonth = \Carbon\Carbon::createFromDate($selectedYear, $selectedMonth, 1)->startOfMonth();
         $endOfMonth   = \Carbon\Carbon::createFromDate($selectedYear, $selectedMonth, 1)->endOfMonth();
         $weekRanges = [];
@@ -275,10 +247,8 @@ class PdfController extends Controller
         }
         $dailyChartData = implode(',', $dailyData);
 
-        // Get the recent users.
         $recentUsers = User::orderBy('created_at', 'DESC')->take(10)->get();
 
-        // Prepare data for the PDF view.
         $pdfData = [
             'recentUsers'               => $recentUsers,
             'userRegistrationsByMonth'  => $userRegistrationsByMonth,
@@ -294,9 +264,9 @@ class PdfController extends Controller
 
         return $pdf->download('user_report_' . $selectedYear . '_' . $selectedMonth . '.pdf');
     }
+
     public function downloadInventoryReportPdf(Request $request)
     {
-        // Validate the inputs
         $validator = Validator::make($request->all(), [
             'start_date'    => 'nullable|date',
             'end_date'      => 'nullable|date',
@@ -304,46 +274,37 @@ class PdfController extends Controller
             'stock_status'  => 'nullable|string|in:instock,outofstock,reorder',
         ]);
 
-        // If validation fails, redirect back with errors and input
         if ($validator->fails()) {
             return redirect()->route('admin.report-inventory')
                 ->withErrors($validator)
                 ->withInput();
         }
 
-        // Check if "Today" filter is applied
         if ($request->has('today') && $request->input('today') == '1') {
             $startDate = Carbon::today()->toDateString();
             $endDate = Carbon::today()->toDateString();
         } else {
-            // Get start_date and end_date from the request
             $startDate = $request->input('start_date');
             $endDate = $request->input('end_date');
         }
 
-        // Additional validation: Ensure end_date is after or equal to start_date
         if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
             return redirect()->route('admin.report-inventory')
                 ->withErrors(['end_date' => 'The end date must be after or equal to the start date.'])
                 ->withInput();
         }
 
-        // Build the query for products
         $productsQuery = Product::with(['category', 'orderItems', 'attributeValues']);
 
-        // Apply date filter if dates are provided
         if ($startDate && $endDate) {
             $start = Carbon::parse($startDate)->startOfDay();
             $end = Carbon::parse($endDate)->endOfDay();
 
-            // Filter products based on updated_at date
             $productsQuery->whereBetween('updated_at', [$start, $end]);
         }
 
-        // Get the products
         $products = $productsQuery->get();
 
-        // Apply stock status filter if provided
         $stockStatus = $request->input('stock_status');
 
         if ($stockStatus) {
@@ -364,30 +325,23 @@ class PdfController extends Controller
             });
         }
 
-        // Load the view for PDF rendering
         $pdfView = view('admin.pdf.pdf-inventory-report', compact('products', 'startDate', 'endDate'))->render();
 
-        // DomPDF options to improve performance
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isRemoteEnabled', true);
 
-        // Initialize DomPDF and load the HTML
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($pdfView);
 
-        // Setup the paper size and orientation
         $dompdf->setPaper('A4', 'landscape');
 
-        // Render the HTML as PDF
         $dompdf->render();
 
-        // Download the generated PDF file
         return $dompdf->stream('inventory_report.pdf', ['Attachment' => true]);
     }
 
-
-        public function downloadInputSales(Request $request)
+    public function downloadInputSales(Request $request)
     {
         $request->validate([
             'start_date' => 'required|date',
@@ -397,7 +351,7 @@ class PdfController extends Controller
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
         $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
 
-        $chartImage = $request->input('chart_image'); // Retrieve the Base64 chart image
+        $chartImage = $request->input('chart_image');
 
         $salesData = Order::select(
             DB::raw('DATE(created_at) as date'),
@@ -429,7 +383,6 @@ class PdfController extends Controller
                 ->sum('total'),
         ];
 
-        // Generate the PDF
         $pdf = new Dompdf();
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
@@ -454,9 +407,8 @@ class PdfController extends Controller
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
         $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
 
-        $chartImage = $request->input('chart_image'); // Retrieve the Base64 chart image
+        $chartImage = $request->input('chart_image');
 
-        // Query user data grouped by registration day
         $usersData = User::select(
             DB::raw('DATE(created_at) as date'),
             DB::raw('COUNT(id) as total_users'),
@@ -469,7 +421,6 @@ class PdfController extends Controller
             ->orderBy('date', 'asc')
             ->get();
 
-        // Prepare data for the chart
         $chartData = [
             'dates' => $usersData->pluck('date')->toArray(),
             'total_users' => $usersData->pluck('total_users')->toArray(),
@@ -482,7 +433,6 @@ class PdfController extends Controller
             'total_non_employees_count' => User::where('role', 'non-employee')->whereBetween('created_at', [$startDate, $endDate])->count(),
         ];
 
-        // Generate the PDF
         $pdf = new Dompdf();
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
@@ -497,52 +447,45 @@ class PdfController extends Controller
         return $pdf->stream('user-report.pdf');
     }
 
-
     public function facilityStatement(Request $request)
-{
-    // Get filter parameters from request
-    $dateFrom = $request->input('date_from');
-    $dateTo = $request->input('date_to');
-    $status = $request->input('status');
+    {
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $status = $request->input('status');
 
-    // Build the query for payments
-    $paymentsQuery = Payment::with(['user', 'availability.facility', 'availability.facilityAttribute']);
+        $paymentsQuery = Payment::with(['user', 'availability.facility', 'availability.facilityAttribute']);
 
-    // Apply date filter if dates are provided
-    if ($dateFrom && $dateTo) {
-        $start = Carbon::parse($dateFrom)->startOfDay();
-        $end = Carbon::parse($dateTo)->endOfDay();
-        $paymentsQuery->whereHas('availability', function($query) use ($start, $end) {
-            $query->whereBetween('date_from', [$start, $end])
-                  ->orWhereBetween('date_to', [$start, $end]);
-        });
+        if ($dateFrom && $dateTo) {
+            $start = Carbon::parse($dateFrom)->startOfDay();
+            $end = Carbon::parse($dateTo)->endOfDay();
+            $paymentsQuery->whereHas('availability', function($query) use ($start, $end) {
+                $query->whereBetween('date_from', [$start, $end])
+                    ->orWhereBetween('date_to', [$start, $end]);
+            });
+        }
+
+        if ($status) {
+            $paymentsQuery->where('status', $status);
+        }
+
+        $payments = $paymentsQuery->orderBy('created_at', 'desc')->get();
+
+        $formattedDateFrom = $dateFrom ? Carbon::parse($dateFrom)->format('F j, Y') : 'N/A';
+        $formattedDateTo = $dateTo ? Carbon::parse($dateTo)->format('F j, Y') : 'N/A';
+
+        $pdf = PDF::loadView('admin.pdf.pdf-facility-billing', [
+            'payments' => $payments,
+            'dateFrom' => $formattedDateFrom,
+            'dateTo' => $formattedDateTo
+        ])->setPaper('A4', 'portrait');
+
+        $filename = 'facility_billing_statements_';
+        $filename .= $dateFrom ? Carbon::parse($dateFrom)->format('Y-m-d') : 'all';
+        $filename .= '_to_';
+        $filename .= $dateTo ? Carbon::parse($dateTo)->format('Y-m-d') : 'all';
+        $filename .= '.pdf';
+
+        return $pdf->download($filename);
     }
 
-    // Apply status filter if provided
-    if ($status) {
-        $paymentsQuery->where('status', $status);
-    }
-
-    $payments = $paymentsQuery->orderBy('created_at', 'desc')->get();
-
-    // Format dates for display
-    $formattedDateFrom = $dateFrom ? Carbon::parse($dateFrom)->format('F j, Y') : 'N/A';
-    $formattedDateTo = $dateTo ? Carbon::parse($dateTo)->format('F j, Y') : 'N/A';
-
-    // Load the view for PDF rendering
-    $pdf = PDF::loadView('admin.pdf.pdf-facility-billing', [
-        'payments' => $payments,
-        'dateFrom' => $formattedDateFrom,
-        'dateTo' => $formattedDateTo
-    ])->setPaper('A4', 'portrait');
-
-    // Generate filename
-    $filename = 'facility_billing_statements_';
-    $filename .= $dateFrom ? Carbon::parse($dateFrom)->format('Y-m-d') : 'all';
-    $filename .= '_to_';
-    $filename .= $dateTo ? Carbon::parse($dateTo)->format('Y-m-d') : 'all';
-    $filename .= '.pdf';
-
-    return $pdf->download($filename);
-}
 }

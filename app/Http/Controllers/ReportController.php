@@ -152,8 +152,6 @@ class ReportController extends Controller
         ));
     }
 
-    
-    
     public function generateUser(Request $request)
     {
         $dateParams = $this->getDateParameters($request);
@@ -647,80 +645,80 @@ class ReportController extends Controller
     }
 
 
-public function generateInputSales(Request $request)
-{
-    $request->validate([
-        'start_date' => 'required|date',
-        'end_date' => 'nullable|date|after_or_equal:start_date',
-        'month' => 'nullable|integer|between:1,12',
-        'year' => 'nullable|integer|min:2010|max:' . date('Y'),
-        'week' => 'nullable|integer|between:1,6'
-    ]);
-    
-    $dateParams = $this->getDateParameters($request);
-    $periods = $this->getAvailablePeriods();
+    public function generateInputSales(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'month' => 'nullable|integer|between:1,12',
+            'year' => 'nullable|integer|min:2010|max:' . date('Y'),
+            'week' => 'nullable|integer|between:1,6'
+        ]);
+        
+        $dateParams = $this->getDateParameters($request);
+        $periods = $this->getAvailablePeriods();
 
-    $availableMonths = $periods['availableMonths'];
-    $availableWeeks = $periods['availableWeeks'];
-    $yearRange = $periods['yearRange'];
-    
-    $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
-    $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
-    
-    $salesData = Order::select(
-        DB::raw('DATE(created_at) as date'),
-        DB::raw('SUM(total) as total_sales'),
-        DB::raw('SUM(CASE WHEN status = "reserved" THEN total ELSE 0 END) as reserved_sales'),
-        DB::raw('SUM(CASE WHEN status = "pickedup" THEN total ELSE 0 END) as pickedup_sales'),
-        DB::raw('SUM(CASE WHEN status = "canceled" THEN total ELSE 0 END) as canceled_sales')
-    )
-    ->whereBetween('created_at', [$startDate, $endDate])
-    ->groupBy('date')
-    ->orderBy('date', 'asc')
-    ->get();
-    
-    $totalOrders = Order::whereBetween('created_at', [$startDate, $endDate])->count();
-    $reservedSalesTotal = Order::where('status', 'reserved')
+        $availableMonths = $periods['availableMonths'];
+        $availableWeeks = $periods['availableWeeks'];
+        $yearRange = $periods['yearRange'];
+        
+        $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
+        $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
+        
+        $salesData = Order::select(
+            DB::raw('DATE(created_at) as date'),
+            DB::raw('SUM(total) as total_sales'),
+            DB::raw('SUM(CASE WHEN status = "reserved" THEN total ELSE 0 END) as reserved_sales'),
+            DB::raw('SUM(CASE WHEN status = "pickedup" THEN total ELSE 0 END) as pickedup_sales'),
+            DB::raw('SUM(CASE WHEN status = "canceled" THEN total ELSE 0 END) as canceled_sales')
+        )
         ->whereBetween('created_at', [$startDate, $endDate])
-        ->sum('total');
-    $pickedUpSalesTotal = Order::where('status', 'pickedup')
-        ->whereBetween('created_at', [$startDate, $endDate])
-        ->sum('total');
-    $canceledSalesTotal = Order::where('status', 'canceled')
-        ->whereBetween('created_at', [$startDate, $endDate])
-        ->sum('total');
-    
-    $chartData = [
-        'dates' => $salesData->pluck('date')->toArray(),
-        'total_sales' => $salesData->pluck('total_sales')->toArray(),
-        'reserved_sales' => $salesData->pluck('reserved_sales')->toArray(),
-        'pickedup_sales' => $salesData->pluck('pickedup_sales')->toArray(),
-        'canceled_sales' => $salesData->pluck('canceled_sales')->toArray(),
-        'total_orders' => $totalOrders,
-        'reserved_sales_total' => $reservedSalesTotal,
-        'pickedup_sales_total' => $pickedUpSalesTotal,
-        'canceled_sales_total' => $canceledSalesTotal,
-    ];
-    
-    $selectedYear = $dateParams['selectedYear'];
-    $selectedMonth = $periods['availableMonths']->firstWhere('id', $dateParams['selectedMonth']) ?: $periods['availableMonths']->first();
-    $selectedWeekId = $dateParams['selectedWeek'];
-    $availableMonths = $periods['availableMonths'];
-    $availableWeeks = $periods['availableWeeks'];
-    $yearRange = $periods['yearRange'];
-    
-    return view('admin.reports.product-input-sales', compact(
-        'chartData', 
-        'startDate', 
-        'endDate',
-        'selectedMonth',
-        'selectedYear',
-        'selectedWeekId',
-        'availableMonths',
-        'availableWeeks',
-        'yearRange'
-    ));
-}
+        ->groupBy('date')
+        ->orderBy('date', 'asc')
+        ->get();
+        
+        $totalOrders = Order::whereBetween('created_at', [$startDate, $endDate])->count();
+        $reservedSalesTotal = Order::where('status', 'reserved')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->sum('total');
+        $pickedUpSalesTotal = Order::where('status', 'pickedup')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->sum('total');
+        $canceledSalesTotal = Order::where('status', 'canceled')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->sum('total');
+        
+        $chartData = [
+            'dates' => $salesData->pluck('date')->toArray(),
+            'total_sales' => $salesData->pluck('total_sales')->toArray(),
+            'reserved_sales' => $salesData->pluck('reserved_sales')->toArray(),
+            'pickedup_sales' => $salesData->pluck('pickedup_sales')->toArray(),
+            'canceled_sales' => $salesData->pluck('canceled_sales')->toArray(),
+            'total_orders' => $totalOrders,
+            'reserved_sales_total' => $reservedSalesTotal,
+            'pickedup_sales_total' => $pickedUpSalesTotal,
+            'canceled_sales_total' => $canceledSalesTotal,
+        ];
+        
+        $selectedYear = $dateParams['selectedYear'];
+        $selectedMonth = $periods['availableMonths']->firstWhere('id', $dateParams['selectedMonth']) ?: $periods['availableMonths']->first();
+        $selectedWeekId = $dateParams['selectedWeek'];
+        $availableMonths = $periods['availableMonths'];
+        $availableWeeks = $periods['availableWeeks'];
+        $yearRange = $periods['yearRange'];
+        
+        return view('admin.reports.product-input-sales', compact(
+            'chartData', 
+            'startDate', 
+            'endDate',
+            'selectedMonth',
+            'selectedYear',
+            'selectedWeekId',
+            'availableMonths',
+            'availableWeeks',
+            'yearRange'
+        ));
+    }
 
     public function generateInputUsers(Request $request)
     {
@@ -862,7 +860,6 @@ public function generateInputSales(Request $request)
         $query = Payment::with(['user', 'availability.facility', 'paymentDetails'])
             ->orderBy('created_at', 'desc');
 
-        // Apply filters if provided
         if ($request->has('facility_id') && $request->facility_id) {
             $query->whereHas('availability', function($q) use ($request) {
                 $q->where('facility_id', $request->facility_id);
