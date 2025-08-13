@@ -6,9 +6,9 @@
         "build": "vite build"
     },
     "devDependencies": {
-        "@popperjs/core": "^2.11.6",
+        "@popperjs/core": "^2.11.8",
         "axios": "^1.6.4",
-        "bootstrap": "^5.2.3",
+        "bootstrap": "^5.0.2",
         "concurrently": "^9.1.2",
         "laravel-echo": "^1.19.0",
         "laravel-vite-plugin": "^1.2.0",
@@ -17,10 +17,21 @@
         "vite": "^6.2.2"
     },
     "dependencies": {
-        "@fullcalendar/core": "^6.1.15",
-        "@fullcalendar/daygrid": "^6.1.15",
+        "@fortawesome/fontawesome-free": "^6.7.2",
+        "@fullcalendar/core": "^6.1.19",
+        "@fullcalendar/daygrid": "^6.1.19",
+        "@fullcalendar/interaction": "^6.1.19",
+        "@fullcalendar/timegrid": "^6.1.19",
+        "animate.css": "^4.1.1",
+        "apexcharts": "^5.3.3",
+        "bootstrap-select": "^1.13.18",
         "dropzone": "^6.0.0-beta.2",
+        "fullcalendar": "^5.11.5",
+        "jquery": "^3.7.1",
         "moment": "^2.30.1",
-        "pikaday": "^1.8.2"
+        "pikaday": "^1.8.2",
+        "sweetalert2": "^11.22.3",
+        "swiper": "^11.2.10",
+        "toastr": "^2.1.4"
     }
 }

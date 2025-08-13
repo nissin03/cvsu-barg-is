@@ -1,4 +1,4 @@
-{{-- dashoard new working --}}
+
 @extends('layouts.admin')
 @section('content')
     <main class="container">
@@ -218,9 +218,9 @@
                         <div class="flex items-center justify-content-between mb-4">
                             <h5><i class="fas fa-clock me-2"></i>Recent Reservations</h5>
                             <div class="dropdown default">
-                                {{-- <a class="btn btn-secondary dropdown-toggle" href="{{ route('admin.reservations') }}">
+                                <a class="btn btn-secondary dropdown-toggle" href="{{ route('admin.facilities.reservations') }}">
                                     <span class="view-all">View all</span>
-                                </a> --}}
+                                </a>
                             </div>
                         </div>
                         <div class="wg-table table-all-user">
@@ -237,12 +237,47 @@
                                             <th class="text-center action-column">Action</th>
                                         </tr>
                                     </thead>
-                                   <tbody>
+                                    <tbody>
                                         @foreach ($reservations as $payment)
                                             @php
                                                 $availability = $payment->availability;
                                                 $facility = $availability->facility ?? null;
                                                 $facilityAttribute = $availability->facilityAttribute ?? null;
+                                                
+                                                $groupedDates = [];
+                                                if ($payment->grouped_availabilities && $payment->grouped_availabilities->isNotEmpty()) {
+                                                    $sortedAvailabilities = $payment->grouped_availabilities->sortBy('date_from');
+                                                    $currentGroup = [];
+                                                    
+                                                    foreach ($sortedAvailabilities as $avail) {
+                                                        if (empty($currentGroup)) {
+                                                            $currentGroup = [
+                                                                'start' => $avail->date_from,
+                                                                'end' => $avail->date_to
+                                                            ];
+                                                        } elseif (Carbon\Carbon::parse($currentGroup['end'])->addDay()->format('Y-m-d') === $avail->date_from) {
+                                                            $currentGroup['end'] = $avail->date_to;
+                                                        } else {
+                                                            $groupedDates[] = $currentGroup;
+                                                            $currentGroup = [
+                                                                'start' => $avail->date_from,
+                                                                'end' => $avail->date_to
+                                                            ];
+                                                        }
+                                                    }
+                                                    
+                                                    if (!empty($currentGroup)) {
+                                                        $groupedDates[] = $currentGroup;
+                                                    }
+                                                } else if ($availability) {
+                                                    $groupedDates[] = [
+                                                        'start' => $availability->date_from,
+                                                        'end' => $availability->date_to
+                                                    ];
+                                                }
+                                                
+                                                $limitedGroupedDates = array_slice($groupedDates, 0, 3);
+                                                $hasMoreDates = count($groupedDates) > 3;
                                             @endphp
                                             <tr class="table-row-modern">
                                                 <td class="name-cell">
@@ -288,46 +323,23 @@
                                                         --
                                                     @endif
                                                 </td>
-                                                <td class="text-center date-cell" style="font-size: 1.2rem;">
-                                                    @if($payment->availability)
-                                                        @php
-                                                            $allAvailabilities = \App\Models\Availability::where('facility_id', $payment->availability->facility_id)
-                                                                ->where('facility_attribute_id', $payment->availability->facility_attribute_id)
-                                                                ->where('remaining_capacity', $payment->availability->remaining_capacity)
-                                                                ->orderBy('date_from')
-                                                                ->get();
-                                                            
-                                                            $groupedDates = [];
-                                                            $currentGroup = [];
-                                                            
-                                                            foreach ($allAvailabilities as $availability) {
-                                                                if (empty($currentGroup)) {
-                                                                    $currentGroup = [
-                                                                        'start' => $availability->date_from,
-                                                                        'end' => $availability->date_to
-                                                                    ];
-                                                                } elseif (Carbon\Carbon::parse($currentGroup['end'])->addDay()->eq(Carbon\Carbon::parse($availability->date_from))) {
-                                                                    $currentGroup['end'] = $availability->date_to;
-                                                                } else {
-                                                                    $groupedDates[] = $currentGroup;
-                                                                    $currentGroup = [
-                                                                        'start' => $availability->date_from,
-                                                                        'end' => $availability->date_to
-                                                                    ];
-                                                                }
-                                                            }
-                                                            
-                                                            if (!empty($currentGroup)) {
-                                                                $groupedDates[] = $currentGroup;
-                                                            }
-                                                        @endphp
-
+                                            <td class="text-center date-cell" style="font-size: 1.2rem;">
+                                                    @if(!empty($groupedDates))
                                                         <div class="date-ranges">
                                                             @foreach($groupedDates as $range)
-                                                                <div class="date-range" style="font-size: 1.1rem;">
-                                                                    {{ \Carbon\Carbon::parse($range['start'])->format('M j, Y') }}
-                                                                    @if($range['start'] != $range['end'])
-                                                                        - {{ \Carbon\Carbon::parse($range['end'])->format('M j, Y') }}
+                                                                <div class="date-range" style="font-size: 1.1rem; margin-bottom: 2px;">
+                                                                    @if($range['start'] === $range['end'])
+                                                                        {{ \Carbon\Carbon::parse($range['start'])->format('M j, Y') }}
+                                                                    @else
+                                                                        @php
+                                                                            $startDate = \Carbon\Carbon::parse($range['start']);
+                                                                            $endDate = \Carbon\Carbon::parse($range['end']);
+                                                                        @endphp
+                                                                        @if($startDate->format('M') === $endDate->format('M'))
+                                                                            {{ $startDate->format('M j') }} - {{ $endDate->format('j, Y') }}
+                                                                        @else
+                                                                            {{ $startDate->format('M j') }} - {{ $endDate->format('M j, Y') }}
+                                                                        @endif
                                                                     @endif
                                                                 </div>
                                                             @endforeach

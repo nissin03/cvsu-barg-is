@@ -542,98 +542,103 @@ class FacilityController extends Controller
     }
 
 
-public function facilityDashboard()
-{
-    $dashboardData = [
-        'total_reservations' => Payment::count(),
-        'completed_reservations' => Payment::where('status', 'completed')->count(),
-        'pending_reservations' => Payment::where('status', 'pending')->count(),
-        'canceled_reservations' => Payment::where('status', 'canceled')->count(),
-        'active_facilities' => Facility::where('archived', false)->count(),
-        'total_revenue' => Payment::where('status', 'completed')->sum('total_price'),
-    ];
+    public function facilityDashboard()
+    {
+        $dashboardData = [
+            'total_reservations' => Payment::count(),
+            'completed_reservations' => Payment::where('status', 'completed')->count(),
+            'pending_reservations' => Payment::where('status', 'pending')->count(),
+            'canceled_reservations' => Payment::where('status', 'canceled')->count(),
+            'active_facilities' => Facility::where('archived', 0)->count(),
+            'total_revenue' => Payment::where('status', 'completed')->sum('total_price'),
+        ];
 
-    $reservations = Payment::with([
-        'user',
-        'availability.facility', 
-        'availability.facilityAttribute',
-        'transactionReservations'
-    ])
-    ->latest()
-    ->take(10)
-    ->get();
-
-    // Analytics data
-    // Gender distribution
-    $genderData = TransactionReservation::with('user')
-        ->selectRaw('users.sex as gender, COUNT(*) as count')
-        ->join('users', 'transaction_reservations.user_id', '=', 'users.id')
-        ->whereNotNull('users.sex')
-        ->groupBy('users.sex')
+        $reservations = Payment::with([
+            'user',
+            'availability.facility', 
+            'availability.facilityAttribute',
+            'transactionReservations.availability'
+        ])
+        ->latest()
+        ->take(10)
         ->get();
-    
-    $genderSeries = $genderData->pluck('count')->toArray();
-    $genderLabels = $genderData->pluck('gender')->map(function($item) {
-        return ucfirst($item);
-    })->toArray();
 
-    // Department distribution
-    $departmentData = TransactionReservation::with('user')
-        ->selectRaw('users.department as department, COUNT(*) as count')
-        ->join('users', 'transaction_reservations.user_id', '=', 'users.id')
-        ->whereNotNull('users.department')
-        ->groupBy('users.department')
-        ->get();
-    
-    $departmentSeries = $departmentData->pluck('count')->toArray();
-    $departmentLabels = $departmentData->pluck('department')->toArray();
+        $reservations->each(function ($payment) {
+            if ($payment->availability) {
+                $relatedAvailabilities = \App\Models\Availability::whereIn('id', 
+                    \App\Models\TransactionReservation::where('payment_id', $payment->id)
+                        ->pluck('availability_id')
+                )->orderBy('date_from')->get();
+                
+                $payment->grouped_availabilities = $relatedAvailabilities;
+            }
+        });
 
-    // College distribution (assuming course represents college)
-    $collegeData = TransactionReservation::with('user')
-        ->selectRaw('users.course as college, COUNT(*) as count')
-        ->join('users', 'transaction_reservations.user_id', '=', 'users.id')
-        ->whereNotNull('users.course')
-        ->groupBy('users.course')
-        ->get();
-    
-    $collegeSeries = $collegeData->pluck('count')->toArray();
-    $collegeLabels = $collegeData->pluck('college')->toArray();
+        $genderData = Payment::selectRaw('users.sex as gender, COUNT(DISTINCT payments.id) as count')
+            ->join('users', 'payments.user_id', '=', 'users.id')
+            ->whereNotNull('users.sex')
+            ->groupBy('users.sex')
+            ->get();
 
-    // Role distribution
-    $roleData = TransactionReservation::with('user')
-        ->selectRaw('users.role as role, COUNT(*) as count')
-        ->join('users', 'transaction_reservations.user_id', '=', 'users.id')
-        ->whereNotNull('users.role')
-        ->groupBy('users.role')
-        ->get();
-    
-    $roleSeries = $roleData->pluck('count')->toArray();
-    $roleLabels = $roleData->pluck('role')->map(function($item) {
-        return ucfirst(str_replace('-', ' ', $item));
-    })->toArray();
+        $genderSeries = $genderData->pluck('count')->toArray();
+        $genderLabels = $genderData->pluck('gender')->map(function($item) {
+            return ucfirst($item);
+        })->toArray();
 
-    return view('admin.facilities.dashboard', [
-        'dashboardData' => $dashboardData,
-        'reservations' => $reservations,
-        'gender' => [
-            'series' => $genderSeries,
-            'labels' => $genderLabels
-        ],
-        'department' => [
-            'series' => $departmentSeries,
-            'labels' => $departmentLabels
-        ],
-        'college' => [
-            'series' => $collegeSeries,
-            'labels' => $collegeLabels
-        ],
-        'role' => [
-            'series' => $roleSeries,
-            'labels' => $roleLabels
-        ]
-    ]);
-}
-    // Add this method to your FacilityController
+        $departmentData = Payment::selectRaw('users.department as department, COUNT(DISTINCT payments.id) as count')
+            ->join('users', 'payments.user_id', '=', 'users.id')
+            ->whereNotNull('users.department')
+            ->groupBy('users.department')
+            ->get();
+
+        $departmentSeries = $departmentData->pluck('count')->toArray();
+        $departmentLabels = $departmentData->pluck('department')->toArray();
+
+        $collegeData = Payment::selectRaw('users.course as college, COUNT(DISTINCT payments.id) as count')
+            ->join('users', 'payments.user_id', '=', 'users.id')
+            ->whereNotNull('users.course')
+            ->groupBy('users.course')
+            ->get();
+
+        $collegeSeries = $collegeData->pluck('count')->toArray();
+        $collegeLabels = $collegeData->pluck('college')->toArray();
+
+        $roleData = Payment::selectRaw('users.role as role, COUNT(DISTINCT payments.id) as count')
+            ->join('users', 'payments.user_id', '=', 'users.id')
+            ->whereNotNull('users.role')
+            ->groupBy('users.role')
+            ->get();
+
+        $roleSeries = $roleData->pluck('count')->toArray();
+        $roleLabels = $roleData->pluck('role')->map(function($item) {
+            return ucfirst(str_replace('-', ' ', $item));
+        })->toArray();
+
+        return view('admin.facilities.dashboard', [
+            'dashboardData' => $dashboardData,
+            'reservations' => $reservations,
+            'gender' => [
+                'series' => $genderSeries,
+                'labels' => $genderLabels
+            ],
+            'department' => [
+                'series' => $departmentSeries,
+                'labels' => $departmentLabels
+            ],
+            'college' => [
+                'series' => $collegeSeries,
+                'labels' => $collegeLabels
+            ],
+            'role' => [
+                'series' => $roleSeries,
+                'labels' => $roleLabels
+            ]
+        ]);
+    }
+
+
+
+    
     public function analytics()
     {
         // Gender distribution
