@@ -161,8 +161,7 @@ class ReportController extends Controller
         $availableMonths = $periods['availableMonths'];
         $availableWeeks = $periods['availableWeeks'];
         $yearRange = $periods['yearRange'];
-        
-        // Extract selected month and year
+
         $selectedMonth = $dateParams['selectedMonth'];
         $selectedYear = $dateParams['selectedYear'];
 
@@ -857,7 +856,12 @@ class ReportController extends Controller
 
     public function facilitiesStatement(Request $request)
     {
-        $query = Payment::with(['user', 'availability.facility', 'paymentDetails'])
+        $query = Payment::with([
+                'user', 
+                'availability.facility', 
+                'availability.facilityAttribute',
+                'transactionReservations.availability'
+            ])
             ->orderBy('created_at', 'desc');
 
         if ($request->has('facility_id') && $request->facility_id) {
@@ -878,12 +882,23 @@ class ReportController extends Controller
             $query->where('status', $request->status);
         }
 
-        $payments = $query->get();
+        $payments = $query->get()->map(function($payment) {
+            $dates = $payment->transactionReservations->pluck('availability.date_from')->filter()->unique()->sort();
+            
+            if ($dates->count() > 0) {
+                $payment->date_from = $dates->first();
+                $payment->date_to = $dates->last();
+            } else {
+                $payment->date_from = $payment->availability->date_from ?? null;
+                $payment->date_to = $payment->availability->date_to ?? null;
+            }
+            
+            return $payment;
+        });
 
         return view('admin.reports.facility_statement', [
             'payments' => $payments,
             'filters' => $request->all()
         ]);
     }
-
 }

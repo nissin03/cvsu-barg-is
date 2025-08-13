@@ -335,7 +335,6 @@
                 data: { query: query },
                 dataType: 'json',
                 success: function(data) {
-                    console.log('Search response:', data);
                     $("#box-content-search").empty();
 
                     if (data.products.length > 0 || data.facilities.length > 0) {
@@ -361,13 +360,34 @@
 
                         $.each(data.facilities, function(index, item) {
                             var facilityUrl = "{{ route('user.facilities.details', ['slug' => ':slug']) }}".replace(':slug', item.slug || item.id);
-                            var imageUrl = item.image ? "{{ asset('uploads/facilities') }}/" + item.image : "{{ asset('images/default-facility.png') }}";
+                            var imageUrl;
+                            
+                            if (item.image) {
+                                var cleanImageName = item.image;
+                                if (cleanImageName.startsWith('facilities/')) {
+                                    cleanImageName = cleanImageName.replace('facilities/', '');
+                                }
+                                imageUrl = "/storage/facilities/thumbnails/" + cleanImageName;
+                            } else {
+                                imageUrl = "{{ asset('images/default-facility.png') }}";
+                            }
 
                             $("#box-content-search").append(
                                 `<li class="search-result-item">
                                     <a href="${facilityUrl}">
                                         <div class="image">
-                                            <img src="${imageUrl}" alt="${item.name}" loading="lazy">
+                                            <img src="${imageUrl}" 
+                                                alt="${item.name}" 
+                                                loading="lazy"
+                                                onerror="
+                                                    if (this.src.includes('/thumbnails/')) {
+                                                        var fallbackUrl = this.src.replace('/thumbnails/', '/');
+                                                        this.src = fallbackUrl;
+                                                    } else {
+                                                        this.src = '{{ asset('images/default-facility.png') }}';
+                                                        this.onerror = null;
+                                                    }
+                                                ">
                                         </div>
                                         <div class="info">
                                             <div class="name">${item.name}</div>

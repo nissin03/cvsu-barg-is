@@ -49,6 +49,23 @@ class UserSeeder extends Seeder
             'updated_at'        => $createdAt,
         ]);
 
+        // Student
+        $createdAt = $faker->dateTimeBetween('2025-01-01', '2025-12-31');
+        User::create([
+            'name'              => 'User',
+            'email'             => 'user@cvsu.edu.ph',
+            'email_verified_at' => now(),
+            'password'          => Hash::make('password123'),
+            'utype'             => 'USR',
+            'password_set'      => true,
+            'role'              => 'employee',
+            'sex'               => 'male',
+            'phone_number'      => '9' . $faker->numerify('#########'),
+            'created_at'        => $createdAt,
+            'updated_at'        => $createdAt,
+        ]);
+
+
         // Create additional Admin Users
         for ($i = 1; $i <= 4; $i++) {
             $createdAt = $faker->dateTimeBetween('2025-01-01', '2025-12-31');
@@ -60,7 +77,7 @@ class UserSeeder extends Seeder
                 'utype'             => 'ADM',
                 'password_set'      => true,
                 'role'              => 'employee',
-                'sex'               => $faker->randomElement(['male', 'female']),
+                'sex'               => $faker->randomElement(['male']),
                 'phone_number'      => '9' . $faker->numerify('#########'),
                 'created_at'        => $createdAt,
                 'updated_at'        => $createdAt,
