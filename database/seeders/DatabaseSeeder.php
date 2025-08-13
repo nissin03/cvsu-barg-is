@@ -24,13 +24,12 @@ class DatabaseSeeder extends Seeder
             // OrderSeeder::class,
             SlidesSeeder::class,
             // FacilityAndRelationsSeeder::class,
-            FacilitySeeder::class,
+            // FacilitySeeder::class,
             // FacilityReportSeeder::class,
             OrderSeeder::class,
             ReservationSeeder::class,
 
 
         ]);
-
     }
 }
