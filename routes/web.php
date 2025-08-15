@@ -36,11 +36,6 @@ Route::get('/user/facilities', [UserFacilityController::class, 'index'])->name('
 Route::get('/user/facilities/{slug}', [UserFacilityController::class, 'show'])->name('user.facilities.details');
 Route::post('/facilities/calculate-price', [UserFacilityController::class, 'calculatePrice'])->name('facilities.calculatePrice');
 
-Route::post('/reserve', [UserFacilityController::class, 'reserve'])->name('facility.reserve');
-Route::get('/user/checkout', [UserFacilityController::class, 'checkout'])->name('facility.checkout');
-Route::post('user/facilities/place-reservation', [UserFacilityController::class, 'place_reservation'])->name('user.facilities.placeReservation');
-Route::get('/user/reservations', [UserFacilityController::class, 'account_reservation'])->name('user.reservations');
-Route::get('/user/reservatio_history', [UserFacilityController::class, 'reservation_history'])->name('user.reservations_history');
 
 Route::get('/about-us', [AboutController::class, 'index'])->name('about.index');
 
@@ -82,7 +77,6 @@ Route::middleware(['auth', AuthUser::class])->group(function () {
     Route::get('/user/profile', [UserController::class, 'show_profile'])->name('user.profile');
     Route::get('/user/profile/edit/{id}', [UserController::class, 'profile_edit'])->name('user.profile.edit');
     Route::put('/user/profile/update', [UserController::class, 'profile_update'])->name('user.profile.update');
-    // Route::get('user/profile/edit/{id}', [UserController::class, 'edit'])->name('user.profile.edit');
 
     Route::get('/user/profile-image/edit', [UserController::class, 'profile_image_edit'])->name('user.profile.image.edit');
     Route::put('/user/profile-image/update', [UserController::class, 'profile_image_update'])->name('user.profile.image.update');
@@ -91,8 +85,12 @@ Route::middleware(['auth', AuthUser::class])->group(function () {
     Route::get('/order-history', [UserController::class, 'order_history'])->name('user.order.history');
     Route::get('/reservation-history', [UserController::class, 'reservation_history'])->name('user.reservation.history');
 
-    Route::get('/user/reservation', [UserController::class, 'account_reservation'])->name('user.reservation');
-    Route::get('/user/reservation-details/{reservation_id}', [UserController::class, 'account_reservation_details'])->name('user.reservation-details');
+    Route::post('/reserve', [UserFacilityController::class, 'reserve'])->name('facility.reserve');
+    Route::get('/user/checkout', [UserFacilityController::class, 'checkout'])->name('facility.checkout');
+    Route::post('user/facilities/place-reservation', [UserFacilityController::class, 'place_reservation'])->name('user.facilities.placeReservation');
+    Route::get('/user/reservations', [UserFacilityController::class, 'reservations'])->name('user.reservations');
+    Route::get('/user/reservations/{payment_id}/details', [UserFacilityController::class, 'reservation_details'])->name('user.reservation_details');
+    Route::get('/user/reservation-history', [UserFacilityController::class, 'reservation_history'])->name('user.reservations_history');
 
     Route::post('/user/reservation-details/cancel-reservation', [UserController::class, 'account_cancel_reservation'])->name('user.account_cancel_reservation');
 
@@ -134,17 +132,12 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/facility/create', [FacilityController::class, 'create'])->name('admin.facility.create');
         Route::post('/facility/store', [FacilityController::class, 'store'])->name('admin.facilities.store');
         Route::get('/facility/edit/{id}', [FacilityController::class, 'edit'])->name('admin.facilities.edit');
-        // Route::put('/facility/update', [FacilityController::class, 'update'])->name('admin.facilities.update');
         Route::put('/facility/update/{id}', [FacilityController::class, 'update'])->name('admin.facilities.update');
-        // Route::get('/facility/reservation', [FacilityController::class, 'reservations'])->name('admin.facilities.reservations');
         Route::get('/reservation/events/{availability_id}', [FacilityController::class, 'events'])->name('admin.facilities.reservations-events');
         Route::get('/{availability_id}/reservation-history', [FacilityController::class, 'reservationHistory'])->name('admin.facilities.reservations-history');
 
 
         Route::get('/facilities/dashboard', [FacilityController::class, 'facilityDashboard'])->name('admin.facilities.dashboard');
-        // Route::get('/facilities/analytics', [FacilityController::class, 'analytics'])->name('admin.facilities.analytics');
-        // Route::get('/admin/facilities/analytics', [FacilityController::class, 'facilityDashboard']);
-
 
         Route::get('/facility/reports', [FacilityReportController::class, 'index'])->name('admin.facility.reports');
         Route::get('/facilities/reports/data', [FacilityReportController::class, 'data'])->name('admin.facility.reports.data');

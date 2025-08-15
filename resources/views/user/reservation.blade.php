@@ -1,131 +1,324 @@
 @extends('layouts.app')
 
 @section('content')
-    @php
-        $user = auth()->user();
-        $currentRoute = request()->route()->getName();
+    <style>
+        .pt-90 {
+            padding-top: 90px !important;
+        }
 
-        // Determine the base home route based on user type
-        $homeRoute = match ($user->utype ?? 'guest') {
-            'USR' => route('user.index'),
-            'ADM' => route('admin.index'),
-            default => route('home.index'),
-        };
+        .my-account .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+            padding-bottom: 13px;
+        }
 
-        $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
+        .my-account .wg-box {
+            background: #fff;
+            border: 1px solid #eaeaea;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
 
-        // Customize breadcrumbs based on the current route
-        $breadcrumbs[] = [
-            'url' => null,
-            'label' => $currentRoute === 'user.rentals' ? 'Rentals' : ucwords(str_replace('.', ' ', $currentRoute)),
-        ];
-    @endphp
+        /* Reservation Summary Styles */
+        .reservation-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
 
-    <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
+        .reservation-summary .left-section,
+        .reservation-summary .right-section {
+            width: 48%;
+        }
+
+        .reservation-summary .reservation-status {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .reservation-summary .reservation-info {
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        /* Table Styles */
+        .table-custom {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+
+        .table-custom th,
+        .table-custom td {
+            padding: 12px;
+            border: 1px solid #eaeaea;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .table-custom th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+        }
+
+        .facility-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .facility-info img {
+            width: 80px;
+            height: 80px;
+            margin-right: 15px;
+            border: 1px solid #eaeaea;
+            border-radius: 4px;
+            object-fit: cover;
+        }
+
+        .facility-details {
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            color: #fff;
+        }
+
+        .badge-success {
+            background-color: #28a745;
+        }
+
+        .badge-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .badge-danger {
+            background-color: #dc3545;
+        }
+
+        .badge-info {
+            background-color: #17a2b8;
+        }
+
+        /* Buttons */
+        .btn-custom {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-top: 10px;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+        }
+
+        .btn-outline-primary {
+            background-color: transparent;
+            color: #007bff;
+            border: 1px solid #007bff;
+        }
+
+        .text-end {
+            text-align: right;
+        }
+
+        /* Date Range Display */
+        .date-range {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+            margin: 10px 0;
+        }
+
+        .date-range .date-label {
+            font-weight: 600;
+            color: #007bff;
+        }
+
+        .date-range .date-value {
+            color: #333;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .reservation-summary .left-section,
+            .reservation-summary .right-section {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+        }
+
+        /* Status Timeline */
+        .status-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .status-timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e9ecef;
+        }
+
+        .status-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .status-item::before {
+            content: '';
+            position: absolute;
+            left: -22px;
+            top: 5px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #007bff;
+        }
+
+        .status-item.completed::before {
+            background-color: #28a745;
+        }
+
+        .status-item.pending::before {
+            background-color: #ffc107;
+        }
+
+        .status-item.canceled::before {
+            background-color: #dc3545;
+        }
+    </style>
+
+    <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="Reservation"
         :breadcrumbs="$breadcrumbs" />
 
     <main class="container" style="padding-top: 1em;">
+        <div class="mb-4 pb-4"></div>
+
         <section class="my-account container">
-            <h2 class="page-title">Rentals</h2>
+            <h2 class="page-title">Facility Reservations</h2>
 
             <div class="row">
                 <div class="col-lg-2">
                     @include('user.account__nav')
                 </div>
 
-                <!-- <div class="col-lg-10">
-                    <div class="accordion mt-5" id="rentalAccordion">
-                        @foreach ($reservations as $reservation)
-    <div class="accordion-item mb-3 shadow-sm border rounded">
-                                <h2 class="accordion-header" id="headingReservation{{ $reservation->id }}">
-                                    <button class="accordion-button d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReservation{{ $reservation->id }}" aria-expanded="{{ $loop->first ? 'true' : 'false' }}" aria-controls="collapseReservation{{ $reservation->id }}">
-                                        <span>
-                                            <strong>Reservation #{{ $reservation->id }}</strong>
-                                            <small class="text-muted">Placed on {{ $reservation->created_at->format('M d, Y') }}</small>
-                                        </span>
-                                        <span>
-                                            <span class="badge bg-{{ $reservation->rent_status == 'completed' ? 'success' : ($reservation->rent_status == 'canceled' ? 'danger' : ($reservation->rent_status == 'reserved' ? 'warning' : 'secondary')) }}">
-                                                {{ ucfirst($reservation->rent_status) }}
-                                            </span>
-                                        </span>
-                                    </button>
-                                </h2>
-                                <div id="collapseReservation{{ $reservation->id }}" class="accordion-collapse collapse {{ $loop->first ? 'show' : '' }}" aria-labelledby="headingReservation{{ $reservation->id }}" data-bs-parent="#rentalAccordion">
-                                    <div class="accordion-body">
+                <div class="col-lg-10">
+                    @forelse ($payments as $payment)
+                <div class="wg-box">
+                    <div class="reservation-summary">
+                        <!-- Left Section -->
+                        <div class="left-section">
+                            <div class="reservation-status">
+                                @if ($payment->status == 'completed')
+                                    <span class="badge badge-success">Completed</span>
+                                @elseif($payment->status == 'canceled')
+                                    <span class="badge badge-danger">Canceled</span>
+                                @elseif($payment->status == 'reserved')
+                                    <span class="badge badge-info">Reserved</span>
+                                @else
+                                    <span class="badge badge-warning">Pending</span>
+                                @endif
+                            </div>
+                            <div class="reservation-info">
+                                <p><strong>Reservation No:</strong> {{ $payment->id }}</p>
+                                <p><strong>Reservation Date:</strong> {{ $payment->created_at->format('M d, Y H:i') }}</p>
+                                <p><strong>Last Updated:</strong> {{ $payment->updated_at->format('M d, Y H:i') }}</p>
+                                @if ($payment->updated_by)
+                                    <p><strong>Updated By:</strong> {{ $payment->updatedBy->name }}</p>
+                                @endif
+                            </div>
+                        </div>
 
-                                        <div class="d-flex justify-content-between mb-3">
-                                            <div>
-                                                <p><strong>Name: </strong>{{ $reservation->rental->name }}</p>
-                                                <p><strong>Status: </strong>{{ ucfirst($reservation->rent_status) }}</p>
-                                                <p><strong>Payment: </strong>{{ ucfirst($reservation->payment_status) }}</p>
-                                            </div>
-                                            <div>
-                                                <p><strong>Total Price: </strong>
-                                                    @if ($reservation->rental->name === 'International House II')
-    &#8369; {{ number_format($reservation->total_price, 2) }}
-@elseif ($reservation->rental->name === 'Swimming Pool')
-    &#8369; {{ number_format($reservation->total_price, 2) }}
-@elseif (in_array($reservation->rental->name, ['Male Dormitory', 'Female Dormitory']) && $reservation->dormitoryRoom)
-    &#8369; {{ number_format($reservation->rental->price, 2) }}
-@else
-    &#8369; {{ number_format($reservation->total_price, 2) }}
-    @endif
-                                                </p>
+                        <!-- Right Section -->
+                        <div class="right-section">
+                            <div class="reservation-info">
+                                <p><strong>Facility:</strong> {{ $payment->availability->facility->name }}</p>
+                                <p><strong>Total Price:</strong> &#8369;{{ number_format($payment->total_price, 2) }}</p>
+                                <p><strong>Status:</strong> {{ ucfirst($payment->status) }}</p>
+                            </div>
+                        </div>
+                    </div>
 
-                                                @if ($reservation->rental->name === 'Swimming Pool')
-    <p><strong>Pool Quantity: </strong>{{ $reservation->pool_quantity }}</p>
-@elseif (in_array($reservation->rental->name, ['Male Dormitory', 'Female Dormitory', 'International House II']) &&
-        $reservation->rent_status === 'reserved' &&
-        $reservation->dormitoryRoom)
-    <p><strong>Room Number: </strong> {{ $reservation->dormitoryRoom->room_number }}</p>
-                                                    <p><strong>Room Capacity: </strong> {{ $reservation->dormitoryRoom->room_capacity }}</p>
-    @endif
-                                            </div>
-                                        </div>
-                                     -->
-                <!-- Reservation Footer Details -->
-                <div class="mt-3 d-flex justify-content-between align-items-center">
-                    <p class="text-muted"><strong>Reservation Date:</strong>
-                        @if ($reservation->rental->name === 'International House II' && $reservation->reservation_ih2_date)
-                            {{ implode(', ', json_decode($reservation->reservation_ih2_date, true)) }}
-                        @elseif ($reservation->dormitoryRoom && in_array($reservation->rental->name, ['Male Dormitory', 'Female Dormitory']))
-                            {{ $reservation->dormitoryRoom->start_date }}
-                        @else
-                            {{ $reservation->reservation_date }}
+                    <!-- Date Range Information -->
+                    <div class="date-range">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><span class="date-label">Date From:</span> 
+                                    <span class="date-value">{{ \Carbon\Carbon::parse($payment->availability->date_from)->format('M d, Y') }}</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><span class="date-label">Date To:</span> 
+                                    <span class="date-value">{{ \Carbon\Carbon::parse($payment->availability->date_to)->format('M d, Y') }}</span>
+                                </p>
+                            </div>
+                        </div>
+                        @if ($payment->availability->time_start && $payment->availability->time_end)
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><span class="date-label">Time Start:</span> 
+                                        <span class="date-value">{{ \Carbon\Carbon::parse($payment->availability->time_start)->format('h:i A') }}</span>
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><span class="date-label">Time End:</span> 
+                                        <span class="date-value">{{ \Carbon\Carbon::parse($payment->availability->time_end)->format('h:i A') }}</span>
+                                    </p>
+                                </div>
+                            </div>
                         @endif
-                    </p>
-                    <a href="{{ route('user.reservation-details', ['reservation_id' => $reservation->id]) }}"
-                        class="btn btn-outline-primary">View Details</a>
+                    </div>
+
+                    <div class="text-end">
+                        <a class="btn btn-custom btn-outline-primary" href="{{ route('user.reservation_details', ['payment_id' => $payment->id]) }}">View Details</a>
+                    </div>
                 </div>
-            </div>
+                    @empty
+                        <div class="wg-box">
+                            <div class="text-center">
+                                <h4>No Facility Reservations Found</h4>
+                                <p class="text-muted">You haven't made any facility reservations yet.</p>
+                                <a href="{{ route('user.facilities.index') }}" class="btn btn-custom btn-outline-primary">Browse Facilities</a>
+                            </div>
+                        </div>
+                    @endforelse
 
-            </div>
-            </div>
-            @endforeach
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="d-flex justify-content-between flex-wrap gap-2 pagination-wrapper">
-                {{ $reservations->links('pagination::bootstrap-5') }}
-            </div>
-            </div>
+                    <!-- Pagination -->
+                    @if ($payments->hasPages())
+                        <div class="wg-box">
+                            <div class="d-flex justify-content-center">
+                                {{ $payments->links('pagination::bootstrap-5') }}
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
         </section>
     </main>
 @endsection
 
-
-@push('styles')
-    <style>
-        .accordion-button {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .pagination-wrapper {
-            margin-top: 20px;
-        }
-    </style>
+@push('scripts')
+    <script>
+        $(function() {
+            console.log('Facility Reservations page loaded');
+        });
+    </script>
 @endpush

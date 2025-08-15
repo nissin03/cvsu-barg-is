@@ -2,38 +2,6 @@
 @section('content')
 
 
-@php
-    $user = auth()->user();
-    $currentRoute = request()->route()->getName();
-
-    // Determine the base home route based on user type
-    $homeRoute = match ($user->utype ?? 'guest') {
-        'USR' => route('user.index'),
-        'DIR' => route('director.index'),
-        'ADM' => route('admin.index'),
-        default => route('home.index'),
-    };
-
-    // Initialize breadcrumbs array with the Home link
-    $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
-
-    // Breadcrumbs logic
-    $routesWithBreadcrumbs = [
-        'facilities.index' => ['Rentals'],
-        'facilities.details' => ['Rentals', 'Rental Details'],
-        'about.index' => ['About Us'],
-        'contact.index' => ['Contact Us'],
-    ];
-
-    if (isset($routesWithBreadcrumbs[$currentRoute])) {
-        foreach ($routesWithBreadcrumbs[$currentRoute] as $label) {
-            $breadcrumbs[] = ['url' => null, 'label' => $label];
-        }
-    } else {
-        $breadcrumbs[] = ['url' => null, 'label' => 'Facility Details'];
-    }
-@endphp
-
 <link href="{{ asset('css/facility/details.css') }}" rel="stylesheet">
 
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
@@ -305,27 +273,27 @@
 @if ($facility->facility_type === 'whole_place')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var dateFromInput = document.getElementById('date_from');
-            var dateToInput = document.getElementById('date_to');
-            var timeStartInput = document.getElementById('time_start');
-            var timeEndInput = document.getElementById('time_end');
-            var clientTypeDropdown = document.getElementById('client_type');
-            var totalPriceElement = document.getElementById('total-price').querySelector('span');
+            let dateFromInput = document.getElementById('date_from');
+            let dateToInput = document.getElementById('date_to');
+            let timeStartInput = document.getElementById('time_start');
+            let timeEndInput = document.getElementById('time_end');
+            let clientTypeDropdown = document.getElementById('client_type');
+            let totalPriceElement = document.getElementById('total-price').querySelector('span');
             
-            var hasDayBasedPricing = @json($facility->prices->contains('is_based_on_days', true));
-            var userType = @json(auth()->user()->utype ?? 'USR');
+            let hasDayBasedPricing = @json($facility->prices->contains('is_based_on_days', true));
+            let userType = @json(auth()->check() ? auth()->user()->utype ?? 'USR' : 'USR');
             
-            var availabilities = @json($facility->availabilities ?? []);
-            var facilityCapacity = @json($wholeAttr->whole_capacity ?? 0);
+            let availabilities = @json($facility->availabilities ?? []);
+            let facilityCapacity = @json($wholeAttr->whole_capacity ?? 0);
 
-            var today = new Date();
-            var tomorrow = new Date(today);
+            let today = new Date();
+            let tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 3);
-            var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
+            let tomorrowFormatted = tomorrow.toISOString().split('T')[0];
 
             function getMaxDate() {
                 if (userType === 'ADM') return null;
-                var maxDate = new Date();
+                let maxDate = new Date();
                 maxDate.setMonth(maxDate.getMonth() + 1);
                 return maxDate.toISOString().split('T')[0];
             }
@@ -658,7 +626,7 @@
         tomorrow.setDate(tomorrow.getDate() + 3);
         var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
         
-        var userType = @json(auth()->user()->utype);
+        var userType = @json(auth()->check() ? auth()->user()->utype : 'USR');
         var maxDate = null;
         var maxDateFormatted = null;
         
@@ -1256,7 +1224,7 @@ document.addEventListener('DOMContentLoaded', function() {
     tomorrow.setDate(tomorrow.getDate() + 3);
     var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
     
-    var userType = @json(auth()->user()->utype ?? 'USR');
+    var userType = @json(auth()->check() ? auth()->user()->utype ?? 'USR' : 'USR');
     
     var maxDate = null;
     var maxDateFormatted = null;

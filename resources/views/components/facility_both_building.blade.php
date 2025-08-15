@@ -4,7 +4,7 @@
         if (is_null($attribute->sex_restriction)) {
             return true;
         }
-        return $attribute->sex_restriction === auth()->user()->sex;
+        return auth()->check() && $attribute->sex_restriction === auth()->user()->sex;
     });
     $availableRoom = $filteredAttributes->first(function($attribute) {
         return $attribute->whole_capacity > 0;

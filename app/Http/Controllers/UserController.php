@@ -27,20 +27,18 @@ class UserController extends Controller
     {
         return view('about.index');
     }
-    
+
     public function orders()
     {
-
-
         $orders = Order::where('user_id', Auth::user()->id)
-                        ->whereNotIn('status', ['canceled', 'pickedup']) // Exclude canceled or picked-up orders
-                        ->orderBy('created_at', 'DESC')
-                        ->paginate(10);
-        
+            ->whereNotIn('status', ['canceled', 'pickedup'])
+            ->orderBy('created_at', 'DESC')
+            ->paginate(10);
+
         return view('user.orders', compact('orders'));
     }
 
- 
+
     public function order_details($order_id)
     {
         $order = Order::where('user_id', Auth::user()->id)->where('id', $order_id)->first();
@@ -57,19 +55,16 @@ class UserController extends Controller
     {
         $userId = Auth::user()->id;
 
-        // Get the date 30 days ago
         $thirtyDaysAgo = Carbon::now()->subDays(30);
-
-        // Fetch only accepted, canceled, or picked-up orders for history
         $orders = Order::where('user_id', $userId)
-                        ->whereIn('status', ['accepted', 'canceled', 'pickedup']) // Filter by history status
-                        ->where('created_at', '>=', $thirtyDaysAgo) // Filter orders from the last 30 days
-                        ->orderBy('created_at', 'desc') // Order by the latest first
-                        ->paginate(10);
+            ->whereIn('status', ['accepted', 'canceled', 'pickedup'])
+            ->where('created_at', '>=', $thirtyDaysAgo)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
         return view('user.order_history', compact('orders'));
     }
-    
+
     public function show_profile()
     {
         $user = Auth::user();
@@ -134,10 +129,10 @@ class UserController extends Controller
         $user->save();
 
         if (session()->has('url.intended')) {
-                $intendedUrl = session()->pull('url.intended');
-                return redirect()->to($intendedUrl)
-                    ->with('profile_completed', 'Your profile has been successfully updated!');
-            }
+            $intendedUrl = session()->pull('url.intended');
+            return redirect()->to($intendedUrl)
+                ->with('profile_completed', 'Your profile has been successfully updated!');
+        }
 
         if (Cart::instance('cart')->count() > 0) {
             return redirect()->route('cart.checkout')->with('success', 'Profile updated successfully.');
@@ -197,76 +192,4 @@ class UserController extends Controller
 
         return redirect()->route('user.profile')->with('error', 'No profile image to delete.');
     }
-
-    public function account_reservation()
-    {
-        $reservations = Reservation::where('user_id', Auth::user()->id)
-            ->whereNotIn('rent_status', ['completed', 'canceled']) // Exclude completed and canceled reservations
-            ->orderBy('created_at', 'DESC')
-            ->paginate(5);
-    
-        return view('user.reservation', compact('reservations'));
-    }
-        public function account_reservation_details($reservation_id)
-        {
-    
-            $reservation = Reservation::where('user_id', Auth::user()->id)->find($reservation_id);        
-
-            if ($reservation) {
-                
-                return view('user.reservation-details', compact('reservation'));
-            } else {
-                return redirect()->route('user.reservation.history')->with('error', 'Reservation not found.');
-            }
-        }
-
-        
-
-        // public function account_cancel_reservation(Request $request)
-        // {
-        //     // Find the reservation by ID and ensure it belongs to the authenticated user
-        //     $reservation = Reservation::where('id', $request->reservation_id)
-        //                                 ->where('user_id', Auth::id())
-        //                                 ->first();
-        
-        //     if (!$reservation) {
-        //         return back()->with('error', 'Reservation not found.');
-        //     }
-        
-        //     // Update the rent_status, payment_status, and canceled_date fields
-        //     $reservation->rent_status = "canceled";
-        //     $reservation->payment_status = "canceled";
-        //     $reservation->canceled_date = Carbon::now();
-        //     $reservation->save();
-        
-        //     return redirect()->route('user.reservation.history')->with("status", "Reservation has been cancelled successfully!");
-        // }
-        
-
-
-            
-        public function reservation_history()
-        {
-            $userId = Auth::user()->id;
-
-            // Get the date 30 days ago
-            $thirtyDaysAgo = Carbon::now()->subDays(30);
-
-         // Fetch reservations that are reserved, completed, or canceled
-            $reservations = Reservation::where('user_id', $userId)
-            ->whereIn('rent_status', ['completed', 'canceled']) // Include only completed or canceled reservations
-            ->where(function ($query) use ($thirtyDaysAgo) {
-                $query->where('created_at', '>=', $thirtyDaysAgo)
-                    ->orWhere('canceled_date', '>=', $thirtyDaysAgo);
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
-            return view('user.reservation_history', compact('reservations'));
-        }   
-        
-
-
-
-
 }
