@@ -24,8 +24,12 @@ class HomeController extends Controller
     public function index()
     {
         $slides = Slide::where('status', 1)->get()->take(3);
-        $categories = Category::orderBy('name')->get();
-        $fproducts = Product::where('featured', 1)->get()->take(8);
+        $categories = Category::whereNotNull('parent_id')->take(3)->get();
+        $fproducts = Product::where('featured', 1)
+                ->where('stock_status', '!=', 'outofstock')
+                ->where('quantity', '>', 0)
+                ->get()
+                ->take(8);
         return view('index', compact('slides', 'categories', 'fproducts'));
     }
     public function contact()
@@ -54,14 +58,24 @@ class HomeController extends Controller
             'message.max' => 'The message must not exceed 65535 characters.'
         ]);
 
-        $lastContact = Contact::where('user_id', $user->id)
-            ->latest()
-            ->first();
-        $timeWindow = 60;
+        $todaysMessagesCount = Contact::where('user_id', $user->id)
+                                ->whereDate('created_at', today())
+                                ->count();
 
-        if ($lastContact && Carbon::parse($lastContact->created_at)->diffInMinutes(Carbon::now()) < $timeWindow) {
-            return redirect()->back()->with('error', 'You can only send one message every ' . $timeWindow . ' minutes.');
+        if ($todaysMessagesCount >= 3) {
+            return redirect()->back()->withErrors([
+                'message_limit' => 'You have reached your daily limit of 3 messages. Please try again tomorrow.'
+            ]);
         }
+
+        // $lastContact = Contact::where('user_id', $user->id)
+        //     ->latest()
+        //     ->first();
+        // $timeWindow = 60;
+
+        // if ($lastContact && Carbon::parse($lastContact->created_at)->diffInMinutes(Carbon::now()) < $timeWindow) {
+        //     return redirect()->back()->with('error', 'You can only send one message every ' . $timeWindow . ' minutes.');
+        // }
 
         $contact = new Contact();
         $contact->name = $user->name;
@@ -76,10 +90,63 @@ class HomeController extends Controller
         return redirect()->back()->with('success', 'Your message has been sent successfully.');
     }
 
-    public function search(Request  $request)
+    public function search(Request $request)
     {
         $query = $request->input('query');
-        $results = Product::where('name', 'LIKE', "%{$query}%")->get()->take(8);
-        return response()->json($results);
+        
+        if (empty($query)) {
+            return response()->json([
+                'products' => [],
+                'facilities' => []
+            ]);
+        }
+        
+        $products = Product::query()
+            ->with(['attributeValues'])
+            ->where(function($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                ->orWhere('short_description', 'LIKE', "%{$query}%");
+            })
+            ->where('archived', false)
+            ->take(5)
+            ->get()
+            ->map(function($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'image' => $product->image,
+                    'short_description' => $product->short_description,
+                    'price' => $product->attributeValues->isNotEmpty() 
+                        ? $product->attributeValues->first()->price 
+                        : $product->price
+                ];
+            });
+
+        $facilities = Facility::query()
+            ->where(function($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                ->orWhere('description', 'LIKE', "%{$query}%");
+            })
+            ->where('archived', false)
+            ->take(5)
+            ->get()
+            ->map(function($facility) {
+                return [
+                    'id' => $facility->id,
+                    'name' => $facility->name,
+                    'slug' => $facility->slug,
+                    'image' => $facility->image,
+                    'description' => $facility->description
+                ];
+            });
+
+        return response()->json([
+            'products' => $products,
+            'facilities' => $facilities
+        ]);
     }
+
+
+
 }

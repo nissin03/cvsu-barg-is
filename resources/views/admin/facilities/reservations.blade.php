@@ -225,7 +225,7 @@
                                 </td>
                         
                                 <td class="text-center">
-                                {{ $availability->date_from }} - {{ $availability->date_to }}
+                                {{ \Carbon\Carbon::parse($availability->date_from)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($availability->date_to)->format('M d, Y') }}
                                 </td>
                                 
                                 

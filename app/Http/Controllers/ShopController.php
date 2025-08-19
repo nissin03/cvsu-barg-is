@@ -15,10 +15,11 @@ class ShopController extends Controller
         $o_column = "";
         $o_order = "";
         $order = $request->query('order') ? $request->query('order') : -1;
-        $f_categories = $request->query('categories');
-        $sex = $request->query('sex', ''); // Add sex parameter with default empty string
-        
-        switch($order) {
+        $f_categories = $request->query('categories', '');
+        $sex = $request->query('sex', '');
+        $priceRange = $request->query('priceRange', '');
+
+        switch ($order) {
             case 1:
                 $o_column = 'created_at';
                 $o_order = 'DESC';
@@ -40,27 +41,71 @@ class ShopController extends Controller
                 $o_order = 'DESC';
                 break;
         }
-        
-        $categories = Category::with('children')->whereNull('parent_id')->orderBy('name', 'ASC')->get();
-        
-        // Modify query to include gender filter
-        $products = Product::where(function ($query) use ($f_categories) {
-            $query->whereIn('category_id', explode(',', $f_categories))->orWhereRaw("'" . $f_categories . "'=''"); // include all if no category is selected
+
+        $categories = Category::with(['children', 'products'])
+            ->whereNull('parent_id')
+            ->orderBy('name', 'ASC')
+            ->get()
+            ->map(function ($category) {
+                $category->total_products = $category->products->count() +
+                    $category->children->sum(function ($child) {
+                        return $child->products->count();
+                    });
+                return $category;
+            });
+
+        $selected_categories = $f_categories ? explode(',', $f_categories) : [];
+        $expanded_categories = [];
+
+        foreach ($selected_categories as $category_id) {
+            $category = Category::find($category_id);
+            if ($category) {
+                $expanded_categories[] = $category_id;
+                if (is_null($category->parent_id)) {
+                    $expanded_categories = array_merge(
+                        $expanded_categories,
+                        $category->children->pluck('id')->toArray()
+                    );
+                }
+            }
+        }
+        $expanded_categories = array_unique($expanded_categories);
+
+        $products = Product::where(function ($query) use ($expanded_categories, $f_categories) {
+            if (!empty($expanded_categories)) {
+                $query->whereIn('category_id', $expanded_categories);
+            } elseif ($f_categories === '') {
+                $query->whereNotNull('category_id');
+            }
         })
-        ->when($sex !== '', function ($query) use ($sex) {
-            return $query->where('sex', $sex);
-        })
-        ->orderBy($o_column, $o_order)
-        ->paginate(9);
-        
-        // Check if the request is an AJAX request
+            ->when($sex !== '', function ($query) use ($sex) {
+                return $query->where('sex', $sex);
+            })
+            ->when($priceRange !== '', function ($query) use ($priceRange) {
+                // Handle price range filtering
+                switch ($priceRange) {
+                    case '0-50':
+                        return $query->whereBetween('price', [0, 50]);
+                    case '50-100':
+                        return $query->whereBetween('price', [50, 100]);
+                    case '100-200':
+                        return $query->whereBetween('price', [100, 200]);
+                    case '200-500':
+                        return $query->whereBetween('price', [200, 500]);
+                    case '500+':
+                        return $query->where('price', '>', 500);
+                    default:
+                        return $query;
+                }
+            })
+            ->orderBy($o_column, $o_order)
+            ->paginate(9);
+
         if ($request->ajax()) {
-            $view = view('partials.products-list', compact('products'))->render();
-            return response()->json(['html' => $view]);
+            return view('partials.products-list', compact('products'));
         }
 
-
-        return view('shop', compact('products', 'order', 'categories', 'f_categories', 'sex'));
+        return view('shop', compact('products', 'order', 'categories', 'f_categories', 'sex', 'priceRange'));
     }
 
 

@@ -439,6 +439,33 @@
                         </button>
                     </div>
 
+                    <div class="row mt-3 p-3 bg-light rounded">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="checkbox" class="is-based-on-days" id="isBasedOnDaysGlobal">
+                                <label for="isBasedOnDaysGlobal">Is Based on Days?</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="checkbox" class="is-there-a-quantity" id="isThereAQuantityGlobal">
+                                <label for="isThereAQuantityGlobal">Is There a Quantity?</label>
+                            </div>
+                        </div>
+                        <div id="dateFieldsContainerGlobal" class="col-12 mt-3" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="date_from_global">Date From:</label>
+                                    <input type="date" id="date_from_global" name="date_from_global">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="date_to_global">Date To:</label>
+                                    <input type="date" id="date_to_global" name="date_to_global">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <p id="noPricesMessage" class="alert alert-warning">
                         <i class="bi bi-info-circle me-2"></i> No prices added yet :(
                     </p>
@@ -482,11 +509,13 @@
                                         <div class="row g-3">
                                             <div class="col-md-6">
                                                 <label class="form-label">Price Name</label>
-                                                <input type="text" class="form-control price-name" placeholder="Enter price name">
+                                                <input type="text" class="form-control price-name"
+                                                    placeholder="Enter price name">
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label">Price</label>
-                                                <input type="number" class="form-control price-value" min="1" placeholder="Enter price">
+                                                <input type="number" class="form-control price-value" min="1"
+                                                    placeholder="Enter price">
                                             </div>
                                             <div class="col-md-12">
                                                 <label class="form-label">Price Type</label>
@@ -498,43 +527,6 @@
                                             </div>
                                         </div>
                                         <div class="col-md-12 d-flex align-items-center justify-items-center mt-5 gap-5">
-                                            <button type="button" class="btn btn-lg btn-outline-danger removePriceBtn mb-3">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="priceFormContainer">
-                                    <div class="price-form-card mb-3 p-3 border rounded">
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label">Price Name</label>
-                                                <input type="text" class="form-control price-name"
-                                                    placeholder="Enter price name"
-                                                    value="{{ old('price_name', $facility->prices->first()->price_name) }}">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Price</label>
-                                                <input type="number" class="form-control price-value" min="1"
-                                                    placeholder="Enter price"
-                                                    value="{{ old('price_value', $facility->prices->first()->price_value) }}">
-                                            </div>
-                                            <div class="col-md-12">
-                                                <label class="form-label">Price Type</label>
-                                                <select class="price-type"
-                                                    value="{{ old('price_type', $facility->prices->first()->price_type) }}">
-                                                    <option value="">Choose Price Type</option>
-                                                    <option value="individual"
-                                                        {{ old('price_type') === 'individual' || $facility->prices->first()->price_type === 'individual' ? 'selected' : '' }}>
-                                                        Individual
-                                                    </option>
-                                                    <option value="whole"
-                                                        {{ old('price_type') === 'whole' || $facility->prices->first()->price_type === 'whole' ? 'selected' : '' }}>
-                                                        Whole Place</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-12 d-flex align-items-center justify-items-center mt-5 gap-5">
                                             <button type="button"
                                                 class="btn btn-lg btn-outline-danger removePriceBtn mb-3">
                                                 <i class="fa-solid fa-trash"></i>
@@ -542,30 +534,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-12 d-flex align-items-end justify-content-end gap-5 px-3"
-                                    style="margin-top: 10px;">
-                                    <div id="isBasedOnDaysContainer">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <input type="checkbox" class="is-based-on-days" id="isBasedOnDays">
-                                            <label for="is-based-on-days">Is Based on Days?</label>
-                                        </div>
-                                    </div>
-                                    <div id="isThereAQuantityContainer">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <input type="checkbox" class="is-there-a-quantity" id="isThereAQuantity">
-                                            <label for="is-there-a-quantity">Is There a Quantity?</label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="dateFieldsContainer" class="row my-4">
-                                    <div class="col-md-6">
-                                        <label for="date_from">Date From:</label>
-                                        <input type="date" id="date_from" name="date_from">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="date_to">Date To:</label>
-                                        <input type="date" id="date_to" name="date_to">
-                                    </div>
+                                <div id="priceFormContainer">
                                 </div>
                                 <button type="button" id="addMultiplePricesRowBtn" style="margin-top: 10px;">
                                     <i class="fa-solid fa-plus"></i> Add Another Price
@@ -644,6 +613,13 @@
         let priceEditMode = false;
         let priceEditIndex = -1;
 
+        let globalPriceSettings = {
+            isBasedOnDays: false,
+            isThereAQuantity: false,
+            dateFrom: '',
+            dateTo: ''
+        };
+
         $(document).ready(function() {
             try {
                 let roomsRaw = $('#facilityAttributesJson').val();
@@ -660,13 +636,32 @@
                         priceName: price.priceName || price.name || '',
                         priceValue: price.priceValue || price.value || '',
                         priceType: price.priceType || price.price_type || 'individual',
-                        isBasedOnDays: price.isBasedOnDays != null ? price.isBasedOnDays : price
-                            .is_based_on_days == 1,
-                        isThereAQuantity: price.isThereAQuantity != null ? price.isThereAQuantity :
-                            price.is_there_a_quantity == 1,
+                        isBasedOnDays: price.isBasedOnDays != null ? price.isBasedOnDays : (price
+                            .is_based_on_days == 1 ? '1' : '0'),
+                        isThereAQuantity: price.isThereAQuantity != null ? price.isThereAQuantity : (
+                            price.is_there_a_quantity == 1 ? '1' : '0'),
                         dateFrom: price.dateFrom || price.date_from || '',
                         dateTo: price.dateTo || price.date_to || ''
                     }));
+
+                    // Set global settings based on first price (if any)
+                    if (prices.length > 0) {
+                        const firstPrice = prices[0];
+                        globalPriceSettings.isBasedOnDays = firstPrice.isBasedOnDays === '1';
+                        globalPriceSettings.isThereAQuantity = firstPrice.isThereAQuantity === '1';
+                        globalPriceSettings.dateFrom = firstPrice.dateFrom || '';
+                        globalPriceSettings.dateTo = firstPrice.dateTo || '';
+
+                        // Update global checkboxes
+                        $('#isBasedOnDaysGlobal').prop('checked', globalPriceSettings.isBasedOnDays);
+                        $('#isThereAQuantityGlobal').prop('checked', globalPriceSettings.isThereAQuantity);
+
+                        if (globalPriceSettings.isBasedOnDays) {
+                            $('#dateFieldsContainerGlobal').show();
+                            $('#date_from_global').val(globalPriceSettings.dateFrom);
+                            $('#date_to_global').val(globalPriceSettings.dateTo);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Failed to parse room/price JSON:', error);
@@ -985,25 +980,91 @@
             });
         });
 
-        $('#dateFieldsContainer').hide();
-        $('#isBasedOnDays').on('change', function() {
-            if ($(this).is(':checked')) {
-                $('#dateFieldsContainer').fadeIn(200);
+        // $('#dateFieldsContainer').hide();
+        $('#isBasedOnDaysGlobal').on('change', function() {
+            const isChecked = $(this).is(':checked');
+            globalPriceSettings.isBasedOnDays = isChecked;
+
+            if (isChecked) {
+                $('#dateFieldsContainerGlobal').fadeIn(200);
                 let today = new Date().toISOString().split('T')[0];
-                $('#date_from, #date_to').attr('min', today);
+                $('#date_from_global, #date_to_global').attr('min', today);
+
+                // Set current dates if available
+                if (globalPriceSettings.dateFrom) {
+                    $('#date_from_global').val(globalPriceSettings.dateFrom);
+                }
+                if (globalPriceSettings.dateTo) {
+                    $('#date_to_global').val(globalPriceSettings.dateTo);
+                }
             } else {
-                $('#dateFieldsContainer').fadeOut(200);
-                $('#date_from, #date_to').val('');
+                $('#dateFieldsContainerGlobal').fadeOut(200);
+                globalPriceSettings.dateFrom = '';
+                globalPriceSettings.dateTo = '';
+                $('#date_from_global, #date_to_global').val('');
+
+                // Clear date fields for all existing prices when unchecked
+                prices.forEach(price => {
+                    price.dateFrom = null;
+                    price.dateTo = null;
+                });
             }
+
+            // Apply to ALL existing prices immediately
+            prices.forEach(price => {
+                price.isBasedOnDays = isChecked ? '1' : '0';
+            });
+
+            renderPriceList();
         });
-        $('#date_from').on('change', function() {
+
+        $('#isThereAQuantityGlobal').on('change', function() {
+            const isChecked = $(this).is(':checked');
+            globalPriceSettings.isThereAQuantity = isChecked;
+
+            // Apply to ALL existing prices immediately
+            prices.forEach(price => {
+                price.isThereAQuantity = isChecked ? '1' : '0';
+            });
+
+            renderPriceList();
+        });
+
+        $('#date_from_global').on('change', function() {
             let selectedDate = new Date($(this).val());
             selectedDate.setDate(selectedDate.getDate() + 1);
             let nextDay = selectedDate.toISOString().split('T')[0];
 
-            $('#date_to').val(nextDay);
-            $('#date_to').attr('min', nextDay);
+            $('#date_to_global').val(nextDay);
+            $('#date_to_global').attr('min', nextDay);
+
+            globalPriceSettings.dateFrom = $(this).val();
+            globalPriceSettings.dateTo = nextDay;
+
+            // Apply dates to ALL existing prices immediately
+            prices.forEach(price => {
+                if (price.isBasedOnDays === '1') {
+                    price.dateFrom = globalPriceSettings.dateFrom;
+                    price.dateTo = globalPriceSettings.dateTo;
+                }
+            });
+
+            renderPriceList();
         });
+
+        $('#date_to_global').on('change', function() {
+            globalPriceSettings.dateTo = $(this).val();
+
+            // Apply dates to ALL existing prices immediately
+            prices.forEach(price => {
+                if (price.isBasedOnDays === '1') {
+                    price.dateTo = globalPriceSettings.dateTo;
+                }
+            });
+
+            renderPriceList();
+        });
+
 
         function renderPriceList() {
             const container = $('#priceContainer').empty();
@@ -1017,60 +1078,53 @@
 
             prices.forEach((price, index) => {
                 let badgeType = price.priceType === 'individual' ? 'bg-primary text-white' :
-                    price
-                    .priceType ===
-                    'whole' ? 'bg-warning text-white' : '';
-                const card = /*HTML*/ $(`
-                       <div class="card p-3 mb-3">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <h4>${price.priceName}</h4>
-                                    <p><span class="badge ${badgeType}">${price.priceType.charAt(0).toUpperCase() + price.priceType.slice(1)}</span></p>
-                                </div>
-                                <p class="fw-bold h4">₱ ${price.priceValue}.00</p>
-                                  <p>Is Based on Days?: <span class="badge bg-success">${price.isBasedOnDays ? 'Yes' : 'No'}</span></p>
-                        <p>Is There a Quantity?: <span class="badge bg-success">${price.isThereAQuantity ? 'Yes' : 'No'}</span></p>
-                           ${price.dateFrom && price.isBasedOnDays == '1' ? `<p><i class="fa-solid fa-calendar-alt me-2 text-info"></i> Date From: <span class="">${price.dateFrom}</span></p>` : ''}
-                        ${price.dateTo && price.isBasedOnDays == '1' ? `<p><i class="fa-solid fa-calendar-check me-2 text-info"></i> Date To: <span class="">${price.dateTo}</span></p>` : ''}
-                            </div>
+                    price.priceType === 'whole' ? 'bg-warning text-white' : '';
 
-                    <div class="d-flex">
-                            <button type="button" class="btn btn-lg btn-outline-warning me-2 edit-price"
-                                data-index="${index}">
-                                <i class="fa-solid fa-pen"></i> Edit
-                            </button>
-                            <button type="button" class="btn btn-lg btn-outline-danger delete-price"
-                                data-index="${index}">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                        </div>
-                    </div>
-                `);
+                const card = $(`
+                           <div class="card p-3 mb-3">
+                               <div class="card-body d-flex justify-content-between align-items-center">
+                                   <div>
+                                       <div class="d-flex align-items-center gap-2">
+                                           <h4>${price.priceName}</h4>
+                                           <p><span class="badge ${badgeType}">${price.priceType.charAt(0).toUpperCase() + price.priceType.slice(1)}</span></p>
+                                       </div>
+                                       <p class="fw-bold h4">₱ ${price.priceValue}.00</p>
+                                       <p>Is Based on Days?: <span class="badge ${price.isBasedOnDays == '1' ? 'bg-success' : 'bg-secondary'}">${price.isBasedOnDays == '1' ? 'Yes' : 'No'}</span></p>
+                                       <p>Is There a Quantity?: <span class="badge ${price.isThereAQuantity == '1' ? 'bg-success' : 'bg-secondary'}">${price.isThereAQuantity == '1' ? 'Yes' : 'No'}</span></p>
+                                       ${price.dateFrom && price.isBasedOnDays == '1' ? `<p><i class="fa-solid fa-calendar-alt me-2 text-info"></i> Date From: <span class="">${price.dateFrom}</span></p>` : ''}
+                                       ${price.dateTo && price.isBasedOnDays == '1' ? `<p><i class="fa-solid fa-calendar-check me-2 text-info"></i> Date To: <span class="">${price.dateTo}</span></p>` : ''}
+                                   </div>
+                                   <div class="d-flex">
+                                       <button type="button" class="btn btn-lg btn-outline-warning me-2 edit-price" data-index="${index}">
+                                           <i class="fa-solid fa-pen"></i> Edit
+                                       </button>
+                                       <button type="button" class="btn btn-lg btn-outline-danger delete-price" data-index="${index}">
+                                           <i class="fa-solid fa-trash"></i>
+                                       </button>
+                                   </div>
+                               </div>
+                           </div>
+                       `);
                 container.append(card);
-            })
+            });
             $('#pricesJson').val(JSON.stringify(prices));
         }
-
-        // Always reset modal to single empty form on Add Price button click
-        $(document).on('click', '[data-bs-target="#addPrice"]', function () {
+        $(document).on('click', '[data-bs-target="#addPrice"]', function() {
             priceEditMode = false;
             priceEditIndex = -1;
             resetPriceModal();
         });
 
-        // Add Another Price (only in add mode)
         $('#addMultiplePricesRowBtn').off('click').on('click', function(e) {
             e.preventDefault();
             if (!priceEditMode) {
                 let newPriceForm = $('#priceFormTemplate .price-form-card').clone();
                 newPriceForm.find('input, select').val('');
+                newPriceForm.find('.removePriceBtn').parent().remove();
                 $('#priceFormContainer').append(newPriceForm);
             }
         });
 
-        // Remove price form (only in add mode)
         $(document).on('click', '.removePriceBtn', function() {
             if ($('.price-form-card').length > 1 && !priceEditMode) {
                 $(this).closest('.price-form-card').remove();
@@ -1079,7 +1133,6 @@
             }
         });
 
-        // Save All or Update Price
         $('#saveMultiplePricesBtn').off('click').on('click', function() {
             if (priceEditMode) {
                 updateSinglePrice(priceEditIndex);
@@ -1088,49 +1141,65 @@
             }
         });
 
-        // Edit price: open modal with only that price's data, single form, edit mode
         $(document).on('click', '.edit-price', function() {
             let index = $(this).data('index');
             let price = prices[index];
             priceEditMode = true;
             priceEditIndex = index;
+
             $('#priceFormContainer').empty();
             let $form = $('#priceFormTemplate .price-form-card').clone();
+
+            $form.find('.removePriceBtn').parent().remove();
+
             $form.find('.price-name').val(price.priceName);
             $form.find('.price-value').val(price.priceValue);
             $form.find('.price-type').val(price.priceType);
             $('#priceFormContainer').append($form);
-            $('#isBasedOnDays').prop('checked', price.isBasedOnDays == '1');
-            $('#isThereAQuantity').prop('checked', price.isThereAQuantity == '1');
+
+            // Update global settings to match the price being edited
+            $('#isBasedOnDaysGlobal').prop('checked', price.isBasedOnDays == '1');
+            $('#isThereAQuantityGlobal').prop('checked', price.isThereAQuantity == '1');
+
             if (price.isBasedOnDays == '1') {
-                $('#dateFieldsContainer').show();
-                $('#date_from').val(price.dateFrom || '');
-                $('#date_to').val(price.dateTo || '');
+                $('#dateFieldsContainerGlobal').show();
+                $('#date_from_global').val(price.dateFrom || '');
+                $('#date_to_global').val(price.dateTo || '');
+                globalPriceSettings.dateFrom = price.dateFrom || '';
+                globalPriceSettings.dateTo = price.dateTo || '';
             } else {
-                $('#dateFieldsContainer').hide();
-                $('#date_from, #date_to').val('');
+                $('#dateFieldsContainerGlobal').hide();
+                $('#date_from_global, #date_to_global').val('');
             }
+
+            globalPriceSettings.isBasedOnDays = price.isBasedOnDays == '1';
+            globalPriceSettings.isThereAQuantity = price.isThereAQuantity == '1';
+
             $('#addPriceLabel').text('Edit Price');
             $('#saveMultiplePricesBtn').text('Update Price');
             $('#addPrice').modal('show');
         });
 
-        // Always reset modal to single empty form and add mode on close
+        $(document).on('click', '.delete-price', function() {
+            if (confirm('Are you sure you want to delete this price?')) {
+                const index = $(this).data('index');
+                prices.splice(index, 1);
+                renderPriceList();
+            }
+        });
         $('#addPrice').on('hidden.bs.modal', function() {
             priceEditMode = false;
             priceEditIndex = -1;
             resetPriceModal();
         });
 
+
         function resetPriceModal() {
             $('#priceFormContainer').empty();
             let $form = $('#priceFormTemplate .price-form-card').clone();
             $form.find('input, select').val('');
             $('#priceFormContainer').append($form);
-            $('#isBasedOnDays').prop('checked', false);
-            $('#isThereAQuantity').prop('checked', false);
-            $('#date_from, #date_to').val('');
-            $('#dateFieldsContainer').hide();
+
             $('#addPriceLabel').text('Add Price');
             $('#saveMultiplePricesBtn').text('Save All');
         }
@@ -1138,32 +1207,39 @@
         function saveAllPrices() {
             let valid = true;
             let newPrices = [];
-            let isBasedOnDays = $('#isBasedOnDays').is(':checked') ? '1' : '0';
-            let isThereAQuantity = $('#isThereAQuantity').is(':checked') ? '1' : '0';
-            let dateFrom = $('#date_from').val();
-            let dateTo = $('#date_to').val();
+
+            // Get values from global settings outside modal
+            let isBasedOnDays = $('#isBasedOnDaysGlobal').is(':checked') ? '1' : '0';
+            let isThereAQuantity = $('#isThereAQuantityGlobal').is(':checked') ? '1' : '0';
+            let dateFrom = $('#date_from_global').val();
+            let dateTo = $('#date_to_global').val();
+
             $('#priceFormContainer .price-form-card').each(function() {
                 const priceName = $(this).find('.price-name').val();
                 const priceValue = $(this).find('.price-value').val();
                 const priceType = $(this).find('.price-type').val();
+
                 if (!priceName || !priceValue || !priceType) {
                     valid = false;
                     return false;
                 }
+
                 newPrices.push({
                     priceName,
                     priceValue,
                     priceType,
                     isBasedOnDays,
                     isThereAQuantity,
-                    dateFrom: dateFrom ? dateFrom : null,
-                    dateTo: dateTo ? dateTo : null,
+                    dateFrom: (isBasedOnDays === '1' && dateFrom) ? dateFrom : null,
+                    dateTo: (isBasedOnDays === '1' && dateTo) ? dateTo : null,
                 });
             });
+
             if (!valid) {
                 alert('Please fill all required fields for all prices.');
                 return;
             }
+
             prices.push(...newPrices);
             renderPriceList();
             resetPriceModal();
@@ -1175,23 +1251,29 @@
             const priceName = $form.find('.price-name').val();
             const priceValue = $form.find('.price-value').val();
             const priceType = $form.find('.price-type').val();
-            let isBasedOnDays = $('#isBasedOnDays').is(':checked') ? '1' : '0';
-            let isThereAQuantity = $('#isThereAQuantity').is(':checked') ? '1' : '0';
-            let dateFrom = $('#date_from').val();
-            let dateTo = $('#date_to').val();
+
+            // Get values from global settings outside modal
+            let isBasedOnDays = $('#isBasedOnDaysGlobal').is(':checked') ? '1' : '0';
+            let isThereAQuantity = $('#isThereAQuantityGlobal').is(':checked') ? '1' : '0';
+            let dateFrom = $('#date_from_global').val();
+            let dateTo = $('#date_to_global').val();
+
             if (!priceName || !priceValue || !priceType) {
                 alert('Please fill all required fields.');
                 return;
             }
+
             prices[index] = {
+                id: prices[index].id, // Preserve the existing ID
                 priceName,
                 priceValue,
                 priceType,
                 isBasedOnDays,
                 isThereAQuantity,
-                dateFrom: dateFrom ? dateFrom : null,
-                dateTo: dateTo ? dateTo : null,
+                dateFrom: (isBasedOnDays === '1' && dateFrom) ? dateFrom : null,
+                dateTo: (isBasedOnDays === '1' && dateTo) ? dateTo : null,
             };
+
             renderPriceList();
             resetPriceModal();
             $('#addPrice').modal('hide');
@@ -1227,11 +1309,19 @@
                 prices = [];
                 renderPriceList();
 
-                $('#isBasedOnDays').prop('checked', false);
-                $('#isThereAQuantity').prop('checked', false);
+                // Reset global settings
+                globalPriceSettings = {
+                    isBasedOnDays: false,
+                    isThereAQuantity: false,
+                    dateFrom: '',
+                    dateTo: ''
+                };
 
-                $('#date_from, #date_to').val('');
-                $('#dateFieldsContainer').hide();
+                // Reset global checkboxes and fields
+                $('#isBasedOnDaysGlobal').prop('checked', false);
+                $('#isThereAQuantityGlobal').prop('checked', false);
+                $('#date_from_global, #date_to_global').val('');
+                $('#dateFieldsContainerGlobal').hide();
                 $(".price-type").val('');
             }
         });
@@ -1278,12 +1368,6 @@
 
             $('#pricesJson').val(JSON.stringify(prices));
             this.submit();
-        });
-        $(document).ready(function() {
-            console.log(rooms);
-            console.log(prices);
-            renderRoomList();
-            renderPriceList();
         });
     </script>
 

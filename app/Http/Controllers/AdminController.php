@@ -894,12 +894,22 @@ class AdminController extends Controller
     {
         $status = $request->input('status');
         $timeSlot = $request->input('time_slot');
+        $search = $request->input('search');
         $timeSlots = TimeSlotHelper::time();
 
-        $query = Order::query();
+        $query = Order::with('user');
 
         $query->when($status, fn($q) => $q->where('status', $status))
-            ->when($timeSlot, fn($q) => $q->where('time_slot', $timeSlot));
+            ->when($timeSlot, fn($q) => $q->where('time_slot', $timeSlot))
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($subQuery) use ($search) {
+                    $subQuery->where('id', $search)
+                        ->orWhereHas('user', function ($userQuery) use ($search) {
+                            $userQuery->where('name', 'LIKE', "%{$search}%")
+                                ->orWhere('email', 'LIKE', "%{$search}%");
+                        });
+                });
+            });
 
         $orders = $query
             ->orderByRaw("FIELD(status, 'reserved', 'canceled', 'pickedup')")
@@ -1279,982 +1289,7 @@ class AdminController extends Controller
     }
 
     // Reports Page
-    public function generateReport(Request $request)
-    {
-        $currentDate = Carbon::now(); // Define the current date here
-        $currentYear = $currentDate->year;
-        $currentMonthId = $currentDate->month;
-
-        // Get selected year and month from request, default to current year/month
-        $selectedYear = $request->input('year', $currentYear);
-        $selectedMonthId = $request->input('month', $currentMonthId);
-
-        // Fetch available months and the selected month
-        $availableMonths = MonthName::orderBy('id')->get();
-        $selectedMonth = $availableMonths->firstWhere('id', $selectedMonthId);
-
-        if (!$selectedMonth) {
-            $selectedMonth = $availableMonths->first();
-            $selectedMonthId = $selectedMonth->id;
-        }
-
-        // Calculate the start and end of the selected month
-        $startOfMonth = Carbon::create($selectedYear, $selectedMonthId, 1)->startOfMonth();
-        $endOfMonth = $startOfMonth->copy()->endOfMonth();
-
-        // Fetch the latest 10 orders
-        $orders = Order::orderBy('created_at', 'DESC')->take(10)->get();
-
-        // Fetch dashboard data for the selected month and year
-        $dashboardDatas = DB::select("SELECT
-                                        SUM(total) AS TotalAmount,
-                                        SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
-                                        SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
-                                        SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount,
-                                        COUNT(*) AS Total,
-                                        SUM(IF(status = 'reserved', 1, 0)) AS TotalReserved,
-                                        SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp,
-                                        SUM(IF(status = 'canceled', 1, 0)) AS TotalCanceled
-                                      FROM Orders
-                                      WHERE created_at BETWEEN ? AND ?", [$startOfMonth, $endOfMonth]);
-
-        // Weekly data for the selected month
-        $weekRanges = [];
-        for ($week = 1; $week <= 6; $week++) {
-            $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek(Carbon::MONDAY);
-            $endOfWeek = $startOfWeek->copy()->endOfWeek(Carbon::SUNDAY);
-
-            // Ensure the start and end of the week don't exceed the month boundaries
-            if ($startOfWeek->lt($startOfMonth)) {
-                $startOfWeek = $startOfMonth;
-            }
-            if ($endOfWeek->gt($endOfMonth)) {
-                $endOfWeek = $endOfMonth;
-            }
-
-            // Add valid week ranges
-            if ($startOfWeek->lte($endOfMonth)) {
-                $weekRanges[$week] = [$startOfWeek, $endOfWeek];
-            }
-        }
-
-        // Fetch totals for each week
-        $totalAmounts = [];
-        $reservationAmounts = [];
-        $pickedUpAmounts = [];
-        $canceledAmounts = [];
-
-        foreach ($weekRanges as $week => [$startOfSelectedWeek, $endOfSelectedWeek]) {
-            // Fetch total amounts for the week
-            $dashboardData = DB::select(
-                "SELECT
-                                            SUM(total) AS TotalAmount,
-                                            SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
-                                            SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
-                                            SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
-                                        FROM Orders
-                                        WHERE created_at BETWEEN ? AND ?",
-                [$startOfSelectedWeek, $endOfSelectedWeek]
-            )[0];
-
-            $totalAmounts[$week] = $dashboardData->TotalAmount ?? 0;
-            $reservationAmounts[$week] = $dashboardData->TotalReservedAmount ?? 0;
-            $pickedUpAmounts[$week] = $dashboardData->TotalPickedUpAmount ?? 0;
-            $canceledAmounts[$week] = $dashboardData->TotalCanceledAmount ?? 0;
-        }
-
-        // Prepare Weekly Data for View
-        $AmountW = implode(',', $totalAmounts);
-        $ReservationAmountW = implode(',', $reservationAmounts);
-        $PickedUpAmountW = implode(',', $pickedUpAmounts);
-        $CanceledAmountW = implode(',', $canceledAmounts);
-
-        // Calculate overall totals for weekly data display
-        $TotalAmountW = array_sum($totalAmounts);
-        $TotalReservedAmountW = array_sum($reservationAmounts);
-        $TotalPickedUpAmountW = array_sum($pickedUpAmounts);
-        $TotalCanceledAmountW = array_sum($canceledAmounts);
-
-        // Monthly data for the selected year
-        $monthlyDatas = DB::select("SELECT M.id AS MonthNo, M.name AS MonthName,
-                                        IFNULL(D.TotalAmount, 0) AS TotalAmount,
-                                        IFNULL(D.TotalReservedAmount, 0) AS TotalReservedAmount,
-                                        IFNULL(D.TotalPickedUpAmount, 0) AS TotalPickedUpAmount,
-                                        IFNULL(D.TotalCanceledAmount, 0) AS TotalCanceledAmount
-                                     FROM month_names M
-                                     LEFT JOIN (
-                                         SELECT
-                                             MONTH(created_at) AS MonthNo,
-                                             SUM(total) AS TotalAmount,
-                                             SUM(IF(status='reserved', total, 0)) AS TotalReservedAmount,
-                                             SUM(IF(status='pickedup', total, 0)) AS TotalPickedUpAmount,
-                                             SUM(IF(status='canceled', total, 0)) AS TotalCanceledAmount
-                                         FROM Orders
-                                         WHERE YEAR(created_at) = ?
-                                         GROUP BY MONTH(created_at)
-                                     ) D ON D.MonthNo = M.id
-                                     ORDER BY M.id", [$selectedYear]);
-
-        // Prepare Monthly Data for View
-        $AmountM = implode(',', collect($monthlyDatas)->pluck('TotalAmount')->toArray());
-        $ReservationAmountM = implode(',', collect($monthlyDatas)->pluck('TotalReservedAmount')->toArray());
-        $PickedUpAmountM = implode(',', collect($monthlyDatas)->pluck('TotalPickedUpAmount')->toArray());
-        $CanceledAmountM = implode(',', collect($monthlyDatas)->pluck('TotalCanceledAmount')->toArray());
-
-        // Calculate overall totals for monthly data display
-        $TotalAmount = collect($monthlyDatas)->sum('TotalAmount');
-        $TotalReservedAmount = collect($monthlyDatas)->sum('TotalReservedAmount');
-        $TotalPickedUpAmount = collect($monthlyDatas)->sum('TotalPickedUpAmount');
-        $TotalCanceledAmount = collect($monthlyDatas)->sum('TotalCanceledAmount');
-
-        // Calculate the range of years to show in the dropdown
-        $yearRange = range($currentYear, $currentYear - 10);
-
-        // New Code (Adding daily data)
-        $availableWeeks = DB::table('week_names')->orderBy('week_number')->get();
-        $selectedWeekId = $request->input('week', $currentDate->weekOfMonth);
-
-        $selectedWeek = $availableWeeks->firstWhere('week_number', $selectedWeekId);
-        if (!$selectedWeek) {
-            $selectedWeek = $availableWeeks->first();
-            $selectedWeekId = $selectedWeek->week_number;
-        }
-
-        // Define the start and end of the selected week
-        if (array_key_exists($selectedWeekId, $weekRanges)) {
-            [$startOfSelectedWeek, $endOfSelectedWeek] = $weekRanges[$selectedWeekId];
-        } else {
-            [$startOfSelectedWeek, $endOfSelectedWeek] = $weekRanges[1]; // Default to week 1
-        }
-
-        // Query for daily data within the selected week, grouped by day
-        $dailyDatasRaw = DB::select(
-            "SELECT DAYOFWEEK(created_at) AS DayNo,
-                                        DAYNAME(created_at) AS DayName,
-                                        SUM(total) AS TotalAmount,
-                                        SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
-                                        SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
-                                        SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
-                                       FROM Orders
-                                       WHERE created_at BETWEEN ? AND ?
-                                       GROUP BY DAYOFWEEK(created_at), DAYNAME(created_at)
-                                       ORDER BY DayNo",
-            [$startOfSelectedWeek, $endOfSelectedWeek]
-        );
-
-        // Define the desired order of days
-        $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-        // Create a map of DayName to daily data
-        $dailyDataMap = collect($dailyDatasRaw)->keyBy('DayName');
-
-        // Reorder the daily data from Monday to Sunday, filling missing days with zeros
-        $sortedDailyDatas = collect($daysOfWeek)->map(function ($day) use ($dailyDataMap) {
-            if ($dailyDataMap->has($day)) {
-                return $dailyDataMap->get($day);
-            } else {
-                return (object)[
-                    'DayNo' => null,
-                    'DayName' => $day,
-                    'TotalAmount' => 0,
-                    'TotalReservedAmount' => 0,
-                    'TotalPickedUpAmount' => 0,
-                    'TotalCanceledAmount' => 0,
-                ];
-            }
-        });
-
-        // Prepare Daily Data for View
-        $AmountD = implode(',', $sortedDailyDatas->pluck('TotalAmount')->toArray());
-        $ReservationAmountD = implode(',', $sortedDailyDatas->pluck('TotalReservedAmount')->toArray());
-        $PickedUpAmountD = implode(',', $sortedDailyDatas->pluck('TotalPickedUpAmount')->toArray());
-        $CanceledAmountD = implode(',', $sortedDailyDatas->pluck('TotalCanceledAmount')->toArray());
-
-        $TotalAmountD = $sortedDailyDatas->sum('TotalAmount');
-        $TotalReservedAmountD = $sortedDailyDatas->sum('TotalReservedAmount');
-        $TotalPickedUpAmountD = $sortedDailyDatas->sum('TotalPickedUpAmount');
-        $TotalCanceledAmountD = $sortedDailyDatas->sum('TotalCanceledAmount');
-
-        // Return View with all data
-        $pageTitle = 'Reports';
-        return view('admin.reports', compact(
-            'orders',
-            'dashboardDatas',
-            'AmountM',
-            'ReservationAmountM',
-            'PickedUpAmountM',
-            'CanceledAmountM',
-            'TotalAmount',
-            'TotalReservedAmount',
-            'TotalPickedUpAmount',
-            'TotalCanceledAmount',
-            'AmountW',
-            'ReservationAmountW',
-            'PickedUpAmountW',
-            'CanceledAmountW',
-            'TotalAmountW',
-            'TotalReservedAmountW',
-            'TotalPickedUpAmountW',
-            'TotalCanceledAmountW',
-            'selectedMonth',
-            'selectedYear',
-            'availableMonths',
-            'yearRange',
-            'sortedDailyDatas',
-            'AmountD',
-            'ReservationAmountD',
-            'PickedUpAmountD',
-            'CanceledAmountD',
-            'TotalAmountD',
-            'TotalReservedAmountD',
-            'TotalPickedUpAmountD',
-            'TotalCanceledAmountD',
-            'selectedWeekId',
-            'availableWeeks',
-            'pageTitle'
-        ));
-    }
-
-    public function generateProduct(Request $request)
-    {
-        // Get the current year and month
-        $currentYear = Carbon::now()->year;
-        $currentMonth = Carbon::now()->month;
-        $selectedYear = $request->input('year', $currentYear);
-        $selectedMonth = $request->input('month', $currentMonth);
-
-        // Most frequent products data - simplified query for testing
-        $mostFrequentProducts = DB::table('order_items')
-            ->join('orders', 'order_items.order_id', '=', 'orders.id')
-            ->join('products', 'order_items.product_id', '=', 'products.id')
-            ->select(
-                'products.name',
-                DB::raw('COUNT(*) as total_orders')
-            )
-            ->groupBy('products.id', 'products.name')
-            ->orderByDesc('total_orders')
-            ->limit(10)
-            ->get();
-
-        // Least bought products data - simplified query for testing
-        $leastBoughtProducts = DB::table('products')
-            ->leftJoin('order_items', 'products.id', '=', 'order_items.product_id')
-            ->select(
-                'products.name',
-                DB::raw('COUNT(order_items.id) as total_orders')
-            )
-            ->groupBy('products.id', 'products.name')
-            ->orderBy('total_orders')
-            ->limit(10)
-            ->get();
-
-        // Prepare data for charts
-        $mostFrequentLabels = $mostFrequentProducts->pluck('name');
-        $mostFrequentData = $mostFrequentProducts->pluck('total_orders');
-        $leastBoughtLabels = $leastBoughtProducts->pluck('name');
-        $leastBoughtData = $leastBoughtProducts->pluck('total_orders');
-
-        // Available months and year range for the form
-        $availableMonths = DB::table('month_names')->get();
-        $yearRange = range($currentYear, $currentYear - 10);
-
-        return view('admin.report-product', compact(
-            'mostFrequentLabels',
-            'mostFrequentData',
-            'leastBoughtLabels',
-            'leastBoughtData',
-            'availableMonths',
-            'yearRange',
-            'selectedMonth',
-            'selectedYear'
-        ));
-    }
-
-    public function generateUser(Request $request)
-    {
-        // Set default year and month from current date.
-        $currentYear  = Carbon::now()->year;
-        $currentMonth = Carbon::now()->month;
-        $selectedYear = $request->input('year', $currentYear);
-        $selectedMonth = $request->input('month', $currentMonth);
-
-        // Retrieve available weeks from the seeded week_names table.
-        $availableWeeks = DB::table('week_names')->orderBy('week_number')->get();
-
-        // (Optional) Variables for a custom date-range report.
-        $newUsersCount = null;
-        $newUsers      = null;
-        $startDate     = null;
-        $endDate       = null;
-        $chartData     = null;
-
-        // If a date-range form was submitted, validate and compute its data.
-        if ($request->isMethod('POST') && $request->has(['start_date', 'end_date'])) {
-            $request->validate([
-                'start_date' => 'required|date',
-                'end_date'   => 'required|date|after_or_equal:start_date',
-            ]);
-
-            $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
-            $endDate   = Carbon::parse($request->input('end_date'))->endOfDay();
-
-            $newUsersCount = User::whereBetween('created_at', [$startDate, $endDate])->count();
-
-            $userRegistrations = User::select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('COUNT(*) as count')
-            )
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->groupBy('date')
-                ->orderBy('date', 'asc')
-                ->get();
-
-            $chartData = [
-                'dates'  => $userRegistrations->pluck('date')->map(function ($date) {
-                    return Carbon::parse($date)->format('Y-m-d');
-                })->toArray(),
-                'counts' => $userRegistrations->pluck('count')->toArray(),
-            ];
-
-            $newUsers = User::whereBetween('created_at', [$startDate, $endDate])->get();
-        }
-
-        // Retrieve statistics for the dashboard.
-        $totalUsers = User::count();
-        $newUsersThisMonth = User::whereYear('created_at', $currentYear)
-            ->whereMonth('created_at', $currentMonth)
-            ->count();
-        $activeUsers = User::where('isDefault', false)->count(); // Customize your query as needed.
-
-        $growthRate = ($totalUsers > 0) ? (($newUsersThisMonth / $totalUsers) * 100) : 0;
-
-        // Retrieve recently registered users (limit 10).
-        $recentUsers = User::orderBy('created_at', 'DESC')->take(10)->get();
-
-        // === Monthly Chart Data ===
-        $userRegistrations = DB::select("
-            SELECT COUNT(*) AS TotalUsers, MONTH(created_at) AS MonthNo
-            FROM users
-            WHERE YEAR(created_at) = ?
-            GROUP BY MonthNo
-            ORDER BY MonthNo
-        ", [$selectedYear]);
-
-        // Build an array with one entry per month (fill missing months with 0).
-        $monthlyData = array_fill(1, 12, 0);
-        foreach ($userRegistrations as $data) {
-            $monthlyData[$data->MonthNo] = $data->TotalUsers;
-        }
-        $userRegistrationsByMonth = implode(',', $monthlyData);
-
-        // === Weekly Chart Data ===
-        $weeklyData = array_fill(1, 6, 0);
-        $userCounts = DB::table('users')
-            ->selectRaw('WEEK(created_at, 1) - WEEK(DATE_SUB(created_at, INTERVAL DAYOFMONTH(created_at)-1 DAY), 1) + 1 as week_number')
-            ->selectRaw('COUNT(*) as count')
-            ->whereYear('created_at', $selectedYear)
-            ->whereMonth('created_at', $selectedMonth)
-            ->groupBy('week_number')
-            ->get();
-        foreach ($userCounts as $count) {
-            $weekIndex = $count->week_number;
-            if (isset($weeklyData[$weekIndex])) {
-                $weeklyData[$weekIndex] = $count->count;
-            }
-        }
-        $weeklyChartData = implode(',', $weeklyData);
-
-        // === Daily Chart Data (Filtered by Week) ===
-        // Determine start and end of the selected month.
-        $startOfMonth = Carbon::createFromDate($selectedYear, $selectedMonth, 1)->startOfMonth();
-        $endOfMonth   = Carbon::createFromDate($selectedYear, $selectedMonth, 1)->endOfMonth();
-
-        // Calculate week ranges for the month.
-        $weekRanges = [];
-        for ($week = 1; $week <= 6; $week++) {
-            $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek(Carbon::MONDAY);
-            $endOfWeek   = $startOfWeek->copy()->endOfWeek(Carbon::SUNDAY);
-
-            if ($startOfWeek->lt($startOfMonth)) {
-                $startOfWeek = $startOfMonth;
-            }
-            if ($endOfWeek->gt($endOfMonth)) {
-                $endOfWeek = $endOfMonth;
-            }
-            if ($startOfWeek->lte($endOfMonth)) {
-                $weekRanges[$week] = [$startOfWeek, $endOfWeek];
-            }
-        }
-
-        // Get selected week from the request; default to week 1.
-        $selectedWeekId = $request->input('week', 1);
-        if (!array_key_exists($selectedWeekId, $weekRanges)) {
-            $selectedWeekId = 1;
-        }
-        list($dailyStart, $dailyEnd) = $weekRanges[$selectedWeekId];
-
-        // Query daily registration counts within the selected week.
-        $dailyCounts = DB::table('users')
-            ->selectRaw('DAYNAME(created_at) as day_name, DAYOFWEEK(created_at) as day_of_week, COUNT(*) as count')
-            ->whereBetween('created_at', [$dailyStart, $dailyEnd])
-            ->groupBy('day_of_week', 'day_name')
-            ->orderBy('day_of_week')
-            ->get();
-
-        // We want to display data for Monday through Sunday.
-        $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        $dailyData = array_fill(0, 7, 0);
-        foreach ($dailyCounts as $count) {
-            $index = array_search($count->day_name, $daysOfWeek);
-            if ($index !== false) {
-                $dailyData[$index] = $count->count;
-            }
-        }
-        $dailyChartData = implode(',', $dailyData);
-
-        // Retrieve available months from the seeded month_names table.
-        $availableMonths = DB::table('month_names')->get();
-        $yearRange = range($currentYear, $currentYear - 10);
-
-        $pageTitle = 'User Registrations Report';
-
-        return view('admin.report-user', compact(
-            'totalUsers',
-            'newUsersThisMonth',
-            'activeUsers',
-            'growthRate',
-            'recentUsers',
-            'userRegistrationsByMonth',
-            'weeklyChartData',
-            'dailyChartData',
-            'availableMonths',
-            'yearRange',
-            'selectedMonth',
-            'selectedYear',
-            'availableWeeks',
-            'pageTitle',
-            'newUsersCount',
-            'newUsers',
-            'startDate',
-            'endDate',
-            'chartData',
-            'selectedWeekId'
-        ))->with('showChart', true);
-    }
-
-    public function generateInventory(Request $request)
-    {
-        // Validate the inputs
-        $validator = Validator::make($request->all(), [
-            'start_date'    => 'nullable|date',
-            'end_date'      => 'nullable|date',
-            'today'         => 'nullable|boolean',
-            'stock_status'  => 'nullable|string|in:instock,outofstock,reorder',
-        ]);
-
-        // If validation fails, redirect back with errors and input
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        // Check if "Today" filter is applied
-        if ($request->has('today') && $request->input('today') == '1') {
-            $startDate = Carbon::today()->toDateString();
-            $endDate = Carbon::today()->toDateString();
-        } else {
-            // Get start_date and end_date from the request
-            $startDate = $request->input('start_date');
-            $endDate = $request->input('end_date');
-        }
-
-        // Additional validation: Ensure end_date is after or equal to start_date
-        if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
-            return redirect()->back()->withErrors(['end_date' => 'The end date must be after or equal to the start date.'])->withInput();
-        }
-
-        // Build the query for products
-        $productsQuery = Product::with(['category', 'orderItems', 'attributeValues']);
-
-        // Apply date filter if dates are provided
-        if ($startDate && $endDate) {
-            $start = Carbon::parse($startDate)->startOfDay();
-            $end = Carbon::parse($endDate)->endOfDay();
-
-            // Filter products based on updated_at date
-            $productsQuery->whereBetween('updated_at', [$start, $end]);
-        }
-
-        // Get the products
-        $products = $productsQuery->get();
-
-        // Apply stock status filter if provided
-        $stockStatus = $request->input('stock_status');
-
-        if ($stockStatus) {
-            $products = $products->filter(function ($product) use ($stockStatus) {
-                $currentStock = $product->attributeValues->isNotEmpty()
-                    ? $product->attributeValues->sum('quantity')
-                    : $product->current_stock;
-
-                if ($stockStatus == 'instock') {
-                    return $currentStock > $product->reorder_quantity;
-                } elseif ($stockStatus == 'outofstock') {
-                    return $currentStock <= $product->outofstock_quantity;
-                } elseif ($stockStatus == 'reorder') {
-                    return $currentStock > $product->outofstock_quantity && $currentStock <= $product->reorder_quantity;
-                }
-
-                return true;
-            });
-        }
-
-        // Paginate the results manually
-        $page = $request->input('page', 1);
-        $perPage = 20;
-        $total = $products->count();
-        $products = $products->forPage($page, $perPage);
-
-        $products = new \Illuminate\Pagination\LengthAwarePaginator(
-            $products,
-            $total,
-            $perPage,
-            $page,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
-
-        return view('admin.report-inventory', compact('products', 'startDate', 'endDate'));
-    }
-
-
-
-
-    public function generateBillingStatement($orderId)
-    {
-        $order = Order::with(['user', 'orderItems.product'])->findOrFail($orderId);
-        return view('admin.report-statement', compact('order'));
-    }
-
-    public function listBillingStatements(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
-            'today' => 'nullable|boolean',
-            'search' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        if ($request->has('today') && $request->input('today') == '1') {
-            $startDate = Carbon::today()->toDateString();
-            $endDate = Carbon::today()->toDateString();
-        } else {
-            $startDate = $request->input('start_date');
-            $endDate = $request->input('end_date');
-        }
-
-        if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
-            return redirect()->back()->withErrors(['end_date' => 'The end date must be after or equal to the start date.'])->withInput();
-        }
-
-        $ordersQuery = Order::with('user');
-
-        if ($request->has('search') && $request->input('search')) {
-            $searchTerm = $request->input('search');
-            $ordersQuery->whereHas('user', function ($query) use ($searchTerm) {
-                $query->where('name', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('email', 'like', '%' . $searchTerm . '%');
-            });
-        }
-
-        if ($startDate && $endDate) {
-            $start = Carbon::parse($startDate)->startOfDay();
-            $end = Carbon::parse($endDate)->endOfDay();
-            $ordersQuery->whereBetween('created_at', [$start, $end]);
-        }
-
-        $orders = $ordersQuery->orderBy('created_at', 'desc')->paginate(20);
-
-        return view('admin.report-statements', compact('orders', 'startDate', 'endDate'));
-    }
-
-
-
-    // DomPDF for Reports Products Page
-    public function downloadBillingStatements(Request $request)
-    {
-        // Validate the date inputs
-        $validator = Validator::make($request->all(), [
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
-            'today' => 'nullable|boolean',
-        ]);
-
-        // If validation fails, redirect back with errors and input
-        if ($validator->fails()) {
-            return redirect()->route('admin.report-statements')
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        // Check if "Today" filter is applied
-        if ($request->has('today') && $request->input('today') == '1') {
-            $startDate = Carbon::today()->toDateString();
-            $endDate = Carbon::today()->toDateString();
-        } else {
-            // Get start_date and end_date from the request
-            $startDate = $request->input('start_date');
-            $endDate = $request->input('end_date');
-        }
-
-        // Additional validation: Ensure end_date is after or equal to start_date
-        if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
-            return redirect()->route('admin.report-statements')
-                ->withErrors(['end_date' => 'The end date must be after or equal to the start date.'])
-                ->withInput();
-        }
-
-        // Build the query for orders
-        $ordersQuery = Order::with('user');
-
-        // Apply date filter if dates are provided
-        if ($startDate && $endDate) {
-            $start = Carbon::parse($startDate)->startOfDay();
-            $end = Carbon::parse($endDate)->endOfDay();
-
-            $ordersQuery->whereBetween('created_at', [$start, $end]);
-        }
-
-        $orders = $ordersQuery->orderBy('created_at', 'desc')->get();
-
-        // Load the view for PDF rendering
-        $pdf = PDF::loadView('admin.pdf-billing', [
-            'orders' => $orders,
-            'startDate' => $startDate,
-            'endDate' => $endDate
-        ])
-            ->setPaper('A4', 'portrait');
-
-
-
-
-        // Return the generated PDF for download
-        return $pdf->download('billing_statements.pdf');
-    }
-
-    public function downloadPdf(Request $request)
-    {
-        // Fetch values from the form submission
-        $data = [
-            'total_amount' => $request->input('total_amount'),
-            'total_reserved_amount' => $request->input('total_reserved_amount'),
-            'total_picked_up_amount' => $request->input('total_picked_up_amount'),
-            'total_canceled_amount' => $request->input('total_canceled_amount'),
-            'total_amount_w' => $request->input('total_amount_w'),
-            'total_reserved_amount_w' => $request->input('total_reserved_amount_w'),
-            'total_picked_up_amount_w' => $request->input('total_picked_up_amount_w'),
-            'total_canceled_amount_w' => $request->input('total_canceled_amount_w'),
-            'total_amount_d' => $request->input('total_amount_d'),
-            'total_reserved_amount_d' => $request->input('total_reserved_amount_d'),
-            'total_picked_up_amount_d' => $request->input('total_picked_up_amount_d'),
-            'total_canceled_amount_d' => $request->input('total_canceled_amount_d'),
-            'selectedYear'             => $request->input('selected_year'),
-            'selectedMonth'            => (object)['name' => $request->input('selected_month_name')],
-            'selectedWeekId'           => $request->input('selected_week_id'),
-        ];
-
-        // Generate the PDF using the data only (no graph images)
-        $pdf = PDF::loadView('admin.pdf-reports', $data)
-            ->setPaper('A4', 'portrait'); // Set paper size to A4, portrait orientation
-
-        // Download the PDF
-        return $pdf->download('sales_report.pdf');
-    }
-
-
-
-    public function downloadProduct(Request $request)
-    {
-        // Get the data again for the PDF (same logic as in generateProduct)
-        $currentYear = Carbon::now()->year;
-        $currentMonth = Carbon::now()->month;
-        $selectedYear = $request->input('year', $currentYear);
-        $selectedMonth = $request->input('month', $currentMonth);
-
-        $mostFrequentProducts = DB::table('order_items')
-            ->join('orders', 'order_items.order_id', '=', 'orders.id')
-            ->join('products', 'order_items.product_id', '=', 'products.id')
-            ->select(
-                'products.name',
-                DB::raw('COUNT(*) as total_orders')
-            )
-            ->groupBy('products.id', 'products.name')
-            ->orderByDesc('total_orders')
-            ->limit(10)
-            ->get();
-
-        $leastBoughtProducts = DB::table('products')
-            ->leftJoin('order_items', 'products.id', '=', 'order_items.product_id')
-            ->select(
-                'products.name',
-                DB::raw('COUNT(order_items.id) as total_orders')
-            )
-            ->groupBy('products.id', 'products.name')
-            ->orderBy('total_orders')
-            ->limit(10)
-            ->get();
-
-        // Prepare data for the PDF view
-        $mostFrequentLabels = $mostFrequentProducts->pluck('name');
-        $mostFrequentData = $mostFrequentProducts->pluck('total_orders');
-        $leastBoughtLabels = $leastBoughtProducts->pluck('name');
-        $leastBoughtData = $leastBoughtProducts->pluck('total_orders');
-
-        // Initialize DomPDF
-        $dompdf = new Dompdf();
-        $options = new Options();
-        $options->set("isHtml5ParserEnabled", true);
-        // Uncomment the following line if you need to load remote images:
-        $options->setIsRemoteEnabled(true);
-        $dompdf->setOptions($options);
-
-        // Load HTML content from the view (which now includes the header and images)
-        $html = view('admin.pdf-products', compact(
-            'mostFrequentLabels',
-            'mostFrequentData',
-            'leastBoughtLabels',
-            'leastBoughtData'
-        ))->render();
-
-        // Load HTML and render PDF
-        $dompdf->loadHtml($html);
-        $dompdf->render();
-
-        // Output the generated PDF to browser
-        return $dompdf->stream('product-report.pdf');
-    }
-
-
-
-    public function getMonthlyRegisteredUsers($month, $year)
-    {
-        // Fetch the number of users registered in the specified month and year
-        return User::whereMonth('created_at', $month)
-            ->whereYear('created_at', $year)
-            ->count() ?: 0;
-    }
-
-    public function getWeeklyRegisteredUsers($month, $year)
-    {
-
-        return User::whereMonth('created_at', $month)
-            ->whereYear('created_at', $year)
-            ->count() ?: 0;
-    }
-
-    public function getDailyRegisteredUsers($month, $year)
-    {
-        return User::whereMonth('created_at', $month)
-            ->whereYear('created_at', $year)
-            ->groupBy(DB::raw('DAY(created_at)'))
-            ->select(DB::raw('DAY(created_at) as day'), DB::raw('count(*) as count'))
-            ->get() ?: [];
-    }
-
-    public function getRecentUsers()
-    {
-        return User::latest()->take(5)->get() ?: [];
-    }
-    public function downloadUserReportPdf(Request $request)
-    {
-        $selectedYear  = $request->input('selectedYear');
-        $selectedMonth = $request->input('selectedMonth');
-        $selectedWeekId = $request->input('week', 1);
-
-        // --- Recompute Monthly Data ---
-        $userRegistrations = DB::select("
-            SELECT COUNT(*) AS TotalUsers, MONTH(created_at) AS MonthNo
-            FROM users
-            WHERE YEAR(created_at) = ?
-            GROUP BY MonthNo
-            ORDER BY MonthNo
-        ", [$selectedYear]);
-
-        $monthlyData = array_fill(1, 12, 0);
-        foreach ($userRegistrations as $data) {
-            $monthlyData[$data->MonthNo] = $data->TotalUsers;
-        }
-        $userRegistrationsByMonth = implode(',', $monthlyData);
-
-        // --- Recompute Weekly Data ---
-        $weeklyData = array_fill(1, 6, 0);
-        $userCounts = DB::table('users')
-            ->selectRaw('WEEK(created_at, 1) - WEEK(DATE_SUB(created_at, INTERVAL DAYOFMONTH(created_at)-1 DAY), 1) + 1 as week_number')
-            ->selectRaw('COUNT(*) as count')
-            ->whereYear('created_at', $selectedYear)
-            ->whereMonth('created_at', $selectedMonth)
-            ->groupBy('week_number')
-            ->get();
-
-        foreach ($userCounts as $count) {
-            $weekIndex = $count->week_number;
-            if (isset($weeklyData[$weekIndex])) {
-                $weeklyData[$weekIndex] = $count->count;
-            }
-        }
-        $weeklyChartData = implode(',', $weeklyData);
-
-        // --- Recompute Daily Data (for the selected week) ---
-        $startOfMonth = \Carbon\Carbon::createFromDate($selectedYear, $selectedMonth, 1)->startOfMonth();
-        $endOfMonth   = \Carbon\Carbon::createFromDate($selectedYear, $selectedMonth, 1)->endOfMonth();
-        $weekRanges = [];
-
-        for ($week = 1; $week <= 6; $week++) {
-            $startOfWeek = $startOfMonth->copy()->addDays(($week - 1) * 7)->startOfWeek(\Carbon\Carbon::MONDAY);
-            $endOfWeek   = $startOfWeek->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
-
-            if ($startOfWeek->lt($startOfMonth)) {
-                $startOfWeek = $startOfMonth;
-            }
-            if ($endOfWeek->gt($endOfMonth)) {
-                $endOfWeek = $endOfMonth;
-            }
-            if ($startOfWeek->lte($endOfMonth)) {
-                $weekRanges[$week] = [$startOfWeek, $endOfWeek];
-            }
-        }
-        list($dailyStart, $dailyEnd) = $weekRanges[$selectedWeekId];
-
-        $dailyCounts = DB::table('users')
-            ->selectRaw('DAYNAME(created_at) as day_name, DAYOFWEEK(created_at) as day_of_week, COUNT(*) as count')
-            ->whereBetween('created_at', [$dailyStart, $dailyEnd])
-            ->groupBy('day_of_week', 'day_name')
-            ->orderBy('day_of_week')
-            ->get();
-
-        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        $dailyData = array_fill(0, 7, 0);
-        foreach ($dailyCounts as $count) {
-            $index = array_search($count->day_name, $days);
-            if ($index !== false) {
-                $dailyData[$index] = $count->count;
-            }
-        }
-        $dailyChartData = implode(',', $dailyData);
-
-        // Get the recent users.
-        $recentUsers = User::orderBy('created_at', 'DESC')->take(10)->get();
-
-        // Prepare data for the PDF view.
-        $pdfData = [
-            'recentUsers'               => $recentUsers,
-            'userRegistrationsByMonth'  => $userRegistrationsByMonth,
-            'weeklyChartData'           => $weeklyChartData,
-            'dailyChartData'            => $dailyChartData,
-            'selectedMonth'             => $selectedMonth,
-            'selectedYear'              => $selectedYear,
-            'selectedWeekId'            => $selectedWeekId,
-        ];
-
-        $pdf = PDF::loadView('admin.pdf-user', $pdfData)
-            ->setPaper('a4', 'portrait');
-
-        return $pdf->download('user_report_' . $selectedYear . '_' . $selectedMonth . '.pdf');
-    }
-    public function downloadInventoryReportPdf(Request $request)
-    {
-        // Validate the inputs
-        $validator = Validator::make($request->all(), [
-            'start_date'    => 'nullable|date',
-            'end_date'      => 'nullable|date',
-            'today'         => 'nullable|boolean',
-            'stock_status'  => 'nullable|string|in:instock,outofstock,reorder',
-        ]);
-
-        // If validation fails, redirect back with errors and input
-        if ($validator->fails()) {
-            return redirect()->route('admin.report-inventory')
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        // Check if "Today" filter is applied
-        if ($request->has('today') && $request->input('today') == '1') {
-            $startDate = Carbon::today()->toDateString();
-            $endDate = Carbon::today()->toDateString();
-        } else {
-            // Get start_date and end_date from the request
-            $startDate = $request->input('start_date');
-            $endDate = $request->input('end_date');
-        }
-
-        // Additional validation: Ensure end_date is after or equal to start_date
-        if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
-            return redirect()->route('admin.report-inventory')
-                ->withErrors(['end_date' => 'The end date must be after or equal to the start date.'])
-                ->withInput();
-        }
-
-        // Build the query for products
-        $productsQuery = Product::with(['category', 'orderItems', 'attributeValues']);
-
-        // Apply date filter if dates are provided
-        if ($startDate && $endDate) {
-            $start = Carbon::parse($startDate)->startOfDay();
-            $end = Carbon::parse($endDate)->endOfDay();
-
-            // Filter products based on updated_at date
-            $productsQuery->whereBetween('updated_at', [$start, $end]);
-        }
-
-        // Get the products
-        $products = $productsQuery->get();
-
-        // Apply stock status filter if provided
-        $stockStatus = $request->input('stock_status');
-
-        if ($stockStatus) {
-            $products = $products->filter(function ($product) use ($stockStatus) {
-                $currentStock = $product->attributeValues->isNotEmpty()
-                    ? $product->attributeValues->sum('quantity')
-                    : $product->current_stock;
-
-                if ($stockStatus == 'instock') {
-                    return $currentStock > $product->reorder_quantity;
-                } elseif ($stockStatus == 'outofstock') {
-                    return $currentStock <= $product->outofstock_quantity;
-                } elseif ($stockStatus == 'reorder') {
-                    return $currentStock > $product->outofstock_quantity && $currentStock <= $product->reorder_quantity;
-                }
-
-                return true;
-            });
-        }
-
-        // Load the view for PDF rendering
-        $pdfView = view('admin.pdf-inventory-report', compact('products', 'startDate', 'endDate'))->render();
-
-        // DomPDF options to improve performance
-        $options = new Options();
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('isRemoteEnabled', true);
-
-        // Initialize DomPDF and load the HTML
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml($pdfView);
-
-        // Setup the paper size and orientation
-        $dompdf->setPaper('A4', 'landscape');
-
-        // Render the HTML as PDF
-        $dompdf->render();
-
-        // Download the generated PDF file
-        return $dompdf->stream('inventory_report.pdf', ['Attachment' => true]);
-    }
-
+   
 
 
 
@@ -2449,17 +1484,7 @@ class AdminController extends Controller
     }
 
 
-    public function users()
-    {
-        $users = User::all();
-        return view('admin.users', compact('users'));
-    }
-    public function users_destroy($id)
-    {
-        $user = User::findOrFail($id);
-        $user->delete();
-        return redirect()->route('admin.users')->with('success', 'User deleted successfully');
-    }
+
 
     // public function filterOrders(Request $request)
     // {
@@ -2537,12 +1562,11 @@ class AdminController extends Controller
     public function users_update(Request $request, $id)
     {
         $request->validate([
-            'phone_number' => 'nullable|string|max:15',
-            'year_level' => 'nullable|string|max:10',
-            'department' => 'nullable|string|max:50',
-            'course' => 'nullable|string|max:50',
+            'phone_number' => 'nullable',
+            'year_level' => 'nullable',
+            'department' => 'nullable',
+            'course' => 'nullable',
         ]);
-
         $user = User::findOrFail($id);
         $user->phone_number = $request->phone_number;
         $user->year_level = $request->year_level;
@@ -2555,39 +1579,99 @@ class AdminController extends Controller
 
     public function users_add()
     {
+        return view("admin.user-add");
+    }
 
-        $users = User::all();
+    public function users(Request $request)
+    {
+        $query = User::query();
 
-        return view("admin.user-add", compact('users'));
+        if ($request->filled('year_level')) {
+            $query->where('year_level', $request->year_level);
+        }
+
+        if ($request->filled('department')) {
+            $query->where('department', $request->department);
+        }
+
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
+        $users = $query->paginate(10);
+        if ($request->ajax()) {
+            return response()->json([
+                'users' => $users->items(),
+                'links' => (string) $users->links('pagination::bootstrap-5'),
+            ]);
+        }
+
+        return view('admin.users', compact('users'));
     }
 
 
     public function users_store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'nullable',
-            'role' => 'required',
-            'phone_number' => 'nullable',
-            'year_level' => 'nullable',
-            'department' => 'nullable',
-            'course' => 'nullable',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
+        $isAdmin = $request->form_type === 'admin';
+        $validationRules = [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email|ends_with:@cvsu.edu.ph',
+            'phone_number' => 'nullable|string|regex:/^9\d{9}$/',
+            'sex' => 'required|in:male,female',
+        ];
+        if ($isAdmin) {
+            $validationRules['form_type'] = 'required|in:admin';
+        } else {
+            $validationRules['role'] = 'required|in:student,employee,non-employee';
+            $validationRules['year_level'] = 'nullable|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
+            $validationRules['department'] = 'nullable|in:CEIT,GSOLC,CAFENR,CAS,CCJ,CEMDS,CED,CON,CVMBS';
+            $validationRules['course'] = 'nullable|string|max:255';
+            $validationRules['form_type'] = 'nullable|in:user';
+            if ($request->role === 'student') {
+                $validationRules['year_level'] = 'required|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
+                $validationRules['department'] = 'required|in:CEIT,GSOLC,CAFENR,CAS,CCJ,CEMDS,CED,CON,CVMBS';
+                $validationRules['course'] = 'required|string|max:255';
+            }
+        }
+        $customMessages = [
+            'email.ends_with' => 'The email must be a @cvsu.edu.ph email address.',
+            'phone_number.regex' => 'Phone number must start with 9 and be exactly 10 digits.',
+            'year_level.required' => 'Year level is required for students.',
+            'department.required' => 'Department is required for students.',
+            'course.required' => 'Course is required for students.',
+        ];
+        $validated = $request->validate($validationRules, $customMessages);
+        if ($isAdmin) {
+            $validated['password'] = Hash::make('cvsu-barg-password');
+            $validated['utype'] = 'ADM';
+            $validated['role'] = 'employee';
+            $validated['password_set'] = true;
+        } else {
+            $validated['password'] = Hash::make($request->password ?? 'defaultpassword');
+            $validated['utype'] = 'USR';
+            $validated['password_set'] = false;
+        }
+        unset($validated['form_type']);
 
-        $user = new User();
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->password = Hash::make('defaultpassword');
-        $user->role = $request->role;
-        $user->phone_number = $request->phone_number;
-        $user->year_level = $request->year_level;
-        $user->department = $request->department;
-        $user->course = $request->course;
+        if (!$isAdmin && in_array($validated['role'], ['employee', 'non-employee'])) {
+            $validated['year_level'] = null;
+            $validated['course'] = null;
+        }
+        $validated['email_verified_at'] = now();
 
-        $user->save();
-        return redirect()->route('admin.users')->with('status', 'User has been added successfully!');
+        $validated['sex'] = $validated['sex'] ?? 'male';
+        $validated['isDefault'] = false;
+        try {
+            $user = User::create($validated);
+            $message = $isAdmin
+                ? 'Admin has been added successfully!'
+                : 'User has been added successfully!';
+
+            return redirect()->route('admin.users')->with('status', $message);
+        } catch (\Exception $e) {
+            \Log::error('User creation failed: ' . $e->getMessage());
+            return back()->withInput()->withErrors(['error' => 'Failed to create user. Please try again.']);
+        }
     }
 
     public function searchProducts(Request $request)

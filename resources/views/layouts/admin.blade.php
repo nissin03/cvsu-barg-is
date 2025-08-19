@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     @vite('resources/js/app.js')
-  
+
     <style>
         .modal-backdrop {
             position: fixed;
@@ -261,14 +261,33 @@
                         <div class="center-item">
                             <div class="center-heading">Main Home</div>
                             <ul class="menu-list">
-                                <li class="menu-item">
-                                    <a href="{{ route('admin.index') }}" class="">
+                                <li class="menu-item has-children">
+                                    <a href="javascript:void(0);" class="">
                                         <div class="icon"><i class="icon-grid"></i></div>
                                         <div class="text">Dashboard</div>
                                     </a>
+
+                                    <ul class="sub-menu">
+                                        <li class="sub-menu-item">
+                                            <a href="{{ route('admin.index') }}">
+                                                <div class="text">Products Dashboard</div>
+                                            </a>
+                                        </li>
+
+                                        <li class="sub-menu-item">
+                                            <a href="{{ route('admin.facilities.dashboard') }}">
+                                                <div class="text">Facilities Dashboard</div>
+                                            </a>
+                                        </li>
+                                    </ul>
+
+                                   
                                 </li>
                             </ul>
                         </div>
+
+
+                        
                         <div class="center-item">
                             <ul class="menu-list">
 
@@ -300,12 +319,7 @@
                                     </li>
 
 
-                                    {{-- <li class="menu-item">
-                                        <a href="{{ route('admin.facilities.reservations') }}">
-                                            <div class="icon"><i class="icon-calendar"></i></div>
-                                            <div class="text">Reservations</div>
-                                        </a>
-                                    </li> --}}
+                                  
 
                                     <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
@@ -420,7 +434,7 @@
                                             <div class="icon"><i class="icon-bar-chart-2"></i></div>
                                             <div class="text">Products Reports</div>
                                         </a>
-                                        <ul class="sub-menu">
+                                         <ul class="sub-menu">
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.reports') }}">
                                                     <div class="text">Sales</div>
@@ -446,17 +460,17 @@
                                                     <div class="text">Statements</div>
                                                 </a>
                                             </li>
-                                            <li class="sub-menu-item">
+                                            {{-- <li class="sub-menu-item">
                                                 <a href="{{ route('admin.generate-input-users') }}">
                                                     <div class="text">Input User</div>
                                                 </a>
-                                            </li>
+                                            </li> --}}
 
-                                            <li class="sub-menu-item">
+                                            {{-- <li class="sub-menu-item">
                                                 <a href="{{ route('admin.generate-input-sales') }}">
                                                     <div class="text">Input Sales</div>
                                                 </a>
-                                            </li>
+                                            </li> --}}
                                         </ul>
                                     </li>
 
@@ -466,13 +480,22 @@
                                             <div class="text">Facilties Reports</div>
                                         </a>
                                         <ul class="sub-menu">
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.facility.reports') }}">
-                                                    <div class="text">Facilities Reports</div>
+                                            <li class="menu-item">
+                                                <a href="{{ route('admin.facility-statement') }}">
+                                                    <div class="text">Statement</div>
                                                 </a>
                                             </li>
+                                            <li class="sub-menu-item">
+                                                {{-- <a href="{{ route('admin.facilities.analytics') }}">
+                                                    <div class="text">Facilities Analytics</div>
+                                                </a> --}}
+                                            </li>
+
+
+
+                                           
                                         </ul>
-                                        
+
                                     </li>
 
 
@@ -501,9 +524,7 @@
                                 <div class="button-show-hide">
                                     <i class="icon-menu-left"></i>
                                 </div>
-
-
-                                <form class="form-search flex-grow" id="searchForm"
+                                {{-- <form class="form-search flex-grow" id="searchForm"
                                     action="{{ route('admin.searchproduct') }}" method="GET">
                                     <fieldset class="name">
                                         <input type="text" placeholder="Search here..." class="show-search"
@@ -512,9 +533,7 @@
                                     <div class="button-submit">
                                         <button type="submit"><i class="icon-search"></i></button>
                                     </div>
-                                </form>
-
-
+                                </form> --}}
                             </div>
                             <div class="header-grid">
                                 <div class="popup-wrap message type-header">
@@ -532,7 +551,8 @@
                                             aria-labelledby="dropdownMenuButton2">
                                             <div class="dropdown-header">
                                                 <div class="notification-actions">
-                                                    <button type="button" id="markAllReadBtn" class="mark-read">Mark all as read</button>
+                                                    <button type="button" id="markAllReadBtn" class="mark-read">Mark
+                                                        all as read</button>
                                                     <button type="button" class="remove-all">Remove all</button>
                                                 </div>
                                             </div>
@@ -709,7 +729,7 @@
 
     @stack('scripts')
     <script>
-           window.userId = @json(Auth::id());
+        window.userId = @json(Auth::id());
     </script>
 </body>
 

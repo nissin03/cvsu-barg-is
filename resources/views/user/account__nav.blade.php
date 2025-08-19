@@ -14,8 +14,6 @@
         <li><a href="{{ route('user.reservations_history') }}" class="menu-link menu-link_us-s">Facility Reservation
                 History</a>
         </li>
-        <!-- <li><a href="{{ route('user.reservation') }}" class="menu-link menu-link_us-s">Rentals</a></li>
-    <li><a href="{{ route('user.reservation.history') }}" class="menu-link menu-link_us-s">Rental History</a></li> -->
         <li>
             <form action="{{ route('logout') }}" method="post" id="logout-form">
                 @csrf

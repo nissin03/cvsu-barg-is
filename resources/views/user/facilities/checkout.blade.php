@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-    <style>
+    {{-- <style>
         :root {
             --primary: #3B82F6;
             --primary-light: #EFF6FF;
@@ -375,7 +375,7 @@
             font-size: 0.75rem;
             color: #ef4444;
         }
-    </style>
+    </style> --}}
 
     @php
         $user = auth()->user();
@@ -393,6 +393,8 @@
             $breadcrumbs[] = ['url' => null, 'label' => ucwords(str_replace('.', ' ', $currentRoute))];
         }
     @endphp
+
+<link href="{{ asset('css/facility/checkout.css') }}" rel="stylesheet">
 
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
@@ -527,7 +529,7 @@
                                         </td>
                                     </tr>
 
-                                    @if($timeStart && $timeEnd)
+                                    {{-- @if($timeStart && $timeEnd)
                                     <tr>
                                         <th>Start Time to End Time</th>
                                         <td>
@@ -538,7 +540,7 @@
                                             @endif
                                         </td>
                                     </tr>
-                                    @endif
+                                    @endif --}}
 
                                 @elseif($facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty()) 
 
@@ -585,14 +587,14 @@
                                         </tr>
                                     @endif
                                     
-                                    @if($reservationData['booking_type'] === 'whole')
+                                    {{-- @if($reservationData['booking_type'] === 'whole')
                                         @if(isset($reservationData['time_start']) && isset($reservationData['time_end']))
                                             <tr>
                                                 <th>Time</th>
                                                 <td>{{ $reservationData['time_start'] }} - {{ $reservationData['time_end'] }}</td>
                                             </tr>
                                         @endif
-                                    @endif
+                                    @endif --}}
 
                                 @elseif ($facility->facility_type === 'both' && $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty())
                                     @php

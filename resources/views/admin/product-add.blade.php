@@ -330,6 +330,22 @@
 
 @push('scripts')
     <script>
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML =
+                        '<div class="loading-spinner me-2"></div>Processing...';
+                    submitBtn.disabled = true;
+                    setTimeout(() => {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }, 5000);
+                }
+            });
+        });
         $(function() {
             $("#myFile").on("change", function(e) {
                 const [file] = this.files;
@@ -349,7 +365,7 @@
                 if (totalImages > maxImages) {
                     alert(
                         `You can only upload a maximum of ${maxImages} images. You already have ${existingImages} images and trying to add ${newFiles.length} more.`
-                        );
+                    );
                     this.value = '';
                     return;
                 }
@@ -428,7 +444,7 @@
                 variantDiv.innerHTML = `
                     <div class="variant-header flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold">Variant ${variantCount}</h3>
-                        <button type="button" class="remove-variant-btn btn btn-danger btn-sm" 
+                        <button type="button" class="remove-variant-btn btn btn-danger btn-sm"
                                 data-variant-index="${variantCount}">
                             <i class="fas fa-times"></i> Remove
                         </button>

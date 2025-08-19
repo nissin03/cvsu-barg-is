@@ -7,6 +7,7 @@ use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Carbon\Carbon;
 
 class UserSeeder extends Seeder
 {
@@ -19,6 +20,7 @@ class UserSeeder extends Seeder
 
         $departments = ['CEIT', 'GSOLC', 'CAFENR', 'CAS', 'CCJ', 'CEMDS', 'CED', 'CON', 'CVMBS'];
         $yearLevels = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
+        $roles = ['student', 'employee', 'non-employee'];
         $courses = [
             'CEIT' => ['BS Agricultural and Biosystems Engineering', 'BS Architecture', 'BS Civil Engineering', 'BS Computer Science', 'BS Information Technology'],
             'GSOLC' => ['PhD in Agriculture', 'PhD in Management', 'Master of Arts in Education', 'MS Agriculture'],
@@ -40,9 +42,29 @@ class UserSeeder extends Seeder
             'password'          => Hash::make('password123'),
             'utype'             => 'ADM',
             'password_set'      => true,
+            'role'              => 'employee',
+            'sex'               => 'male',
+            'phone_number'      => '9' . $faker->numerify('#########'),
             'created_at'        => $createdAt,
             'updated_at'        => $createdAt,
         ]);
+
+        // Student
+        $createdAt = $faker->dateTimeBetween('2025-01-01', '2025-12-31');
+        User::create([
+            'name'              => 'User',
+            'email'             => 'user@cvsu.edu.ph',
+            'email_verified_at' => now(),
+            'password'          => Hash::make('password123'),
+            'utype'             => 'USR',
+            'password_set'      => true,
+            'role'              => 'employee',
+            'sex'               => 'male',
+            'phone_number'      => '9' . $faker->numerify('#########'),
+            'created_at'        => $createdAt,
+            'updated_at'        => $createdAt,
+        ]);
+
 
         // Create additional Admin Users
         for ($i = 1; $i <= 4; $i++) {
@@ -54,6 +76,9 @@ class UserSeeder extends Seeder
                 'password'          => Hash::make('password123'),
                 'utype'             => 'ADM',
                 'password_set'      => true,
+                'role'              => 'employee',
+                'sex'               => $faker->randomElement(['male']),
+                'phone_number'      => '9' . $faker->numerify('#########'),
                 'created_at'        => $createdAt,
                 'updated_at'        => $createdAt,
             ]);
@@ -68,18 +93,21 @@ class UserSeeder extends Seeder
             'password'          => Hash::make('password123'),
             'utype'             => 'DIR',
             'password_set'      => true,
+            'role'              => 'employee',
+            'sex'               => $faker->randomElement(['male', 'female']),
+            'phone_number'      => '9' . $faker->numerify('#########'),
             'created_at'        => $createdAt,
             'updated_at'        => $createdAt,
         ]);
 
-        // Create Regular Users
-        for ($i = 1; $i <= 50; $i++) {
-            $createdAt = $faker->dateTimeBetween('2024-01-01', '2025-12-31');
+        // Create Students (60 users)
+        for ($i = 1; $i <= 100; $i++) {
+            $createdAt = $faker->dateTimeBetween('2025-01-01', Carbon::now());
             $department = $faker->randomElement($departments);
             $course = $faker->randomElement($courses[$department]);
             User::create([
                 'name'              => $faker->name,
-                'email'             => "user{$i}@cvsu.edu.ph",
+                'email'             => "student{$i}@cvsu.edu.ph",
                 'email_verified_at' => now(),
                 'password'          => Hash::make('password123'),
                 'utype'             => 'USR',
@@ -93,6 +121,52 @@ class UserSeeder extends Seeder
                 'sex'               => $faker->randomElement(['male', 'female']),
                 'created_at'        => $createdAt,
                 'updated_at'        => $createdAt,
+            ]);
+        }
+
+        // Create Employees 
+        for ($i = 1; $i <= 20; $i++) {
+            $createdAt = $faker->dateTimeBetween('2025-01-01', Carbon::now());
+            User::create([
+                'name'              => $faker->name,
+                'email'             => "employee{$i}@cvsu.edu.ph",
+                'email_verified_at' => now(),
+                'password'          => Hash::make('password123'),
+                'utype'             => 'USR',
+                'password_set'      => false,
+                'phone_number'      => '9' . $faker->numerify('#########'),
+                'role'              => 'employee',
+                'sex'               => $faker->randomElement(['male', 'female']),
+                'created_at'        => $createdAt,
+                'updated_at'        => $createdAt,
+                // Student-specific fields are null for employees
+                'year_level'        => null,
+                'department'        => null,
+                'course'            => null,
+                'profile_image'     => null,
+            ]);
+        }
+
+        // Create Non-employees
+        for ($i = 1; $i <= 20; $i++) {
+            $createdAt = $faker->dateTimeBetween('2025-01-01', Carbon::now());
+            User::create([
+                'name'              => $faker->name,
+                'email'             => "nonemployee{$i}@cvsu.edu.ph",
+                'email_verified_at' => now(),
+                'password'          => Hash::make('password123'),
+                'utype'             => 'USR',
+                'password_set'      => false,
+                'phone_number'      => '9' . $faker->numerify('#########'),
+                'role'              => 'non-employee',
+                'sex'               => $faker->randomElement(['male', 'female']),
+                'created_at'        => $createdAt,
+                'updated_at'        => $createdAt,
+                // Student-specific fields are null for non-employees
+                'year_level'        => null,
+                'department'        => null,
+                'course'            => null,
+                'profile_image'     => null,
             ]);
         }
     }
