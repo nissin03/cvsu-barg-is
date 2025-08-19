@@ -37,6 +37,7 @@ class FacilityReservationController extends Controller
             'user',
             'availability.facility',
             'availability.facilityAttribute',
+            'transactionReservations.availability',
             'updatedBy' => function ($q) {
                 $q->where('utype', 'ADM');
             }
@@ -58,9 +59,21 @@ class FacilityReservationController extends Controller
             });
         }
 
-        return $query->latest()->paginate(12)->withQueryString();
-    }
+        $reservations = $query->latest()->paginate(12)->withQueryString();
+        $reservations->each(function ($payment) {
+            if ($payment->availability) {
+                $relatedAvailabilities = \App\Models\Availability::whereIn(
+                    'id',
+                    \App\Models\TransactionReservation::where('payment_id', $payment->id)
+                        ->pluck('availability_id')
+                )->orderBy('date_from')->get();
 
+                $payment->grouped_availabilities = $relatedAvailabilities;
+            }
+        });
+
+        return $reservations;
+    }
 
     /**
      * Display the specified resource.
@@ -71,10 +84,20 @@ class FacilityReservationController extends Controller
             'user',
             'availability.facility',
             'availability.facilityAttribute',
+            'transactionReservations.availability',
             'updatedBy' => function ($q) {
                 $q->where('utype', 'ADM');
             }
         ])->findOrFail($id);
+        if ($reservation->availability) {
+            $relatedAvailabilities = \App\Models\Availability::whereIn(
+                'id',
+                \App\Models\TransactionReservation::where('payment_id', $reservation->id)
+                    ->pluck('availability_id')
+            )->orderBy('date_from')->get();
+
+            $reservation->grouped_availabilities = $relatedAvailabilities;
+        }
 
         return view('admin.facilities.reservations.details', compact('reservation'));
     }

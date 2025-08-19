@@ -1319,16 +1319,81 @@ class UserFacilityController extends Controller
         $user = Auth::user()->id;
 
         $payments = Payment::with([
-            'availability.facility',
-            'availability.facilityAttribute',
+            'transactionReservations.availability',
             'transactionReservations.facilityAttribute',
             'transactionReservations.price',
+            'availability.facility',
+            'availability.facilityAttribute',
             'updatedBy'
         ])
             ->where('user_id', $user)
             ->whereNotIn('status', ['completed', 'canceled'])
             ->latest()
             ->paginate(10);
+
+        $payments->each(function ($payment) {
+            if ($payment->availability) {
+                $relatedAvailabilities = \App\Models\Availability::whereIn(
+                    'id',
+                    \App\Models\TransactionReservation::where('payment_id', $payment->id)
+                        ->pluck('availability_id')
+                )->orderBy('date_from')->get();
+                $payment->grouped_availabilities = $relatedAvailabilities;
+                $groupedDates = [];
+
+                if ($relatedAvailabilities->isNotEmpty()) {
+                    $sortedAvailabilities = $relatedAvailabilities->sortBy('date_from');
+                    $currentGroup = [];
+
+                    foreach ($sortedAvailabilities as $avail) {
+                        if (empty($currentGroup)) {
+                            $currentGroup = [
+                                'start' => $avail->date_from,
+                                'end' => $avail->date_to
+                            ];
+                        } elseif (\Carbon\Carbon::parse($currentGroup['end'])->addDay()->format('Y-m-d') === $avail->date_from) {
+                            $currentGroup['end'] = $avail->date_to;
+                        } else {
+                            $groupedDates[] = $currentGroup;
+                            $currentGroup = [
+                                'start' => $avail->date_from,
+                                'end' => $avail->date_to
+                            ];
+                        }
+                    }
+                    if (!empty($currentGroup)) {
+                        $groupedDates[] = $currentGroup;
+                    }
+                } else {
+                    $groupedDates[] = [
+                        'start' => $payment->availability->date_from,
+                        'end' => $payment->availability->date_to
+                    ];
+                }
+
+                $formattedRanges = collect($groupedDates)->map(function ($range) {
+                    $startDate = \Carbon\Carbon::parse($range['start']);
+                    $endDate = \Carbon\Carbon::parse($range['end']);
+
+                    if ($startDate->equalTo($endDate)) {
+                        return $startDate->format('M j, Y');
+                    } else {
+                        if ($startDate->format('M Y') === $endDate->format('M Y')) {
+                            return $startDate->format('M j') . ' - ' . $endDate->format('j, Y');
+                        } elseif ($startDate->format('Y') === $endDate->format('Y')) {
+                            return $startDate->format('M j') . ' - ' . $endDate->format('M j, Y');
+                        } else {
+                            return $startDate->format('M j, Y') . ' - ' . $endDate->format('M j, Y');
+                        }
+                    }
+                });
+
+                $payment->reservation_ranges = $formattedRanges;
+                $payment->reservation_range = $formattedRanges->join(', ');
+                $payment->grouped_dates = $groupedDates;
+            }
+        });
+
         return view('user.reservation', compact('payments'));
     }
 
@@ -1336,10 +1401,13 @@ class UserFacilityController extends Controller
     {
         $user = Auth::user();
         $payment = Payment::with([
-            'availability.facility',
-            'availability.facilityAttribute',
+            'transactionReservations.availability' => function ($query) {
+                $query->orderBy('date_from');
+            },
             'transactionReservations.facilityAttribute',
             'transactionReservations.price',
+            'availability.facility',
+            'availability.facilityAttribute',
             'paymentDetails.facility',
             'user',
             'updatedBy'
@@ -1355,14 +1423,12 @@ class UserFacilityController extends Controller
         $qualificationApproval = QualificationApproval::where('availability_id', $payment->availability_id)
             ->where('user_id', $user->id)
             ->first();
-        $dateFrom = $payment->availability->date_from;
-        $dateTo = $payment->availability->date_to;
-        $days = 0;
 
-        if ($dateFrom && $dateTo) {
-            $days = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1;
-        }
+        // Process grouped availabilities for this single payment
+        $this->processPaymentAvailabilities($payment);
 
+        // Calculate total days across all availability periods
+        $days = $this->calculateTotalDays($payment);
 
         return view('user.reservation_details', compact(
             'payment',
@@ -1378,6 +1444,9 @@ class UserFacilityController extends Controller
         $payments = Payment::with([
             'availability.facility',
             'availability.facilityAttribute',
+            'transactionReservations.availability' => function ($query) {
+                $query->orderBy('date_from');
+            },
             'transactionReservations.facilityAttribute',
             'transactionReservations.price',
             'updatedBy'
@@ -1388,6 +1457,151 @@ class UserFacilityController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
+        // Process each payment to add grouped availability data
+        $payments->each(function ($payment) {
+            $this->processPaymentAvailabilities($payment);
+        });
+
         return view('user.reservation_history', compact('payments'));
+    }
+
+    /**
+     * Process availabilities for a single payment
+     */
+    private function processPaymentAvailabilities($payment)
+    {
+        // Extract availabilities from transaction reservations
+        $relatedAvailabilities = $payment->transactionReservations
+            ->pluck('availability')
+            ->filter()
+            ->sortBy('date_from');
+
+        if ($relatedAvailabilities->isNotEmpty()) {
+            $payment->grouped_availabilities = $relatedAvailabilities;
+            $payment->grouped_dates = $this->groupConsecutiveDates($relatedAvailabilities);
+        } else if ($payment->availability) {
+            // Fallback to single availability
+            $payment->grouped_availabilities = collect([$payment->availability]);
+            $payment->grouped_dates = [[
+                'start' => $payment->availability->date_from,
+                'end' => $payment->availability->date_to,
+                'time_start' => $payment->availability->time_start,
+                'time_end' => $payment->availability->time_end
+            ]];
+        } else {
+            $payment->grouped_availabilities = collect();
+            $payment->grouped_dates = [];
+        }
+
+        // Format ranges for easy display
+        $payment->reservation_ranges = $this->formatDateRanges($payment->grouped_dates);
+        $payment->reservation_range = $payment->reservation_ranges->join(', ');
+    }
+
+    /**
+     * Calculate total days across all availability periods
+     */
+    private function calculateTotalDays($payment)
+    {
+        $totalDays = 0;
+
+        if (!empty($payment->grouped_dates)) {
+            foreach ($payment->grouped_dates as $range) {
+                $startDate = Carbon::parse($range['start']);
+                $endDate = Carbon::parse($range['end']);
+                $totalDays += $startDate->diffInDays($endDate) + 1;
+            }
+        } else if ($payment->availability) {
+            // Fallback calculation
+            $dateFrom = $payment->availability->date_from;
+            $dateTo = $payment->availability->date_to;
+
+            if ($dateFrom && $dateTo) {
+                $totalDays = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1;
+            }
+        }
+
+        return $totalDays;
+    }
+
+    /**
+     * Group consecutive availabilities into date ranges
+     */
+    private function groupConsecutiveDates($availabilities)
+    {
+        if ($availabilities->isEmpty()) {
+            return [];
+        }
+
+        $groupedDates = [];
+        $currentGroup = null;
+
+        foreach ($availabilities as $avail) {
+            if (!$currentGroup) {
+                // Start new group
+                $currentGroup = [
+                    'start' => $avail->date_from,
+                    'end' => $avail->date_to,
+                    'time_start' => $avail->time_start,
+                    'time_end' => $avail->time_end
+                ];
+            } elseif ($this->isConsecutiveDate($currentGroup['end'], $avail->date_from)) {
+                // Extend current group
+                $currentGroup['end'] = $avail->date_to;
+                // Keep the time from the first availability in the group
+            } else {
+                // Save current group and start new one
+                $groupedDates[] = $currentGroup;
+                $currentGroup = [
+                    'start' => $avail->date_from,
+                    'end' => $avail->date_to,
+                    'time_start' => $avail->time_start,
+                    'time_end' => $avail->time_end
+                ];
+            }
+        }
+
+        // Don't forget the last group
+        if ($currentGroup) {
+            $groupedDates[] = $currentGroup;
+        }
+
+        return $groupedDates;
+    }
+
+    /**
+     * Check if two dates are consecutive
+     */
+    private function isConsecutiveDate($endDate, $startDate)
+    {
+        return Carbon::parse($endDate)->addDay()->format('Y-m-d') === $startDate;
+    }
+
+    /**
+     * Format date ranges for display
+     */
+    private function formatDateRanges($groupedDates)
+    {
+        return collect($groupedDates)->map(function ($range) {
+            $startDate = Carbon::parse($range['start']);
+            $endDate = Carbon::parse($range['end']);
+
+            if ($startDate->equalTo($endDate)) {
+                return $startDate->format('M j, Y');
+            }
+
+            // Same month and year
+            if ($startDate->format('M Y') === $endDate->format('M Y')) {
+                return $startDate->format('M j') . ' - ' . $endDate->format('j, Y');
+            }
+
+            // Same year, different months
+            if ($startDate->format('Y') === $endDate->format('Y')) {
+                return $startDate->format('M j') . ' - ' . $endDate->format('M j, Y');
+            }
+
+            // Different years
+            return $startDate->format('M j, Y') . ' - ' . $endDate->format('M j, Y');
+        });
     }
 }

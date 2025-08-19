@@ -205,23 +205,22 @@
             background-color: #dc3545;
         }
     </style>
+<x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="Reservation"
+:breadcrumbs="$breadcrumbs" />
 
-    <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="Reservation"
-        :breadcrumbs="$breadcrumbs" />
+<main class="container" style="padding-top: 1em;">
+<div class="mb-4 pb-4"></div>
 
-    <main class="container" style="padding-top: 1em;">
-        <div class="mb-4 pb-4"></div>
+<section class="my-account container">
+    <h2 class="page-title">Facility Reservations</h2>
 
-        <section class="my-account container">
-            <h2 class="page-title">Facility Reservations</h2>
+    <div class="row">
+        <div class="col-lg-2">
+            @include('user.account__nav')
+        </div>
 
-            <div class="row">
-                <div class="col-lg-2">
-                    @include('user.account__nav')
-                </div>
-
-                <div class="col-lg-10">
-                    @forelse ($payments as $payment)
+        <div class="col-lg-10">
+            @forelse ($payments as $payment)
                 <div class="wg-box">
                     <div class="reservation-summary">
                         <!-- Left Section -->
@@ -257,33 +256,127 @@
                         </div>
                     </div>
 
-                    <!-- Date Range Information -->
+                    <!-- Updated Date Range Information with Grouping -->
                     <div class="date-range">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><span class="date-label">Date From:</span> 
-                                    <span class="date-value">{{ \Carbon\Carbon::parse($payment->availability->date_from)->format('M d, Y') }}</span>
-                                </p>
+                        @php
+                            $groupedDates = [];
+                    
+                            if ($payment->grouped_availabilities && $payment->grouped_availabilities->isNotEmpty()) {
+                                $sortedAvailabilities = $payment->grouped_availabilities->sortBy('date_from');
+                                $currentGroup = [];
+                    
+                                foreach ($sortedAvailabilities as $avail) {
+                                    if (empty($currentGroup)) {
+                                        $currentGroup = [
+                                            'start' => $avail->date_from,
+                                            'end' => $avail->date_to,
+                                            'time_start' => $avail->time_start,
+                                            'time_end' => $avail->time_end
+                                        ];
+                                    } elseif (\Carbon\Carbon::parse($currentGroup['end'])->addDay()->format('Y-m-d') === $avail->date_from) {
+                                        $currentGroup['end'] = $avail->date_to;
+                                        // Keep the time from the first availability in the group
+                                    } else {
+                                        $groupedDates[] = $currentGroup;
+                                        $currentGroup = [
+                                            'start' => $avail->date_from,
+                                            'end' => $avail->date_to,
+                                            'time_start' => $avail->time_start,
+                                            'time_end' => $avail->time_end
+                                        ];
+                                    }
+                                }
+                    
+                                if (!empty($currentGroup)) {
+                                    $groupedDates[] = $currentGroup;
+                                }
+                            } else {
+                                // fallback: single availability
+                                $groupedDates[] = [
+                                    'start' => $payment->availability->date_from,
+                                    'end' => $payment->availability->date_to,
+                                    'time_start' => $payment->availability->time_start,
+                                    'time_end' => $payment->availability->time_end
+                                ];
+                            }
+                        @endphp
+
+                        @if(!empty($groupedDates))
+                            <div class="date-ranges-container">
+                                <h6 class="mb-3">Reservation Schedule:</h6>
+                                @foreach($groupedDates as $index => $range)
+                                    @php
+                                        $startDate = \Carbon\Carbon::parse($range['start']);
+                                        $endDate = \Carbon\Carbon::parse($range['end']);
+                                    @endphp
+                                    
+                                    <div class="date-range-item mb-3 p-3" style="background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
+                                        <div class="row">
+                                            <div class="col-md-12 mb-2">
+                                                <p class="mb-1">
+                                                    <span class="date-label"><strong>Schedule {{ $index + 1 }}:</strong></span>
+                                                    <span class="date-value fw-bold text-primary">
+                                                        @if ($startDate->equalTo($endDate))
+                                                            {{ $startDate->format('M j, Y') }}
+                                                        @else
+                                                            @if($startDate->format('M Y') === $endDate->format('M Y'))
+                                                                {{ $startDate->format('M j') }} - {{ $endDate->format('j, Y') }}
+                                                            @elseif($startDate->format('Y') === $endDate->format('Y'))
+                                                                {{ $startDate->format('M j') }} - {{ $endDate->format('M j, Y') }}
+                                                            @else
+                                                                {{ $startDate->format('M j, Y') }} - {{ $endDate->format('M j, Y') }}
+                                                            @endif
+                                                        @endif
+                                                    </span>
+                                                </p>
+                                            </div>
+                                            
+                                            @if ($range['time_start'] && $range['time_end'])
+                                                <div class="col-md-6">
+                                                    <p class="mb-0">
+                                                        <span class="date-label">Time Start:</span>
+                                                        <span class="date-value">{{ \Carbon\Carbon::parse($range['time_start'])->format('h:i A') }}</span>
+                                                    </p>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <p class="mb-0">
+                                                        <span class="date-label">Time End:</span>
+                                                        <span class="date-value">{{ \Carbon\Carbon::parse($range['time_end'])->format('h:i A') }}</span>
+                                                    </p>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
-                            <div class="col-md-6">
-                                <p><span class="date-label">Date To:</span> 
-                                    <span class="date-value">{{ \Carbon\Carbon::parse($payment->availability->date_to)->format('M d, Y') }}</span>
-                                </p>
-                            </div>
-                        </div>
-                        @if ($payment->availability->time_start && $payment->availability->time_end)
+                        @else
+                            <!-- Fallback to original layout if no grouped dates -->
                             <div class="row">
                                 <div class="col-md-6">
-                                    <p><span class="date-label">Time Start:</span> 
-                                        <span class="date-value">{{ \Carbon\Carbon::parse($payment->availability->time_start)->format('h:i A') }}</span>
+                                    <p><span class="date-label">Date From:</span> 
+                                        <span class="date-value">{{ \Carbon\Carbon::parse($payment->availability->date_from)->format('M d, Y') }}</span>
                                     </p>
                                 </div>
                                 <div class="col-md-6">
-                                    <p><span class="date-label">Time End:</span> 
-                                        <span class="date-value">{{ \Carbon\Carbon::parse($payment->availability->time_end)->format('h:i A') }}</span>
+                                    <p><span class="date-label">Date To:</span> 
+                                        <span class="date-value">{{ \Carbon\Carbon::parse($payment->availability->date_to)->format('M d, Y') }}</span>
                                     </p>
                                 </div>
                             </div>
+                            @if ($payment->availability->time_start && $payment->availability->time_end)
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><span class="date-label">Time Start:</span> 
+                                            <span class="date-value">{{ \Carbon\Carbon::parse($payment->availability->time_start)->format('h:i A') }}</span>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><span class="date-label">Time End:</span> 
+                                            <span class="date-value">{{ \Carbon\Carbon::parse($payment->availability->time_end)->format('h:i A') }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            @endif
                         @endif
                     </div>
 
@@ -291,34 +384,69 @@
                         <a class="btn btn-custom btn-outline-primary" href="{{ route('user.reservation_details', ['payment_id' => $payment->id]) }}">View Details</a>
                     </div>
                 </div>
-                    @empty
-                        <div class="wg-box">
-                            <div class="text-center">
-                                <h4>No Facility Reservations Found</h4>
-                                <p class="text-muted">You haven't made any facility reservations yet.</p>
-                                <a href="{{ route('user.facilities.index') }}" class="btn btn-custom btn-outline-primary">Browse Facilities</a>
-                            </div>
-                        </div>
-                    @endforelse
-
-                    <!-- Pagination -->
-                    @if ($payments->hasPages())
-                        <div class="wg-box">
-                            <div class="d-flex justify-content-center">
-                                {{ $payments->links('pagination::bootstrap-5') }}
-                            </div>
-                        </div>
-                    @endif
+            @empty
+                <div class="wg-box">
+                    <div class="text-center">
+                        <h4>No Facility Reservations Found</h4>
+                        <p class="text-muted">You haven't made any facility reservations yet.</p>
+                        <a href="{{ route('user.facilities.index') }}" class="btn btn-custom btn-outline-primary">Browse Facilities</a>
+                    </div>
                 </div>
-            </div>
-        </section>
-    </main>
-@endsection
+            @endforelse
+
+            <!-- Pagination -->
+            @if ($payments->hasPages())
+                <div class="wg-box">
+                    <div class="d-flex justify-content-center">
+                        {{ $payments->links('pagination::bootstrap-5') }}
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+</section>
+</main>
+
+@push('styles')
+<style>
+.date-ranges-container {
+    margin-top: 15px;
+}
+
+.date-range-item {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.date-range-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.date-label {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.date-value {
+    color: #495057;
+}
+
+/* Debug info - remove in production */
+.debug-info {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+}
+</style>
+@endpush
 
 @push('scripts')
-    <script>
-        $(function() {
-            console.log('Facility Reservations page loaded');
-        });
-    </script>
+<script>
+    $(function() {
+        console.log('Facility Reservations page loaded with date grouping');
+    });
+</script>
 @endpush

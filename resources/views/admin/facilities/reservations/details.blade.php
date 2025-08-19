@@ -44,6 +44,10 @@
             opacity: 0.6;
             cursor: not-allowed;
         }
+
+        .date-range {
+            margin-bottom: 2px;
+        }
     </style>
 
     <div class="main-content-inner">
@@ -67,9 +71,6 @@
 
             <div class="wg-box">
                 <div class="d-flex justify-content-end">
-                    {{-- <div class="wg-filter flex-grow">
-                        <h5>Reservation Details</h5>
-                    </div> --}}
                     <a class="btn  btn-danger" href="{{ route('admin.facilities.reservations') }}">Back</a>
                 </div>
                 @if (Session::has('status'))
@@ -96,8 +97,70 @@
                         </tr>
                         <tr>
                             <th>Reservation Date</th>
-                            <td>{{ \Carbon\Carbon::parse($reservation->availability->date_from)->format('M d, Y') }} -
-                                {{ \Carbon\Carbon::parse($reservation->availability->date_to)->format('M d, Y') }}</td>
+                            <td>
+                                @php
+                                    $groupedDates = [];
+                            
+                                    if ($reservation->grouped_availabilities && $reservation->grouped_availabilities->isNotEmpty()) {
+                                        $sortedAvailabilities = $reservation->grouped_availabilities->sortBy('date_from');
+                                        $currentGroup = [];
+                            
+                                        foreach ($sortedAvailabilities as $avail) {
+                                            if (empty($currentGroup)) {
+                                                $currentGroup = [
+                                                    'start' => $avail->date_from,
+                                                    'end' => $avail->date_to
+                                                ];
+                                            } elseif (\Carbon\Carbon::parse($currentGroup['end'])->addDay()->format('Y-m-d') === $avail->date_from) {
+                                                $currentGroup['end'] = $avail->date_to;
+                                            } else {
+                                                $groupedDates[] = $currentGroup;
+                                                $currentGroup = [
+                                                    'start' => $avail->date_from,
+                                                    'end' => $avail->date_to
+                                                ];
+                                            }
+                                        }
+                            
+                                        if (!empty($currentGroup)) {
+                                            $groupedDates[] = $currentGroup;
+                                        }
+                                    } else {
+                                        // fallback: single availability
+                                        $groupedDates[] = [
+                                            'start' => $reservation->availability->date_from,
+                                            'end' => $reservation->availability->date_to
+                                        ];
+                                    }
+                                @endphp
+                            
+                                @if(!empty($groupedDates))
+                                    <div class="date-ranges">
+                                        @foreach($groupedDates as $range)
+                                            @php
+                                                $startDate = \Carbon\Carbon::parse($range['start']);
+                                                $endDate = \Carbon\Carbon::parse($range['end']);
+                                            @endphp
+                            
+                                            <div class="date-range">
+                                                @if ($startDate->equalTo($endDate))
+                                                    {{ $startDate->format('M j, Y') }}
+                                                @else
+                                                    @if($startDate->format('M Y') === $endDate->format('M Y'))
+                                                        {{ $startDate->format('M j') }} - {{ $endDate->format('j, Y') }}
+                                                    @elseif($startDate->format('Y') === $endDate->format('Y'))
+                                                        {{ $startDate->format('M j') }} - {{ $endDate->format('M j, Y') }}
+                                                    @else
+                                                        {{ $startDate->format('M j, Y') }} - {{ $endDate->format('M j, Y') }}
+                                                    @endif
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    N/A
+                                @endif
+                            </td>
                             <th>Created At</th>
                             <td>{{ $reservation->created_at->format('M d, Y H:i:s') }}</td>
                             <th>Status</th>
@@ -259,7 +322,7 @@
                     // Show error message
                     const alertDiv = document.createElement('div');
                     alertDiv.className = 'alert alert-danger mt-3';
-                    alertDiv.textContent = 'Error updating status. Please try again.';
+                    alertDiv.textDiv = 'Error updating status. Please try again.';
                     form.parentNode.insertBefore(alertDiv, form.nextSibling);
 
                     // Remove the alert after 3 seconds

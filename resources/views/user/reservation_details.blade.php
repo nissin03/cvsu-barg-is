@@ -302,8 +302,8 @@
                                 <div class="col-md-6">
                                     <p><span class="date-label">Reservation Period:</span></p>
                                     <div class="date-ranges">
-                                        @if(!empty($groupedDates))
-                                            @foreach($groupedDates as $range)
+                                        @if(!empty($payment->grouped_dates))
+                                            @foreach($payment->grouped_dates as $range)
                                                 <div class="date-range-item" style="margin-bottom: 5px;">
                                                     @if($range['start'] === $range['end'])
                                                         {{ \Carbon\Carbon::parse($range['start'])->format('M j, Y') }}
@@ -312,10 +312,12 @@
                                                             $startDate = \Carbon\Carbon::parse($range['start']);
                                                             $endDate = \Carbon\Carbon::parse($range['end']);
                                                         @endphp
-                                                        @if($startDate->format('M') === $endDate->format('M'))
+                                                        @if($startDate->format('M Y') === $endDate->format('M Y'))
                                                             {{ $startDate->format('M j') }} - {{ $endDate->format('j, Y') }}
-                                                        @else
+                                                        @elseif($startDate->format('Y') === $endDate->format('Y'))
                                                             {{ $startDate->format('M j') }} - {{ $endDate->format('M j, Y') }}
+                                                        @else
+                                                            {{ $startDate->format('M j, Y') }} - {{ $endDate->format('M j, Y') }}
                                                         @endif
                                                     @endif
                                                 </div>
@@ -325,7 +327,41 @@
                                         @endif
                                     </div>
                                 </div>
-                                @if ($payment->availability->time_start && $payment->availability->time_end)
+                                
+                                {{-- Display time information from grouped availabilities --}}
+                                @if (!empty($payment->grouped_dates))
+                                    @php
+                                        // Get time from first availability group
+                                        $firstRange = $payment->grouped_dates[0];
+                                        $hasTime = !empty($firstRange['time_start']) && !empty($firstRange['time_end']);
+                                    @endphp
+                                    
+                                    @if ($hasTime)
+                                        <div class="col-md-6">
+                                            <p><span class="date-label">Time:</span> 
+                                                <span class="date-value">
+                                                    {{ \Carbon\Carbon::parse($firstRange['time_start'])->format('h:i A') }} - 
+                                                    {{ \Carbon\Carbon::parse($firstRange['time_end'])->format('h:i A') }}
+                                                </span>
+                                            </p>
+                                            
+                                            {{-- Show if multiple time periods exist --}}
+                                            @if (count($payment->grouped_dates) > 1)
+                                                @foreach(array_slice($payment->grouped_dates, 1) as $index => $range)
+                                                    @if (!empty($range['time_start']) && !empty($range['time_end']))
+                                                        <p><span class="date-label">Time {{ $index + 2 }}:</span> 
+                                                            <span class="date-value">
+                                                                {{ \Carbon\Carbon::parse($range['time_start'])->format('h:i A') }} - 
+                                                                {{ \Carbon\Carbon::parse($range['time_end'])->format('h:i A') }}
+                                                            </span>
+                                                        </p>
+                                                    @endif
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    @endif
+                                @elseif ($payment->availability && $payment->availability->time_start && $payment->availability->time_end)
+                                    {{-- Fallback to single availability time --}}
                                     <div class="col-md-6">
                                         <p><span class="date-label">Time:</span> 
                                             <span class="date-value">
@@ -336,21 +372,20 @@
                                     </div>
                                 @endif
                             </div>
+                            
                             @if ($days > 0)
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <p><span class="date-label">Duration:</span> 
+                                        <p><span class="date-label">Total Duration:</span> 
                                             <span class="date-value">{{ $days }} day(s)</span>
                                         </p>
                                     </div>
                                 </div>
                             @endif
-                        </div>
-
-                        <div class="text-end">
-                            <a class="btn btn-custom btn-outline-primary" href="{{ route('user.reservations') }}">Back to Reservations</a>
-                        </div>
-                    </div>
+                            
+                            <div class="text-end">
+                                <a class="btn btn-custom btn-outline-primary" href="{{ route('user.reservations') }}">Back to Reservations</a>
+                            </div>
 
                     <!-- Facility Information -->
                     <div class="wg-box">
