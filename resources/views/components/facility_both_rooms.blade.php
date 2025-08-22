@@ -2,11 +2,11 @@
     $hasAvailableRooms = false;
     
     $filteredAttributes = $facility->facilityAttributes->filter(function($attribute) {
-        if (auth()->user()->utype === 'ADM' || is_null($attribute->sex_restriction)) {
+        if ((auth()->check() && auth()->user()->utype === 'ADM') || is_null($attribute->sex_restriction)) {
             return true;
         }
         
-        return $attribute->sex_restriction === auth()->user()->sex;
+        return auth()->check() && $attribute->sex_restriction === auth()->user()->sex;
     });
     
     $availableRoom = $filteredAttributes->first(function($attribute) {
@@ -28,8 +28,8 @@
                     ($availability->remaining_capacity >= $room->capacity);
 
         $sexAllowed = true;
-        if ($room->sex_restriction && auth()->user()->utype === 'USR') {
-            $sexAllowed = $room->sex_restriction === auth()->user()->sex;
+        if ($room->sex_restriction && auth()->check() && auth()->user()->utype === 'USR') {
+            $sexAllowed = auth()->check() && $room->sex_restriction === auth()->user()->sex;
         }
         
         return $isAvailable && $sexAllowed;
@@ -414,7 +414,7 @@
                         <select name="selected_room" id="selected_room" class="client-type-select" required>
                             <option value="">Select a Room</option>
                             @foreach ($allRooms as $room)
-                                @if(auth()->user()->utype === 'ADM' || !$room->sex_restriction || $room->sex_restriction === auth()->user()->sex)
+                                @if(auth()->check() && (auth()->user()->utype === 'ADM' || !$room->sex_restriction || $room->sex_restriction === auth()->user()->sex))
                                     <option value="{{ $room->id }}" 
                                         data-capacity="{{ $room->capacity }}"
                                         data-room-name="{{ $room->room_name }}">

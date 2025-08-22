@@ -542,7 +542,7 @@ class FacilityController extends Controller
     }
 
 
-    public function facilityDashboard()
+   public function facilityDashboard()
     {
         $dashboardData = [
             'total_reservations' => Payment::count(),
@@ -636,9 +636,6 @@ class FacilityController extends Controller
         ]);
     }
 
-
-
-    
     public function analytics()
     {
         // Gender distribution
@@ -647,9 +644,9 @@ class FacilityController extends Controller
             ->join('users', 'transaction_reservations.user_id', '=', 'users.id')
             ->groupBy('users.sex')
             ->get();
-        
+
         $genderSeries = $genderData->pluck('count')->toArray();
-        $genderLabels = $genderData->pluck('gender')->map(function($item) {
+        $genderLabels = $genderData->pluck('gender')->map(function ($item) {
             return ucfirst($item);
         })->toArray();
 
@@ -660,7 +657,7 @@ class FacilityController extends Controller
             ->whereNotNull('users.department')
             ->groupBy('users.department')
             ->get();
-        
+
         $departmentSeries = $departmentData->pluck('count')->toArray();
         $departmentLabels = $departmentData->pluck('department')->toArray();
 
@@ -671,7 +668,7 @@ class FacilityController extends Controller
             ->whereNotNull('users.course')
             ->groupBy('users.course')
             ->get();
-        
+
         $collegeSeries = $collegeData->pluck('count')->toArray();
         $collegeLabels = $collegeData->pluck('college')->toArray();
 
@@ -681,9 +678,9 @@ class FacilityController extends Controller
             ->join('users', 'transaction_reservations.user_id', '=', 'users.id')
             ->groupBy('users.role')
             ->get();
-        
+
         $roleSeries = $roleData->pluck('count')->toArray();
-        $roleLabels = $roleData->pluck('role')->map(function($item) {
+        $roleLabels = $roleData->pluck('role')->map(function ($item) {
             return ucfirst(str_replace('-', ' ', $item));
         })->toArray();
 
@@ -706,9 +703,4 @@ class FacilityController extends Controller
             ]
         ]);
     }
-
-
-
-
-
 }

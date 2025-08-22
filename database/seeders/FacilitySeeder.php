@@ -410,7 +410,7 @@ class FacilitySeeder extends Seeder
         ]);
 
         // Both Facility Type - Swimming Pool
-        $swimmingPool = DB::table('facilities')->insertGetId([
+         $swimmingPool = DB::table('facilities')->insertGetId([
             'name' => 'Swimming Pool',
             'facility_type' => 'both',
             'slug' => Str::slug('Swimming Pool'),
@@ -427,6 +427,7 @@ class FacilitySeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
 
         // Swimming Pool Attributes - Whole Capacity
         DB::table('facility_attributes')->insert([

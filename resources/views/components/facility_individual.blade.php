@@ -1,9 +1,9 @@
 @php
     $filteredAttributes = $facility->facilityAttributes->filter(function($attribute) {
-        if (auth()->user()->utype === 'ADM' || is_null($attribute->sex_restriction)) {
+        if ((auth()->check() && auth()->user()->utype === 'ADM') || is_null($attribute->sex_restriction)) {
             return true;
         }
-        return $attribute->sex_restriction === auth()->user()->sex;
+        return auth()->check() && $attribute->sex_restriction === auth()->user()->sex;
     });
     
     $isBasedOnDays = $facility->prices->where('is_based_on_days', true)->count() > 0;
@@ -698,7 +698,7 @@
         
         const roomSelect = document.getElementById('room_selection');
     
-        const userType = "{{ auth()->user()->utype ?? 'USR' }}"; 
+        const userType = "{{ auth()->check() ? auth()->user()->utype ?? 'USR' : 'USR' }}"; 
         
         reserveBtn.disabled = true;
         

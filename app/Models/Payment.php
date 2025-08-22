@@ -42,4 +42,17 @@ class Payment extends Model
     {
         return $this->hasMany(TransactionReservation::class);
     }
+
+    public function groupedAvailabilities()
+    {
+        if (!$this->availability) {
+            return $this->newCollection();
+        }
+
+        return Availability::where('facility_id', $this->availability->facility_id)
+            ->where('facility_attribute_id', $this->availability->facility_attribute_id)
+            ->where('date_from', '>=', $this->availability->date_from)
+            ->where('date_to', '<=', $this->availability->date_to)
+            ->orderBy('date_from');
+    }
 }
