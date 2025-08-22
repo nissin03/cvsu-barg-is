@@ -542,7 +542,7 @@ class FacilityController extends Controller
     }
 
 
-    public function facilityDashboard()
+   public function facilityDashboard()
     {
         $dashboardData = [
             'total_reservations' => Payment::count(),
@@ -555,22 +555,21 @@ class FacilityController extends Controller
 
         $reservations = Payment::with([
             'user',
-            'availability.facility',
+            'availability.facility', 
             'availability.facilityAttribute',
             'transactionReservations.availability'
         ])
-            ->latest()
-            ->take(10)
-            ->get();
+        ->latest()
+        ->take(10)
+        ->get();
 
         $reservations->each(function ($payment) {
             if ($payment->availability) {
-                $relatedAvailabilities = \App\Models\Availability::whereIn(
-                    'id',
+                $relatedAvailabilities = \App\Models\Availability::whereIn('id', 
                     \App\Models\TransactionReservation::where('payment_id', $payment->id)
                         ->pluck('availability_id')
                 )->orderBy('date_from')->get();
-
+                
                 $payment->grouped_availabilities = $relatedAvailabilities;
             }
         });
@@ -582,7 +581,7 @@ class FacilityController extends Controller
             ->get();
 
         $genderSeries = $genderData->pluck('count')->toArray();
-        $genderLabels = $genderData->pluck('gender')->map(function ($item) {
+        $genderLabels = $genderData->pluck('gender')->map(function($item) {
             return ucfirst($item);
         })->toArray();
 
@@ -611,7 +610,7 @@ class FacilityController extends Controller
             ->get();
 
         $roleSeries = $roleData->pluck('count')->toArray();
-        $roleLabels = $roleData->pluck('role')->map(function ($item) {
+        $roleLabels = $roleData->pluck('role')->map(function($item) {
             return ucfirst(str_replace('-', ' ', $item));
         })->toArray();
 
@@ -636,9 +635,6 @@ class FacilityController extends Controller
             ]
         ]);
     }
-
-
-
 
     public function analytics()
     {
