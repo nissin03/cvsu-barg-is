@@ -410,13 +410,13 @@ class FacilitySeeder extends Seeder
         ]);
 
         // Both Facility Type - Swimming Pool
-         $swimmingPool = DB::table('facilities')->insertGetId([
+        $swimmingPool = DB::table('facilities')->insertGetId([
             'name' => 'Swimming Pool',
             'facility_type' => 'both',
             'slug' => Str::slug('Swimming Pool'),
             'description' => 'Olympic-sized swimming pool with whole facility rental options and overnight stay are prohibited',
             'rules_and_regulations' => '1. Shower before entering\n2. No diving in shallow areas\n3. Proper swimwear required',
-            'requirements' => 'Senior/Employee/Student ID',
+            'requirements' => 'Swimming ID, Health certificate',
             'image' => 'facilities/Pool_(1).png',
             'images' => implode(',', [
                 'facilities/thumbnails/Pool_(2).png',
@@ -427,7 +427,6 @@ class FacilitySeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-
 
         // Swimming Pool Attributes - Whole Capacity
         DB::table('facility_attributes')->insert([
@@ -440,8 +439,8 @@ class FacilitySeeder extends Seeder
         // Swimming Pool Prices
         DB::table('prices')->insert([
             'facility_id' => $swimmingPool,
-            'name' => 'Students and Senior Price',
-            'value' => 120.00,
+            'name' => 'Students Price',
+            'value' => 3000.00,
             'price_type' => 'individual',
             'is_based_on_days' => false,
             'is_there_a_quantity' => true,
@@ -451,8 +450,8 @@ class FacilitySeeder extends Seeder
 
         DB::table('prices')->insert([
             'facility_id' => $swimmingPool,
-            'name' => 'Adult Price',
-            'value' => 150.00,
+            'name' => 'Outsider Price',
+            'value' => 4000.00,
             'price_type' => 'individual',
             'is_based_on_days' => false,
             'is_there_a_quantity' => true,
@@ -460,20 +459,10 @@ class FacilitySeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        DB::table('prices')->insert([
-            'facility_id' => $swimmingPool,
-            'name' => 'Kids with the age of 12 below Price',
-            'value' => 100.00,
-            'price_type' => 'individual',
-            'is_based_on_days' => false,
-            'is_there_a_quantity' => false,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
         DB::table('prices')->insert([
             'facility_id' => $swimmingPool,
             'name' => 'Exclusive Price',
-            'value' => 10000.00,
+            'value' => 5000.00,
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
