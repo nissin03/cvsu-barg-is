@@ -128,7 +128,7 @@
                                         <td class="text-center">
                                             <a href="{{ route('admin.report-statement', ['orderId' => $order->id]) }}" 
                                                class="btn btn-outline-primary fs-4">
-                                                <i class="bi bi-eye me-1"></i>View
+                                                <i class="bi bi-eye me-1"></i>View Statement
                                             </a>
                                         </td>
                                     </tr>
