@@ -531,13 +531,20 @@
 
                                     {{-- @if($timeStart && $timeEnd)
                                     <tr>
-                                        <th>Start Time to End Time</th>
+                                        <th>Start Time</th>
                                         <td>
-                                            @if($timeStart->eq($timeEnd))
+                                           
                                                 {{ $timeStart->format('h:i A') }}
-                                            @else
-                                                {{ $timeStart->format('h:i A') }} to {{ $timeEnd->format('h:i A') }}
-                                            @endif
+                                            
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <th>End Time</th>
+                                        <td>
+                                           
+                                        {{ $timeEnd->format('h:i A') }}
+                                       
                                         </td>
                                     </tr>
                                     @endif --}}
