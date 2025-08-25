@@ -393,7 +393,7 @@
                 if (!startTime) return;
                 
                 timeEndSelect.innerHTML = '';
-                
+                // Time change
                 var startHour = parseInt(startTime.split(':')[0]);
                 var maxHour = Math.min(startHour + 8, 23);
                 
