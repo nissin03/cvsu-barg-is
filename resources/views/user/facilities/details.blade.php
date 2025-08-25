@@ -350,6 +350,39 @@
                 return reservedDates;
             }
 
+            function formatTimeTo12Hour(time) {
+                var hour = parseInt(time.split(':')[0]);
+                var minutes = time.split(':')[1];
+                var ampm = hour >= 12 ? 'PM' : 'AM';
+                var displayHour = hour % 12;
+                if (displayHour === 0) displayHour = 12;
+                return displayHour + ':' + minutes + ' ' + ampm;
+            }
+
+            function updateEndTimeOptions() {
+                var startTime = timeStartSelect.value;
+                if (!startTime) return;
+                
+                timeEndSelect.innerHTML = '';
+                // Time change
+                var startHour = parseInt(startTime.split(':')[0]);
+                var maxHour = Math.min(startHour + 8, 23);
+                
+                for (var hour = startHour + 1; hour <= maxHour; hour++) {
+                    var option = document.createElement('option');
+                    var value = (hour === 24 ? '00' : String(hour).padStart(2, '0')) + ':00';
+                    var displayHour = hour > 12 ? hour - 12 : hour;
+                    if (hour === 12) displayHour = 12;
+                    if (hour === 0) displayHour = 12;
+                    var ampm = hour >= 12 ? 'PM' : 'AM';
+                    option.value = value;
+                    option.textContent = displayHour + ':00 ' + ampm;
+                    timeEndSelect.appendChild(option);
+                }
+                
+                timeEndSelect.disabled = false;
+            }
+
             if (!hasDayBasedPricing) {
                 const calendarEl = document.getElementById('calendar');
                 if (calendarEl) {
