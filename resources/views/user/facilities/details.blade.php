@@ -366,7 +366,7 @@
                 timeEndSelect.innerHTML = '';
                 // Time change
                 var startHour = parseInt(startTime.split(':')[0]);
-                var maxHour = Math.min(startHour + 8, 23);
+                var maxHour = Math.min(startHour + 8, 24);
                 
                 for (var hour = startHour + 1; hour <= maxHour; hour++) {
                     var option = document.createElement('option');
