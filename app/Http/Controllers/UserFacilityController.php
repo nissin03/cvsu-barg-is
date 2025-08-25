@@ -44,19 +44,6 @@ class UserFacilityController extends Controller
 
     public function show($slug)
     {
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
-        $user = Auth::user();
-
-        if ($user->utype !== 'ADM' && (empty($user->phone_number) || empty($user->sex))) {
-            session()->put('url.intended', route('user.facilities.index', ['slug' => $slug]));
-
-            return redirect()->route('user.profile')
-                ->with('error', 'Please complete your profile by adding your phone number and selecting your sex before accessing facilities.');
-        }
-
         $facility = Facility::with('facilityAttributes', 'prices')->where('slug', $slug)->firstOrFail();
         $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first();
         $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
@@ -82,7 +69,18 @@ class UserFacilityController extends Controller
 
     public function reserve(Request $request)
     {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
         $user = Auth::user();
+
+        if ($user->utype !== 'ADM' && (empty($user->phone_number) || empty($user->sex))) {
+            session()->put('url.intended', route('user.facilities.index', ['slug' => $request->facility_slug ?? '']));
+
+            return redirect()->route('user.profile')
+                ->with('error', 'Please complete your profile by adding your phone number and selecting your sex before accessing facilities.');
+        }
 
         $request->validate([
             'facility_id' => 'required|exists:facilities,id',
@@ -92,7 +90,7 @@ class UserFacilityController extends Controller
         ]);
 
         $facility = Facility::with(['facilityAttributes', 'prices'])->find($request->facility_id);
-        $userSex = $user->sex;
+        $userSex = Auth::user()->sex;
 
         if ($facility->facility_type === 'individual') {
             $availableRoom = $facility->facilityAttributes->first(function ($attribute) {

@@ -1,4 +1,3 @@
-
 <link href="{{ asset('css/facility/whole_place.css') }}" rel="stylesheet"> 
 
 <div class="facility-booking-container mb-4">
@@ -127,11 +126,24 @@
             <div id="time-slot-container" class="time-slot-grid">
                 <div class="time-input-group">
                     <label for="time_start" class="time-label">Start Time</label>
-                    <input type="time" id="time_start" name="time_start" class="time-input">
+                    <select id="time_start" name="time_start" class="form-select time-select">
+                        @for($hour = 7; $hour <= 22; $hour++)
+                            @php
+                                $displayHour = $hour > 12 ? $hour - 12 : $hour;
+                                $ampm = $hour >= 12 ? 'PM' : 'AM';
+                                if ($hour === 12) $displayHour = 12;
+                                if ($hour === 0) $displayHour = 12;
+                                $value = str_pad($hour, 2, '0', STR_PAD_LEFT) . ':00';
+                                $display = $displayHour . ':00 ' . $ampm;
+                            @endphp
+                            <option value="{{ $value }}">{{ $display }}</option>
+                        @endfor
+                    </select>
                 </div>
                 <div class="time-input-group">
-                    <label for="time_end" class="time-label">End Time <small>(Max 8 hours)</small></label>
-                    <input type="time" id="time_end" name="time_end" class="time-input" readonly>
+                    <label for="time_end" class="time-label">End Time</label>
+                    <select id="time_end" name="time_end" class="form-select time-select" disabled>
+                    </select>
                 </div>
             </div>
         </div>
@@ -163,8 +175,6 @@
 </div>
 
 
-
-{{--  --}}
 
 {{-- Validation --}}
 <script>

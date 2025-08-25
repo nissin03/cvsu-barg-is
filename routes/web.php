@@ -212,7 +212,6 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/facilities/reservations', [FacilityReservationController::class, 'index'])->name('admin.facilities.reservations');
         Route::get('/facilities/reservations/{id}', [FacilityReservationController::class, 'show'])->name('admin.facilities.reservations.show');
         Route::patch('/facilities/reservations/{reservation}/status', [FacilityReservationController::class, 'update'])->name('admin.facilities.reservations.update');
-        Route::patch('/facilities/reservations/qualification/{id}/status', [FacilityReservationController::class, 'updateQualificationApproval'])->name('admin.facilities.reservations.qualification.update');
 
 
         Route::get('/slide', [AdminController::class, 'slides'])->name('admin.slides');

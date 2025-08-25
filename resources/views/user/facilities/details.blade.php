@@ -2,6 +2,38 @@
 @section('content')
 
 
+@php
+    $user = auth()->user();
+    $currentRoute = request()->route()->getName();
+
+    // Determine the base home route based on user type
+    $homeRoute = match ($user->utype ?? 'guest') {
+        'USR' => route('user.index'),
+        'DIR' => route('director.index'),
+        'ADM' => route('admin.index'),
+        default => route('home.index'),
+    };
+
+    // Initialize breadcrumbs array with the Home link
+    $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
+
+    // Breadcrumbs logic
+    $routesWithBreadcrumbs = [
+        'facilities.index' => ['Rentals'],
+        'facilities.details' => ['Rentals', 'Rental Details'],
+        'about.index' => ['About Us'],
+        'contact.index' => ['Contact Us'],
+    ];
+
+    if (isset($routesWithBreadcrumbs[$currentRoute])) {
+        foreach ($routesWithBreadcrumbs[$currentRoute] as $label) {
+            $breadcrumbs[] = ['url' => null, 'label' => $label];
+        }
+    } else {
+        $breadcrumbs[] = ['url' => null, 'label' => 'Facility Details'];
+    }
+@endphp
+
 <link href="{{ asset('css/facility/details.css') }}" rel="stylesheet">
 
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
@@ -273,33 +305,30 @@
 @if ($facility->facility_type === 'whole_place')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            let dateFromInput = document.getElementById('date_from');
-            let dateToInput = document.getElementById('date_to');
-            let timeStartInput = document.getElementById('time_start');
-            let timeEndInput = document.getElementById('time_end');
-            let clientTypeDropdown = document.getElementById('client_type');
-            let totalPriceElement = document.getElementById('total-price').querySelector('span');
+            var dateFromInput = document.getElementById('date_from');
+            var dateToInput = document.getElementById('date_to');
+            var timeStartSelect = document.getElementById('time_start');
+            var timeEndSelect = document.getElementById('time_end');
+            var clientTypeDropdown = document.getElementById('client_type');
+            var totalPriceElement = document.getElementById('total-price').querySelector('span');
             
-            let hasDayBasedPricing = @json($facility->prices->contains('is_based_on_days', true));
-            let userType = @json(auth()->check() ? auth()->user()->utype ?? 'USR' : 'USR');
+            var hasDayBasedPricing = @json($facility->prices->contains('is_based_on_days', true));
+            var userType = @json(auth()->user()->utype ?? 'USR');
             
-            let availabilities = @json($facility->availabilities ?? []);
-            let facilityCapacity = @json($wholeAttr->whole_capacity ?? 0);
+            var availabilities = @json($facility->availabilities ?? []);
+            var facilityCapacity = @json($wholeAttr->whole_capacity ?? 0);
 
-            let today = new Date();
-            let tomorrow = new Date(today);
+            var today = new Date();
+            var tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 3);
-            let tomorrowFormatted = tomorrow.toISOString().split('T')[0];
+            var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
 
             function getMaxDate() {
                 if (userType === 'ADM') return null;
-                let maxDate = new Date();
+                var maxDate = new Date();
                 maxDate.setMonth(maxDate.getMonth() + 1);
                 return maxDate.toISOString().split('T')[0];
             }
-
-            timeStartInput.value = '07:00';
-            calculateEndTime();
 
             function isDateFullyBooked(dateStr) {
                 if (!availabilities || availabilities.length === 0) return false;
@@ -364,7 +393,7 @@
                 if (!startTime) return;
                 
                 timeEndSelect.innerHTML = '';
-                // Time change
+                
                 var startHour = parseInt(startTime.split(':')[0]);
                 var maxHour = Math.min(startHour + 8, 23);
                 
@@ -573,15 +602,6 @@
                 }
             }
 
-            function calculateEndTime() {
-                var st = timeStartInput.value;
-                if (!st) return;
-                var parts = st.split(':').map(Number),
-                    h = (parts[0] + 8) % 24,
-                    m = parts[1];
-                timeEndInput.value = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-            }
-
             function updateTotalPrice() {
                 var ctVal = clientTypeDropdown.value;
                 var total = 0;
@@ -623,13 +643,20 @@
                 document.getElementById('total_price_input').value = total.toFixed(2);
             }
 
-            timeStartInput.addEventListener('input', calculateEndTime);
+            timeStartSelect.addEventListener('change', function() {
+                updateEndTimeOptions();
+                updateTotalPrice();
+            });
+            
+            timeEndSelect.addEventListener('change', updateTotalPrice);
             clientTypeDropdown.addEventListener('change', updateTotalPrice);
             
             if (!hasDayBasedPricing) {
                 dateFromInput.addEventListener('change', updateTotalPrice);
                 dateToInput.addEventListener('change', updateTotalPrice);
             }
+            
+            updateEndTimeOptions();
         });
 
         document.getElementById('client_type').addEventListener('change', function() {
@@ -659,7 +686,7 @@
         tomorrow.setDate(tomorrow.getDate() + 3);
         var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
         
-        var userType = @json(auth()->check() ? auth()->user()->utype : 'USR');
+        var userType = @json(auth()->user()->utype);
         var maxDate = null;
         var maxDateFormatted = null;
         
@@ -1257,7 +1284,7 @@ document.addEventListener('DOMContentLoaded', function() {
     tomorrow.setDate(tomorrow.getDate() + 3);
     var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
     
-    var userType = @json(auth()->check() ? auth()->user()->utype ?? 'USR' : 'USR');
+    var userType = @json(auth()->user()->utype ?? 'USR');
     
     var maxDate = null;
     var maxDateFormatted = null;
