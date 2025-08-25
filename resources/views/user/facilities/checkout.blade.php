@@ -529,7 +529,7 @@
                                         </td>
                                     </tr>
 
-                                    @if($timeStart && $timeEnd)
+                                    {{-- @if($timeStart && $timeEnd)
                                     <tr>
                                         <th>Start Time</th>
                                         <td>
@@ -547,7 +547,7 @@
                                        
                                         </td>
                                     </tr>
-                                    @endif
+                                    @endif --}}
 
                                 @elseif($facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty()) 
 
