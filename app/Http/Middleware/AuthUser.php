@@ -18,10 +18,10 @@ class AuthUser
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::check()) {
-            if (Auth::user()->utype === 'USR' || Auth::user()->utype === 'ADM') {
+            if (Auth::user()->utype === 'USR') {
                 return $next($request);
             } else {
-                return redirect()->route('home.index')->with('error', 'Access denied. This section is for regular users and admins only.');
+                return redirect()->route('home.index')->with('error', 'Access denied. This section is for regular users only.');
             }
         } else {
             return redirect()->route('login');
