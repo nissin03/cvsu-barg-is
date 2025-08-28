@@ -840,7 +840,7 @@
             },
             departmentChart: {
                 options: getDepartmentChartOptions(),
-                type: 'pie'
+                type: 'bar'
             },
             collegeChart: {
                 options: getCollegeChartOptions(),
@@ -968,9 +968,12 @@
     
     function getDepartmentChartOptions() {
         return {
-            series: @json($department['series']),
+            series: [{
+                name: 'Reservations',
+                data: @json($department['series'])
+            }],
             chart: {
-                type: 'pie',
+                type: 'bar',
                 height: 350,
                 animations: {
                     enabled: true,
@@ -1007,8 +1010,8 @@
                             filename: 'department_reservation',
                         }
                     }
-            }
-        },
+                }
+            },
             title: {
                 text: 'Department Reservation',
                 align: 'center',
@@ -1019,34 +1022,86 @@
                 },
                 margin: 20
             },
-            labels: @json($department['labels']),
-            colors: ['#10B981', '#F59E0B', '#3B82F6', '#EC4899', '#8B5CF6', '#EF4444', '#06B6D4'],
-            legend: {
-                position: 'bottom',
-                fontSize: '14px',
-                fontFamily: 'Arial, sans-serif'
-            },
             plotOptions: {
-                pie: {
-                    donut: {
-                        size: '0%'
+                bar: {
+                    borderRadius: 4,
+                    horizontal: true,
+                    distributed: true,
+                    dataLabels: {
+                        position: 'center',
                     }
                 }
             },
+            colors: ['#10B981', '#F59E0B', '#3B82F6', '#EC4899', '#8B5CF6', '#EF4444', '#06B6D4', '#84CC16', '#F97316'],
             dataLabels: {
                 enabled: true,
-                formatter: function (val, opts) {
-                    return opts.w.config.series[opts.seriesIndex] + " (" + val.toFixed(1) + "%)"
+                formatter: function (val) {
+                    return val
+                },
+                style: {
+                    colors: ['#fff'],
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                }
+            },
+            xaxis: {
+                categories: @json($department['labels']),
+                title: {
+                    text: 'Number of Reservations',
+                    style: {
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: '#374151'
+                    }
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'Departments',
+                    style: {
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: '#374151'
+                    }
+                }
+            },
+            legend: {
+                show: false
+            },
+            grid: {
+                show: true,
+                borderColor: '#e5e7eb',
+                strokeDashArray: 0,
+                position: 'back',
+                xaxis: {
+                    lines: {
+                        show: true
+                    }
+                },
+                yaxis: {
+                    lines: {
+                        show: false
+                    }
+                }
+            },
+            tooltip: {
+                theme: 'dark',
+                y: {
+                    formatter: function (val) {
+                        return val + " reservations"
+                    }
                 }
             },
             responsive: [{
                 breakpoint: 480,
                 options: {
                     chart: {
-                        width: 200
+                        height: 300
                     },
-                    legend: {
-                        position: 'bottom'
+                    plotOptions: {
+                        bar: {
+                            horizontal: true
+                        }
                     }
                 }
             }]

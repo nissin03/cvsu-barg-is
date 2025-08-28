@@ -176,6 +176,7 @@
                 </div>
             </div>
             <div class="modal-body p-4">
+                <!-- User Information Table -->
                 <div class="card border-0 bg-gray-50 mb-4">
                     <div class="card-body p-4">
                         <div class="d-flex align-items-center mb-3">
@@ -184,23 +185,28 @@
                             </div>
                             <h5 class="mb-0 fw-semibold text-gray-800">User Information</h5>
                         </div>
-                        <div class="row g-4">
-                            <div class="col-md-4">
-                                <label class="small text-muted fw-medium mb-1">Full Name</label>
-                                <p class="mb-0 fw-bold text-gray-800 fs-3" id="modalUserName"></p>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="small text-muted fw-medium mb-1">Email Address</label>
-                                <p class="mb-0 fw-bold text-gray-700 fs-3" id="modalUserEmail"></p>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="small text-muted fw-medium mb-1">Gender</label>
-                                <p class="mb-0 fw-bold text-gray-700 fs-3" id="modalUserSex"></p>
-                            </div>
+                        <div class="table-responsive">
+                            <table class="table table-borderless mb-0 modal-detail-table">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-medium text-muted py-2" style="width: 30%;">Full Name:</td>
+                                        <td class="fw-bold text-gray-800 py-2" id="modalUserName"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium text-muted py-2">Email Address:</td>
+                                        <td class="fw-bold text-gray-700 py-2" id="modalUserEmail"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium text-muted py-2">Gender:</td>
+                                        <td class="fw-bold text-gray-700 py-2" id="modalUserSex"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
+                <!-- Facility Details Table -->
                 <div class="card border-0 bg-gray-50 mb-4">
                     <div class="card-body p-4">
                         <div class="d-flex align-items-center mb-3">
@@ -209,34 +215,35 @@
                             </div>
                             <h5 class="mb-0 fw-semibold text-gray-800">Facility Details</h5>
                         </div>
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <label class="small text-muted fw-medium mb-1">Facility Name</label>
-                                <p class="mb-3 fw-bold text-gray-800 fs-3" id="modalFacilityName"></p>
-                                
-                                <div id="roomDetails">
-                                    <label class="small text-muted fw-medium mb-1">Room Name</label>
-                                    <p class="mb-3 text-gray-700 fs-4" id="modalRoomName"></p>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div id="capacityDetails">
-                                    <label class="small text-muted fw-medium mb-1">Capacity</label>
-                                    <p class="mb-3 text-gray-700 fs-4" id="modalCapacity"></p>
-                                </div>
-                                
-                                <div>
-                                    <label class="small text-muted fw-medium mb-1">Reservation Period</label>
-                                    <p class="mb-0 fw-bold text-gray-700 fs-3">
-                                        <span id="modalDateFrom"></span> to <span id="modalDateTo"></span>
-                                    </p>
-                                </div>
-                            </div>
+                        <div class="table-responsive">
+                            <table class="table table-borderless mb-0 modal-detail-table">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-medium text-muted py-2" style="width: 30%;">Facility Name:</td>
+                                        <td class="fw-bold text-gray-800 py-2" id="modalFacilityName"></td>
+                                    </tr>
+                                    <tr id="roomDetailsRow">
+                                        <td class="fw-medium text-muted py-2">Room Name:</td>
+                                        <td class="text-gray-700 py-2" id="modalRoomName"></td>
+                                    </tr>
+                                    <tr id="capacityDetailsRow">
+                                        <td class="fw-medium text-muted py-2">Capacity:</td>
+                                        <td class="text-gray-700 py-2" id="modalCapacity"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium text-muted py-2">Reservation Period:</td>
+                                        <td class="fw-bold text-gray-700 py-2">
+                                            <span id="modalDateFrom"></span> to <span id="modalDateTo"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-               <div class="card border-0 bg-gray-50">
+                <!-- Pricing Information Table -->
+                <div class="card border-0 bg-gray-50">
                     <div class="card-body p-4">
                         <div class="d-flex align-items-center mb-3">
                             <div class="bg-success bg-opacity-10 rounded-circle p-2 me-2">
@@ -244,13 +251,17 @@
                             </div>
                             <h6 class="mb-0 fw-semibold text-gray-800">Pricing Information</h6>
                         </div>
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <label class="small text-muted fw-medium mb-1">Total Amount</label>
-                                <div class="d-flex align-items-center">
-                                    <h3 class="mb-0 fw-bold text-success">₱<span id="modalTotalPrice"></span></h3>
-                                </div>
-                            </div>
+                        <div class="table-responsive">
+                            <table class="table table-borderless mb-0 modal-detail-table">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-medium text-muted py-2" style="width: 30%;">Total Amount:</td>
+                                        <td class="py-2">
+                                            <h4 class="mb-0 fw-bold text-success">₱<span id="modalTotalPrice"></span></h4>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -261,6 +272,7 @@
         </div>
     </div>
 </div>
+
 
 @endsection
 
@@ -280,16 +292,18 @@ $(document).ready(function() {
         $('#modalDateFrom').text($button.data('date-from') || '');
         $('#modalDateTo').text($button.data('date-to') || '');
 
+        // Show/hide room details row
         if ($button.data('room-name')) {
-            $('#roomDetails').show();
+            $('#roomDetailsRow').show();
         } else {
-            $('#roomDetails').hide();
+            $('#roomDetailsRow').hide();
         }
 
+        // Show/hide capacity details row
         if ($button.data('capacity')) {
-            $('#capacityDetails').show();
+            $('#capacityDetailsRow').show();
         } else {
-            $('#capacityDetails').hide();
+            $('#capacityDetailsRow').hide();
         }
 
         $('#paymentDetailsModal').modal('show');
@@ -553,6 +567,73 @@ $(document).ready(function() {
         display: none !important;
     }
 }
+
+.modal-detail-table {
+    font-size: 0.95rem;
+}
+
+.modal-detail-table td {
+    border: none !important;
+    padding: 0.75rem 0.5rem !important;
+    vertical-align: middle;
+}
+
+.modal-detail-table tr {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.modal-detail-table tr:last-child {
+    border-bottom: none;
+}
+
+.modal-detail-table td:first-child {
+    padding-left: 0 !important;
+}
+
+.modal-detail-table td:last-child {
+    padding-right: 0 !important;
+}
+
+/* Responsive adjustments for modal tables */
+@media (max-width: 768px) {
+    .modal-detail-table {
+        font-size: 0.875rem;
+    }
+    
+    .modal-detail-table td {
+        padding: 0.5rem 0.25rem !important;
+    }
+    
+    .modal-detail-table td:first-child {
+        width: 35% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-detail-table td {
+        display: block;
+        width: 100% !important;
+        padding: 0.25rem 0 !important;
+    }
+    
+    .modal-detail-table td:first-child {
+        font-weight: 600 !important;
+        margin-bottom: 0.25rem;
+        padding-bottom: 0 !important;
+    }
+    
+    .modal-detail-table td:last-child {
+        padding-top: 0 !important;
+        margin-bottom: 1rem;
+    }
+    
+    .modal-detail-table tr {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+}
+
 </style>
 @endpush
 
