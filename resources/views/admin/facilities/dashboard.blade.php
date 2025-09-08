@@ -146,7 +146,7 @@
                             <div class="card border-0 shadow-sm rounded-3 h-100">
                                 <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0 fw-semibold text-gray-700">
-                                        <i class="fas fa-building me-2 text-success"></i>Reservations by Department
+                                        <i class="fas fa-building me-2 text-success"></i>Reservations by Colege
                                     </h5>
                                     <button class="btn btn-sm btn-outline-primary fullscreen-btn" data-target="departmentChart">
                                         <i class="fas fa-expand"></i>
@@ -163,7 +163,7 @@
                             <div class="card border-0 shadow-sm rounded-3 h-100">
                                 <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0 fw-semibold text-gray-700">
-                                        <i class="fas fa-graduation-cap me-2 text-purple"></i>Reservations by College
+                                        <i class="fas fa-graduation-cap me-2 text-purple"></i>Reservations by Department
                                     </h5>
                                     <button class="btn btn-sm btn-outline-primary fullscreen-btn" data-target="collegeChart">
                                         <i class="fas fa-expand"></i>
@@ -919,8 +919,22 @@
                         zoomout: false,
                         pan: false,
                         reset: false
+                    },
+                    export: {
+                        csv: {
+                            filename: 'gender_reservation', 
+                        },
+                        svg: {
+                            filename: 'gender_reservation', 
+                        },
+                        png: {
+                            filename: 'gender_reservation',
+                        }
                     }
+                    
+                  
                 }
+                
             },
             title: {
                 text: 'Gender Reservation',
@@ -1001,19 +1015,19 @@
                     },
                     export: {
                         csv: {
-                            filename: 'department_reservation', 
+                            filename: 'College_reservation', 
                         },
                         svg: {
-                            filename: 'department_reservation', 
+                            filename: 'College_reservation', 
                         },
                         png: {
-                            filename: 'department_reservation',
+                            filename: 'College_reservation',
                         }
                     }
                 }
             },
             title: {
-                text: 'Department Reservation',
+                text: 'College Reservation',
                 align: 'center',
                 style: { 
                     fontSize: '18px', 
@@ -1057,7 +1071,7 @@
             },
             yaxis: {
                 title: {
-                    text: 'Departments',
+                    // text: 'Departments',
                     style: {
                         fontSize: '14px',
                         fontWeight: 600,
@@ -1140,11 +1154,22 @@
                         zoomout: false,
                         pan: false,
                         reset: false
+                    },
+                    export: {
+                        csv: {
+                            filename: 'Department_reservation', 
+                        },
+                        svg: {
+                            filename: 'Department_reservation', 
+                        },
+                        png: {
+                            filename: 'Department_reservation',
+                        }
                     }
                 }
             },
             title: {
-                text: 'College Reservation',
+                text: 'Department Reservation',
                 align: 'center',
                 style: { 
                     fontSize: '18px', 
@@ -1268,6 +1293,17 @@
                         zoomout: false,
                         pan: false,
                         reset: false
+                    },
+                    export: {
+                        csv: {
+                            filename: 'role_reservation', 
+                        },
+                        svg: {
+                            filename: 'role_reservation', 
+                        },
+                        png: {
+                            filename: 'role_reservation',
+                        }
                     }
                 }
             },

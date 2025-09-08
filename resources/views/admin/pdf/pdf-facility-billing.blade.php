@@ -100,23 +100,15 @@
     .text-right {
       text-align: right;
     }
-    /* .badge {
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-weight: bold;
-      font-size: 11px;
-      display: inline-block;
-    }
-    .badge-completed { background-color: #10b981; color: white; }
-    .badge-canceled { background-color: #ef4444; color: white; }
-    .badge-reserved { background-color: #3b82f6; color: white; }
-    .badge-pending { background-color: #f59e0b; color: white; } */
 
     .total-row {
       font-weight: bold;
       background-color: #f8f9fa;
     }
-
+    .status-info {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -150,17 +142,44 @@
   </div>
 
   <h3>Facility Billing Statements</h3>
-  <p style="font-size: 14px;">
+  
+  @php
+    $allSameStatus = false;
+    $commonStatus = null;
+    
+    if (!$payments->isEmpty()) {
+      $firstStatus = $payments->first()->status;
+      $allSameStatus = $payments->every(function($payment) use ($firstStatus) {
+        return $payment->status === $firstStatus;
+      });
+      
+      if ($allSameStatus) {
+        $commonStatus = $firstStatus;
+      }
+    }
+  @endphp
+
+  <p class="status-info">
     Downloaded on: {{ \Carbon\Carbon::now()->setTimezone('Asia/Manila')->format('F j, Y, g:i a') }}<br>
     Date Range: {{ $dateFrom }} to {{ $dateTo }}
+    @if($allSameStatus)
+      <br>Status: {{ ucfirst($commonStatus) }}
+    @endif
+    @if($selectedFacility)
+      <br>Facility: {{ $selectedFacility->name }}
+    @endif
   </p>
 
   <table>
     <thead>
       <tr>
         <th class="text-center">User</th>
-        <th class="text-center">Facility</th>
-        <th class="text-center">Status</th>
+        @if($showAllFacilities)
+          <th class="text-center">Facility</th>
+        @endif
+        @if(!$allSameStatus)
+          <th class="text-center">Status</th>
+        @endif
         <th class="text-center">Total Amount</th>
       </tr>
     </thead>
@@ -168,31 +187,45 @@
       @foreach ($payments as $payment)
       <tr>
         <td>{{ $payment->user->name }}</td>
-        <td  class="text-center">{{ $payment->availability->facility->name }}</td>
-        <td class="text-center">
-          @php
-              $statusClass = [
-                  'completed' => 'badge-completed',
-                  'canceled' => 'badge-canceled',
-                  'reserved' => 'badge-reserved',
-                  'pending' => 'badge-pending'
-              ][$payment->status] ?? '';
-          @endphp
-          <span class="badge {{ $statusClass }}">
-            {{ ucfirst($payment->status) }}
-          </span>
-        </td>
+        @if($showAllFacilities)
+          <td class="text-center">{{ $payment->availability->facility->name }}</td>
+        @endif
+        @if(!$allSameStatus)
+          <td class="text-center">
+            @php
+                $statusClass = [
+                    'completed' => 'badge-completed',
+                    'canceled' => 'badge-canceled',
+                    'reserved' => 'badge-reserved',
+                    'pending' => 'badge-pending'
+                ][$payment->status] ?? '';
+            @endphp
+            <span class="badge {{ $statusClass }}">
+              {{ ucfirst($payment->status) }}
+            </span>
+          </td>
+        @endif
         <td class="text-right">₱{{ number_format($payment->total_price, 2) }}</td>
       </tr>
       @endforeach
       
       @if($payments->isEmpty())
       <tr>
-        <td colspan="4" class="text-center">No records found</td>
+        @php
+          $colspan = 2; 
+          if ($showAllFacilities) $colspan++; 
+          if (!$allSameStatus) $colspan++; 
+        @endphp
+        <td colspan="{{ $colspan }}" class="text-center">No records found</td>
       </tr>
       @else
       <tr class="total-row">
-        <td colspan="3" class="text-right"><strong>Grand Total:</strong></td>
+        @php
+          $colspan = 1; 
+          if ($showAllFacilities) $colspan++; 
+          if (!$allSameStatus) $colspan++; 
+        @endphp
+        <td colspan="{{ $colspan }}" class="text-right"><strong>Grand Total:</strong></td>
         <td class="text-right">₱{{ number_format($payments->sum('total_price'), 2) }}</td>
       </tr>
       @endif

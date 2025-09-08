@@ -864,6 +864,7 @@ class ReportController extends Controller
             ])
             ->orderBy('created_at', 'desc');
 
+
         if ($request->has('facility_id') && $request->facility_id) {
             $query->whereHas('availability', function($q) use ($request) {
                 $q->where('facility_id', $request->facility_id);
@@ -896,9 +897,15 @@ class ReportController extends Controller
             return $payment;
         });
 
+        $facilities = \App\Models\Facility::where('archived', false)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return view('admin.reports.facility_statement', [
             'payments' => $payments,
+            'facilities' => $facilities,
             'filters' => $request->all()
         ]);
     }
+    
 }

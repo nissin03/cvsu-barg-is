@@ -306,6 +306,7 @@ class PdfController extends Controller
         $products = $productsQuery->get();
 
         $stockStatus = $request->input('stock_status');
+        $statusLabel = null; // Add this variable
 
         if ($stockStatus) {
             $products = $products->filter(function ($product) use ($stockStatus) {
@@ -323,9 +324,23 @@ class PdfController extends Controller
 
                 return true;
             });
+
+            // Set the status label based on the filter
+            switch ($stockStatus) {
+                case 'instock':
+                    $statusLabel = 'In Stock';
+                    break;
+                case 'outofstock':
+                    $statusLabel = 'Low Stock';
+                    break;
+                case 'reorder':
+                    $statusLabel = 'Reorder Level';
+                    break;
+            }
         }
 
-        $pdfView = view('admin.pdf.pdf-inventory-report', compact('products', 'startDate', 'endDate'))->render();
+        // Pass the statusLabel to the view
+        $pdfView = view('admin.pdf.pdf-inventory-report', compact('products', 'startDate', 'endDate', 'statusLabel'))->render();
 
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
@@ -452,6 +467,7 @@ class PdfController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         $status = $request->input('status');
+        $facilityId = $request->input('facility_id');
 
         $paymentsQuery = Payment::with(['user', 'availability.facility', 'availability.facilityAttribute']);
 
@@ -468,21 +484,43 @@ class PdfController extends Controller
             $paymentsQuery->where('status', $status);
         }
 
+        if ($facilityId) {
+            $paymentsQuery->whereHas('availability', function($query) use ($facilityId) {
+                $query->where('facility_id', $facilityId);
+            });
+        }
+
         $payments = $paymentsQuery->orderBy('created_at', 'desc')->get();
 
         $formattedDateFrom = $dateFrom ? Carbon::parse($dateFrom)->format('F j, Y') : 'N/A';
         $formattedDateTo = $dateTo ? Carbon::parse($dateTo)->format('F j, Y') : 'N/A';
 
+        // Get facility information
+        $selectedFacility = null;
+        $showAllFacilities = !$facilityId; // Show all facilities if no specific facility is selected
+
+        if ($facilityId) {
+            $selectedFacility = \App\Models\Facility::find($facilityId);
+        }
+
         $pdf = PDF::loadView('admin.pdf.pdf-facility-billing', [
             'payments' => $payments,
             'dateFrom' => $formattedDateFrom,
-            'dateTo' => $formattedDateTo
+            'dateTo' => $formattedDateTo,
+            'selectedFacility' => $selectedFacility,
+            'showAllFacilities' => $showAllFacilities
         ])->setPaper('A4', 'portrait');
 
         $filename = 'facility_billing_statements_';
         $filename .= $dateFrom ? Carbon::parse($dateFrom)->format('Y-m-d') : 'all';
         $filename .= '_to_';
         $filename .= $dateTo ? Carbon::parse($dateTo)->format('Y-m-d') : 'all';
+        
+        
+        if ($selectedFacility) {
+            $filename .= '_' . \Str::slug($selectedFacility->name);
+        }
+        
         $filename .= '.pdf';
 
         return $pdf->download($filename);

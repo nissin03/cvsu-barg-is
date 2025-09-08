@@ -27,16 +27,28 @@
         </div>
         <div class="card-body p-4">
             <form method="GET" action="{{ route('admin.facility-statement') }}">
-                <div class="row g-3  align-items-end">
-                    <div class="col-lg-3 col-md-6">
+                <div class="row g-3 align-items-end">
+                   
+                    <div class="col-lg-2 col-md-6">
                         <label for="date_from" class="form-label text-gray-700 fw-medium mb-2">From Date</label>
                         <input type="date" class="form-control form-control-lg border-gray-300" id="date_from" name="date_from" value="{{ request('date_from') }}" style="border-radius: 8px;">
                     </div>
-                    <div class="col-lg-3 col-md-6">
+                    <div class="col-lg-2 col-md-6">
                         <label for="date_to" class="form-label text-gray-700 fw-medium mb-2">To Date</label>
                         <input type="date" class="form-control form-control-lg border-gray-300" id="date_to" name="date_to" value="{{ request('date_to') }}" style="border-radius: 8px;">
                     </div>
-                    <div class="col-lg-3 col-md-6">
+                     <div class="col-lg-2 col-md-6">
+                        <label for="facility_id" class="form-label text-gray-700 fw-medium mb-2">Facility</label>
+                        <select class="form-select form-select-lg border-gray-300" id="facility_id" name="facility_id" style="border-radius: 8px;">
+                            <option value="">All Facilities</option>
+                            @foreach($facilities as $facility)
+                                <option value="{{ $facility->id }}" {{ request('facility_id') == $facility->id ? 'selected' : '' }}>
+                                    {{ $facility->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
                         <div class="d-flex flex-column h-100 justify-content-end">
                             <label for="status" class="form-label text-gray-700 fw-medium mb-2">Status</label>
                             <select class="form-select form-select-lg border-gray-300" id="status" name="status" style="border-radius: 8px;">
@@ -49,7 +61,7 @@
                         </div>
                     </div>
                                     
-                    <div class="col-lg-3 col-md-6 d-flex align-items-end gap-2">
+                    <div class="col-lg-4 col-md-6 d-flex align-items-end gap-2">
                         <button type="submit" class="btn btn-dark btn-lg flex-fill" style="border-radius: 8px;">
                             <i class="fas fa-filter me-1"></i>Filter
                         </button>
@@ -160,6 +172,7 @@
     </div>
 </div>
 
+<!-- Modal remains the same -->
 <div class="modal fade" id="paymentDetailsModal" tabindex="-1" aria-labelledby="paymentDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg-responsive">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
@@ -272,7 +285,6 @@
         </div>
     </div>
 </div>
-
 
 @endsection
 
@@ -636,4 +648,3 @@ $(document).ready(function() {
 
 </style>
 @endpush
-

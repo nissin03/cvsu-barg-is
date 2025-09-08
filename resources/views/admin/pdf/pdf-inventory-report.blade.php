@@ -30,13 +30,13 @@
             width: 100%;
             border-collapse: collapse;
         }
-        /* Remove borders from header cells */
+
         .header-table td {
             vertical-align: middle;
             padding: 0 10px;
             border: none;
         }
-        /* Logo cells – fixed width with no extra padding */
+
         .logo-left, .logo-right {
             width: 70px;
             padding: 0;
@@ -47,17 +47,17 @@
         .logo-right {
             text-align: left;
         }
-        /* Apply negative margins directly to the images so they move closer to the center text */
+
         .logo-left img {
             height: 80px;
             max-width: 90px;
-            margin-right: -250px; /* Adjust value as needed */
+            margin-right: -250px; 
             margin-bottom: 20px; 
         }
         .logo-right img {
             height: 80px;
             max-width: 110px;
-            margin-left: -260px; /* Adjust value as needed */
+            margin-left: -260px; 
             margin-bottom: 20px; 
         }
         .center-cell {
@@ -143,16 +143,19 @@
     </div>
     <!-- End Header Section -->
 
-    <!-- Inventory Report Title and Timestamp -->
     <h2>Inventory Report of Marketing Center</h2>
     <p>
         Downloaded on: {{ \Carbon\Carbon::now()->setTimezone('Asia/Manila')->format('F j, Y, g:i a') }}<br>
+        @if(isset($statusLabel))
+            Status: {{ $statusLabel }}<br>
+        @endif
         {{-- Date Range:
         @if ($startDate && $endDate)
             {{ $startDate }} to {{ $endDate }}
         @else
             N/A
         @endif --}}
+        
     </p>
 
     <!-- Inventory Table -->
@@ -163,7 +166,9 @@
                 <th>Name</th>
                 <th>Category</th>
                 <th>Price</th>
-                <th>Stock Status</th>
+                @if(!isset($statusLabel))
+                    <th>Stock Status</th>
+                @endif
                 <th>Current Stock</th>
             </tr>
         </thead>
@@ -181,22 +186,31 @@
                         {{ $product->price }}
                     @endif
                 </td>
+                @if(!isset($statusLabel))
+                    <td>
+                        @php
+                            $currentStock = $product->attributeValues->isNotEmpty()
+                                ? $product->attributeValues->sum('quantity')
+                                : $product->current_stock;
+                        @endphp
+
+                        @if($currentStock <= $product->outofstock_quantity)
+                            <span class="">Low Stock</span>
+                        @elseif($currentStock <= $product->reorder_quantity)
+                            <span class="">Reorder Level</span>
+                        @else
+                            <span class="">In Stock</span>
+                        @endif
+                    </td>
+                @endif
                 <td>
                     @php
                         $currentStock = $product->attributeValues->isNotEmpty()
                             ? $product->attributeValues->sum('quantity')
                             : $product->current_stock;
                     @endphp
-
-                    @if($currentStock <= $product->outofstock_quantity)
-                        <span class="badge bg-danger">Low Stock</span>
-                    @elseif($currentStock <= $product->reorder_quantity)
-                        <span class="badge bg-warning">Reorder Level</span>
-                    @else
-                        <span class="badge bg-success">In Stock</span>
-                    @endif
+                    {{ $currentStock }}
                 </td>
-                <td>{{ $currentStock }}</td>
             </tr>
             @endforeach
         </tbody>
