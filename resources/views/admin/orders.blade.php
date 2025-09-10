@@ -252,7 +252,6 @@
                                     <th class="text-center">Total Items</th>
                                     <th class="text-center">Total Price</th>
                                     <th class="text-center">Order Date</th>
-                                    <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="js-orders-partial-target">
@@ -290,6 +289,12 @@
                 });
             }
 
+            function initRowClicks() {
+                $('.order-row').off('click').on('click', function() {
+                    window.location = $(this).data('href');
+                });
+            }
+
             function performFilter() {
                 lastScrollPosition = $(window).scrollTop();
 
@@ -320,6 +325,7 @@
                         window.history.pushState({}, '', url);
                         initTooltips();
                         initPaginationEvents();
+                        initRowClicks();
                         $(window).scrollTop(lastScrollPosition);
                     },
                     error: function(xhr, status, error) {
@@ -381,6 +387,7 @@
 
             initTooltips();
             initPaginationEvents();
+            initRowClicks();
         });
     </script>
 @endpush
