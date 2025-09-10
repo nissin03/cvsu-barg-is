@@ -590,13 +590,14 @@
 @endsection
 
 @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
     <script>
         let rooms = [];
         let prices = [];
         let priceEditMode = false;
         let priceEditIndex = -1;
+        let roomEditMode = false;
+        let roomEditIndex = -1;
+        let bulkRoomPreview = [];
 
         let globalPriceSettings = {
             isBasedOnDays: false,
@@ -605,12 +606,10 @@
             dateTo: ''
         };
 
-
         $(document).ready(function() {
-            // Submit button handler with proper reset functionality
+            preserveFormData();
             $('#facilityForm').on('submit', function(e) {
                 e.preventDefault();
-
 
                 const submitBtn = $('#facilitySubmitBtn');
                 const originalText = submitBtn.find('.btn-text').text();
@@ -618,11 +617,9 @@
                 submitBtn.prop('disabled', true)
                     .find('.btn-text').text('Submitting...');
 
-
                 const facilityType = $('#rentalType').val();
                 let hasValidationError = false;
                 let errorMessage = '';
-
 
                 if (!$('input[name="name"]').val().trim()) {
                     hasValidationError = true;
@@ -718,10 +715,15 @@
                 $('#pricesJson').val(JSON.stringify(prices));
                 this.submit();
             });
-
             $('#addMultipleRoomsModal').on('hidden.bs.modal', function() {
-                $('.room-name, .room-capacity').val('');
-                $('.room-sex-restriction').val('');
+                if (!roomEditMode) {
+                    $('.room-name, .room-capacity').val('');
+                    $('.room-sex-restriction').val('');
+                }
+                roomEditMode = false;
+                roomEditIndex = -1;
+                $('#addMultipleRoomsLabel').text('Manage Rooms');
+                $('#saveMultipleRoomsBtn').text('Save All').off('click').on('click', handleSaveRoom);
             });
 
             $('#addPrice').on('hidden.bs.modal', function() {
@@ -729,7 +731,6 @@
                 priceEditIndex = -1;
                 resetPriceModal();
             });
-
 
             $(document).on('change', '#checkAllRooms input[type="checkbox"]', function() {
                 const isChecked = $(this).is(':checked');
@@ -743,7 +744,6 @@
                 $('#checkAllRooms').toggle(checkedCount >= 1);
                 $('.edit-selected-btn, .delete-selected-btn').toggle(checkedCount >= 1);
             }
-
 
             const updateSelectAllCheckbox = () => {
                 const totalCheckboxes = $('.room-checkbox').length;
@@ -814,50 +814,51 @@
                 }
             }
 
-            $('#saveMultipleRoomsBtn').on("click", function(e) {
+            function handleSaveRoom(e) {
                 e.preventDefault();
                 const name = $('.room-name').val().trim();
                 const capacity = $('.room-capacity').val().trim();
-                const sex = $('.room-sex-restriction ').val();
+                const sex = $('.room-sex-restriction').val();
 
                 if (!name || !capacity || !sex) {
-                    alert('Name and capacity required.');
+                    alert('Name, capacity, and sex restriction are required.');
                     return;
                 }
 
-                rooms.push({
-                    room_name: name,
-                    capacity: capacity,
-                    sex_restriction: sex
-                });
+                if (roomEditMode && roomEditIndex !== -1) {
+                    rooms[roomEditIndex] = {
+                        room_name: name,
+                        capacity: capacity,
+                        sex_restriction: sex
+                    };
+                } else {
+                    rooms.push({
+                        room_name: name,
+                        capacity: capacity,
+                        sex_restriction: sex
+                    });
+                }
 
                 $('#addMultipleRoomsModal').modal('hide');
-                $('.room-name, .room-capacity').val('');
-                $('.room-sex-restriction').val('');
                 renderRoomList();
+            }
 
-            });
+            $('#saveMultipleRoomsBtn').on('click', handleSaveRoom);
 
             $(document).on('click', '.edit-room-btn', function() {
                 const index = $(this).data('index');
                 const room = rooms[index];
 
+                roomEditMode = true;
+                roomEditIndex = index;
+
                 $('.room-name').val(room.room_name);
                 $('.room-capacity').val(room.capacity);
                 $('.room-sex-restriction').val(room.sex_restriction);
 
+                $('#addMultipleRoomsLabel').text('Edit Room');
+                $('#saveMultipleRoomsBtn').text('Update Room');
                 $('#addMultipleRoomsModal').modal('show');
-                $('#saveMultipleRoomsBtn').off().click(function() {
-                    rooms[index] = {
-                        room_name: $('.room-name').val(),
-                        capacity: $('.room-capacity').val(),
-                        sex_restriction: $('.room-sex-restriction').val()
-                    };
-                    $('#addMultipleRoomsModal').modal('hide');
-                    $('.room-name, .room-capacity').val('');
-                    $('.room-sex-restriction').val('');
-                    renderRoomList();
-                });
             });
 
             $(document).on('click', '.delete-room-btn', function() {
@@ -867,7 +868,6 @@
                     renderRoomList();
                 }
             });
-
 
             $('#saveBulkRoomsBtn').on('click', function() {
                 const prefix = $('#roomPrefix').val().trim();
@@ -880,22 +880,185 @@
                     alert('All fields are required.');
                     return;
                 }
-                if (sex !== 'male' && sex !== 'female') {
-                    alert('Sex restriction must be either male or female.');
+
+                if (start > end) {
+                    alert('Start number must be less than or equal to end number.');
                     return;
                 }
 
+                bulkRoomPreview = [];
                 for (let i = start; i <= end; i++) {
-                    rooms.push({
+                    bulkRoomPreview.push({
                         room_name: `${prefix}${i}`,
                         capacity: capacity,
                         sex_restriction: sex,
                     });
                 }
 
+                showBulkRoomPreview();
+
+                // $('#addBulkRoomsModal').modal('hide');
+                // $('#bulkRoomForm')[0].reset();
+                // renderRoomList();
+            });
+
+
+            function showBulkRoomPreview() {
+                $('#addBulkRoomsLabel').text('Preview Generated Rooms');
+                let previewContent = `
+            <div class="alert alert-info mb-3">
+                <i class="bi bi-info-circle me-2"></i>
+                Preview of ${bulkRoomPreview.length} rooms to be added. You can modify individual room capacities before saving.
+            </div>
+            <div class="row g-3" id="bulkRoomPreviewContainer">
+        `;
+
+                bulkRoomPreview.forEach((room, index) => {
+                    previewContent += `
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">${room.room_name}</h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label">Capacity</label>
+                                <input type="number"
+                                       class="form-control preview-room-capacity"
+                                       data-index="${index}"
+                                       value="${room.capacity}"
+                                       min="1">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Sex Restriction</label>
+                                <select class="form-select preview-room-sex" data-index="${index}">
+                                    <option value="">No Restriction</option>
+                                    <option value="male" ${room.sex_restriction === 'male' ? 'selected' : ''}>Male</option>
+                                    <option value="female" ${room.sex_restriction === 'female' ? 'selected' : ''}>Female</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+                });
+                previewContent += `
+            </div>
+            <div class="mt-3 d-flex gap-2">
+                <button type="button" class="btn btn-secondary" id="backToBulkFormBtn">
+                    <i class="bi bi-arrow-left"></i> Back to Form
+                </button>
+                <button type="button" class="btn btn-success flex-grow-1" id="confirmBulkRoomsBtn">
+                    <i class="bi bi-check-circle"></i> Confirm & Add All Rooms
+                </button>
+            </div>
+        `;
+
+                $('#addBulkRoomsModal .modal-body').html(previewContent);
+                $('#addBulkRoomsModal .modal-footer').hide();
+                $('#backToBulkFormBtn').on('click', function() {
+                    showBulkRoomForm();
+                });
+                $('#confirmBulkRoomsBtn').on('click', function() {
+                    confirmBulkRooms();
+                });
+                $(document).on('change', '.preview-room-capacity', function() {
+                    const index = $(this).data('index');
+                    const newCapacity = $(this).val();
+                    if (bulkRoomPreview[index]) {
+                        bulkRoomPreview[index].capacity = newCapacity;
+                    }
+                });
+                $(document).on('change', '.preview-room-sex', function() {
+                    const index = $(this).data('index');
+                    const newSex = $(this).val();
+                    if (bulkRoomPreview[index]) {
+                        bulkRoomPreview[index].sex_restriction = newSex;
+                    }
+                });
+            }
+
+
+            function showBulkRoomForm() {
+                $('#addBulkRoomsLabel').text('Add Multiple Rooms');
+
+                const originalFormContent = `
+                <form id="bulkRoomForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Room Prefix</label>
+                            <input type="text" class="form-control" id="roomPrefix" placeholder="e.g., Room">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Start Number</label>
+                            <input type="number" class="form-control" id="startNumber" min="1" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">End Number</label>
+                            <input type="number" class="form-control" id="endNumber" min="1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Capacity</label>
+                            <input type="number" class="form-control" id="bulkCapacity" min="1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Sex Restriction</label>
+                            <select class="" id="bulkSexRestriction">
+                                <option value="">No Restriction</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            `;
+
+                $('#addBulkRoomsModal .modal-body').html(originalFormContent);
+                $('#addBulkRoomsModal .modal-footer').show();
+            }
+
+            function confirmBulkRooms() {
+                let isValid = true;
+                let errorMessage = '';
+
+                bulkRoomPreview.forEach((room, index) => {
+                    if (!room.room_name || !room.capacity || !room.sex_restriction) {
+                        isValid = false;
+                        errorMessage =
+                            `Room ${room.room_name || index + 1} is missing required information.`;
+                        return false;
+                    }
+
+                    if (parseInt(room.capacity) < 1) {
+                        isValid = false;
+                        errorMessage = `Room ${room.room_name} must have a capacity of at least 1.`;
+                        return false;
+                    }
+                });
+
+                if (!isValid) {
+                    alert(errorMessage);
+                    return;
+                }
+                rooms.push(...bulkRoomPreview);
                 $('#addBulkRoomsModal').modal('hide');
-                $('#bulkRoomForm')[0].reset();
+                resetBulkRoomModal();
                 renderRoomList();
+                bulkRoomPreview = [];
+            }
+
+            function resetBulkRoomModal() {
+                showBulkRoomForm();
+                $('#bulkRoomForm')[0].reset();
+                bulkRoomPreview = [];
+            }
+
+            $('#addBulkRoomsModal').on('hidden.bs.modal', function() {
+                resetBulkRoomModal();
+            });
+
+            $('[data-bs-target="#addBulkRoomsModal"]').on('click', function() {
+                resetBulkRoomModal();
             });
 
             const getSelectedRooms = () => {
@@ -903,6 +1066,7 @@
                     return $(this).data('index');
                 }).get();
             };
+
             $('#deleteSelectedRoomsBtn').on('click', function() {
                 if (confirm('Are you sure you want to delete the selected rooms?')) {
                     const selected = getSelectedRooms();
@@ -915,7 +1079,6 @@
                     renderRoomList();
                 }
             });
-
 
             $('#editSelectedRoomsBtn').off('click').on('click', function() {
                 const selected = getSelectedRooms();
@@ -947,7 +1110,7 @@
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Sex Restriction</label>
-                                <select class=" edit-room-sex-restriction" data-index="${index}">
+                                <select class="edit-room-sex-restriction" data-index="${index}">
                                     <option value="">No Restriction</option>
                                     <option value="male" ${room.sex_restriction === 'male' ? 'selected' : ''}>Male</option>
                                     <option value="female" ${room.sex_restriction === 'female' ? 'selected' : ''}>Female</option>
@@ -1028,7 +1191,6 @@
                 });
             });
 
-
             // Prices code starts here
             $('#dateFieldsContainer').hide();
             $('#isBasedOnDaysGlobal').on('change', function() {
@@ -1040,7 +1202,6 @@
                     let today = new Date().toISOString().split('T')[0];
                     $('#date_from_global, #date_to_global').attr('min', today);
 
-                    // Set current dates if available
                     if (globalPriceSettings.dateFrom) {
                         $('#date_from_global').val(globalPriceSettings.dateFrom);
                     }
@@ -1053,14 +1214,12 @@
                     globalPriceSettings.dateTo = '';
                     $('#date_from_global, #date_to_global').val('');
 
-                    // Clear date fields for all existing prices when unchecked
                     prices.forEach(price => {
                         price.dateFrom = null;
                         price.dateTo = null;
                     });
                 }
 
-                // Apply to ALL existing prices immediately
                 prices.forEach(price => {
                     price.isBasedOnDays = isChecked ? '1' : '0';
                 });
@@ -1072,7 +1231,6 @@
                 const isChecked = $(this).is(':checked');
                 globalPriceSettings.isThereAQuantity = isChecked;
 
-                // Apply to ALL existing prices immediately
                 prices.forEach(price => {
                     price.isThereAQuantity = isChecked ? '1' : '0';
                 });
@@ -1091,7 +1249,6 @@
                 globalPriceSettings.dateFrom = $(this).val();
                 globalPriceSettings.dateTo = nextDay;
 
-                // Apply dates to ALL existing prices immediately
                 prices.forEach(price => {
                     if (price.isBasedOnDays === '1') {
                         price.dateFrom = globalPriceSettings.dateFrom;
@@ -1105,7 +1262,6 @@
             $('#date_to_global').on('change', function() {
                 globalPriceSettings.dateTo = $(this).val();
 
-                // Apply dates to ALL existing prices immediately
                 prices.forEach(price => {
                     if (price.isBasedOnDays === '1') {
                         price.dateTo = globalPriceSettings.dateTo;
@@ -1170,7 +1326,7 @@
                 if (!priceEditMode) {
                     let newPriceForm = $('#priceFormTemplate .price-form-card').clone();
                     newPriceForm.find('input, select').val('');
-                    newPriceForm.find('.removePriceBtn').parent().remove();
+                    // newPriceForm.find('.removePriceBtn').parent().remove();
                     $('#priceFormContainer').append(newPriceForm);
                 }
             });
@@ -1246,7 +1402,6 @@
                 $('#saveMultiplePricesBtn').text('Save All');
             }
 
-
             function saveAllPrices() {
                 let valid = true;
                 let newPrices = [];
@@ -1287,26 +1442,6 @@
                 $('#addPrice').modal('hide');
             }
 
-            function updatePricesWithSameDateRange(targetDateFrom, targetDateTo, newIsBasedOnDays,
-                newIsThereAQuantity, excludeIndex = -1) {
-                let updatedCount = 0;
-
-                prices.forEach((price, index) => {
-                    if (index === excludeIndex) return;
-
-                    if (price.dateFrom === targetDateFrom && price.dateTo === targetDateTo) {
-                        price.isBasedOnDays = newIsBasedOnDays;
-                        price.isThereAQuantity = newIsThereAQuantity;
-                        updatedCount++;
-                    }
-                });
-                if (updatedCount > 0) {
-                    console.log(
-                        `Updated ${updatedCount} other price(s) with the same date range (${targetDateFrom} to ${targetDateTo})`
-                    );
-                }
-            }
-
             function updateSinglePrice(index) {
                 let $form = $('#priceFormContainer .price-form-card').first();
                 const priceName = $form.find('.price-name').val();
@@ -1337,6 +1472,71 @@
                 $('#addPrice').modal('hide');
             }
 
+            // Function to preserve form data after validation errors
+            function preserveFormData() {
+                // Restore rooms data if exists in old input
+                const oldRooms = {!! json_encode(old('facility_attributes_json', '[]')) !!};
+                if (oldRooms && oldRooms !== '[]') {
+                    try {
+                        rooms = JSON.parse(oldRooms);
+                    } catch (e) {
+                        rooms = [];
+                    }
+                }
+
+                // Restore prices data if exists in old input
+                const oldPrices = {!! json_encode(old('prices_json', '[]')) !!};
+                if (oldPrices && oldPrices !== '[]') {
+                    try {
+                        prices = JSON.parse(oldPrices);
+                    } catch (e) {
+                        prices = [];
+                    }
+                }
+
+                // Restore facility type selection
+                const facilityType = $('#rentalType').val();
+                if (facilityType) {
+                    showFacilityTypeFields(facilityType);
+                }
+
+                // Show price and room control options
+                if (facilityType && (facilityType === 'individual' || facilityType === 'both')) {
+                    $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                }
+            }
+
+            function showFacilityTypeFields(facilityType) {
+                if (facilityType === 'both') {
+                    $('#selectionBothType').show();
+                    $('#roomBox').show();
+                    $('#priceBox').show();
+                    $('#hideRoomBox').hide();
+                    $('#dormitoryRooms').hide();
+                    $('#selectionContent').show();
+                    $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                } else if (facilityType === 'individual') {
+                    $('#selectionBothType').hide();
+                    $('#roomBox').show();
+                    $('#hideRoomBox').hide();
+                    $('#dormitoryRooms').show();
+                    $('#selectionContent').hide();
+                    $('#priceBox').show();
+                    $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                } else if (facilityType === 'whole_place') {
+                    $('#selectionBothType').hide();
+                    $('#roomBox').show();
+                    $('#hideRoomBox').show();
+                    $('#dormitoryRooms').hide();
+                    $('#selectionContent').hide();
+                    $('#priceBox').show();
+                    $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                } else {
+                    $('#roomBox').hide();
+                    $('#priceBox').hide();
+                }
+            }
+
             renderRoomList();
             renderPriceList();
 
@@ -1362,26 +1562,44 @@
 
             $('#rentalType').on('change', function() {
                 const facilityType = $(this).val();
+
+                // Clear previous data only if facility type changes
                 if (facilityType) {
                     $('#roomCapacityWhole').val('');
-                    rooms = [];
+
+                    // Only clear data if this is a fresh form (not on validation error)
+                    if (!{!! json_encode($errors->any()) !!}) {
+                        rooms = [];
+                        prices = [];
+                        globalPriceSettings = {
+                            isBasedOnDays: false,
+                            isThereAQuantity: false,
+                            dateFrom: '',
+                            dateTo: ''
+                        };
+                        $('#isBasedOnDaysGlobal').prop('checked', false);
+                        $('#isThereAQuantityGlobal').prop('checked', false);
+                        $('#date_from_global, #date_to_global').val('');
+                        $('#dateFieldsContainerGlobal').hide();
+                    }
+
+                    showFacilityTypeFields(facilityType);
                     renderRoomList();
-
-                    prices = [];
                     renderPriceList();
+                }
+            });
 
-                    globalPriceSettings = {
-                        isBasedOnDays: false,
-                        isThereAQuantity: false,
-                        dateFrom: '',
-                        dateTo: ''
-                    };
-                    $('#isBasedOnDays').prop('checked', false);
-                    $('#isThereAQuantity').prop('checked', false);
-
-                    $('#date_from, #date_to').val('');
-                    $('#dateFieldsContainer').hide();
-                    $(".price-type").val('');
+            // Handle radio button changes for "both" facility type
+            $('input[name="facility_selection_both"]').on('change', function() {
+                const selectedValue = $(this).val();
+                if (selectedValue === 'whole') {
+                    $('#hideRoomBox').show();
+                    $('#dormitoryRooms').hide();
+                    $('#selectionContent').hide();
+                } else if (selectedValue === 'room') {
+                    $('#hideRoomBox').hide();
+                    $('#dormitoryRooms').show();
+                    $('#selectionContent').hide();
                 }
             });
         });

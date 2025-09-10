@@ -1,6 +1,8 @@
 @if ($orders->count() > 0)
     @foreach ($orders as $order)
-        <tr>
+        <tr class="order-row" data-href="{{ route('admin.order.details', ['order_id' => $order->id]) }}"
+            style="cursor: pointer;">
+
             <td class="text-start">
                 <div class="name">
                     {{ $order->user->name }}
@@ -28,16 +30,11 @@
             <td class="text-center">&#8369;{{ $order->total }}</td>
 
             <td>{{ $order->created_at->format('M d, Y') }}</td>
-            <td class="text-center">
-                <a href="{{ route('admin.order.details', ['order_id' => $order->id]) }}">
-                    <i class="icon-eye" title="View Details"></i>
-                </a>
-            </td>
         </tr>
     @endforeach
 @else
     <tr id="no-results-message">
-        <td colspan="7" class="text-center p-3">
+        <td colspan="6" class="text-center p-3">
             <div class="alert alert-info">No orders found matching your filters. Try different criteria.</div>
         </td>
     </tr>
