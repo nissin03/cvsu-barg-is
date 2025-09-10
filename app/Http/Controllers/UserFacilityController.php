@@ -862,7 +862,7 @@ class UserFacilityController extends Controller
                             'facility_attribute_id' => $facilityAttributeId,
                             'payment_id'            => $payment->id,
                             'price_id'              => $price->id,
-                            'quantity'              => 0,
+                            'quantity'              => 1,
                             'user_id'               => $user->id,
                             'status'                => 'pending',
                         ]);

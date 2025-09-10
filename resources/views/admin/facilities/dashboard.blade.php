@@ -163,7 +163,7 @@
                             <div class="card border-0 shadow-sm rounded-3 h-100">
                                 <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0 fw-semibold text-gray-700">
-                                        <i class="fas fa-graduation-cap me-2 text-purple"></i>Reservations by Department
+                                        <i class="fas fa-graduation-cap me-2 text-purple"></i>Reservations by Courses
                                     </h5>
                                     <button class="btn btn-sm btn-outline-primary fullscreen-btn" data-target="collegeChart">
                                         <i class="fas fa-expand"></i>
@@ -1157,19 +1157,19 @@
                     },
                     export: {
                         csv: {
-                            filename: 'Department_reservation', 
+                            filename: 'Courses_reservation', 
                         },
                         svg: {
-                            filename: 'Department_reservation', 
+                            filename: 'Courses_reservation', 
                         },
                         png: {
-                            filename: 'Department_reservation',
+                            filename: 'Courses_reservation',
                         }
                     }
                 }
             },
             title: {
-                text: 'Department Reservation',
+                text: 'Courses Reservation',
                 align: 'center',
                 style: { 
                     fontSize: '18px', 

@@ -288,10 +288,10 @@ class CartController extends Controller
             ->where('status', 'reserved')
             ->exists();
 
-        if ($hasReservedOrder) {
-            Cart::instance('cart')->destroy();
-            return redirect()->route('cart.index')->with('error', 'You already have a reserved order. Please complete or cancel it before placing another.');
-        }
+        // if ($hasReservedOrder) {
+        //     Cart::instance('cart')->destroy();
+        //     return redirect()->route('cart.index')->with('error', 'You already have a reserved order. Please complete or cancel it before placing another.');
+        // }
 
         $total = (float) str_replace(',', '', Cart::instance('cart')->total());
         if ($total <= 0) {

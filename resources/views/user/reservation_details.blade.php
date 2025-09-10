@@ -391,13 +391,13 @@
                     <div class="wg-box">
                         <h5>Facility Information</h5>
                         <div class="facility-info">
-                            @if ($payment->availability->facility->image)
+                            {{-- @if ($payment->availability->facility->image)
                                 <img src="{{ asset('uploads/facilities/' . $payment->availability->facility->image) }}"
                                     alt="{{ $payment->availability->facility->name }}">
                             @else
                                 <img src="{{ asset('images/default-facility.jpg') }}"
                                     alt="Default Facility Image">
-                            @endif
+                            @endif --}}
                             <div class="facility-details">
                                 <h6>{{ $payment->availability->facility->name }}</h6>
                                 <p><strong>Type:</strong> {{ ucfirst(str_replace('_', ' ', $payment->availability->facility->facility_type)) }}</p>
@@ -416,41 +416,55 @@
                     </div>
 
                     <!-- Transaction Details -->
-                    <div class="wg-box">
-                        <h5>Transaction Details</h5>
-                        <table class="table-custom">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Price Type</th>
-                                    <th>Unit Price</th>
-                                    <th>Quantity</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($payment->transactionReservations as $transaction)
-                                    <tr>
-                                        <td>
-                                            <div class="facility-details">
-                                                <p>{{ $transaction->price->name ?? 'Facility Booking' }}</p>
-                                            </div>
-                                        </td>
-                                        <td>{{ ucfirst($transaction->price->price_type ?? 'N/A') }}</td>
-                                        <td>&#8369;{{ number_format($transaction->price->value ?? 0, 2) }}</td>
-                                        <td>{{ $transaction->quantity }}</td>
-                                        <td>&#8369;{{ number_format(($transaction->price->value ?? 0) * $transaction->quantity, 2) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <th colspan="4" class="text-end">Total Amount:</th>
-                                    <th>&#8369;{{ number_format($payment->total_price, 2) }}</th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+<div class="wg-box">
+    <h5>Transaction Details</h5>
+    <table class="table-custom">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Price Type</th>
+                <th>Unit Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php
+                $processedItems = [];
+            @endphp
+            
+            @foreach ($payment->transactionReservations as $transaction)
+                @php
+                    $itemKey = ($transaction->price->id ?? 'facility-booking') . '-' . $transaction->quantity;
+                    
+                    if (in_array($itemKey, $processedItems)) {
+                        continue;
+                    }
+                    
+                    $processedItems[] = $itemKey;
+                @endphp
+                
+                <tr>
+                    <td>
+                        <div class="facility-details">
+                            <p>{{ $transaction->price->name ?? 'Facility Booking' }}</p>
+                        </div>
+                    </td>
+                    <td>{{ ucfirst($transaction->price->price_type ?? 'N/A') }}</td>
+                    <td>&#8369;{{ number_format($transaction->price->value ?? 0, 2) }}</td>
+                    <td>{{ $transaction->quantity }}</td>
+                    <td>&#8369;{{ number_format($payment->total_price ?? 0) }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="4" class="text-end">Total Amount:</th>
+                <th>&#8369;{{ number_format($payment->total_price ?? 0) }}</th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
 
                     <!-- Qualification Status -->
                     @if ($qualificationApproval)

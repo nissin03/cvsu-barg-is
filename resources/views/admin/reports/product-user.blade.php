@@ -22,7 +22,7 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="row mb-4">
+    {{-- <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
@@ -83,7 +83,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
 
     <!-- Date Range Filter -->
     <div class="row mb-4">

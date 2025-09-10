@@ -23,19 +23,15 @@ use App\Http\Controllers\FacilityReservationController;
 use App\Http\Controllers\PdfController;
 
 Auth::routes(['reset' => true]);
-
-
 Auth::routes();
 
 Route::get('/', [HomeController::class, 'index'])->name('home.index');
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 Route::get('/shop/{product_slug}', [ShopController::class, 'product_details'])->name('shop.product.details');
 
-
 Route::get('/user/facilities', [UserFacilityController::class, 'index'])->name('user.facilities.index');
 Route::get('/user/facilities/{slug}', [UserFacilityController::class, 'show'])->name('user.facilities.details');
 Route::post('/facilities/calculate-price', [UserFacilityController::class, 'calculatePrice'])->name('facilities.calculatePrice');
-
 
 Route::get('/about-us', [AboutController::class, 'index'])->name('about.index');
 
@@ -51,7 +47,6 @@ Route::delete('/cart/clear', [CartController::class, 'empty_cart'])->name('cart.
 Route::get('/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
 Route::post('/place-an-order', [CartController::class, 'place_an_order'])->name('cart.place.an.order');
 Route::get('/api/slots', [CartController::class, 'getAvailableTimeSlots'])->name('slots.available');
-
 
 Route::get('/order-confirmation', [CartController::class, 'order_confirmation'])->name('cart.order.confirmation');
 
@@ -100,9 +95,6 @@ Route::middleware(['auth', AuthUser::class])->group(function () {
 Route::get('password/set', [PasswordController::class, 'showSetPasswordForm'])->name('password.set');
 Route::post('password/set', [PasswordController::class, 'setPassword']);
 
-
-
-
 Route::middleware(['auth', AuthAdmin::class])
     ->prefix('admin')
     ->group(function () {
@@ -115,7 +107,6 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::delete('/category/{id}/archive', [AdminController::class, 'category_archive'])->name('admin.category.archive');
         Route::get('/archived-categories', [AdminController::class, 'archived_categories'])->name('admin.archived-categories');
         Route::put('/categories/{id}/restore', [AdminController::class, 'restore_categories'])->name('admin.category.restore');
-
 
         // api
         Route::get('/api/dashboard-data', [AdminController::class, 'getDashboardData'])->name('admin.api.dashboard-data');
@@ -136,7 +127,6 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/reservation/events/{availability_id}', [FacilityController::class, 'events'])->name('admin.facilities.reservations-events');
         Route::get('/{availability_id}/reservation-history', [FacilityController::class, 'reservationHistory'])->name('admin.facilities.reservations-history');
 
-
         Route::get('/facilities/dashboard', [FacilityController::class, 'facilityDashboard'])->name('admin.facilities.dashboard');
 
         Route::get('/facility/reports', [FacilityReportController::class, 'index'])->name('admin.facility.reports');
@@ -152,10 +142,6 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::delete('/facility/{id}/archive', [FacilityController::class, 'archivedFacilities'])->name('admin.facilities.archive');
         Route::post('/facility/restore', [FacilityController::class, 'restoreFacilities'])->name('admin.facility.restore');
 
-        // Route::post('/facility/room/store', [FacilityController::class, 'room_store'])->name('admin.facilities.room.store');
-        // Route::post('/facility/rooms-range/store', [FacilityController::class, 'room_store_range'])->name('admin.facilities.store.range');
-
-        //update status
         Route::put('/facilities/reservation/{id}/update-status', [FacilityController::class, 'updateStatus'])
             ->name('admin.facilities.reservation.updateStatus');
         Route::post('/facility/{facilityId}/rooms', [FacilityController::class, 'storeRooms'])
@@ -179,7 +165,6 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::post('/product/store', [AdminController::class, 'product_store'])->name('admin.product.store');
         Route::get('/product/edit/{id}', [AdminController::class, 'product_edit'])->name('admin.product.edit');
         Route::put('/product/update', [AdminController::class, 'product_update'])->name('admin.product.update');
-        // Route::delete('/product/{id}/delete', [AdminController::class, 'product_delete'])->name('admin.product.delete');
         Route::delete('/product/{id}/archived', [AdminController::class, 'archivedProducts'])->name('admin.product.archive');
         Route::get('/archived-products', [AdminController::class, 'showArchivedProducts'])->name('admin.archived-products');
         Route::post('/product/restore', [AdminController::class, 'restoreProducts'])->name('admin.product.restore');
@@ -193,27 +178,17 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::put('/product-attribute/update', [AdminController::class, 'product_attribute_update'])->name('admin.product.attribute.update');
         Route::delete('/product-attribute/{id}/delete', [AdminController::class, 'product_attribute_delete'])->name('admin.product.attribute.delete');
 
-        // Route::get('/pos', [PosController::class, 'index'])->name('admin.pos.index');
-        // Route::get('/pos/{order?}', [PosController::class, 'index'])->name('admin.pos');
-
-
-
         Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders');
         Route::get('/orders/filters', [AdminController::class, 'filterOrders'])->name('admin.orders.filter');
         Route::get('/order/{order_id}/details', [AdminController::class, 'order_details'])->name('admin.order.details');
         Route::put('/order/update-status', [AdminController::class, 'update_order_status'])->name('admin.order.status.update');
         Route::post('/order/{order_id}/complete-payment', [AdminController::class, 'completePayment'])->name('admin.order.complete-payment');
         Route::get('/order/{order}/receipt-pdf', [AdminController::class, 'downloadReceipt'])->name('admin.order-receipt.pdf');
-        // Route::get('/order/{order}/receipt-preview', [AdminController::class, 'previewReceipt'])
-        //     ->name('admin.order.receipt-preview');
-
-
 
         Route::get('/facilities/reservations', [FacilityReservationController::class, 'index'])->name('admin.facilities.reservations');
         Route::get('/facilities/reservations/{id}', [FacilityReservationController::class, 'show'])->name('admin.facilities.reservations.show');
         Route::patch('/facilities/reservations/{reservation}/status', [FacilityReservationController::class, 'update'])->name('admin.facilities.reservations.update');
         Route::patch('/facilities/reservations/qualification/{id}/status', [FacilityReservationController::class, 'updateQualificationApproval'])->name('admin.facilities.reservations.qualification.update');
-
 
         Route::get('/slide', [AdminController::class, 'slides'])->name('admin.slides');
         Route::get('/slide/add', [AdminController::class, 'slide_add'])->name('admin.slide.add');
@@ -241,45 +216,50 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/getWeeklyData', [AdminController::class, 'getWeeklyData'])->name('admin.getWeeklyData');
         Route::get('/index-daily', [AdminController::class, 'indexDaily'])->name('admin.index-daily');
 
-        // REPORTS
+        Route::get('/reports', [ReportController::class, 'generateReport'])->name('admin.reports');
+        Route::get('/report-user', [ReportController::class, 'generateUser'])->name('admin.report-user');
+        Route::get('/report-product', [ReportController::class, 'generateProduct'])->name('admin.report-product');
+        Route::get('/report-inventory', [ReportController::class, 'generateInventory'])->name('admin.report-inventory');
+        Route::get('/report-statements', [ReportController::class, 'listBillingStatements'])->name('admin.report-statements');
+        Route::get('/report-statement/{orderId}', [ReportController::class, 'generateBillingStatement'])->name('admin.report-statement');
 
-        Route::get('/admin/reports', [ReportController::class, 'generateReport'])->name('admin.reports');
-        Route::get('/admin/report-user', [ReportController::class, 'generateUser'])->name('admin.report-user');
-        Route::get('/admin/report-product', [ReportController::class, 'generateProduct'])->name('admin.report-product');
-        Route::get('/admin/report-inventory', [ReportController::class, 'generateInventory'])->name('admin.report-inventory');
-        Route::get('/admin/report-statements', [ReportController::class, 'listBillingStatements'])->name('admin.report-statements');
-        Route::get('/admin/report-statement/{orderId}', [ReportController::class, 'generateBillingStatement'])->name('admin.report-statement');
-        // Route::get('/admin/report-statement/{orderId}', [ReportController::class, 'generateBillingStatement'])->name('admin.report-statement');
+        Route::get('/facilities-sales', [ReportController::class, 'listSalesFacilities'])->name('admin.facilties.stataments');
+        Route::get('/payment-details/{paymentId}', [ReportController::class, 'showPaymentDetails'])->name('admin.sales-report-details');
 
-        Route::get('/admin/facilities-sales', [ReportController::class, 'listSalesFacilities'])->name('admin.facilties.stataments');
-        Route::get('admin/payment-details/{paymentId}', [ReportController::class, 'showPaymentDetails'])->name('admin.sales-report-details');
+        Route::get('/facility-statement', [ReportController::class, 'facilitiesStatement'])->name('admin.facility-statement');
 
-        Route::get('facility-statement', [ReportController::class, 'facilitiesStatement'])->name('admin.facility-statement');
+        Route::get('/report-statements/download', [PdfController::class, 'downloadBillingStatements'])->name('admin.report-statements.download');
+        Route::post('/downloadPdf', [PdfController::class, 'downloadPdf'])->name('admin.downloadPdf');
+        Route::post('/report-user/pdf', [PdfController::class, 'downloadUserReportPdf'])->name('admin.report-user.pdf');
+        Route::get('/report-inventory/pdf', [PdfController::class, 'downloadInventoryReportPdf'])->name('admin.report-inventory.pdf');
+        Route::get('/report-product/download', [PdfController::class, 'downloadProduct'])->name('admin.report-product.download');
+        Route::post('/sales-report/download', [PdfController::class, 'downloadInputSales'])->name('admin.download-input-sales');
+        Route::post('/user-report/download', [PdfController::class, 'downloadInputUsers'])->name('admin.download-input-users');
+        Route::get('/facility-statement/download', [PdfController::class, 'facilityStatement'])->name('admin.facility-statement.download');
 
-        //  PDF
-        Route::get('/admin/report-statements/download', [PdfController::class, 'downloadBillingStatements'])->name('admin.report-statements.download');
-        Route::post('/admin/downloadPdf', [PdfController::class, 'downloadPdf'])->name('admin.downloadPdf');
-        Route::post('/admin/report-user/pdf', [PdfController::class, 'downloadUserReportPdf'])->name('admin.report-user.pdf');
-        Route::get('/admin/report-inventory/pdf', [PdfController::class, 'downloadInventoryReportPdf'])->name('admin.report-inventory.pdf');
-        Route::get('/admin/report-product/download', [PdfController::class, 'downloadProduct'])->name('admin.report-product.download');
-        Route::post('/admin/sales-report/download', [PdfController::class, 'downloadInputSales'])->name('admin.download-input-sales');
-        Route::post('/admin/user-report/download', [PdfController::class, 'downloadInputUsers'])->name('admin.download-input-users');
-        Route::get('/admin/facility-statement/download', [PdfController::class, 'facilityStatement'])->name('admin.facility-statement.download');
+        Route::post('/sales-report', [ReportController::class, 'generateInputSales'])->name('admin.generate-input-sales');
+        Route::get('/sales-report', function () {
+            $reportController = new ReportController();
+            $periods = $reportController->getAvailablePeriods();
+            $dateParams = $reportController->getDateParameters(new \Illuminate\Http\Request());
+            
+            return view('admin.reports.product-input-sales', [
+                'chartData' => null,
+                'startDate' => null,
+                'endDate' => null,
+                'availableMonths' => $periods['availableMonths'],
+                'availableWeeks' => $periods['availableWeeks'],
+                'yearRange' => $periods['yearRange'],
+                'selectedMonth' => $periods['availableMonths']->firstWhere('id', $dateParams['selectedMonth']) ?: $periods['availableMonths']->first(),
+                'selectedYear' => $dateParams['selectedYear'],
+                'selectedWeekId' => $dateParams['selectedWeek']
+            ]);
+        })->name('admin.reports.input-sales');
 
-        // Route::get('/user-reports', [ReportController::class, 'showUserReports'])->name('admin.user-reports');
-        // Route::post('/user-reports/generate', [ReportController::class, 'generateUserReports'])->name('admin.user-reports.generate');
-
-        Route::post('/admin/sales-report', [ReportController::class, 'generateInputSales'])->name('admin.generate-input-sales');
-        Route::get('/admin/sales-report', function () {
-            return view('admin.reports.input-sales');
+        Route::post('/user-report', [ReportController::class, 'generateInputUsers'])->name('admin.generate-input-users');
+        Route::get('/user-report', function () {
+            return view('admin.reports.product-input-user');
         });
-
-        Route::post('/admin/user-report', [ReportController::class, 'generateInputUsers'])->name('admin.generate-input-users');
-        Route::get('/admin/user-report', function () {
-            return view('admin.reports.input-user');
-        });
-
-
 
         Route::get('/report/facilities', [AdminController::class, 'generateFacilitespayment'])->name('admin.report.facilities');
     });

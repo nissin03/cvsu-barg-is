@@ -71,18 +71,18 @@ class ShopController extends Controller
         }
         $expanded_categories = array_unique($expanded_categories);
 
-        $products = Product::where(function ($query) use ($expanded_categories, $f_categories) {
-            if (!empty($expanded_categories)) {
-                $query->whereIn('category_id', $expanded_categories);
-            } elseif ($f_categories === '') {
-                $query->whereNotNull('category_id');
-            }
-        })
+        $products = Product::where('archived', false)
+            ->where(function ($query) use ($expanded_categories, $f_categories) {
+                if (!empty($expanded_categories)) {
+                    $query->whereIn('category_id', $expanded_categories);
+                } elseif ($f_categories === '') {
+                    $query->whereNotNull('category_id');
+                }
+            })
             ->when($sex !== '', function ($query) use ($sex) {
                 return $query->where('sex', $sex);
             })
             ->when($priceRange !== '', function ($query) use ($priceRange) {
-                // Handle price range filtering
                 switch ($priceRange) {
                     case '0-50':
                         return $query->whereBetween('price', [0, 50]);

@@ -234,6 +234,7 @@
             const sexSelect = document.getElementById('sex');
             const yearLevelSelect = document.getElementById('yearLevel');
             const departmentSelect = document.getElementById('studentDepartment');
+            const emailInput = document.getElementById('email');
 
             const courses = {
                 CEIT: ['BS Agricultural and Biosystems Engineering', 'BS Architecture', 'BS Civil Engineering',
@@ -267,6 +268,51 @@
                 CON: ['BS Medical Technology', 'BS Midwifery', 'BS Nursing', 'Diploma in Midwifery'],
                 CVMBS: ['Doctor of Veterinary Medicine']
             };
+
+            // Function to filter role options based on email domain
+            function filterRoleOptions() {
+                const email = emailInput.value.trim();
+                const roleOptions = roleSelect.querySelectorAll('option');
+                
+                // Reset all options to be visible first
+                roleOptions.forEach(option => {
+                    option.style.display = 'block';
+                    option.disabled = false;
+                });
+
+                if (email.includes('@cvsu.edu.ph')) {
+                    // For @cvsu.edu.ph emails, only show student and employee
+                    roleOptions.forEach(option => {
+                        if (option.value === 'non-employee') {
+                            option.style.display = 'none';
+                            option.disabled = true;
+                        }
+                    });
+                    
+                    // If current role is non-employee, reset selection
+                    if (roleSelect.value === 'non-employee') {
+                        roleSelect.value = '';
+                        updateFieldsVisibility('');
+                    }
+                } else if (email.includes('@gmail.com')) {
+                    // For @gmail.com emails, only show non-employee
+                    roleOptions.forEach(option => {
+                        if (option.value === 'student' || option.value === 'employee') {
+                            option.style.display = 'none';
+                            option.disabled = true;
+                        }
+                    });
+                    
+                    // If current role is student or employee, reset selection
+                    if (roleSelect.value === 'student' || roleSelect.value === 'employee') {
+                        roleSelect.value = '';
+                        updateFieldsVisibility('');
+                    }
+                }
+            }
+
+            // Initialize role filtering on page load
+            filterRoleOptions();
 
             if (phoneInput) {
                 phoneInput.addEventListener('input', function() {
@@ -302,6 +348,8 @@
 
             function updateFieldsVisibility(role) {
                 if (!role) {
+                    studentFields.style.display = 'none';
+                    othersFields.style.display = 'none';
                     return;
                 }
 
