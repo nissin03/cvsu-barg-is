@@ -15,6 +15,8 @@ use App\Models\MonthName;
 use App\Models\OrderItem;
 use App\Models\Reservation;
 use App\Models\Transaction;
+use App\Models\College;
+use App\Models\Course;
 use Illuminate\Support\Str;
 use App\Mail\ReplyToContact;
 use Illuminate\Http\Request;
@@ -1005,6 +1007,7 @@ class AdminController extends Controller
         $order->save();
         return back()->with('status', 'Status updated successfully!');
     }
+    
     public function completePayment(Request $request, $order_id)
     {
         return DB::transaction(function () use ($request, $order_id) {
@@ -1552,46 +1555,21 @@ class AdminController extends Controller
         }
     }
 
-    public function users_edit($id)
-    {
-        $user = User::findOrFail($id);
-        return view('admin.user-edit', compact('user'));
-    }
-
-
-    public function users_update(Request $request, $id)
-    {
-        $request->validate([
-            'phone_number' => 'nullable',
-            'year_level' => 'nullable',
-            'department' => 'nullable',
-            'course' => 'nullable',
-        ]);
-        $user = User::findOrFail($id);
-        $user->phone_number = $request->phone_number;
-        $user->year_level = $request->year_level;
-        $user->department = $request->department;
-        $user->course = $request->course;
-
-        $user->save();
-        return redirect()->route('admin.users')->with('status', 'User has been updated successfully!');
-    }
-
-    public function users_add()
-    {
-        return view("admin.user-add");
-    }
 
     public function users(Request $request)
     {
-        $query = User::query();
+        $query = User::with(['college', 'course']);
 
         if ($request->filled('year_level')) {
             $query->where('year_level', $request->year_level);
         }
 
-        if ($request->filled('department')) {
-            $query->where('department', $request->department);
+        if ($request->filled('college_id')) {
+            $query->where('college_id', $request->college_id);
+        }
+
+        if ($request->filled('course_id')) {
+            $query->where('course_id', $request->course_id);
         }
 
         if ($request->filled('name')) {
@@ -1599,16 +1577,45 @@ class AdminController extends Controller
         }
 
         $users = $query->paginate(10);
+        $colleges = College::all();
+        $courses = Course::all();
+
         if ($request->ajax()) {
+            // Format the users data to include college and course codes
+            $formattedUsers = $users->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone_number' => $user->phone_number,
+                    'year_level' => $user->year_level,
+                    'college' => $user->college ? ['code' => $user->college->code] : null,
+                    'course' => $user->course ? ['code' => $user->course->code] : null,
+                ];
+            });
+            
             return response()->json([
-                'users' => $users->items(),
+                'users' => $formattedUsers,
                 'links' => (string) $users->links('pagination::bootstrap-5'),
             ]);
         }
 
-        return view('admin.users', compact('users'));
+        return view('admin.users', compact('users', 'colleges', 'courses'));
     }
 
+    public function coursesByCollege($collegeId)
+    {
+        $courses = Course::where('college_id', $collegeId)->get();
+        return response()->json($courses);
+    }
+
+    public function users_add()
+    {
+        $colleges = College::all();
+        $courses = Course::all();
+        
+        return view("admin.user-add", compact('colleges', 'courses'));
+    }
 
     public function users_store(Request $request)
     {
@@ -1617,50 +1624,58 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|ends_with:@cvsu.edu.ph',
             'phone_number' => 'nullable|string|regex:/^9\d{9}$/',
-            'sex' => 'required|in:male,female',
         ];
+        
         if ($isAdmin) {
             $validationRules['form_type'] = 'required|in:admin';
+            $validationRules['sex'] = 'required|in:male,female';
         } else {
             $validationRules['role'] = 'required|in:student,employee,non-employee';
             $validationRules['year_level'] = 'nullable|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
-            $validationRules['department'] = 'nullable|in:CEIT,GSOLC,CAFENR,CAS,CCJ,CEMDS,CED,CON,CVMBS';
-            $validationRules['course'] = 'nullable|string|max:255';
+            $validationRules['college_id'] = 'nullable|exists:colleges,id';
+            $validationRules['course_id'] = 'nullable|exists:courses,id';
             $validationRules['form_type'] = 'nullable|in:user';
+            
             if ($request->role === 'student') {
                 $validationRules['year_level'] = 'required|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
-                $validationRules['department'] = 'required|in:CEIT,GSOLC,CAFENR,CAS,CCJ,CEMDS,CED,CON,CVMBS';
-                $validationRules['course'] = 'required|string|max:255';
+                $validationRules['college_id'] = 'required|exists:colleges,id';
+                $validationRules['course_id'] = 'required|exists:courses,id';
             }
         }
+        
         $customMessages = [
             'email.ends_with' => 'The email must be a @cvsu.edu.ph email address.',
             'phone_number.regex' => 'Phone number must start with 9 and be exactly 10 digits.',
             'year_level.required' => 'Year level is required for students.',
-            'department.required' => 'Department is required for students.',
-            'course.required' => 'Course is required for students.',
+            'college_id.required' => 'College is required for students.',
+            'course_id.required' => 'Course is required for students.',
         ];
+        
         $validated = $request->validate($validationRules, $customMessages);
+        
         if ($isAdmin) {
             $validated['password'] = Hash::make('cvsu-barg-password');
             $validated['utype'] = 'ADM';
             $validated['role'] = 'employee';
             $validated['password_set'] = true;
+            $validated['sex'] = $validated['sex'] ?? 'male';
         } else {
             $validated['password'] = Hash::make($request->password ?? 'defaultpassword');
             $validated['utype'] = 'USR';
             $validated['password_set'] = false;
+            $validated['sex'] = 'male'; // Default for users
+            
+            // Only set student-specific fields for students
+            if ($validated['role'] !== 'student') {
+                $validated['year_level'] = null;
+                $validated['college_id'] = null;
+                $validated['course_id'] = null;
+            }
         }
-        unset($validated['form_type']);
-
-        if (!$isAdmin && in_array($validated['role'], ['employee', 'non-employee'])) {
-            $validated['year_level'] = null;
-            $validated['course'] = null;
-        }
+        
         $validated['email_verified_at'] = now();
-
-        $validated['sex'] = $validated['sex'] ?? 'male';
         $validated['isDefault'] = false;
+        
         try {
             $user = User::create($validated);
             $message = $isAdmin
@@ -1672,6 +1687,67 @@ class AdminController extends Controller
             \Log::error('User creation failed: ' . $e->getMessage());
             return back()->withInput()->withErrors(['error' => 'Failed to create user. Please try again.']);
         }
+    }
+
+    public function users_edit($id)
+    {
+        $user = User::findOrFail($id);
+        $colleges = College::all();
+        $courses = Course::all();
+        
+        return view('admin.user-edit', compact('user', 'colleges', 'courses'));
+    }
+
+    public function users_update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        
+        $validationRules = [
+            'phone_number' => 'nullable|string|regex:/^9\d{9}$/',
+        ];
+        
+        if ($user->role === 'student') {
+            $validationRules['year_level'] = 'required|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
+            $validationRules['college_id'] = 'required|exists:colleges,id';
+            $validationRules['course_id'] = 'required|exists:courses,id';
+        } else {
+            $validationRules['year_level'] = 'nullable';
+            $validationRules['college_id'] = 'nullable';
+            $validationRules['course_id'] = 'nullable';
+        }
+        
+        $customMessages = [
+            'phone_number.regex' => 'Phone number must start with 9 and be exactly 10 digits.',
+            'year_level.required' => 'Year level is required for students.',
+            'college_id.required' => 'College is required for students.',
+            'course_id.required' => 'Course is required for students.',
+        ];
+        
+        $request->validate($validationRules, $customMessages);
+        
+        $user->phone_number = $request->phone_number;
+        
+        if ($user->role === 'student') {
+            $user->year_level = $request->year_level;
+            $user->college_id = $request->college_id;
+            $user->course_id = $request->course_id;
+            
+            $college = College::find($request->college_id);
+            $course = Course::find($request->course_id);
+            
+            $user->department = $college->name;
+            $user->course = $course->name;
+        } else {
+            $user->year_level = null;
+            $user->college_id = null;
+            $user->course_id = null;
+            $user->department = null;
+            $user->course = null;
+        }
+        
+        $user->save();
+        
+        return redirect()->route('admin.users')->with('status', 'User has been updated successfully!');
     }
 
     public function searchProducts(Request $request)

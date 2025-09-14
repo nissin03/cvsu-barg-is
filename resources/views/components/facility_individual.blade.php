@@ -709,12 +709,12 @@
 
         const today = new Date();
         const minSelectableDate = new Date();
-        minSelectableDate.setDate(today.getDate() + 3);
+        minSelectableDate.setDate(today.getDate() + 7);
     
         let maxSelectableDate = null;
         if (userType === 'USR') {
-            maxSelectableDate = new Date();
-            maxSelectableDate.setMonth(today.getMonth() + 1); 
+            maxSelectableDate = new Date(); 
+            maxSelectableDate.setMonth(today.getMonth() + 3); 
         }     
         const datedPriceScenario = @json($datedPriceWithQuantity || $datedPrice ? true : false);
         

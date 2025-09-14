@@ -420,11 +420,60 @@
                                     </li>
 
                                     <li class="menu-item">
+                                        {{-- <a href="javascript:void(0);" class="menu-item-button"> --}}
                                         <a href="{{ route('admin.users') }}">
-                                            <div class="icon"><i class="icon-user"></i></div>
+                                            <div class="icon"><i class="fas fa-users"></i></div>
                                             <div class="text">Users</div>
                                         </a>
                                     </li>
+
+                                    <li class="menu-item has-children">
+                                        <a href="javascript:void(0);" class="menu-item-button">
+                                        {{-- <a href="{{ route('admin.users') }}"> --}}
+                                            <div class="icon"><i class="fas fa-university"></i></div>
+                                            <div class="text">College</div>
+                                        </a>
+                                          <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.colleges.index') }}">
+                                                    <div class="text">Colleges</div>
+                                                </a>
+                                            </li>
+                                          </ul> 
+                                           <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.colleges.create') }}">
+                                                    <div class="text">Add Colleges</div>
+                                                </a>
+                                            </li>
+                                          </ul> 
+                                        
+                                    </li>
+
+                                    <li class="menu-item has-children">
+                                        <a href="javascript:void(0);" class="menu-item-button">
+                                        {{-- <a href="{{ route('admin.users') }}"> --}}
+                                            <div class="icon"><i class="fas fa-book-open"></i></div>
+                                            <div class="text">Course</div>
+                                        </a>
+                                          <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.courses.index') }}">
+                                                    <div class="text">Courses</div>
+                                                </a>
+                                            </li>
+                                          </ul> 
+                                           <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.courses.create') }}">
+                                                    <div class="text">Add Courses</div>
+                                                </a>
+                                            </li>
+                                          </ul> 
+                                        
+                                    </li>
+
+
                                 @endif
 
                                 {{-- Director Menu Items --}}

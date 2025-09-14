@@ -1,11 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-    <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
-        :breadcrumbs="$breadcrumbs" />
+    <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}" :breadcrumbs="$breadcrumbs" />
 
     <style>
-        /* General styles */
         .profile-sidebar {
             background-color: #ffffff;
             padding: 20px;
@@ -45,7 +43,6 @@
             margin-top: 20px;
         }
 
-        /* Button styles */
         .btn-black {
             background-color: #343a40;
             color: #fff;
@@ -53,6 +50,21 @@
 
         .btn-black:hover {
             background-color: #23272b;
+        }
+        
+        .btn-black:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .input-error {
+            border-color: #dc3545;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
         }
     </style>
     <div class="container mt-5 pt-5">
@@ -66,15 +78,13 @@
                             <h2>Update Profile</h2>
                             <p>Edit your personal information</p>
                             <hr>
-                            <form action="{{ route('user.profile.update') }}" method="POST" enctype="multipart/form-data"
-                                id="profileForm">
+                            <form action="{{ route('user.profile.update') }}" method="POST" enctype="multipart/form-data" id="profileForm">
                                 @csrf
                                 @method('PUT')
 
                                 <div class="mb-3">
                                     <div class="form-floating">
-                                        <input type="text" class="form-control" id="fullName" name="name"
-                                            placeholder="Enter Full Name" disabled value="{{ old('name', $user->name) }}">
+                                        <input type="text" class="form-control" id="fullName" name="name" placeholder="Enter Full Name" disabled value="{{ old('name', $user->name) }}">
                                         <label for="fullName">Full Name</label>
                                         @error('name')
                                             <span class="text-danger">{{ $message }}</span>
@@ -84,9 +94,7 @@
 
                                 <div class="mb-3">
                                     <div class="form-floating">
-                                        <input type="email" class="form-control" id="email" name="email"
-                                            placeholder="Enter Email Address" disabled
-                                            value="{{ old('email', $user->email) }}">
+                                        <input type="email" class="form-control" id="email" name="email" placeholder="Enter Email Address" disabled value="{{ old('email', $user->email) }}">
                                         <label for="email">Email</label>
                                         @error('email')
                                             <span class="text-danger">{{ $message }}</span>
@@ -95,15 +103,12 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="form-floating">
-                                        <div class="input-group">
-                                            <span class="input-group-text">+63</span>
-                                            <input type="tel" class="form-control" id="phoneNumber" name="phone_number"
-                                                placeholder="Phone Number"
-                                                value="{{ old('phone_number', $user->phone_number) }}" pattern="^9\d{9}$"
-                                                maxlength="10">
-                                        </div>
+                                    <label for="phoneNumber" class="form-label">Phone Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">+63</span>
+                                        <input type="tel" class="form-control" id="phoneNumber" name="phone_number" placeholder="Phone Number" value="{{ old('phone_number', $user->phone_number) }}" pattern="^9\d{9}$" maxlength="10">
                                     </div>
+                                    <div id="phoneError" class="error-message"></div>
                                     @error('phone_number')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
@@ -113,10 +118,8 @@
                                     <div class="form-floating">
                                         <select class="form-select" id="sex" name="sex" required>
                                             <option value="" disabled>Select Sex</option>
-                                            <option value="male"
-                                                {{ old('sex', $user->sex) === 'male' ? 'selected' : '' }}>Male</option>
-                                            <option value="female"
-                                                {{ old('sex', $user->sex) === 'female' ? 'selected' : '' }}>Female</option>
+                                            <option value="male" {{ old('sex', $user->sex) === 'male' ? 'selected' : '' }}>Male</option>
+                                            <option value="female" {{ old('sex', $user->sex) === 'female' ? 'selected' : '' }}>Female</option>
                                         </select>
                                         <label for="sex" class="form-label">Sex</label>
                                     </div>
@@ -125,22 +128,13 @@
                                     @enderror
                                 </div>
 
-
-
                                 <div class="mb-3">
                                     <div class="form-floating">
-                                        <select class="form-select" id="role" name="role"
-                                            {{ auth()->user()->role_change_allowed ? 'required' : 'disabled' }}>
+                                        <select class="form-select" id="role" name="role" {{ auth()->user()->role_change_allowed ? 'required' : 'disabled' }}>
                                             <option value="" disabled>Select Role</option>
-                                            <option value="student"
-                                                {{ old('role', $user->role) == 'student' ? 'selected' : '' }}>Student
-                                            </option>
-                                            <option value="employee"
-                                                {{ old('role', $user->role) == 'employee' ? 'selected' : '' }}>Employee
-                                            </option>
-                                            <option value="non-employee"
-                                                {{ old('role', $user->role) == 'non-employee' ? 'selected' : '' }}>
-                                                Non-Employee</option>
+                                            <option value="student" {{ old('role', $user->role) == 'student' ? 'selected' : '' }}>Student</option>
+                                            <option value="employee" {{ old('role', $user->role) == 'employee' ? 'selected' : '' }}>Employee</option>
+                                            <option value="non-employee" {{ old('role', $user->role) == 'non-employee' ? 'selected' : '' }}>Non-Employee</option>
                                         </select>
                                         <label for="role">Role</label>
                                     </div>
@@ -149,21 +143,17 @@
                                     @enderror
                                 </div>
 
-                                <!-- Student Fields -->
                                 <div id="studentFields" style="display: none;">
                                     <div class="mb-3">
                                         <div class="form-floating">
                                             <select class="form-select" id="yearLevel" name="year_level">
-                                                <option value="" disabled
-                                                    {{ old('year_level', $user->year_level) ? '' : 'selected' }}>Select
-                                                    Year Level</option>
+                                                <option value="" disabled>Select Year Level</option>
                                                 @foreach (['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'] as $year)
-                                                    <option value="{{ $year }}"
-                                                        {{ old('year_level', $user->year_level) == $year ? 'selected' : '' }}>
-                                                        {{ $year }}</option>
+                                                    <option value="{{ $year }}" {{ old('year_level', $user->year_level) == $year ? 'selected' : '' }}>{{ $year }}</option>
                                                 @endforeach
                                             </select>
                                             <label for="yearLevel">Year Level</label>
+                                            <div id="yearLevelError" class="error-message"></div>
                                             @error('year_level')
                                                 <span class="text-danger">{{ $message }}</span>
                                             @enderror
@@ -172,18 +162,15 @@
 
                                     <div class="mb-3">
                                         <div class="form-floating">
-                                            <select class="form-select" id="studentDepartment" name="department">
-                                                <option value="" disabled
-                                                    {{ old('department', $user->department) ? '' : 'selected' }}>Select
-                                                    Department</option>
-                                                @foreach (['CEIT', 'GSOLC', 'CAFENR', 'CAS', 'CCJ', 'CEMDS', 'CED', 'CON', 'CVMBS'] as $dept)
-                                                    <option value="{{ $dept }}"
-                                                        {{ old('department', $user->department) == $dept ? 'selected' : '' }}>
-                                                        {{ $dept }}</option>
+                                            <select class="form-select" id="college_id" name="college_id">
+                                                <option value="" disabled selected>Select College</option>
+                                                @foreach($colleges as $college)
+                                                    <option value="{{ $college->id }}" {{ old('college_id', $user->college_id) == $college->id ? 'selected' : '' }}>{{ $college->name }}</option>
                                                 @endforeach
                                             </select>
-                                            <label for="studentDepartment">Department</label>
-                                            @error('department')
+                                            <label for="college_id">College</label>
+                                            <div id="collegeError" class="error-message"></div>
+                                            @error('college_id')
                                                 <span class="text-danger">{{ $message }}</span>
                                             @enderror
                                         </div>
@@ -191,24 +178,27 @@
 
                                     <div class="mb-3">
                                         <div class="form-floating">
-                                            <select class="form-select" id="course" name="course">
+                                            <select class="form-select" id="course_id" name="course_id">
                                                 <option value="" disabled selected>Select Course</option>
+                                                @if($user->college_id)
+                                                    @foreach($colleges->find($user->college_id)->courses ?? [] as $course)
+                                                        <option value="{{ $course->id }}" {{ old('course_id', $user->course_id) == $course->id ? 'selected' : '' }}>{{ $course->name }}</option>
+                                                    @endforeach
+                                                @endif
                                             </select>
-                                            <label for="course">Course</label>
-                                            @error('course')
+                                            <label for="course_id">Course</label>
+                                            <div id="courseError" class="error-message"></div>
+                                            @error('course_id')
                                                 <span class="text-danger">{{ $message }}</span>
                                             @enderror
                                         </div>
                                     </div>
                                 </div>
 
-                                <div id="othersFields" style="display: none;">
-                                    <!-- Additional fields for non-employees can be added here -->
-                                </div>
+                                <div id="othersFields" style="display: none;"></div>
 
                                 <div class="mt-4 mb-3">
-                                    <button type="submit" class="btn btn-black" id="updateProfileBtn">Update
-                                        Profile</button>
+                                    <button type="submit" class="btn btn-black" id="updateProfileBtn" disabled>Update Profile</button>
                                 </div>
                             </form>
                         </div>
@@ -221,199 +211,220 @@
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const roleSelect = document.getElementById('role');
-            const studentFields = document.getElementById('studentFields');
-            const professorFields = document.getElementById('professorFields');
-            const othersFields = document.getElementById('othersFields');
-            const currentRole = '{{ old('role', $user->role) }}';
-            const studentDepartmentSelect = document.getElementById('studentDepartment');
-            const courseSelect = document.getElementById('course');
-            const phoneInput = document.getElementById('phoneNumber');
-            const updateBtn = document.getElementById('updateProfileBtn');
-            const sexSelect = document.getElementById('sex');
-            const yearLevelSelect = document.getElementById('yearLevel');
-            const departmentSelect = document.getElementById('studentDepartment');
-            const emailInput = document.getElementById('email');
+      document.addEventListener('DOMContentLoaded', function() {
+        const roleSelect = document.getElementById('role');
+        const studentFields = document.getElementById('studentFields');
+        const othersFields = document.getElementById('othersFields');
+        const currentRole = '{{ old('role', $user->role) }}';
+        const phoneInput = document.getElementById('phoneNumber');
+        const updateBtn = document.getElementById('updateProfileBtn');
+        const sexSelect = document.getElementById('sex');
+        const yearLevelSelect = document.getElementById('yearLevel');
+        const emailInput = document.getElementById('email');
+        const collegeSelect = document.getElementById('college_id');
+        const courseSelect = document.getElementById('course_id');
+        
+        // Error message elements
+        const phoneError = document.getElementById('phoneError');
+        const yearLevelError = document.getElementById('yearLevelError');
+        const collegeError = document.getElementById('collegeError');
+        const courseError = document.getElementById('courseError');
 
-            const courses = {
-                CEIT: ['BS Agricultural and Biosystems Engineering', 'BS Architecture', 'BS Civil Engineering',
-                    'BS Computer Engineering', 'BS Computer Science', 'BS Electrical Engineering',
-                    'BS Electronics Engineering', 'BS Industrial Technology Major in Automotive Technology',
-                    'BS Industrial Technology Major in Electrical Technology',
-                    'BS Industrial Technology Major in Electronics Technology', 'BS Information Technology'
-                ],
-                GSOLC: ['PhD in Agriculture', 'PhD in Education', 'PhD in Management',
-                    'Master in Business Administration', 'Master in Agriculture',
-                    'Master of Arts in Education', 'Master in Engineering', 'Master of Management',
-                    'Master of Professional Studies', 'MS Agriculture', 'MS Biology', 'MS Food Science',
-                    'Master in Information Technology'
-                ],
-                CAFENR: ['Bachelor of Agricultural Entrepreneurship', 'BS Agriculture',
-                    'BS Environmental Science', 'BS Food Technology'
-                ],
-                CAS: ['BA English Language Studies', 'BA Journalism', 'BA Political Science',
-                    'BA Applied Mathematics', 'BS Biology', 'BS Psychology', 'BS Social Work'
-                ],
-                CCJ: ['BS Criminology', 'BS Industrial Security Management'],
-                CEMDS: ['BS Accountancy', 'BS Business Management', 'BS Economics', 'BS International Studies',
-                    'BS Office Administration'
-                ],
-                CED: ['Bachelor of Early Childhood Education', 'Bachelor of Elementary Education',
-                    'Bachelor of Secondary Education', 'Bachelor of Special Needs Education',
-                    'Bachelor of Technology and Livelihood Education', 'BS Hospitality Management',
-                    'BS Tourism Management', 'Teacher Certificate Program', 'Science High School',
-                    'Elementary Education', 'Pre-Elementary Education'
-                ],
-                CON: ['BS Medical Technology', 'BS Midwifery', 'BS Nursing', 'Diploma in Midwifery'],
-                CVMBS: ['Doctor of Veterinary Medicine']
-            };
+        function filterRoleOptions() {
+            const email = emailInput.value.trim();
+            const roleOptions = roleSelect.querySelectorAll('option');
+            
+            roleOptions.forEach(option => {
+                option.style.display = 'block';
+                option.disabled = false;
+            });
 
-            // Function to filter role options based on email domain
-            function filterRoleOptions() {
-                const email = emailInput.value.trim();
-                const roleOptions = roleSelect.querySelectorAll('option');
-                
-                // Reset all options to be visible first
+            if (email.includes('@cvsu.edu.ph')) {
                 roleOptions.forEach(option => {
-                    option.style.display = 'block';
-                    option.disabled = false;
-                });
-
-                if (email.includes('@cvsu.edu.ph')) {
-                    // For @cvsu.edu.ph emails, only show student and employee
-                    roleOptions.forEach(option => {
-                        if (option.value === 'non-employee') {
-                            option.style.display = 'none';
-                            option.disabled = true;
-                        }
-                    });
-                    
-                    // If current role is non-employee, reset selection
-                    if (roleSelect.value === 'non-employee') {
-                        roleSelect.value = '';
-                        updateFieldsVisibility('');
-                    }
-                } else if (email.includes('@gmail.com')) {
-                    // For @gmail.com emails, only show non-employee
-                    roleOptions.forEach(option => {
-                        if (option.value === 'student' || option.value === 'employee') {
-                            option.style.display = 'none';
-                            option.disabled = true;
-                        }
-                    });
-                    
-                    // If current role is student or employee, reset selection
-                    if (roleSelect.value === 'student' || roleSelect.value === 'employee') {
-                        roleSelect.value = '';
-                        updateFieldsVisibility('');
-                    }
-                }
-            }
-
-            // Initialize role filtering on page load
-            filterRoleOptions();
-
-            if (phoneInput) {
-                phoneInput.addEventListener('input', function() {
-                    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
-                    if (this.value.length > 0 && this.value[0] !== '9') {
-                        this.value = '9' + this.value.slice(1);
+                    if (option.value === 'non-employee') {
+                        option.style.display = 'none';
+                        option.disabled = true;
                     }
                 });
-            }
-
-            function updateCourseOptions() {
-                const department = studentDepartmentSelect.value;
-                courseSelect.innerHTML = '<option value="" disabled selected>Select Course</option>';
-
-                if (courses[department]) {
-                    courses[department].forEach(function(course) {
-                        const option = document.createElement('option');
-                        option.value = course;
-                        option.textContent = course;
-                        courseSelect.appendChild(option);
-                    });
-
-                    const oldValue = '{{ old('course', $user->course) }}';
-                    if (oldValue) {
-                        courseSelect.value = oldValue;
+                
+                if (roleSelect.value === 'non-employee') {
+                    roleSelect.value = '';
+                    updateFieldsVisibility('');
+                }
+            } else if (email.includes('@gmail.com')) {
+                roleOptions.forEach(option => {
+                    if (option.value === 'student' || option.value === 'employee') {
+                        option.style.display = 'none';
+                        option.disabled = true;
                     }
+                });
+                
+                if (roleSelect.value === 'student' || roleSelect.value === 'employee') {
+                    roleSelect.value = '';
+                    updateFieldsVisibility('');
                 }
             }
+        }
 
-            studentDepartmentSelect.addEventListener('change', updateCourseOptions);
+        filterRoleOptions();
 
-            updateCourseOptions();
-
-            function updateFieldsVisibility(role) {
-                if (!role) {
-                    studentFields.style.display = 'none';
-                    othersFields.style.display = 'none';
-                    return;
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+                if (this.value.length > 0 && this.value[0] !== '9') {
+                    this.value = '9' + this.value.slice(1);
                 }
+                validateForm();
+            });
+        }
 
+        function updateFieldsVisibility(role) {
+            if (!role) {
                 studentFields.style.display = 'none';
                 othersFields.style.display = 'none';
-
-                if (role === 'student') {
-                    studentFields.style.display = 'block';
-                } else if (role === 'employee' || role === 'non-employee') {
-                    othersFields.style.display = 'block';
-                }
+                return;
             }
 
-            updateFieldsVisibility(currentRole);
+            studentFields.style.display = 'none';
+            othersFields.style.display = 'none';
 
-            roleSelect.addEventListener('change', function() {
-                updateFieldsVisibility(this.value);
-            });
-
-            $(function() {
-                $('.delete').on('click', function(e) {
-                    e.preventDefault();
-                    var form = $(this).closest('form');
-                    Swal.fire({
-                        title: 'Are you sure?',
-                        text: "You want to delete this record?",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, delete it!'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            form.submit();
-                        }
-                    });
-                });
-            });
-
-            function validateForm() {
-                const phoneValue = phoneInput.value.trim();
-                const sexValue = sexSelect.value;
-                const roleValue = roleSelect.value;
-
-                let isValid = phoneValue.length === 10 && phoneValue.match(/^9\d{9}$/) && sexValue;
-
-                if (roleValue === 'student') {
-                    const yearLevelValue = yearLevelSelect.value;
-                    const departmentValue = departmentSelect.value;
-                    const courseValue = courseSelect.value;
-                    isValid = isValid && yearLevelValue && departmentValue && courseValue;
-                }
-
-                updateBtn.disabled = !isValid;
+            if (role === 'student') {
+                studentFields.style.display = 'block';
+            } else if (role === 'employee' || role === 'non-employee') {
+                othersFields.style.display = 'block';
             }
+            
+            validateForm();
+        }
 
-            phoneInput.addEventListener('input', validateForm);
-            sexSelect.addEventListener('change', validateForm);
-            roleSelect.addEventListener('change', validateForm);
-            yearLevelSelect.addEventListener('change', validateForm);
-            departmentSelect.addEventListener('change', validateForm);
-            courseSelect.addEventListener('change', validateForm);
+        updateFieldsVisibility(currentRole);
 
+        roleSelect.addEventListener('change', function() {
+            updateFieldsVisibility(this.value);
             validateForm();
         });
+
+        function updateCourses(collegeId) {
+            if (!collegeId) {
+                courseSelect.innerHTML = '<option value="" disabled selected>Select Course</option>';
+                validateForm();
+                return;
+            }
+
+            fetch(`/colleges/${collegeId}/courses`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(courses => {
+                    courseSelect.innerHTML = '<option value="" disabled selected>Select Course</option>';
+                    courses.forEach(course => {
+                        const option = document.createElement('option');
+                        option.value = course.id;
+                        option.textContent = course.name;
+                        courseSelect.appendChild(option);
+                    });
+                    
+                    const oldCourseId = '{{ old('course_id', $user->course_id) }}';
+                    if (oldCourseId) {
+                        courseSelect.value = oldCourseId;
+                    }
+                    validateForm();
+                })
+                .catch(error => {
+                    console.error('Error fetching courses:', error);
+                    courseSelect.innerHTML = '<option value="" disabled selected>Error loading courses</option>';
+                    validateForm();
+                });
+        }
+
+        collegeSelect.addEventListener('change', function() {
+            updateCourses(this.value);
+            validateForm();
+        });
+
+        courseSelect.addEventListener('change', function() {
+            validateForm();
+        });
+
+        yearLevelSelect.addEventListener('change', function() {
+            validateForm();
+        });
+
+        sexSelect.addEventListener('change', function() {
+            validateForm();
+        });
+
+        @if($user->college_id)
+            updateCourses({{ $user->college_id }});
+        @endif
+
+        function validateForm() {
+            let isValid = true;
+
+            phoneError.textContent = '';
+            yearLevelError.textContent = '';
+            collegeError.textContent = '';
+            courseError.textContent = '';
+
+            phoneInput.classList.remove('input-error');
+            yearLevelSelect.classList.remove('input-error');
+            collegeSelect.classList.remove('input-error');
+            courseSelect.classList.remove('input-error');
+
+            const phoneValue = phoneInput.value.trim();
+            if (phoneValue.length === 0) {
+                phoneError.textContent = 'Phone number is required';
+                phoneInput.classList.add('input-error');
+                isValid = false;
+            } else if (phoneValue.length !== 10 || !phoneValue.match(/^9\d{9}$/)) {
+                phoneError.textContent = 'Please enter a valid 10-digit phone number starting with 9';
+                phoneInput.classList.add('input-error');
+                isValid = false;
+            }
+
+            if (!sexSelect.value) {
+                isValid = false;
+            }
+
+            const roleValue = roleSelect.value;
+            if (roleValue === 'student') {
+                if (!yearLevelSelect.value) {
+                    yearLevelError.textContent = 'Year level is required for students';
+                    yearLevelSelect.classList.add('input-error');
+                    isValid = false;
+                }
+                
+                if (!collegeSelect.value) {
+                    collegeError.textContent = 'College is required for students';
+                    collegeSelect.classList.add('input-error');
+                    isValid = false;
+                }
+                
+                if (!courseSelect.value) {
+                    courseError.textContent = 'Course is required for students';
+                    courseSelect.classList.add('input-error');
+                    isValid = false;
+                }
+            }
+            
+            updateBtn.disabled = !isValid;
+            
+            return isValid;
+        }
+
+        // Initial validation
+        validateForm();
+        
+        // Add event listeners for validation
+        phoneInput.addEventListener('input', validateForm);
+        sexSelect.addEventListener('change', validateForm);
+        roleSelect.addEventListener('change', validateForm);
+        yearLevelSelect.addEventListener('change', validateForm);
+        collegeSelect.addEventListener('change', validateForm);
+        courseSelect.addEventListener('change', validateForm);
+    });
     </script>
 @endpush

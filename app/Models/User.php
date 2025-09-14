@@ -27,6 +27,7 @@ class User extends Authenticatable
         'department',
         'course',
         'isDefault',
+        'colleges',
     ];
 
     public function getProfileImageUrlAttribute()
@@ -69,5 +70,18 @@ class User extends Authenticatable
         return $this->hasMany(Payment::class);
 
     }
+
+    public function college()
+    {
+        return $this->belongsTo(College::class);
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(Course::class);
+    }
+
+
+
   
 }

@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Surfsidemedia\Shoppingcart\Facades\Cart;
 use Illuminate\Validation\ValidationException;
+use App\Models\College;
+use App\Models\Course;
+
 
 class UserController extends Controller
 {
@@ -67,7 +70,7 @@ class UserController extends Controller
 
     public function show_profile()
     {
-        $user = Auth::user();
+        $user = Auth::user()->load('college', 'course');
         return view('user.profile', compact('user'));
     }
 
@@ -77,7 +80,11 @@ class UserController extends Controller
         if (!$user) {
             return redirect()->route('user.profile')->with('error', 'User not found.');
         }
-        return view('user.profile-edit', compact('user'));
+        
+        $colleges = College::all();
+        $courses = Course::all(); // Add this line
+        
+        return view('user.profile-edit', compact('user', 'colleges', 'courses')); // Add courses here
     }
 
     public function profile_update(Request $request)
@@ -95,11 +102,9 @@ class UserController extends Controller
         }
 
         if ($role === 'student') {
-            $validationRules['department'] = 'required|string';
             $validationRules['year_level'] = 'required|string|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
-            $validationRules['course'] = 'required|string';
-        } elseif ($role === 'professor') {
-            $validationRules['department'] = 'required|string';
+            $validationRules['college_id'] = 'required|exists:colleges,id';
+            $validationRules['course_id'] = 'required|exists:courses,id';
         }
 
         $validatedData = $request->validate($validationRules);
@@ -114,16 +119,12 @@ class UserController extends Controller
 
         if ($role === 'student') {
             $user->year_level = $validatedData['year_level'];
-            $user->department = $validatedData['department'];
-            $user->course = $validatedData['course'];
-        } elseif ($role === 'professor') {
-            $user->year_level = null;
-            $user->department = $validatedData['department'];
-            $user->course = null;
+            $user->college_id = $validatedData['college_id'];
+            $user->course_id = $validatedData['course_id'];
         } else {
             $user->year_level = null;
-            $user->department = null;
-            $user->course = null;
+            $user->college_id = null;
+            $user->course_id = null;
         }
 
         $user->save();
@@ -209,5 +210,17 @@ class UserController extends Controller
             return redirect()->route('user.profile')
                 ->with('error', 'An error occurred while deleting your profile image. Please try again.');
         }
+    }
+
+    public function getCollegeCourses(College $college)
+    {
+        $courses = $college->courses->map(function ($course) {
+            return [
+                'id' => $course->id,
+                'name' => $course->name
+            ];
+        });
+
+        return response()->json($courses);
     }
 }

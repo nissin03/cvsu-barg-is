@@ -127,7 +127,7 @@
                 <div class="time-input-group">
                     <label for="time_start" class="time-label">Start Time</label>
                     <select id="time_start" name="time_start" class="form-select time-select">
-                        @for($hour = 7; $hour <= 22; $hour++)
+                        @for($hour = 7; $hour <= 21; $hour++)
                             @php
                                 $displayHour = $hour > 12 ? $hour - 12 : $hour;
                                 $ampm = $hour >= 12 ? 'PM' : 'AM';

@@ -2,7 +2,13 @@
     $hasAvailableRooms = false;
     
     $filteredAttributes = $facility->facilityAttributes->filter(function($attribute) {
-        if ((auth()->check() && auth()->user()->utype === 'ADM') || is_null($attribute->sex_restriction)) {
+        // Show to admin regardless of restriction
+        if (auth()->check() && auth()->user()->utype === 'ADM') {
+            return true;
+        }
+        
+        // Show to users if no restriction, 'all' restriction, or matches user's sex
+        if (is_null($attribute->sex_restriction) || $attribute->sex_restriction === 'all') {
             return true;
         }
         
@@ -29,7 +35,9 @@
 
         $sexAllowed = true;
         if ($room->sex_restriction && auth()->check() && auth()->user()->utype === 'USR') {
-            $sexAllowed = auth()->check() && $room->sex_restriction === auth()->user()->sex;
+            // Allow if restriction is 'all' or matches user's sex
+            $sexAllowed = $room->sex_restriction === 'all' || 
+                         (auth()->check() && $room->sex_restriction === auth()->user()->sex);
         }
         
         return $isAvailable && $sexAllowed;
@@ -85,10 +93,15 @@
                                 <div class="capacity-card">
                                     <i class="fa fa-door-open"></i>
                                     <span class="capacity-text">{{ $assignedRoom->room_name }}</span>
-                                    @if($assignedRoom->sex_restriction)
+                                    @if($assignedRoom->sex_restriction && $assignedRoom->sex_restriction !== 'all')
                                         <span class="badge bg-info ms-2">
                                             <i class="fa fa-{{ $assignedRoom->sex_restriction === 'male' ? 'mars' : 'venus' }} me-1"></i>
                                             {{ ucfirst($assignedRoom->sex_restriction) }} Only
+                                        </span>
+                                    @elseif($assignedRoom->sex_restriction === 'all')
+                                        <span class="badge bg-success ms-2">
+                                            <i class="fa fa-venus-mars me-1"></i>
+                                            All Genders
                                         </span>
                                     @endif
                                     <span class="capacity-value">{{ $assignedRoom->capacity }} person(s)</span>
@@ -116,8 +129,10 @@
                                             data-capacity="{{ $room->capacity }}"
                                             data-room-name="{{ $room->room_name }}">
                                             {{ $room->room_name }} (Capacity: {{ $room->capacity }} person(s))
-                                            @if($room->sex_restriction)
+                                            @if($room->sex_restriction && $room->sex_restriction !== 'all')
                                                 - {{ ucfirst($room->sex_restriction) }} only
+                                            @elseif($room->sex_restriction === 'all')
+                                                - All Genders
                                             @endif
                                         </option>
                                     @endif
@@ -401,7 +416,7 @@
         @endif
     </div>
 
-    <div id="whole-section" @if(!$defaultWhole) style="display: none;" @endif>
+<div id="whole-section" @if(!$defaultWhole) style="display: none;" @endif>
         @if($hasWholePrice)
             <div class="booking-section">
                 <div class="section-header">
@@ -414,13 +429,18 @@
                         <select name="selected_room" id="selected_room" class="client-type-select" required>
                             <option value="">Select a Room</option>
                             @foreach ($allRooms as $room)
-                                @if(auth()->check() && (auth()->user()->utype === 'ADM' || !$room->sex_restriction || $room->sex_restriction === auth()->user()->sex))
+                                @if(auth()->check() && (auth()->user()->utype === 'ADM' || 
+                                   !$room->sex_restriction || 
+                                   $room->sex_restriction === 'all' || 
+                                   $room->sex_restriction === auth()->user()->sex))
                                     <option value="{{ $room->id }}" 
                                         data-capacity="{{ $room->capacity }}"
                                         data-room-name="{{ $room->room_name }}">
                                         {{ $room->room_name }} (Capacity: {{ $room->capacity }})
-                                        @if($room->sex_restriction)
+                                        @if($room->sex_restriction && $room->sex_restriction !== 'all')
                                             - {{ ucfirst($room->sex_restriction) }} only
+                                        @elseif($room->sex_restriction === 'all')
+                                            - All Genders
                                         @endif
                                     </option>
                                 @endif
