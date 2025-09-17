@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
             // FacilityAndRelationsSeeder::class,
             FacilitySeeder::class,
             // FacilityReportSeeder::class,
-            OrderSeeder::class,
+            // OrderSeeder::class,
             ReservationSeeder::class,
        
 

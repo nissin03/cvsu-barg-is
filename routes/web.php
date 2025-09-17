@@ -4,7 +4,7 @@ use App\Http\Middleware\AuthUser;
 use App\Http\Middleware\AuthAdmin;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PosController;
+use App\Http\Controllers\PdfController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ShopController;
@@ -15,17 +15,16 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\SocialAuthController;
+use App\Http\Controllers\AccountSetupController;
 use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserFacilityController;
 use App\Http\Controllers\FacilityReportController;
-use App\Http\Controllers\FacilityReservationController;
-use App\Http\Controllers\PdfController;
 use App\Http\Controllers\Admin\AdminCourseController;
 use App\Http\Controllers\Admin\AdminCollegeController;
+use App\Http\Controllers\FacilityReservationController;
 
-Auth::routes(['reset' => true]);
-Auth::routes();
+Auth::routes(['verify' => true]);
 
 Route::get('/', [HomeController::class, 'index'])->name('home.index');
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
@@ -46,17 +45,14 @@ Route::put('/cart/update-variant/{rowId}', [CartController::class, 'updateVarian
 Route::delete('/cart/remove/{rowId}', [CartController::class, 'remove_item'])->name('cart.item.remove');
 Route::delete('/cart/clear', [CartController::class, 'empty_cart'])->name('cart.empty');
 
-Route::get('/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
-Route::post('/place-an-order', [CartController::class, 'place_an_order'])->name('cart.place.an.order');
-Route::get('/api/slots', [CartController::class, 'getAvailableTimeSlots'])->name('slots.available');
+
 
 Route::get('/order-confirmation', [CartController::class, 'order_confirmation'])->name('cart.order.confirmation');
 
 Route::get('/preorders/accept/{preOrder}', [CartController::class, 'acceptPreOrder'])->name('preorders.accept');
 Route::get('/preorders/cancel/{preOrder}', [CartController::class, 'cancelPreOrder'])->name('preorders.cancel');
 
-Route::get('/api/get-time-slots', [CartController::class, 'getAvailableDatesAndTimeSlots']);
-Route::get('/api/get-unavailable-dates', [CartController::class, 'getUnavailableDates']);
+
 Route::get('auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('google-auth-callback');
 Route::get('auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('google-auth');
 
@@ -65,17 +61,27 @@ Route::post('/contact-us', [HomeController::class, 'contact_store'])->name('home
 
 Route::get('/search', [HomeController::class, 'search'])->name('home.search');
 
-Route::middleware(['auth', AuthUser::class])->group(function () {
+Route::middleware(['auth', 'verified', AuthUser::class])->group(function () {
     Route::get('/account-dashboard', [UserController::class, 'index'])->name('user.index');
     Route::get('/account-order', [UserController::class, 'orders'])->name('user.orders');
+    Route::get('/canceled-order', [UserController::class, 'canceled_order'])
+        ->name('user.canceled-orders');
+    Route::post('/canceled-order/{orderId}/rebook', [UserController::class, 'rebook_canceled_order'])->name('user.order.rebook');
     Route::get('/account-order/{order_id}/details', [UserController::class, 'order_details'])->name('user.order.details');
     Route::put('/account-order/cancel-order', [UserController::class, 'order_cancel'])->name('user.order.cancel');
+
+
+    Route::get('/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+    Route::post('/place-an-order', [CartController::class, 'place_an_order'])->name('cart.place.an.order');
+    Route::get('/api/slots', [CartController::class, 'getAvailableTimeSlots'])->name('slots.available');
+    Route::get('/api/get-time-slots', [CartController::class, 'getAvailableDatesAndTimeSlots']);
+    Route::get('/api/get-unavailable-dates', [CartController::class, 'getUnavailableDates']);
 
     Route::get('/user/profile', [UserController::class, 'show_profile'])->name('user.profile');
     Route::get('/user/profile/edit/{id}', [UserController::class, 'profile_edit'])->name('user.profile.edit');
     Route::put('/user/profile/update', [UserController::class, 'profile_update'])->name('user.profile.update');
     Route::get('/colleges/{college}/courses', [UserController::class, 'getCollegeCourses'])->name('colleges.courses');
-    
+
 
     Route::get('/user/profile-image/edit', [UserController::class, 'profile_image_edit'])->name('user.profile.image.edit');
     Route::put('/user/profile-image/update', [UserController::class, 'profile_image_update'])->name('user.profile.image.update');
@@ -94,10 +100,22 @@ Route::middleware(['auth', AuthUser::class])->group(function () {
     Route::post('/user/reservation-details/cancel-reservation', [UserController::class, 'account_cancel_reservation'])->name('user.account_cancel_reservation');
 
     Route::get('/account-rentals', [UserController::class, 'account_rentals'])->name('user.account.rentals');
+
+    // User notification routes
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [NotificationController::class, 'allNotifications'])->name('notifications.all');
+        Route::get('/unread', [NotificationController::class, 'unread'])->name('notifications.unread');
+        Route::post('/mark-as-read/{id}', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+        Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
+        Route::post('/mark-multiple-as-read', [NotificationController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-as-read');
+        Route::delete('/destroy/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+        Route::delete('/destroy-all', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
+        Route::get('/count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    });
 });
 
-Route::get('password/set', [PasswordController::class, 'showSetPasswordForm'])->name('password.set');
-Route::post('password/set', [PasswordController::class, 'setPassword']);
+Route::get('/password/set', [PasswordController::class, 'showSetPasswordForm'])->name('password.set');
+Route::post('/password/set', [PasswordController::class, 'setPassword']);
 
 Route::middleware(['auth', AuthAdmin::class])
     ->prefix('admin')
@@ -153,15 +171,16 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/facility/{facilityId}/rooms', [FacilityController::class, 'getRooms'])
             ->name('facility.rooms.get');
 
-        Route::middleware(['auth'])->prefix('notifications')->group(function () {
-            Route::get('/', [NotificationController::class, 'allNotifications'])->name('notifications.all');
-            Route::get('/unread', [NotificationController::class, 'unread'])->name('notifications.unread');
-            Route::post('/mark-as-read/{id}', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
-            Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
-            Route::post('/mark-multiple-as-read', [NotificationController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-as-read');
-            Route::delete('/destroy/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
-            Route::delete('/destroy-all', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
-            Route::get('/count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+        // Admin notification routes
+        Route::prefix('notifications')->group(function () {
+            Route::get('/', [NotificationController::class, 'allNotifications'])->name('admin.notifications.all');
+            Route::get('/unread', [NotificationController::class, 'unread'])->name('admin.notifications.unread');
+            Route::post('/mark-as-read/{id}', [NotificationController::class, 'markAsRead'])->name('admin.notifications.mark-as-read');
+            Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('admin.notifications.mark-all-as-read');
+            Route::post('/mark-multiple-as-read', [NotificationController::class, 'markMultipleAsRead'])->name('admin.notifications.mark-multiple-as-read');
+            Route::delete('/destroy/{id}', [NotificationController::class, 'destroy'])->name('admin.notifications.destroy');
+            Route::delete('/destroy-all', [NotificationController::class, 'destroyAll'])->name('admin.notifications.destroy-all');
+            Route::get('/count', [NotificationController::class, 'unreadCount'])->name('admin.notifications.unread-count');
         });
 
         Route::get('/products', [AdminController::class, 'products'])->name('admin.products');
@@ -225,7 +244,7 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/admin/colleges/archive', [\App\Http\Controllers\AdminCollegeController::class, 'archive'])->name('admin.colleges.archive');
         Route::patch('/admin/colleges/{id}/restore', [\App\Http\Controllers\AdminCollegeController::class, 'restore'])->name('admin.colleges.restore');
         Route::delete('/admin/colleges/{id}/force-delete', [\App\Http\Controllers\AdminCollegeController::class, 'forceDelete'])->name('admin.colleges.force-delete');
-            
+
         // Courses Routes
         Route::get('courses', [\App\Http\Controllers\AdminCourseController::class, 'index'])->name('admin.courses.index');
         Route::get('courses/create', [\App\Http\Controllers\AdminCourseController::class, 'create'])->name('admin.courses.create');
@@ -233,11 +252,11 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('courses/{course}/edit', [\App\Http\Controllers\AdminCourseController::class, 'edit'])->name('admin.courses.edit');
         Route::put('courses/{course}', [\App\Http\Controllers\AdminCourseController::class, 'update'])->name('admin.courses.update');
         Route::delete('/courses/{id}', [\App\Http\Controllers\AdminCourseController::class, 'destroy'])->name('admin.courses.destroy');
-        
+
         Route::get('/courses/archive', [\App\Http\Controllers\AdminCourseController::class, 'archive'])->name('admin.courses.archive');
         Route::patch('/courses/{id}/restore', [\App\Http\Controllers\AdminCourseController::class, 'restore'])->name('admin.courses.restore');
         Route::delete('/courses/{id}/force-delete', [\App\Http\Controllers\AdminCourseController::class, 'forceDelete'])->name('admin.courses.force-delete');
-// Route::post('colleges/store', [CollegeController::class, 'store'])->name('colleges.store');
+        // Route::post('colleges/store', [CollegeController::class, 'store'])->name('colleges.store');
 
         Route::get('/search', [AdminController::class, 'searchproduct'])->name('admin.searchproduct');
 
@@ -271,7 +290,7 @@ Route::middleware(['auth', AuthAdmin::class])
             $reportController = new ReportController();
             $periods = $reportController->getAvailablePeriods();
             $dateParams = $reportController->getDateParameters(new \Illuminate\Http\Request());
-            
+
             return view('admin.reports.product-input-sales', [
                 'chartData' => null,
                 'startDate' => null,

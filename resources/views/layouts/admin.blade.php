@@ -7,6 +7,10 @@
 
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @auth
+        <meta name="user-id" content="{{ Auth::user()->id }}">
+        <meta name="user-role" content="{{ Auth::user()->utype }}">
+    @endauth
 
     {{-- <title>{{ config('app.name', 'Information System') }}</title> --}}
     <title>{{ isset($pageTitle) ? $pageTitle : config('app.name', 'Information System') }}</title>
@@ -281,13 +285,13 @@
                                         </li>
                                     </ul>
 
-                                   
+
                                 </li>
                             </ul>
                         </div>
 
 
-                        
+
                         <div class="center-item">
                             <ul class="menu-list">
 
@@ -319,7 +323,7 @@
                                     </li>
 
 
-                                  
+
 
                                     <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
@@ -422,58 +426,56 @@
                                     <li class="menu-item">
                                         {{-- <a href="javascript:void(0);" class="menu-item-button"> --}}
                                         <a href="{{ route('admin.users') }}">
-                                            <div class="icon"><i class="fas fa-users"></i></div>
+                                            <div class="icon"><i class="icon-users"></i></div>
                                             <div class="text">Users</div>
                                         </a>
                                     </li>
 
                                     <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
-                                        {{-- <a href="{{ route('admin.users') }}"> --}}
-                                            <div class="icon"><i class="fas fa-university"></i></div>
+                                            {{-- <a href="{{ route('admin.users') }}"> --}}
+                                            <div class="icon"><i class="icon-users"></i></div>
                                             <div class="text">College</div>
                                         </a>
-                                          <ul class="sub-menu">
+                                        <ul class="sub-menu">
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.colleges.index') }}">
                                                     <div class="text">Colleges</div>
                                                 </a>
                                             </li>
-                                          </ul> 
-                                           <ul class="sub-menu">
+                                        </ul>
+                                        <ul class="sub-menu">
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.colleges.create') }}">
                                                     <div class="text">Add Colleges</div>
                                                 </a>
                                             </li>
-                                          </ul> 
-                                        
+                                        </ul>
+
                                     </li>
 
                                     <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
-                                        {{-- <a href="{{ route('admin.users') }}"> --}}
-                                            <div class="icon"><i class="fas fa-book-open"></i></div>
+                                            {{-- <a href="{{ route('admin.users') }}"> --}}
+                                            <div class="icon"><i class="icon-book-open"></i></div>
                                             <div class="text">Course</div>
                                         </a>
-                                          <ul class="sub-menu">
+                                        <ul class="sub-menu">
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.courses.index') }}">
                                                     <div class="text">Courses</div>
                                                 </a>
                                             </li>
-                                          </ul> 
-                                           <ul class="sub-menu">
+                                        </ul>
+                                        <ul class="sub-menu">
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.courses.create') }}">
                                                     <div class="text">Add Courses</div>
                                                 </a>
                                             </li>
-                                          </ul> 
-                                        
+                                        </ul>
+
                                     </li>
-
-
                                 @endif
 
                                 {{-- Director Menu Items --}}
@@ -483,7 +485,7 @@
                                             <div class="icon"><i class="icon-bar-chart-2"></i></div>
                                             <div class="text">Products Reports</div>
                                         </a>
-                                         <ul class="sub-menu">
+                                        <ul class="sub-menu">
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.reports') }}">
                                                     <div class="text">Sales</div>
@@ -542,7 +544,7 @@
 
 
 
-                                           
+
                                         </ul>
 
                                     </li>
@@ -619,14 +621,16 @@
                                                         <div class="notification-item"
                                                             data-notification-id="{{ $notification->id }}">
                                                             <div class="badge-icon h5">
-                                                                <i class="fas fa-envelope text-dark"></i>
+                                                                <i
+                                                                    class="{{ $notification->data['icon'] ?? 'fas fa-envelope' }} text-dark"></i>
                                                             </div>
                                                             <div class="notification-content">
                                                                 <p class="notification-text fw-bold">
-                                                                    {{ $notification->data['name'] }}</p>
+                                                                    {{ $notification->data['title'] ?? ($notification->data['name'] ?? 'Notification') }}
+                                                                </p>
                                                                 <p class="notification-subtext">
                                                                 <div class="unread-indicator"></div>
-                                                                {{ Str::limit($notification->data['message'], 30) }}
+                                                                {{ Str::limit($notification->data['body'] ?? ($notification->data['message'] ?? 'No message'), 30) }}
                                                                 </p>
                                                             </div>
                                                             <div class="remove-notification"

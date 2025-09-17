@@ -24,7 +24,7 @@ class StockUpdate extends Notification
 
     public function via($notifiable)
     {
-        return ['mail', 'database']; 
+        return ['mail', 'database'];
     }
     public function toDatabase($notifiable)
     {
@@ -36,19 +36,22 @@ class StockUpdate extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-                    ->subject('New Stock Available: ' . $this->product->name)
-                    ->line('We are excited to inform you that new stock is available for the product: ' . $this->product->name . '.')
-                    ->action('View Product', url('/admin/product/edit/{id}' . $this->product->id))
-                    ->line('Thank you for shopping with us!');
+            ->subject('New Stock Available: ' . $this->product->name)
+            ->line('We are excited to inform you that new stock is available for the product: ' . $this->product->name . '.')
+            ->action('View Product', url('/admin/product/edit/{id}' . $this->product->id))
+            ->line('Thank you for shopping with us!');
     }
 
     public function toArray($notifiable)
     {
         return [
             'product_id' => $this->product->id,
-            'product_name' => $this->product->name,
-            'message' => $this->message,
-
+            'title' => 'Stock Update',
+            'body' => "New stock available for {$this->product->name}: {$this->message}",
+            'url' => route('shop.product.details', $this->product->slug ?? $this->product->id),
+            'icon' => 'fas fa-box',
+            'product_name' => $this->product->name, // Keep for backward compatibility
+            'message' => $this->message, // Keep for backward compatibility
         ];
     }
 }

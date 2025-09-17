@@ -24,8 +24,8 @@ class User extends Authenticatable
         'sex',
         'phone_number',
         'year_level',
-        'department',
-        'course',
+        'course_id',
+        'college_id',
         'isDefault',
         'colleges',
     ];
@@ -65,10 +65,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Contact::class);
     }
-       public function payments()
+    public function payments()
     {
         return $this->hasMany(Payment::class);
-
     }
 
     public function college()
@@ -80,8 +79,4 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Course::class);
     }
-
-
-
-  
 }

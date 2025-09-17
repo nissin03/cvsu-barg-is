@@ -15,6 +15,7 @@ use App\Helpers\ProfileHelper;
 use Illuminate\Support\Carbon;
 use App\Helpers\TimeSlotHelper;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use App\Models\ProductAttributeValue;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use App\Notifications\LowStockNotification;
 use App\Notifications\PreOrderNotification;
+use App\Notifications\OrderPlacedNotification;
 use Illuminate\Support\Facades\Notification;
 use Surfsidemedia\Shoppingcart\Facades\Cart;
 
@@ -277,7 +279,18 @@ class CartController extends Controller
         if (!Auth::check()) {
             return redirect()->route('login');
         }
-        $user = Auth::user();
+
+
+        $user = Auth::user()->load('course.college');
+        Log::info('Checkout attempt', [
+            'user' => $user->toArray(),
+            'isProfileIncomplete' => ProfileHelper::isProfileIncomplete($user),
+        ]);
+
+        if (is_null($user->email_verified_at)) {
+            return redirect()->route('verification.notice')
+                ->with('error', 'Please verify your email before checking out.');
+        }
 
         if ($user->utype === 'USR' && ProfileHelper::isProfileIncomplete($user)) {
             return redirect()->route('user.profile', ['swal' => 1])->with([
@@ -287,11 +300,6 @@ class CartController extends Controller
         $hasReservedOrder = Order::where('user_id', $user->id)
             ->where('status', 'reserved')
             ->exists();
-
-        // if ($hasReservedOrder) {
-        //     Cart::instance('cart')->destroy();
-        //     return redirect()->route('cart.index')->with('error', 'You already have a reserved order. Please complete or cancel it before placing another.');
-        // }
 
         $total = (float) str_replace(',', '', Cart::instance('cart')->total());
         if ($total <= 0) {
@@ -346,6 +354,10 @@ class CartController extends Controller
             $transaction->change = 0;
             $transaction->status = "unpaid";
             $transaction->save();
+
+
+            // Send notification to user
+            $user->notify(new OrderPlacedNotification($order));
 
             Cart::instance('cart')->destroy();
             Session::forget('checkout');
@@ -453,5 +465,44 @@ class CartController extends Controller
             $slotCounts[$slot] = max(self::MAX_SLOT_COUNT - $count, 0);
         }
         return response()->json($slotCounts);
+    }
+
+    public function cancelUnpaidOrders()
+    {
+        $expiredOrders = Order::where('status', 'reserved')
+            ->whereHas('transaction', function ($query) {
+                $query->where('status', 'unpaid');
+            })
+            ->where('created_at', '<', Carbon::now()->subDay())
+            ->get();
+
+        foreach ($expiredOrders as $order) {
+            DB::transaction(function () use ($order) {
+                foreach ($order->orderItems as $item) {
+                    if ($item->variant_id) {
+                        $variant = ProductAttributeValue::find($item->variant_id);
+                        if ($variant) {
+                            $variant->quantity += $item->quantity;
+                            $variant->stock_status = 'instock';
+                            $variant->save();
+                        }
+                    } else {
+                        $product = Product::find($item->product_id);
+                        if ($product) {
+                            $product->quantity += $item->quantity;
+                            $product->stock_status = 'instock';
+                            $product->save();
+                        }
+                    }
+                }
+                $order->status = 'canceled';
+                $order->canceled_date = Carbon::now();
+                $order->save();
+
+                $order->transaction->status = 'canceled';
+                $order->transaction->save();
+            });
+        }
+        return "Expired unpaid orders cancelled successfully.";
     }
 }
