@@ -11,8 +11,8 @@ class ProfileHelper
                         empty($user->email) ||
                         empty($user->phone_number) ||
                         empty($user->year_level) ||
-                        empty($user->department) ||
                         empty($user->course);
+                        empty($user->college);
             }
 
             return empty($user->name) ||

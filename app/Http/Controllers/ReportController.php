@@ -907,19 +907,21 @@ class ReportController extends Controller
             ])
             ->orderBy('created_at', 'desc');
 
-
         if ($request->has('facility_id') && $request->facility_id) {
             $query->whereHas('availability', function($q) use ($request) {
                 $q->where('facility_id', $request->facility_id);
             });
         }
-
         if ($request->has('date_from') && $request->date_from) {
-            $query->whereDate('created_at', '>=', $request->date_from);
+            $query->whereHas('availability', function($q) use ($request) {
+                $q->whereDate('date_from', '>=', $request->date_from);
+            });
         }
 
         if ($request->has('date_to') && $request->date_to) {
-            $query->whereDate('created_at', '<=', $request->date_to);
+            $query->whereHas('availability', function($q) use ($request) {
+                $q->whereDate('date_to', '<=', $request->date_to);
+            });
         }
 
         if ($request->has('status') && $request->status) {

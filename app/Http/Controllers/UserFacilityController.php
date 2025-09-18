@@ -42,42 +42,44 @@ class UserFacilityController extends Controller
         }
     }
 
-    public function show($slug)
-    {
-         if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
-        $user = Auth::user();
-
-        if ($user->utype !== 'ADM' && (empty($user->phone_number) || empty($user->sex))) {
-            session()->put('url.intended', route('user.facilities.index', ['slug' => $request->facility_slug ?? '']));
-
-            return redirect()->route('user.profile')
-                ->with('error', 'Please complete your profile by adding your phone number and selecting your sex before accessing facilities.');
-        }
-        
-        $facility = Facility::with('facilityAttributes', 'prices')->where('slug', $slug)->firstOrFail();
-        $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first();
-        $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
-        $availableRoom = $facility->facilityAttributes->first(function ($attribute) {
-            return $attribute->capacity > 0;
-        });
-        if (!$availableRoom) {
-            $availableRoom = null;
-        }
-
-        if ($facility->facility_type === 'whole_place' || $facility->facility_type === 'both') {
-            $facility->load(['availabilities' => function ($query) {
-                $query->where(function ($q) {
-                    $q->where('date_from', '>=', now()->toDateString())
-                        ->orWhere('date_to', '>=', now()->toDateString());
-                })->orderBy('created_at', 'desc');
-            }]);
-        }
-
-        return view('user.facilities.details', compact('availableRoom', 'wholeAttr', 'facility', 'sexRestriction'));
+public function show($slug)
+{
+    if (!Auth::check()) {
+        return redirect()->route('login');
     }
+
+    $user = Auth::user();
+
+    if ($user->utype !== 'ADM' && (empty($user->phone_number) || empty($user->sex))) {
+        session()->put('url.intended', route('user.facilities.index', ['slug' => $request->facility_slug ?? '']));
+
+        return redirect()->route('user.profile')
+            ->with('error', 'Please complete your profile by adding your phone number and selecting your sex before accessing facilities.');
+    }
+    
+    $facility = Facility::with('facilityAttributes', 'prices', 'addons')->where('slug', $slug)->firstOrFail();
+    
+    $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first();
+    $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
+    $availableRoom = $facility->facilityAttributes->first(function ($attribute) {
+        return $attribute->capacity > 0;
+    });
+    
+    if (!$availableRoom) {
+        $availableRoom = null;
+    }
+
+    if ($facility->facility_type === 'whole_place' || $facility->facility_type === 'both') {
+        $facility->load(['availabilities' => function ($query) {
+            $query->where(function ($q) {
+                $q->where('date_from', '>=', now()->toDateString())
+                    ->orWhere('date_to', '>=', now()->toDateString());
+            })->orderBy('created_at', 'desc');
+        }]);
+    }
+
+    return view('user.facilities.details', compact('availableRoom', 'wholeAttr', 'facility', 'sexRestriction'));
+}
 
 
     public function reserve(Request $request)

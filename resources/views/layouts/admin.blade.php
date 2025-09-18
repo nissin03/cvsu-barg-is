@@ -309,6 +309,17 @@
                                                     <div class="text">Facilities</div>
                                                 </a>
                                             </li>
+                                            <li class="divider mb-10"></li>
+                                                <li class="sub-menu-item">
+                                                    <a href="{{ route('admin.addons') }}">
+                                                        <div class="text">Manage Add-ons</div>
+                                                    </a>
+                                                </li>
+                                                 <li class="sub-menu-item">
+                                                    <a href="{{ route('admin.addons.create') }}">
+                                                        <div class="text">Create Add-ons</div>
+                                                    </a>
+                                                </li>
                                         </ul>
                                     </li>
                                     <li class="menu-item">
@@ -422,7 +433,7 @@
                                     <li class="menu-item">
                                         {{-- <a href="javascript:void(0);" class="menu-item-button"> --}}
                                         <a href="{{ route('admin.users') }}">
-                                            <div class="icon"><i class="fas fa-users"></i></div>
+                                            <div class="icon"><i class="icon-users"></i></div>
                                             <div class="text">Users</div>
                                         </a>
                                     </li>
@@ -430,7 +441,7 @@
                                     <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
                                         {{-- <a href="{{ route('admin.users') }}"> --}}
-                                            <div class="icon"><i class="fas fa-university"></i></div>
+                                            <div class="icon"><i class="icon-settings"></i></div>
                                             <div class="text">College</div>
                                         </a>
                                           <ul class="sub-menu">
@@ -453,7 +464,7 @@
                                     <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
                                         {{-- <a href="{{ route('admin.users') }}"> --}}
-                                            <div class="icon"><i class="fas fa-book-open"></i></div>
+                                            <div class="icon"><i class="icon-book-open"></i></div>
                                             <div class="text">Course</div>
                                         </a>
                                           <ul class="sub-menu">

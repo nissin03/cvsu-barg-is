@@ -113,6 +113,18 @@
         /* --------------------- */
         /* End Header Section    */
         /* --------------------- */
+
+            .prepared-by {
+      margin-top: 40px;
+      text-align: right;
+      width: 100%;
+    }
+    .signature-line {
+      border-top: 1px solid #000;
+      width: 250px;
+      /* margin-top: 40px; */
+      margin-left: auto;
+    }
     </style>
 </head>
 <body>
@@ -252,5 +264,12 @@
             @endforeach
         </tbody>
     </table>
+        <div class="prepared-by">
+    <div>Prepared by:</div>
+    <div class="signature-line"></div>
+    <div>{{ Auth::user()->name }}</div>
+    <div>{{ Auth::user()->role ? ucfirst(Auth::user()->role) : 'Administrator' }}</div>
+    <div>Business Affairs and Marketing Office</div>
+    <div>Cavite State University</div>
 </body>
 </html>

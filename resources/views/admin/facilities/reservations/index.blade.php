@@ -250,6 +250,18 @@
                             </option>
                         </select>
                     </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label for="facility_id" class="form-label text-gray-700 fw-medium mb-2">Facility</label>
+                        <select class="form-select form-select-lg border-gray-300" id="facility_id" name="facility_id" style="border-radius: 8px;">
+                            <option value="">All Facilities</option>
+                            {{-- @foreach($facilities as $facility)
+                                <option value="{{ $facility->id }}" {{ request('facility_id') == $facility->id ? 'selected' : '' }}>
+                                    {{ $facility->name }}
+                                </option>
+                            @endforeach --}}
+                        </select>
+                    </div>
                 </div>
 
                 <div class="wg-table table-all-user">

@@ -101,7 +101,7 @@
                                     @elseif($assignedRoom->sex_restriction === 'all')
                                         <span class="badge bg-success ms-2">
                                             <i class="fa fa-venus-mars me-1"></i>
-                                            All Genders
+                                            All Sex
                                         </span>
                                     @endif
                                     <span class="capacity-value">{{ $assignedRoom->capacity }} person(s)</span>
@@ -132,7 +132,7 @@
                                             @if($room->sex_restriction && $room->sex_restriction !== 'all')
                                                 - {{ ucfirst($room->sex_restriction) }} only
                                             @elseif($room->sex_restriction === 'all')
-                                                - All Genders
+                                                -  All Sex
                                             @endif
                                         </option>
                                     @endif
@@ -440,7 +440,7 @@
                                         @if($room->sex_restriction && $room->sex_restriction !== 'all')
                                             - {{ ucfirst($room->sex_restriction) }} only
                                         @elseif($room->sex_restriction === 'all')
-                                            - All Genders
+                                            -  All Sex
                                         @endif
                                     </option>
                                 @endif

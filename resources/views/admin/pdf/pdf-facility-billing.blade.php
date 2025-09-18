@@ -100,7 +100,6 @@
     .text-right {
       text-align: right;
     }
-
     .total-row {
       font-weight: bold;
       background-color: #f8f9fa;
@@ -108,6 +107,39 @@
     .status-info {
       font-size: 14px;
       margin-bottom: 10px;
+    }
+    .prepared-by {
+      margin-top: 40px;
+      text-align: right;
+      width: 100%;
+    }
+    .signature-line {
+      border-top: 1px solid #000;
+      width: 250px;
+      /* margin-top: 40px; */
+      margin-left: auto;
+    }
+    .badge {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: bold;
+      display: inline-block;
+    }
+    .badge-completed {
+      background-color: #10b981;
+      color: white;
+    }
+    .badge-canceled {
+      background-color: #ef4444;
+      color: white;
+    }
+    .badge-reserved {
+      background-color: #3b82f6;
+      color: white;
+    }
+    .badge-pending {
+      background-color: #f59e0b;
+      color: white;
     }
   </style>
 </head>
@@ -177,6 +209,7 @@
         @if($showAllFacilities)
           <th class="text-center">Facility</th>
         @endif
+        <th class="text-center">Reservation Dates</th>
         @if(!$allSameStatus)
           <th class="text-center">Status</th>
         @endif
@@ -185,19 +218,43 @@
     </thead>
     <tbody>
       @foreach ($payments as $payment)
+      @php
+        // Extract dates from transaction reservations or availability
+        $dates = $payment->transactionReservations->pluck('availability.date_from')->filter()->unique()->sort();
+        
+        if ($dates->count() > 0) {
+          $dateFrom = $dates->first();
+          $dateTo = $dates->last();
+        } else {
+          // Fallback to availability dates
+          $dateFrom = $payment->availability->date_from ?? null;
+          $dateTo = $payment->availability->date_to ?? null;
+        }
+        
+        // Format dates for display
+        $formattedDateFrom = $dateFrom ? \Carbon\Carbon::parse($dateFrom)->format('M d, Y') : 'N/A';
+        $formattedDateTo = $dateTo ? \Carbon\Carbon::parse($dateTo)->format('M d, Y') : 'N/A';
+      @endphp
       <tr>
         <td>{{ $payment->user->name }}</td>
         @if($showAllFacilities)
           <td class="text-center">{{ $payment->availability->facility->name }}</td>
         @endif
+        <td class="text-center">
+          @if($dateFrom && $dateTo)
+            {{ $formattedDateFrom }} - {{ $formattedDateTo }}
+          @else
+            N/A
+          @endif
+        </td>
         @if(!$allSameStatus)
           <td class="text-center">
             @php
                 $statusClass = [
-                    'completed' => 'badge-completed',
-                    'canceled' => 'badge-canceled',
-                    'reserved' => 'badge-reserved',
-                    'pending' => 'badge-pending'
+                    'completed' ,
+                    'canceled' ,
+                    'reserved',
+                    'pending'
                 ][$payment->status] ?? '';
             @endphp
             <span class="badge {{ $statusClass }}">
@@ -215,13 +272,14 @@
           $colspan = 2; 
           if ($showAllFacilities) $colspan++; 
           if (!$allSameStatus) $colspan++; 
+          $colspan++; 
         @endphp
         <td colspan="{{ $colspan }}" class="text-center">No records found</td>
       </tr>
       @else
       <tr class="total-row">
         @php
-          $colspan = 1; 
+          $colspan = 2;
           if ($showAllFacilities) $colspan++; 
           if (!$allSameStatus) $colspan++; 
         @endphp
@@ -231,5 +289,16 @@
       @endif
     </tbody>
   </table>
+
+  <!-- Prepared By Section -->
+  <div class="prepared-by">
+    <div>Prepared by:</div>
+    <div class="signature-line"></div>
+    <div>{{ Auth::user()->name }}</div>
+    <div>{{ Auth::user()->role ? ucfirst(Auth::user()->role) : 'Administrator' }}</div>
+    <div>Production and Resource Generation Office</div>
+    <div>Cavite State University</div>
+  </div>
 </body>
 </html>
+
