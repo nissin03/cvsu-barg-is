@@ -16,14 +16,14 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\SocialAuthController;
+use App\Http\Controllers\AdminCourseController;
 use App\Http\Controllers\DataPrivacyController;
 use App\Http\Controllers\AccountSetupController;
+use App\Http\Controllers\AdminCollegeController;
 use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserFacilityController;
 use App\Http\Controllers\FacilityReportController;
-use App\Http\Controllers\Admin\AdminCourseController;
-use App\Http\Controllers\Admin\AdminCollegeController;
 use App\Http\Controllers\FacilityReservationController;
 
 
@@ -243,40 +243,40 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/admin/courses-by-college/{collegeId}', [UserController::class, 'coursesByCollege'])->name('admin.courses.by.college');
 
         // College routes
-        Route::get('/admin/colleges', [\App\Http\Controllers\AdminCollegeController::class, 'index'])->name('admin.colleges.index');
-        Route::get('/admin/college/create', [\App\Http\Controllers\AdminCollegeController::class, 'create'])->name('admin.colleges.create');
-        Route::post('/admin/colleges', [\App\Http\Controllers\AdminCollegeController::class, 'store'])->name('admin.colleges.store');
-        Route::get('/colleges/{id}/edit', [\App\Http\Controllers\AdminCollegeController::class, 'edit'])->name('admin.colleges.edit');
-        Route::put('/colleges/{id}', [\App\Http\Controllers\AdminCollegeController::class, 'update'])->name('admin.colleges.update');
-        Route::delete('/admin/colleges/{id}', [\App\Http\Controllers\AdminCollegeController::class, 'destroy'])->name('admin.colleges.destroy');
-        Route::get('/admin/colleges/archive', [\App\Http\Controllers\AdminCollegeController::class, 'archive'])->name('admin.colleges.archive');
-        Route::patch('/admin/colleges/{id}/restore', [\App\Http\Controllers\AdminCollegeController::class, 'restore'])->name('admin.colleges.restore');
-        Route::delete('/admin/colleges/{id}/force-delete', [\App\Http\Controllers\AdminCollegeController::class, 'forceDelete'])->name('admin.colleges.force-delete');
+        Route::get('/admin/colleges', [AdminCollegeController::class, 'index'])->name('admin.colleges.index');
+        Route::get('/admin/college/create', [AdminCollegeController::class, 'create'])->name('admin.colleges.create');
+        Route::post('/admin/colleges', [AdminCollegeController::class, 'store'])->name('admin.colleges.store');
+        Route::get('/colleges/{id}/edit', [AdminCollegeController::class, 'edit'])->name('admin.colleges.edit');
+        Route::put('/colleges/{id}', [AdminCollegeController::class, 'update'])->name('admin.colleges.update');
+        Route::delete('/admin/colleges/{id}', [AdminCollegeController::class, 'destroy'])->name('admin.colleges.destroy');
+        Route::get('/admin/colleges/archive', [AdminCollegeController::class, 'archive'])->name('admin.colleges.archive');
+        Route::patch('/admin/colleges/{id}/restore', [AdminCollegeController::class, 'restore'])->name('admin.colleges.restore');
+        Route::delete('/admin/colleges/{id}/force-delete', [AdminCollegeController::class, 'forceDelete'])->name('admin.colleges.force-delete');
 
         // Courses Routes
-        Route::get('courses', [\App\Http\Controllers\AdminCourseController::class, 'index'])->name('admin.courses.index');
-        Route::get('courses/create', [\App\Http\Controllers\AdminCourseController::class, 'create'])->name('admin.courses.create');
-        Route::post('courses', [\App\Http\Controllers\AdminCourseController::class, 'store'])->name('admin.courses.store');
-        Route::get('courses/{course}/edit', [\App\Http\Controllers\AdminCourseController::class, 'edit'])->name('admin.courses.edit');
-        Route::put('courses/{course}', [\App\Http\Controllers\AdminCourseController::class, 'update'])->name('admin.courses.update');
-        Route::delete('/courses/{id}', [\App\Http\Controllers\AdminCourseController::class, 'destroy'])->name('admin.courses.destroy');
-        Route::get('/courses/archive', [\App\Http\Controllers\AdminCourseController::class, 'archive'])->name('admin.courses.archive');
-        Route::patch('/courses/{id}/restore', [\App\Http\Controllers\AdminCourseController::class, 'restore'])->name('admin.courses.restore');
-        Route::delete('/courses/{id}/force-delete', [\App\Http\Controllers\AdminCourseController::class, 'forceDelete'])->name('admin.courses.force-delete');
-        
+        Route::get('courses', [AdminCourseController::class, 'index'])->name('admin.courses.index');
+        Route::get('courses/create', [AdminCourseController::class, 'create'])->name('admin.courses.create');
+        Route::post('courses', [AdminCourseController::class, 'store'])->name('admin.courses.store');
+        Route::get('courses/{course}/edit', [AdminCourseController::class, 'edit'])->name('admin.courses.edit');
+        Route::put('courses/{course}', [AdminCourseController::class, 'update'])->name('admin.courses.update');
+        Route::delete('/courses/{id}', [AdminCourseController::class, 'destroy'])->name('admin.courses.destroy');
+        Route::get('/courses/archive', [AdminCourseController::class, 'archive'])->name('admin.courses.archive');
+        Route::patch('/courses/{id}/restore', [AdminCourseController::class, 'restore'])->name('admin.courses.restore');
+        Route::delete('/courses/{id}/force-delete', [AdminCourseController::class, 'forceDelete'])->name('admin.courses.force-delete');
+
         // Addons
-        Route::get('addons', [\App\Http\Controllers\AddonsController::class, 'index'])->name('admin.addons');
-        Route::get('addons/create', [\App\Http\Controllers\AddonsController::class, 'create'])->name('admin.addons.create');
-        Route::post('addons', [\App\Http\Controllers\AddonsController::class, 'store'])->name('admin.addons.store');
-        Route::get('/addons/{id}/edit', [\App\Http\Controllers\AddonsController::class, 'edit'])->name('admin.addons.edit');
-        Route::put('/addons/update/{id}', [\App\Http\Controllers\AddonsController::class, 'update'])->name('admin.addons.update');
-            Route::delete('/addons/{id}', [\App\Http\Controllers\AddonsController::class, 'destroy'])->name('admin.addons.destroy');
-    
+        Route::get('addons', [AddonsController::class, 'index'])->name('admin.addons');
+        Route::get('addons/create', [AddonsController::class, 'create'])->name('admin.addons.create');
+        Route::post('addons', [AddonsController::class, 'store'])->name('admin.addons.store');
+        Route::get('/addons/{id}/edit', [AddonsController::class, 'edit'])->name('admin.addons.edit');
+        Route::put('/addons/update/{id}', [AddonsController::class, 'update'])->name('admin.addons.update');
+        Route::delete('/addons/{id}', [AddonsController::class, 'destroy'])->name('admin.addons.destroy');
+
         // Addon archive routes
-        Route::get('/addons/archive', [\App\Http\Controllers\AddonsController::class, 'archive'])->name('admin.addons.archive');
-        Route::patch('/addons/{id}/restore', [\App\Http\Controllers\AddonsController::class, 'restore'])->name('admin.addons.restore');
-        Route::delete('/addons/{id}/force-delete', [\App\Http\Controllers\AddonsController::class, 'forceDelete'])->name('admin.addons.force-delete');
-      
+        Route::get('/addons/archive', [AddonsController::class, 'archive'])->name('admin.addons.archive');
+        Route::patch('/addons/{id}/restore', [AddonsController::class, 'restore'])->name('admin.addons.restore');
+        Route::delete('/addons/{id}/force-delete', [AddonsController::class, 'forceDelete'])->name('admin.addons.force-delete');
+
 
 
         Route::get('/search', [AdminController::class, 'searchproduct'])->name('admin.searchproduct');

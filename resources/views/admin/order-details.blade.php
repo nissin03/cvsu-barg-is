@@ -15,9 +15,8 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            font-family: "Inter", sans-serif;
-            font-size: 14px;
-            font-weight: 700;
+            font-size: 15px;
+            font-weight: 600;
             line-height: 20px;
             border-radius: 12px;
             background-size: 100%;
@@ -81,6 +80,15 @@
             letter-spacing: 0.5px;
             transition: all 0.2s;
         }
+
+        .small-label {
+            font-size: 1.50rem;
+        }
+
+        .small-textarea {
+            font-size: 2rem;
+            padding: 0.25rem;
+        }
     </style>
 
     <div class="main-content-inner">
@@ -127,7 +135,7 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="cancelReasonModalLabel">Cancel Order</h5>
+                            <h5 class="modal-title" id="cancelReasonModalLabel">Provide Cancellation Reason</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <form action="{{ route('admin.order.status.update') }}" method="POST" id="cancel-order-form">
@@ -137,17 +145,17 @@
                             <input type="hidden" name="order_status" value="canceled" />
                             <div class="modal-body">
                                 <div class="mb-3">
-                                    <label for="canceled_reason" class="form-label">
+                                    <label for="canceled_reason" class="form-label small-label">
                                         Reason for Cancellation <span class="text-danger">*</span>
                                     </label>
-                                    <textarea name="canceled_reason" id="canceled_reason" class="form-control" rows="4"
+                                    <textarea name="canceled_reason" id="canceled_reason" class="form-control small-textarea" rows="4"
                                         placeholder="Please provide a reason for canceling this order..." required maxlength="500"></textarea>
-                                    <div class="form-text">Maximum 500 characters</div>
+                                    <div class="form-text" style="font-size:1rem;">Maximum 500 characters</div>
                                 </div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-danger">Cancel Order</button>
+                                <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
                             </div>
                         </form>
 
@@ -262,12 +270,11 @@
                             @php
                                 $isDisabled = in_array($order->status, ['canceled', 'pickedup']);
                             @endphp
-
                             @if (!$isDisabled)
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <button type="button" class="tf-button tf-button-danger w208"
-                                            data-bs-toggle="modal" data-bs-target="#cancelReasonModal">
+                                        <button type="button" class="tf-button tf-button-danger" data-bs-toggle="modal"
+                                            data-bs-target="#cancelReasonModal">
                                             Cancel Order
                                         </button>
                                     </div>
@@ -277,8 +284,15 @@
                                     <i class="fas fa-info-circle me-2"></i>
                                     This order has already been {{ $order->status }}. No further actions can be performed.
                                 </div>
+
+                                @if ($order->status === 'canceled' && !empty($order->canceled_reason))
+                                    <div class="alert alert-warning mt-2 fs-6">
+                                        <strong>Reason for Cancellation:</strong> {{ $order->canceled_reason }}
+                                    </div>
+                                @endif
                             @endif
                         </div>
+
                     </div>
                 </div>
 
@@ -330,7 +344,7 @@
 
                                 <div class="divider my-3"></div>
                                 <div class="d-flex align-items-end gap-2">
-                                    <button type="submit" class="tf-button tf-button-success w208">
+                                    <button type="submit" class="tf-button tf-button-success">
                                         Complete Payment
                                     </button>
                                 </div>
