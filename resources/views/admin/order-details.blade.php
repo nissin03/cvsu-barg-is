@@ -184,14 +184,14 @@
                                     </div>
                                     <div class="d-flex align-items-center gap-2 mb-5">
                                         <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">
-                                            Department:
+                                            College:
                                         <p class="body-text mb-2">
-                                            {{ $order->user->department ?? '--' }}</p>
+                                            {{ $order->user->college->name ?? '--' }}</p>
                                     </div>
                                     <div class="d-flex align-items-center gap-2 mb-5">
                                         <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Course:
                                         <p class="body-text mb-2">
-                                            {{ $order->user->course ?? '--' }}</p>
+                                            {{ $order->user->course->name ?? '--' }}</p>
                                     </div>
                                 @endif
                                 <div class="d-flex align-items-center gap-2 mb-5">
