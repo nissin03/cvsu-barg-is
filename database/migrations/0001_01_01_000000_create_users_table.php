@@ -25,10 +25,10 @@ return new class extends Migration
             $table->string('phone_number')->nullable();
             $table->string('year_level')->nullable();
             $table->string('department')->nullable();
-           
-               $table->foreignId('course_id')->nullable()->constrained('courses')->onDelete('set null');
+
+            $table->foreignId('course_id')->nullable()->constrained('courses')->onDelete('set null');
             $table->foreignId('college_id')->nullable()->constrained('colleges')->onDelete('set null');
-            
+
             $table->boolean('isDefault')->default(false);
 
 

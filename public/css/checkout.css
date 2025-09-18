@@ -1,3 +1,5 @@
+/* All CSS from checkout.blade.php moved here */
+
 :root {
     --primary-green: #2d6a4f;
     --secondary-green: #40916c;
@@ -321,29 +323,92 @@
 .fc-disabled-day:hover {
     cursor: not-allowed !important;
 }
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .reservation-card {
-        padding: 1.5rem;
-        margin: 1rem;
+/* Tablet Responsive Styles */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .calendar-container {
+        min-height: 380px;
     }
 
-    .reservation-icon {
-        font-size: 2.5rem;
-    }
-
-    .reservation-title {
-        font-size: 1.5rem;
+    .time-slots-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+        max-width: 350px;
     }
 
     .time-btn {
-        min-width: 100px;
-        padding: 0.5rem 1rem;
+        min-height: 58px;
+    }
+}
+
+/* Desktop Styles */
+@media (min-width: 992px) {
+    .calendar-container {
+        min-height: 450px;
+    }
+
+    .time-slots-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        max-width: 400px;
+    }
+
+    .user-order-container {
+        position: sticky;
+        top: 20px;
+    }
+}
+
+/* Large Desktop Styles */
+@media (min-width: 1200px) {
+    .calendar-container {
+        min-height: 500px;
+    }
+}
+
+/* FullCalendar responsive adjustments */
+@media (max-width: 767.98px) {
+    .fc-toolbar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+    }
+
+    .fc-button-group {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .fc-daygrid-day-number {
         font-size: 0.9rem;
     }
 
-    .section-header {
-        padding: 0.75rem;
+    .fc-col-header-cell {
+        font-size: 0.85rem;
     }
+}
+
+/* Ensure disabled dates are clearly marked */
+.fc-disabled-day {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
+    cursor: not-allowed !important;
+}
+
+.fc-disabled-day:hover {
+    background-color: #f8f9fa !important;
+}
+
+/* Selected date styling */
+.selected-date {
+    background-color: #0d6efd !important;
+    color: white !important;
+}
+
+.selected-date .fc-daygrid-day-number {
+    color: white !important;
 }

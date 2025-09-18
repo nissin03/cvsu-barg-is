@@ -1,59 +1,67 @@
-function fetchNotifications() {
-    fetch("/admin/notifications", {
-        headers: {
-            "X-Requested-With": "XMLHttpRequest",
-            Accept: "application/json",
-            "X-CSRF-TOKEN":
-                document.querySelector('meta[name="csrf-token"]')?.content ||
-                "",
-        },
-        credentials: "same-origin",
-    })
-        .then((response) => {
-            if (response.status === 403) {
-                throw new Error("Access forbidden");
-            }
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then((data) => {
-            updateNotificationUI(data);
-            const markAllBtn = document.getElementById("markAllReadBtn");
-            if (markAllBtn) {
-                markAllBtn.disabled = data.length === 0;
-            }
-        })
-        .catch((error) => {
-            console.error("Notification fetch error:", error);
-            const notificationList =
-                document.getElementById("notification-list");
-            if (notificationList) {
-                notificationList.innerHTML = `
-                <div class="notification-item">
-                    <div class="notification-content">
-                        <p class="notification-text text-center">
-                            ${
-                                error.message.includes("forbidden")
-                                    ? "Please refresh the page"
-                                    : "Unable to load notifications"
-                            }
-                        </p>
-                    </div>
-                </div>
-            `;
-            }
-        });
-}
+/**
+ * Unified Notification Manager
+ * Works for both admin and user contexts with backward compatibility
+ */
+class NotificationManager {
+    constructor(config) {
+        this.userId = config.userId;
+        this.isAdmin = config.isAdmin || false;
+        this.endpoints = config.endpoints || {};
+        this.mountPointSelector =
+            config.mountPointSelector || "#notification-list";
+        this.echo = window.Echo;
+        this.axios = window.axios;
 
-function updateNotificationUI(notifications) {
-    const countElement = document.querySelector(".notification-count");
-    if (countElement) {
-        countElement.textContent = notifications.length;
+        this.setupCSRFToken();
+        this.init();
     }
-    const notificationList = document.getElementById("notification-list");
-    if (notificationList) {
+
+    setupCSRFToken() {
+        const token = document.querySelector(
+            'meta[name="csrf-token"]'
+        )?.content;
+        if (token) {
+            this.axios.defaults.headers.common["X-CSRF-TOKEN"] = token;
+        }
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.setupEchoListeners();
+        this.fetchNotifications();
+    }
+
+    /**
+     * Fetch notifications from server
+     */
+    async fetchNotifications() {
+        try {
+            const response = await this.axios.get(
+                this.endpoints.all || "/admin/notifications"
+            );
+            const notifications = response.data.data || response.data;
+            this.updateNotificationUI(notifications);
+            this.updateUnreadCount();
+        } catch (error) {
+            console.error("Notification fetch error:", error);
+            this.showError("Unable to load notifications");
+        }
+    }
+
+    /**
+     * Update notification UI
+     */
+    updateNotificationUI(notifications) {
+        const countElement = document.querySelector(".notification-count");
+        if (countElement) {
+            countElement.textContent = notifications.length;
+        }
+
+        const notificationList = document.querySelector(
+            this.mountPointSelector
+        );
+        if (!notificationList) return;
+
         if (notifications.length === 0) {
             notificationList.innerHTML = `
                 <div class="notification-item">
@@ -66,282 +74,429 @@ function updateNotificationUI(notifications) {
             let html = "";
             const recentNotifications = notifications.slice(0, 5);
             recentNotifications.forEach((notification) => {
-                html += generateNotificationHTML(notification);
+                html += this.generateNotificationHTML(notification);
             });
             notificationList.innerHTML = html;
-            addNotificationHandlers(notificationList);
+            this.addNotificationHandlers(notificationList);
         }
     }
-}
 
-function addNotificationHandlers(container) {
-    container
-        .querySelectorAll(".notification-item[data-notification-id]")
-        .forEach((item) => {
-            item.addEventListener("click", function (event) {
-                if (event.target.closest(".remove-notification")) {
-                    return;
-                }
-                const notificationId = this.getAttribute(
-                    "data-notification-id"
-                );
-                markAsReadOnly(notificationId, this);
+    /**
+     * Generate HTML for a single notification (backward compatible)
+     */
+    generateNotificationHTML(notification) {
+        const data = notification.data || notification;
+        const isRead = notification.read_at !== null;
+
+        // Support both new and old data formats
+        const title = data.title || data.name || "Notification";
+        const body = data.body || data.message || "No message provided";
+        const icon = data.icon || "fas fa-envelope";
+
+        return `
+            <div class="notification-item ${
+                isRead ? "read" : ""
+            }" data-notification-id="${notification.id}">
+                <div class="badge-icon h5">
+                    <i class="${icon} text-dark"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-text fw-bold">${title}</p>
+                    <p class="notification-subtext">
+                        ${body}
+                        ${!isRead ? '<div class="unread-indicator"></div>' : ""}
+                    </p>
+                </div>
+                <div class="remove-notification" data-id="${notification.id}">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Add event handlers to notification elements
+     */
+    addNotificationHandlers(container) {
+        container
+            .querySelectorAll(".notification-item[data-notification-id]")
+            .forEach((item) => {
+                item.addEventListener("click", (event) => {
+                    if (event.target.closest(".remove-notification")) {
+                        return;
+                    }
+                    const notificationId = item.getAttribute(
+                        "data-notification-id"
+                    );
+                    this.markAsRead(notificationId, item);
+                });
+            });
+
+        // Remove notification
+        container.querySelectorAll(".remove-notification").forEach((button) => {
+            button.addEventListener("click", (event) => {
+                event.stopPropagation();
+                const notificationId = button.getAttribute("data-id");
+                this.removeNotification(notificationId);
             });
         });
+    }
 
-    container.querySelectorAll(".remove-notification").forEach((button) => {
-        button.addEventListener("click", function (event) {
-            event.stopPropagation();
-            const notificationId = this.getAttribute("data-id");
-            removeNotification(notificationId);
-        });
-    });
-}
+    /**
+     * Mark notification as read
+     */
+    async markAsRead(notificationId, element = null) {
+        try {
+            const response = await this.axios.post(
+                `${
+                    this.endpoints.markAsRead ||
+                    "/admin/notifications/mark-as-read"
+                }/${notificationId}`
+            );
 
-function markAsReadOnly(id, notificationElement) {
-    fetch(`/admin/notifications/mark-as-read/${id}`, {
-        method: "POST",
-        headers: {
-            "X-CSRF-TOKEN": document
-                .querySelector('meta[name="csrf-token"]')
-                .getAttribute("content"),
-            "Content-Type": "application/json",
-        },
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then((data) => {
-            if (data.status === "success") {
-                if (notificationElement) {
+            if (response.data.status === "success") {
+                if (element) {
                     const unreadIndicator =
-                        notificationElement.querySelector(".unread-indicator");
+                        element.querySelector(".unread-indicator");
                     if (unreadIndicator) {
                         unreadIndicator.remove();
                     }
-                    notificationElement.classList.add("read");
+                    element.classList.add("read");
                 }
-                updateNotificationCount();
+                this.updateUnreadCount();
             }
-        })
-        .catch(() => {
-            toastr.error(
-                "Could not mark notification as read. Please try again."
-            );
-        });
-}
-
-function updateNotificationCount() {
-    fetch("/admin/notifications/count")
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then((data) => {
-            const countElement = document.querySelector(".notification-count");
-            if (countElement) {
-                countElement.textContent = data.count;
-            }
-        })
-        .catch(() => {});
-}
-
-function markAsRead(id) {
-    markAsReadOnly(id);
-    fetchNotifications();
-
-    const allNotificationList = document.getElementById(
-        "all-notification-list"
-    );
-    if (allNotificationList && allNotificationList.style.display !== "none") {
-        fetchAllNotifications();
-    }
-}
-
-function markAllAsRead() {
-    fetch("/admin/notifications/mark-all-as-read", {
-        method: "POST",
-        headers: {
-            "X-CSRF-TOKEN": document
-                .querySelector('meta[name="csrf-token"]')
-                .getAttribute("content"),
-            "Content-Type": "application/json",
-        },
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then((data) => {
-            if (data.status === "success") {
-                fetchNotifications();
-                const allNotificationList = document.getElementById(
-                    "all-notification-list"
-                );
-                if (
-                    allNotificationList &&
-                    allNotificationList.style.display !== "none"
-                ) {
-                    fetchAllNotifications();
-                }
-                toastr.success("All notifications marked as read");
-            }
-        })
-        .catch(() => {
-            toastr.error(
-                "Could not mark all notifications as read. Please try again."
-            );
-        });
-}
-function removeNotification(id) {
-    if (!id) {
-        return;
+        } catch (error) {
+            console.error("Error marking notification as read:", error);
+            this.showError("Could not mark notification as read");
+        }
     }
 
-    fetch(`/admin/notifications/destroy/${id}`, {
-        method: "DELETE",
-        headers: {
-            "X-CSRF-TOKEN": document
-                .querySelector('meta[name="csrf-token"]')
-                .getAttribute("content"),
-            "Content-Type": "application/json",
-        },
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+    /**
+     * Mark all notifications as read
+     */
+    async markAllAsRead() {
+        try {
+            const response = await this.axios.post(
+                this.endpoints.markAllAsRead ||
+                    "/admin/notifications/mark-all-as-read"
+            );
+
+            if (response.data.status === "success") {
+                this.fetchNotifications();
+                this.showSuccess("All notifications marked as read");
             }
-            return response.json();
-        })
-        .then((data) => {
-            if (data.status === "success") {
+        } catch (error) {
+            console.error("Error marking all notifications as read:", error);
+            this.showError("Could not mark all notifications as read");
+        }
+    }
+
+    /**
+     * Remove notification
+     */
+    async removeNotification(notificationId) {
+        if (!notificationId) return;
+
+        try {
+            const response = await this.axios.delete(
+                `${
+                    this.endpoints.destroy || "/admin/notifications/destroy"
+                }/${notificationId}`
+            );
+
+            if (response.data.status === "success") {
                 const notificationElement = document.querySelector(
-                    `.notification-item[data-notification-id="${id}"]`
+                    `.notification-item[data-notification-id="${notificationId}"]`
                 );
                 if (notificationElement) {
                     notificationElement.remove();
-                    const container =
-                        document.getElementById("notification-list");
-                    if (container && container.children.length === 0) {
-                        container.innerHTML = `
-                            <div class="notification-item">
-                                <div class="notification-content">
-                                    <p class="notification-text text-center">No notifications</p>
-                                </div>
-                            </div>
-                        `;
-                    }
-                    const allContainer = document.getElementById(
-                        "all-notification-list"
-                    );
-                    if (allContainer && allContainer.style.display !== "none") {
-                        const allNotificationElement =
-                            allContainer.querySelector(
-                                `.notification-item[data-notification-id="${id}"]`
-                            );
-                        if (allNotificationElement) {
-                            allNotificationElement.remove();
-
-                            if (allContainer.children.length === 0) {
-                                allContainer.innerHTML = `
-                                    <div class="notification-item">
-                                        <div class="notification-content">
-                                            <p class="notification-text text-center">No notifications</p>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                        }
-                    }
-                    updateNotificationCount();
-                } else {
-                    fetchNotifications();
-
-                    const allNotificationList = document.getElementById(
-                        "all-notification-list"
-                    );
-                    if (
-                        allNotificationList &&
-                        allNotificationList.style.display !== "none"
-                    ) {
-                        fetchAllNotifications();
-                    }
+                    this.checkEmptyState();
                 }
+                this.updateUnreadCount();
             }
-        })
-        .catch(() => {
-            toastr.error("Could not remove notification. Please try again.");
-        });
-}
-function removeAllNotifications() {
-    fetch("/admin/notifications/destroy-all", {
-        method: "DELETE",
-        headers: {
-            "X-CSRF-TOKEN": document
-                .querySelector('meta[name="csrf-token"]')
-                .getAttribute("content"),
-            "Content-Type": "application/json",
-        },
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+        } catch (error) {
+            console.error("Error removing notification:", error);
+            this.showError("Could not remove notification");
+        }
+    }
+
+    /**
+     * Remove all notifications
+     */
+    async removeAllNotifications() {
+        try {
+            const response = await this.axios.delete(
+                this.endpoints.destroyAll || "/admin/notifications/destroy-all"
+            );
+
+            if (response.data.status === "success") {
+                this.fetchNotifications();
+                this.showSuccess("All notifications removed");
             }
-            return response.json();
-        })
-        .then((data) => {
-            if (data.status === "success") {
-                fetchNotifications();
-                const allNotificationList = document.getElementById(
-                    "all-notification-list"
+        } catch (error) {
+            console.error("Error removing all notifications:", error);
+            this.showError("Could not remove all notifications");
+        }
+    }
+
+    /**
+     * Update unread count
+     */
+    async updateUnreadCount() {
+        try {
+            const response = await this.axios.get(
+                this.endpoints.unreadCount || "/admin/notifications/count"
+            );
+            const countElement = document.querySelector(".notification-count");
+            if (countElement) {
+                countElement.textContent = response.data.count || 0;
+            }
+        } catch (error) {
+            console.error("Error updating unread count:", error);
+        }
+    }
+
+    /**
+     * Check if notification list is empty and show appropriate message
+     */
+    checkEmptyState() {
+        const container = document.querySelector(this.mountPointSelector);
+        if (container && container.children.length === 0) {
+            container.innerHTML = `
+                <div class="notification-item">
+                    <div class="notification-content">
+                        <p class="notification-text text-center">No notifications</p>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Setup Echo listeners for real-time notifications
+     */
+    setupEchoListeners() {
+        if (!this.echo) {
+            console.warn(
+                "Echo not available, real-time notifications disabled"
+            );
+            return;
+        }
+
+        // Listen to user-specific channel
+        this.echo
+            .private(`App.Models.User.${this.userId}`)
+            .notification((notification) => {
+                console.log("New notification received:", notification);
+                this.handleNewNotification(notification);
+            });
+
+        // Listen to admin channel if user is admin
+        if (this.isAdmin) {
+            this.echo
+                .private("admin-notification")
+                .listen("ContactMessageReceived", (event) => {
+                    console.log("New contact message:", event);
+                    this.handleContactMessage(event.contactMessage);
+                });
+
+            this.echo
+                .private("admin-notification")
+                .listen("LowStockEvent", (event) => {
+                    console.log("Low stock event:", event);
+                    this.handleLowStockEvent(event.product);
+                });
+        }
+    }
+
+    /**
+     * Handle new notification from Echo
+     */
+    handleNewNotification(notification) {
+        // Show toast notification
+        this.showToast(notification.data || notification);
+
+        // Refresh notification list
+        this.fetchNotifications();
+    }
+
+    /**
+     * Handle contact message event
+     */
+    handleContactMessage(contactMessage) {
+        const notification = {
+            id: Date.now(),
+            data: {
+                title: "New Contact Message",
+                body: `New message from ${contactMessage.name}`,
+                icon: "fas fa-envelope",
+                url: "/admin/contacts",
+            },
+            created_at: new Date().toISOString(),
+        };
+
+        this.handleNewNotification(notification);
+    }
+
+    /**
+     * Handle low stock event
+     */
+    handleLowStockEvent(product) {
+        const notification = {
+            id: Date.now(),
+            data: {
+                title: "Low Stock Alert",
+                body: `${product.name} is running low on stock`,
+                icon: "fas fa-exclamation-triangle",
+                url: `/admin/product/edit/${product.id}`,
+            },
+            created_at: new Date().toISOString(),
+        };
+
+        this.handleNewNotification(notification);
+    }
+
+    /**
+     * Show toast notification
+     */
+    showToast(notificationData) {
+        if (window.toastr) {
+            const title =
+                notificationData.title ||
+                notificationData.name ||
+                "Notification";
+            const body =
+                notificationData.body || notificationData.message || "";
+
+            if (
+                notificationData.icon &&
+                notificationData.icon.includes("exclamation")
+            ) {
+                window.toastr.warning(`<strong>${title}</strong>: ${body}`);
+            } else if (
+                notificationData.icon &&
+                notificationData.icon.includes("envelope")
+            ) {
+                window.toastr.info(`<strong>${title}</strong>: ${body}`);
+            } else {
+                window.toastr.success(`<strong>${title}</strong>: ${body}`);
+            }
+        }
+    }
+
+    /**
+     * Show success message
+     */
+    showSuccess(message) {
+        if (window.toastr) {
+            window.toastr.success(message);
+        }
+    }
+
+    /**
+     * Show error message
+     */
+    showError(message) {
+        if (window.toastr) {
+            window.toastr.error(message);
+        } else {
+            console.error(message);
+        }
+    }
+
+    /**
+     * Setup event listeners for UI interactions
+     */
+    setupEventListeners() {
+        // Mark all as read button
+        const markAllBtn = document.querySelector(".mark-read");
+        if (markAllBtn) {
+            markAllBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.markAllAsRead();
+            });
+        }
+
+        // Remove all button
+        const removeAllBtn = document.querySelector(".remove-all");
+        if (removeAllBtn) {
+            removeAllBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const countElement = document.querySelector(
+                    ".notification-count"
                 );
-                if (
-                    allNotificationList &&
-                    allNotificationList.style.display !== "none"
-                ) {
-                    fetchAllNotifications();
+                if (countElement && parseInt(countElement.textContent) > 0) {
+                    if (
+                        confirm(
+                            "Are you sure you want to remove all notifications?"
+                        )
+                    ) {
+                        this.removeAllNotifications();
+                    }
+                } else {
+                    this.showError("No notifications to remove");
                 }
-                toastr.success("All notifications removed");
-            }
-        })
-        .catch(() => {
-            toastr.error(
-                "Could not remove all notifications. Please try again."
-            );
-        });
-}
+            });
+        }
 
-function fetchAllNotifications() {
-    fetch("/admin/notifications", {
-        headers: {
-            "X-Requested-With": "XMLHttpRequest",
-            Accept: "application/json",
-            "X-CSRF-TOKEN":
-                document.querySelector('meta[name="csrf-token"]')?.content ||
-                "",
-        },
-        credentials: "same-origin",
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then((data) => {
-            const allNotificationList = document.getElementById(
-                "all-notification-list"
+        // Toggle notifications button
+        const toggleBtn = document.getElementById("toggle-notifications");
+        if (toggleBtn) {
+            toggleBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleNotifications();
+            });
+        }
+
+        // Prevent dropdown from closing when clicking inside
+        const dropdownMenu = document.querySelector(".dropdown-menu");
+        if (dropdownMenu) {
+            dropdownMenu.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+        }
+    }
+
+    /**
+     * Toggle between recent and all notifications
+     */
+    toggleNotifications() {
+        const recentList = document.getElementById("notification-list");
+        const allList = document.getElementById("all-notification-list");
+        const toggleBtn = document.getElementById("toggle-notifications");
+
+        if (!recentList || !allList || !toggleBtn) return;
+
+        if (recentList.style.display !== "none") {
+            recentList.style.display = "none";
+            allList.style.display = "block";
+            toggleBtn.textContent = "Show recent notifications";
+            this.fetchAllNotifications();
+        } else {
+            recentList.style.display = "block";
+            allList.style.display = "none";
+            toggleBtn.textContent = "See all notifications";
+        }
+    }
+
+    /**
+     * Fetch all notifications for the "See all" view
+     */
+    async fetchAllNotifications() {
+        try {
+            const response = await this.axios.get(
+                this.endpoints.all || "/admin/notifications"
             );
-            if (allNotificationList) {
-                if (data.length === 0) {
-                    allNotificationList.innerHTML = `
+            const allList = document.getElementById("all-notification-list");
+
+            if (allList) {
+                const notifications = response.data.data || response.data;
+                if (notifications.length === 0) {
+                    allList.innerHTML = `
                         <div class="notification-item">
                             <div class="notification-content">
                                 <p class="notification-text text-center">No notifications</p>
@@ -350,20 +505,18 @@ function fetchAllNotifications() {
                     `;
                 } else {
                     let html = "";
-                    data.forEach((notification) => {
-                        html += generateAllNotificationHTML(notification);
+                    notifications.forEach((notification) => {
+                        html += this.generateNotificationHTML(notification);
                     });
-                    allNotificationList.innerHTML = html;
-                    addNotificationHandlers(allNotificationList);
+                    allList.innerHTML = html;
+                    this.addNotificationHandlers(allList);
                 }
             }
-        })
-        .catch(() => {
-            const allNotificationList = document.getElementById(
-                "all-notification-list"
-            );
-            if (allNotificationList) {
-                allNotificationList.innerHTML = `
+        } catch (error) {
+            console.error("Error fetching all notifications:", error);
+            const allList = document.getElementById("all-notification-list");
+            if (allList) {
+                allList.innerHTML = `
                     <div class="notification-item">
                         <div class="notification-content">
                             <p class="notification-text text-center">Unable to load notifications</p>
@@ -371,151 +524,25 @@ function fetchAllNotifications() {
                     </div>
                 `;
             }
-        });
-}
-
-function generateNotificationHTML(notification) {
-    const data = notification.data;
-    return `
-    <div class="notification-item" data-notification-id="${notification.id}">
-        <div class="badge-icon h5">
-            <i class="fas fa-envelope text-dark"></i>
-        </div>
-        <div class="notification-content">
-            <p class="notification-text fw-bold">${
-                data.name || "Notification"
-            }</p>
-            <p class="notification-subtext">
-                ${
-                    data.message
-                        ? data.message.substring(0, 30) +
-                          (data.message.length > 30 ? "..." : "")
-                        : "No message provided"
-                }
-            </p>
-        </div>
-        ${
-            notification.read_at === null
-                ? '<div class="unread-indicator"></div>'
-                : ""
         }
-        <div class="remove-notification" data-id="${notification.id}">
-            <i class="fas fa-times"></i>
-        </div>
-    </div>
-    `;
+    }
 }
 
-function generateAllNotificationHTML(notification) {
-    const data = notification.data;
-    const isRead = notification.read_at !== null;
-
-    return `
-    <div class="notification-item ${
-        isRead ? "read" : ""
-    }" data-notification-id="${notification.id}">
-        <div class="badge-icon h5">
-            <i class="fas fa-envelope text-dark"></i>
-        </div>
-        <div class="notification-content">
-            <p class="notification-text fw-bold">${
-                data.name || "Notification"
-            }</p>
-            <p class="notification-subtext">
-                ${
-                    data.message
-                        ? data.message.substring(0, 30) +
-                          (data.message.length > 30 ? "..." : "")
-                        : "No message provided"
-                }
-            </p>
-        </div>
-        ${!isRead ? '<div class="unread-indicator"></div>' : ""}
-        <div class="remove-notification" data-id="${notification.id}">
-            <i class="fas fa-times"></i>
-        </div>
-    </div>
-    `;
+/**
+ * Initialize notification manager
+ * @param {Object} config - Configuration object
+ * @param {number} config.userId - User ID
+ * @param {boolean} config.isAdmin - Whether user is admin
+ * @param {Object} config.endpoints - API endpoints
+ * @param {string} config.mountPointSelector - DOM selector for notification list
+ */
+function initNotificationManager(config) {
+    return new NotificationManager(config);
 }
 
-function setupEventListeners() {
-    const toggleButton = document.getElementById("toggle-notifications");
-    if (toggleButton) {
-        toggleButton.addEventListener("click", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
+// Export for ES6 modules
+export { initNotificationManager, NotificationManager };
 
-            const recentList = document.getElementById("notification-list");
-            const allList = document.getElementById("all-notification-list");
-
-            if (recentList.style.display !== "none") {
-                recentList.style.display = "none";
-                allList.style.display = "block";
-                this.textContent = "Show recent notifications";
-                fetchAllNotifications();
-            } else {
-                recentList.style.display = "block";
-                allList.style.display = "none";
-                this.textContent = "See all notifications";
-            }
-        });
-    }
-
-    const markReadButton = document.querySelector(".mark-read");
-    if (markReadButton) {
-        markReadButton.addEventListener("click", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            markAllAsRead();
-        });
-    }
-    const removeAllButton = document.querySelector(".remove-all");
-    if (removeAllButton) {
-        removeAllButton.addEventListener("click", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const countElement = document.querySelector(".notification-count");
-            if (countElement && parseInt(countElement.textContent) > 0) {
-                if (
-                    confirm(
-                        "Are you sure you want to remove all notifications?"
-                    )
-                ) {
-                    removeAllNotifications();
-                }
-            } else {
-                toastr.info("No notifications to remove");
-            }
-        });
-    }
-    const dropdownMenu = document.querySelector(".dropdown-menu");
-    if (dropdownMenu) {
-        dropdownMenu.addEventListener("click", function (e) {
-            e.stopPropagation();
-        });
-    }
-
-    document.addEventListener("click", function (event) {
-        const removeButton = event.target.closest(".remove-notification");
-        if (removeButton) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            const notificationId = removeButton.getAttribute("data-id");
-            if (notificationId) {
-                removeNotification(notificationId);
-            }
-        }
-    });
-}
-
-export {
-    fetchNotifications,
-    setupEventListeners,
-    markAsRead,
-    markAllAsRead,
-    removeNotification,
-    removeAllNotifications,
-    fetchAllNotifications,
-};
+// Also make available globally for backward compatibility
+window.initNotificationManager = initNotificationManager;
+window.NotificationManager = NotificationManager;

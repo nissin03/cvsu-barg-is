@@ -28,6 +28,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProductAttribute;
 use App\Services\ImageProcessor;
 use App\Notifications\StockUpdate;
+use App\Notifications\OrderCanceledNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -930,7 +931,6 @@ class AdminController extends Controller
         return view('admin.orders', compact('orders', 'timeSlots'));
     }
 
-    // This route handles the filter functionality
     public function filterOrders(Request $request)
     {
         $status = $request->input('status');
@@ -961,10 +961,12 @@ class AdminController extends Controller
 
     public function order_details($order_id)
     {
-        // $order = Order::find($order_id);
-        $order = Order::with('orderItems.product')->findOrFail($order_id);
-        // $orderItems = OrderItem::where('order_id', $order_id)->orderBy('id')->paginate(12);
-        $transaction = Transaction::where('order_id', $order_id)->first();
+        $order = Order::with(['orderItems.product', 'user', 'updatedBy'])->findOrFail($order_id);
+        // $transaction = Transaction::where('order_id', $order_id)->first();
+        $transaction = Transaction::where('order_id', $order_id)
+            ->latest()
+            ->first();
+
         return view('admin.order-details', compact('order',  'transaction'));
     }
 
@@ -992,7 +994,8 @@ class AdminController extends Controller
     {
         $request->validate([
             'order_id' => 'required|exists:orders,id',
-            'order_status' => 'required|in:reserved,canceled'
+            'order_status' => 'required|in:reserved,canceled',
+            'canceled_reason' => 'required_if:order_status,canceled|string|max:500'
         ]);
 
         $order = Order::with('orderItems')->findOrFail($request->order_id);
@@ -1001,13 +1004,18 @@ class AdminController extends Controller
         if ($request->order_status === 'canceled' && $originalStatus !== 'canceled') {
             $this->restoreQuantity($order);
             $order->canceled_date = Carbon::now();
+            $order->canceled_reason = $request->canceled_reason;
+            $order->updated_by = Auth::user()->id;
+
+            // Send notification to user
+            $order->user->notify(new OrderCanceledNotification($order));
         }
 
         $order->status = $request->order_status;
         $order->save();
         return back()->with('status', 'Status updated successfully!');
     }
-    
+
     public function completePayment(Request $request, $order_id)
     {
         return DB::transaction(function () use ($request, $order_id) {
@@ -1028,11 +1036,15 @@ class AdminController extends Controller
                 'amount_paid' => $request->amount_paid,
                 'change' => $change,
                 'status' => 'paid',
+                'processed_by' => Auth::user()->id,
+                'processed_at' => now()
             ]);
             $order->update([
                 'status' => 'pickedup',
                 'picked_up_date' => now(),
+                'updated_by' => Auth::id(),
             ]);
+
             return response()->json([
                 'message' => 'Payment completed successfully!',
                 'order_id' => $order->id,
@@ -1041,7 +1053,7 @@ class AdminController extends Controller
         });
     }
 
-    public function downloadReceipt(Request $request, Order $order)
+    public function downloadReceipt(Order $order)
     {
         $order->load(['orderItems.product', 'user']);
         $transaction = Transaction::where('order_id', $order->id)
@@ -1058,6 +1070,7 @@ class AdminController extends Controller
         ]);
         return $pdf->download('receipt_order_' . $order->id . '.pdf');
     }
+
     // Sliders Page
     public function slides()
     {
@@ -1166,135 +1179,21 @@ class AdminController extends Controller
 
     public function contact_reply(Request $request, $id)
     {
-        // Find the contact record by its ID
         $contact = Contact::find($id);
         if (!$contact) {
-            // Handle the case where the contact doesn't exist
             return redirect()->route('admin.contacts')->with('error', 'Contact not found.');
         }
-
-        // Validate the reply message input
         $validated = $request->validate([
             'replyMessage' => 'required|string',
         ]);
-
-        // Save the admin's reply to the database
         $reply = new ContactReplies();
         $reply->contact_id = $contact->id;
         $reply->admin_reply = $request->input('replyMessage');
         $reply->admin_id = Auth::id();
         $reply->save();
-
-
         Mail::to($contact->email)->send(new ReplyToContact($contact, $request->input('replyMessage')));
-
-
         return redirect()->route('admin.contacts')->with('status', 'Reply sent successfully!');
     }
-
-
-
-    public function markAsRead($id)
-    {
-        $notification = Auth::user()->notifications()->findOrFail($id);
-        $notification->markAsRead();
-
-        return response()->json([
-            'status' => 'success',
-            'unreadCount' => Auth::user()->unreadNotifications->count(),
-        ]);
-    }
-
-
-    public function markMultipleAsRead(Request $request)
-    {
-        $notificationIds = $request->input('notification_ids');
-        if (!$notificationIds || empty($notificationIds)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No notification IDs provided.',
-            ], 400);
-        }
-
-        $notifications = Auth::user()->notifications()->whereIn('id', $notificationIds)->get();
-
-        if ($notifications->isEmpty()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No matching notifications found.',
-            ], 404);
-        }
-
-        foreach ($notifications as $notification) {
-            $notification->markAsRead();
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'unreadCount' => Auth::user()->unreadNotifications->count(),
-        ]);
-    }
-
-    public function unreadCount()
-    {
-        return response()->json([
-            'unreadCount' => Auth::user()->unreadNotifications->count(),
-        ]);
-    }
-
-
-    public function latest()
-    {
-        $user = Auth::user();
-
-        $notifications = $user->notifications()
-            ->orderBy('created_at', 'desc')
-            ->take(10) // Fetch the latest 10 notifications
-            ->get();
-
-        $formattedNotifications = $notifications->map(function ($notification) {
-            return [
-                'id' => $notification->id,
-                'message' => $notification->data['message'] ?? 'No message available',
-                'icon' => match ($notification->type) {
-                    'App\\Notifications\\LowStockNotification' => 'fa-solid fa-box',
-                    'App\\Notifications\\ContactReceivedMessage' => 'fas fa-envelope',
-                    default => 'fas fa-bell',
-                },
-                'redirect_route' => match ($notification->type) {
-                    'App\\Notifications\\LowStockNotification' => route('admin.products'),
-                    'App\\Notifications\\ContactReceivedMessage' => route('admin.contacts'),
-                    default => '#',
-                },
-                'created_at' => $notification->created_at->diffForHumans(),
-                'read_at' => $notification->read_at,
-            ];
-        });
-
-        return response()->json([
-            'unreadCount' => $user->unreadNotifications->count(),
-            'notifications' => $formattedNotifications,
-        ]);
-    }
-
-
-
-
-    // Delete multiple notifications
-    public function deleteMultipleNotifications(Request $request)
-    {
-        $notificationIds = $request->input('notification_ids');
-        Auth::user()->notifications()->whereIn('id', $notificationIds)->delete();
-
-        return response()->json([
-            'status' => 'success',
-        ]);
-    }
-
-    // Reports Page
-   
-
-
 
     public function filter(Request $request)
     {
@@ -1316,166 +1215,6 @@ class AdminController extends Controller
         return response()->json($users);
     }
 
-
-    public function searchproduct(Request $request)
-    {
-        $query = strtolower($request->input('query'));
-
-        // Check if the query matches certain keywords and redirect accordingly
-
-        //product
-        if (str_contains(strtolower($query), 'add product')) {
-            return redirect()->route('admin.product.add');
-        } elseif (str_contains(strtolower($query), 'products view')) {
-            return redirect()->route('admin.products');
-        } elseif (str_contains(strtolower($query), 'add product attributes')) {
-            return redirect()->route('admin.product-attribute-add');
-        } elseif (str_contains(strtolower($query), 'view product attributes')) {
-            return redirect()->route('admin.product-attributes');
-        } elseif (str_contains(strtolower($query), 'addcategory')) {
-            return redirect()->route('admin.category.add');
-        } elseif (str_contains(strtolower($query), 'categories')) {
-            return redirect()->route('admin.categories');
-        } elseif (str_contains(strtolower($query), 'users')) {
-            return redirect()->route('admin.users');
-        } elseif (str_contains(strtolower($query), 'order')) {
-            return redirect()->route('admin.orders');
-
-            //product report
-
-        } elseif (str_contains(strtolower($query), 'product report')) {
-            return redirect()->route('admin.report-product');
-        } elseif (str_contains(strtolower($query), 'sales products')) {
-            return redirect()->route('admin.reports');
-        } elseif (str_contains(strtolower($query), 'user report')) {
-            return redirect()->route('admin.report-user');
-        } elseif (str_contains(strtolower($query), 'inventory')) {
-            return redirect()->route('admin.report-inventory');
-        } elseif (str_contains(strtolower($query), 'statements')) {
-            return redirect()->route('admin.report-statements');
-
-
-            //rentals
-        } elseif (str_contains(strtolower($query), 'add rental')) {
-            return redirect()->route('admin.rental.add');
-        } elseif (str_contains(strtolower($query), 'rentals view')) {
-            return redirect()->route('admin.rentals');
-        } elseif (str_contains(strtolower($query), 'rental reservation')) {
-            return redirect()->route('admin.reservation');
-
-
-            //rental report
-
-        } elseif (str_contains(strtolower($query), 'sales rental')) {
-            return redirect()->route('admin.rentals_reports');
-        } elseif (str_contains(strtolower($query), 'messages')) {
-            return redirect()->route('admin.contacts');
-        } elseif (str_contains(strtolower($query), 'slides')) {
-            return redirect()->route('admin.slides');
-        } elseif (str_contains(strtolower($query), 'Reservation Reports')) {
-            return redirect()->route('admin.rentalsReportsName');
-        }
-
-        // Add more conditions as needed
-        return back()->with('error', 'No matching results found.');
-    }
-
-    public function updateStatus(Request $request,  Reservation $reservation)
-    {
-
-        $reservation->update([
-            'payment_status' => $request->input('payment_status'),
-            'rent_status' => $request->input('rent_status'),
-        ]);
-
-
-        // Validate the incoming request
-        $request->validate([
-            'reservation_id' => 'required|exists:reservations,id',
-            'rent_status' => 'required|in:pending,reserved,completed,canceled',
-        ]);
-
-        try {
-            // Find the reservation by ID
-            $reservation = Reservation::findOrFail($request->reservation_id);
-
-            // Update the status
-            $reservation->rent_status = $request->rent_status;
-            $reservation->save();
-
-            // Return success response
-            return response()->json([
-                'success' => true,
-                'message' => 'Reservation status updated successfully!',
-            ]);
-        } catch (\Exception $e) {
-            // Return error response
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while updating the reservation status.',
-            ], 500);
-        }
-    }
-
-    public function filterReservations(Request $request)
-    {
-        $query = Reservation::query();
-
-        // Filter by Rent Status
-        if ($request->filled('rent_status')) {
-            $query->where('rent_status', $request->rent_status);
-        }
-
-        // Filter by Payment Status
-        if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
-        }
-
-        // Filter by Rental Type
-        if ($request->filled('rental_type')) {
-            $query->whereHas('rental', function ($q) use ($request) {
-                $q->where('name', $request->rental_type);
-            });
-        }
-
-        $reservations = $query->get();
-
-        // If it's an AJAX request, return JSON
-        if ($request->ajax()) {
-            return response()->json([
-                'html' => view('reservations.filtered', compact('reservations'))->render()
-            ]);
-        }
-
-        // If not AJAX, return regular view
-        return view('reservations.index', compact('reservations'));
-    }
-
-
-    public function updatePaymentStatus(Request $request)
-    {
-        // Validate the incoming request
-        $request->validate([
-            'id' => 'required|exists:reservations,id',  // Ensure reservation exists
-            'payment_status' => 'required|string',     // Ensure valid payment status
-        ]);
-
-        // Find the reservation by its ID
-        $reservation = Reservation::find($request->id);
-
-        if ($reservation) {
-            // Update the payment status
-            $reservation->payment_status = $request->payment_status;
-            $reservation->save();
-
-            // Return a success response
-            return response()->json(['success' => true, 'message' => 'Payment status updated successfully.']);
-        }
-
-        // If the reservation is not found, return an error response
-        return response()->json(['success' => false, 'message' => 'Reservation not found.']);
-    }
-
     public function search(Request $request)
     {
         $query = $request->input('query');
@@ -1486,29 +1225,6 @@ class AdminController extends Controller
         return response()->json($results);
     }
 
-
-
-
-    // public function filterOrders(Request $request)
-    // {
-    //     $query = Order::query();
-
-    //     // Apply filters
-    //     if ($request->has('time_slot') && $request->time_slot != '') {
-    //         $query->where('time_slot', $request->time_slot);
-    //     }
-
-    //     if ($request->has('status') && $request->status != '') {
-    //         $query->where('status', $request->status);
-    //     }
-
-    //     // Fetch the filtered orders with the count of order items
-    //     $orders = $query->withCount('orderItems')->get();
-
-    //     return response()->json($orders); // Send the filtered orders as JSON response
-    // }
-
-
     public function order_filter(Request $request)
     {
         Log::info('Received filter request', [
@@ -1516,7 +1232,7 @@ class AdminController extends Controller
             'status' => $request->status
         ]);
 
-        // Validate filters
+
         $validatedData = $request->validate([
             'time_slot' => 'nullable|string',
             'status' => 'nullable|string|in:reserved,pickedup,canceled'
@@ -1582,7 +1298,7 @@ class AdminController extends Controller
 
         if ($request->ajax()) {
             // Format the users data to include college and course codes
-            $formattedUsers = $users->map(function($user) {
+            $formattedUsers = $users->map(function ($user) {
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -1593,7 +1309,7 @@ class AdminController extends Controller
                     'course' => $user->course ? ['code' => $user->course->code] : null,
                 ];
             });
-            
+
             return response()->json([
                 'users' => $formattedUsers,
                 'links' => (string) $users->links('pagination::bootstrap-5'),
@@ -1613,7 +1329,7 @@ class AdminController extends Controller
     {
         $colleges = College::all();
         $courses = Course::all();
-        
+
         return view("admin.user-add", compact('colleges', 'courses'));
     }
 
@@ -1625,7 +1341,7 @@ class AdminController extends Controller
             'email' => 'required|email|unique:users,email|ends_with:@cvsu.edu.ph',
             'phone_number' => 'nullable|string|regex:/^9\d{9}$/',
         ];
-        
+
         if ($isAdmin) {
             $validationRules['form_type'] = 'required|in:admin';
             $validationRules['sex'] = 'required|in:male,female';
@@ -1635,14 +1351,14 @@ class AdminController extends Controller
             $validationRules['college_id'] = 'nullable|exists:colleges,id';
             $validationRules['course_id'] = 'nullable|exists:courses,id';
             $validationRules['form_type'] = 'nullable|in:user';
-            
+
             if ($request->role === 'student') {
                 $validationRules['year_level'] = 'required|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
                 $validationRules['college_id'] = 'required|exists:colleges,id';
                 $validationRules['course_id'] = 'required|exists:courses,id';
             }
         }
-        
+
         $customMessages = [
             'email.ends_with' => 'The email must be a @cvsu.edu.ph email address.',
             'phone_number.regex' => 'Phone number must start with 9 and be exactly 10 digits.',
@@ -1650,9 +1366,9 @@ class AdminController extends Controller
             'college_id.required' => 'College is required for students.',
             'course_id.required' => 'Course is required for students.',
         ];
-        
+
         $validated = $request->validate($validationRules, $customMessages);
-        
+
         if ($isAdmin) {
             $validated['password'] = Hash::make('cvsu-barg-password');
             $validated['utype'] = 'ADM';
@@ -1664,7 +1380,7 @@ class AdminController extends Controller
             $validated['utype'] = 'USR';
             $validated['password_set'] = false;
             $validated['sex'] = 'male'; // Default for users
-            
+
             // Only set student-specific fields for students
             if ($validated['role'] !== 'student') {
                 $validated['year_level'] = null;
@@ -1672,10 +1388,10 @@ class AdminController extends Controller
                 $validated['course_id'] = null;
             }
         }
-        
+
         $validated['email_verified_at'] = now();
         $validated['isDefault'] = false;
-        
+
         try {
             $user = User::create($validated);
             $message = $isAdmin
@@ -1694,18 +1410,18 @@ class AdminController extends Controller
         $user = User::findOrFail($id);
         $colleges = College::all();
         $courses = Course::all();
-        
+
         return view('admin.user-edit', compact('user', 'colleges', 'courses'));
     }
 
     public function users_update(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        
+
         $validationRules = [
             'phone_number' => 'nullable|string|regex:/^9\d{9}$/',
         ];
-        
+
         if ($user->role === 'student') {
             $validationRules['year_level'] = 'required|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
             $validationRules['college_id'] = 'required|exists:colleges,id';
@@ -1715,26 +1431,26 @@ class AdminController extends Controller
             $validationRules['college_id'] = 'nullable';
             $validationRules['course_id'] = 'nullable';
         }
-        
+
         $customMessages = [
             'phone_number.regex' => 'Phone number must start with 9 and be exactly 10 digits.',
             'year_level.required' => 'Year level is required for students.',
             'college_id.required' => 'College is required for students.',
             'course_id.required' => 'Course is required for students.',
         ];
-        
+
         $request->validate($validationRules, $customMessages);
-        
+
         $user->phone_number = $request->phone_number;
-        
+
         if ($user->role === 'student') {
             $user->year_level = $request->year_level;
             $user->college_id = $request->college_id;
             $user->course_id = $request->course_id;
-            
+
             $college = College::find($request->college_id);
             $course = Course::find($request->course_id);
-            
+
             $user->department = $college->name;
             $user->course = $course->name;
         } else {
@@ -1744,9 +1460,9 @@ class AdminController extends Controller
             $user->department = null;
             $user->course = null;
         }
-        
+
         $user->save();
-        
+
         return redirect()->route('admin.users')->with('status', 'User has been updated successfully!');
     }
 

@@ -85,6 +85,8 @@ class FacilityReservationController extends Controller
     {
         $reservation = Payment::with([
             'user',
+            'user.college',
+            'user.course',
             'availability.facility',
             'availability.facilityAttribute',
             'transactionReservations.availability',
@@ -102,7 +104,6 @@ class FacilityReservationController extends Controller
 
             $reservation->grouped_availabilities = $relatedAvailabilities;
 
-            // Get qualification approvals for all related availabilities
             $qualificationApprovals = QualificationApproval::whereIn('availability_id', $relatedAvailabilities->pluck('id'))
                 ->with('user')
                 ->get();

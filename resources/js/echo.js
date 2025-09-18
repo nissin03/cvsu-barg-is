@@ -1,9 +1,6 @@
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
-import {
-    fetchNotifications,
-    setupEventListeners,
-} from "./utils/notificationManager";
+import { initNotificationManager } from "./utils/notificationManager";
 
 window.Pusher = Pusher;
 
@@ -17,7 +14,7 @@ window.Echo = new Echo({
     enabledTransports: ["ws", "wss"],
 });
 
-// Toastr configuration
+// Configure toastr
 toastr.options = {
     closeButton: true,
     progressBar: true,
@@ -29,36 +26,46 @@ toastr.options = {
     preventDuplicates: false,
 };
 
+// Initialize notification manager when DOM is ready
 document.addEventListener("DOMContentLoaded", function () {
-    fetchNotifications();
-    setupEventListeners();
-    setupEchoListeners();
+    // Get user data from meta tags or global variables
+    const userId =
+        window.userId ||
+        document.querySelector('meta[name="user-id"]')?.content;
+    const isAdmin =
+        window.isAdmin ||
+        document.querySelector('meta[name="user-role"]')?.content === "ADM";
+
+    if (userId) {
+        // Determine endpoints based on user type
+        const endpoints = isAdmin
+            ? {
+                  all: "/admin/notifications",
+                  unread: "/admin/notifications/unread",
+                  markAsRead: "/admin/notifications/mark-as-read",
+                  markAllAsRead: "/admin/notifications/mark-all-as-read",
+                  destroy: "/admin/notifications/destroy",
+                  destroyAll: "/admin/notifications/destroy-all",
+                  unreadCount: "/admin/notifications/count",
+              }
+            : {
+                  all: "/notifications",
+                  unread: "/notifications/unread",
+                  markAsRead: "/notifications/mark-as-read",
+                  markAllAsRead: "/notifications/mark-all-as-read",
+                  destroy: "/notifications/destroy",
+                  destroyAll: "/notifications/destroy-all",
+                  unreadCount: "/notifications/count",
+              };
+
+        // Initialize notification manager with configuration
+        initNotificationManager({
+            userId: userId,
+            isAdmin: isAdmin,
+            endpoints: endpoints,
+            mountPointSelector: "#notification-list",
+        });
+    } else {
+        console.warn("User ID not found, notification manager not initialized");
+    }
 });
-
-function setupEchoListeners() {
-    window.Echo.private(`App.Models.User.${userId}`).notification(
-        (notification) => {
-            console.log("New Notification received:", notification);
-
-            if (notification.hasOwnProperty("contact_id")) {
-                toastr.info(
-                    `<strong>${
-                        notification.name
-                    }</strong>: ${notification.message.substring(0, 50)}${
-                        notification.message.length > 50 ? "..." : ""
-                    }`,
-                    "New Contact Message"
-                );
-            }
-
-            if (notification.hasOwnProperty("product_id")) {
-                toastr.warning(
-                    `<strong>${notification.name}</strong> is running low on stock. Current quantity: ${notification.quantity}`,
-                    "Low Stock Alert"
-                );
-            }
-
-            fetchNotifications();
-        }
-    );
-}

@@ -158,8 +158,8 @@
                             </div>
                         </form>
                     </div>
-                    <a class="tf-button w-auto" href="{{ route('admin.facility.create') }}"><i
-                            class="icon-plus"></i>Add New</a>
+                    <a class="tf-button w-auto" href="{{ route('admin.facility.create') }}"><i class="icon-plus"></i>Add
+                        New</a>
                     <a class="tf-button w-auto" href="{{ route('admin.facilities.archive.index') }}"><i
                             class="icon-archive"></i> Archived Facility</a>
                 </div>
@@ -174,7 +174,7 @@
                                 <th scope="col">Type</th>
                                 <th scope="col">Prices</th>
                                 <th scope="col">Rooms</th>
-                                <th>Action</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="js-facilities-partial-target">
