@@ -438,7 +438,7 @@
                                         {{-- <a href="javascript:void(0);" class="menu-item-button"> --}}
                                         <a href="{{ route('admin.users') }}">
                                             <div class="icon"><i class="icon-users"></i></div>
-                                            <div class="icon"><i class="icon-users"></i></div>
+                                           
                                             <div class="text">Users</div>
                                         </a>
                                     </li>
