@@ -15,6 +15,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\SocialAuthController;
+use App\Http\Controllers\DataPrivacyController;
 use App\Http\Controllers\AccountSetupController;
 use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\NotificationController;
@@ -61,6 +62,8 @@ Route::post('/contact-us', [HomeController::class, 'contact_store'])->name('home
 
 Route::get('/search', [HomeController::class, 'search'])->name('home.search');
 
+
+
 Route::middleware(['auth', 'verified', AuthUser::class])->group(function () {
     Route::get('/account-dashboard', [UserController::class, 'index'])->name('user.index');
     Route::get('/account-order', [UserController::class, 'orders'])->name('user.orders');
@@ -69,6 +72,9 @@ Route::middleware(['auth', 'verified', AuthUser::class])->group(function () {
     Route::post('/canceled-order/{orderId}/rebook', [UserController::class, 'rebook_canceled_order'])->name('user.order.rebook');
     Route::get('/account-order/{order_id}/details', [UserController::class, 'order_details'])->name('user.order.details');
     Route::put('/account-order/cancel-order', [UserController::class, 'order_cancel'])->name('user.order.cancel');
+
+    Route::get('/data-privacy-notice', [DataPrivacyController::class, 'showDataPrivacyNotice'])->name('data-privacy.notice');
+    Route::get('/data-privacy-notice/accept', [DataPrivacyController::class, 'accept'])->name('data-privacy.accept');
 
 
     Route::get('/checkout', [CartController::class, 'checkout'])->name('cart.checkout');

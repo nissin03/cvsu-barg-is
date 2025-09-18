@@ -306,16 +306,16 @@
             max-height: 400px;
         }
 
-        /*
         .unread-indicator {
             width: 8px;
             height: 8px;
             background-color: #30d683;
+            /* background-color: #007bff; */
             border-radius: 50%;
             margin-left: auto;
             margin-right: 8px;
             flex-shrink: 0;
-        } */
+        }
 
         .dropdown-footer {
             padding: 0;
@@ -429,8 +429,6 @@
             left: auto;
         }
     </style>
-
-
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white py-4 fixed-top">
         <div class="container position-relative">

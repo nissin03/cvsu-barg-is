@@ -52,6 +52,16 @@ class User extends Authenticatable
         ];
     }
 
+    public function getEmailForVerification()
+    {
+        return strtolower($this->email);
+    }
+
+    public function setEmailAttribute($value)
+    {
+        $this->attributes['email'] = strtolower($value);
+    }
+
     public function orders()
     {
         return $this->hasMany(Order::class);

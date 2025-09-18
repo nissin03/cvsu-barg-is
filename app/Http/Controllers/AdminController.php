@@ -53,13 +53,15 @@ class AdminController extends Controller
     {
         $currentYear = Carbon::now()->year;
         $yearRange = range($currentYear, $currentYear - 10);
-
-        // Get low stock products
         $products = $this->getLowStockProducts();
         $dashboardData = [$this->getDashboardSummary($currentYear)];
 
-        // Get recent orders
-        $orders = Order::orderBy('created_at', 'DESC')->take(10)->get();
+        $orders = Order::with(
+            'user.course.college'
+        )
+            ->latest()
+            ->take(10)
+            ->get();
 
         $pageTitle = 'Admin Dashboard';
 
@@ -806,8 +808,14 @@ class AdminController extends Controller
 
         if ($product->stock_status === 'instock' && $previousStockStatus !== 'instock') {
             $users = User::where('utype', 'USR')->get();
-            Notification::send($users, new StockUpdate($product, "Good news! The product {$product->name} is now back in stock."));
+
+            foreach ($users as $user) {
+                $user->notify(
+                    new StockUpdate($product, "Good news! The product {$product->name} is now back in stock.")
+                );
+            }
         }
+
         return redirect()->route('admin.products')->with('status', 'Product has been updated successfully!');
     }
 
