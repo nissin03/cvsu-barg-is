@@ -105,14 +105,19 @@
             align-items: center;
             padding: 15px;
             border-bottom: 1px solid #f0f0f0;
+            flex-shrink: 0;
+            background-color: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
+
 
         .notification-heading {
             margin: 0;
             font-size: 18px;
         }
 
-        /* Add this to your CSS file */
         .notification-item.read {
             background-color: #f8f9fa;
             opacity: 0.8;
@@ -121,6 +126,7 @@
         .notification-item.read .notification-text {
             font-weight: normal !important;
         }
+
 
         .mark-read {
             background: none;
@@ -141,22 +147,24 @@
 
         .remove-notification {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 8px;
+            right: 8px;
             width: 20px;
             height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            opacity: 0.7;
+            opacity: 0.5;
             transition: all 0.2s ease;
             z-index: 10;
+            border-radius: 50%;
         }
 
         .remove-notification:hover {
             opacity: 1;
             color: #dc3545;
+            background-color: rgba(220, 53, 69, 0.1);
         }
 
         .notification-actions {
@@ -164,24 +172,45 @@
             gap: 15px;
         }
 
+        .mark-read,
         .remove-all {
             background: none;
             border: none;
-            color: #dc3545;
             font-weight: 600;
             font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
         }
 
-        .remove-notification i {
-            font-size: 14px;
+        .mark-read {
+            color: #30d683;
+        }
+
+        .remove-all {
+            color: #dc3545;
+        }
+
+        .mark-read:hover,
+        .remove-all:hover {
+            opacity: 0.8;
         }
 
         .notification-item {
             padding: 12px 15px;
             border-bottom: 1px solid #f0f0f0;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             position: relative;
+            min-height: 60px;
+            transition: background-color 0.2s ease;
+        }
+
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
         }
 
         .notification-avatar {
@@ -199,71 +228,102 @@
         }
 
         .badge-icon {
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
-            margin-right: 15px;
+            margin-right: 12px;
             display: flex;
             justify-content: center;
             align-items: center;
             background-color: #e9ecef;
+            flex-shrink: 0;
         }
 
         .notification-content {
             flex: 1;
+            min-width: 0;
+            padding-right: 25px;
         }
 
         .notification-text {
-            margin: 0;
+            margin: 0 0 4px 0;
             font-size: 14px;
+            line-height: 1.3;
+            word-wrap: break-word;
         }
 
         .notification-subtext {
             margin: 0;
             font-size: 12px;
             color: #6c757d;
+            line-height: 1.3;
+            display: flex;
+            align-items: center;
+            word-wrap: break-word;
         }
 
+
         /* Add these new styles to your existing CSS */
-        .notification-list-container {
+        /* .notification-list-container {
             max-height: 300px;
             overflow-y: auto;
             transition: max-height 0.3s ease;
             scrollbar-width: thin;
+        } */
+
+        #notification-list,
+        #all-notification-list {
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            scrollbar-width: thin;
+            scrollbar-color: #888 #f1f1f1;
         }
 
-        .notification-list-container::-webkit-scrollbar {
-            width: 6px;
-        }
 
-        .notification-list-container::-webkit-scrollbar-track {
+        .notification-list-container::-webkit-scrollbar-track,
+        #notification-list::-webkit-scrollbar-track,
+        #all-notification-list::-webkit-scrollbar-track {
             background: #f1f1f1;
+            border-radius: 3px;
         }
 
-        .notification-list-container::-webkit-scrollbar-thumb {
+        .notification-list-container::-webkit-scrollbar-thumb,
+        #notification-list::-webkit-scrollbar-thumb,
+        #all-notification-list::-webkit-scrollbar-thumb {
             background: #888;
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
-        .notification-list-container::-webkit-scrollbar-thumb:hover {
+        .notification-list-container::-webkit-scrollbar-thumb:hover,
+        #notification-list::-webkit-scrollbar-thumb:hover,
+        #all-notification-list::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
 
         .all-notifications {
             max-height: 400px;
-            /* Taller container for all notifications */
         }
 
+        /*
         .unread-indicator {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             background-color: #30d683;
             border-radius: 50%;
-            margin-left: 10px;
-        }
+            margin-left: auto;
+            margin-right: 8px;
+            flex-shrink: 0;
+        } */
 
         .dropdown-footer {
             padding: 0;
+            flex-shrink: 0;
+            background-color: #fff;
+            position: sticky;
+            bottom: 0;
+            border-top: 1px solid #f0f0f0;
         }
 
         .dropdown-footer button {
@@ -274,6 +334,11 @@
             color: #212529;
             font-weight: 600;
             border-radius: 0 0 10px 10px;
+            transition: background-color 0.2s ease;
+        }
+
+        .dropdown-footer button:hover {
+            background-color: #e9ecef;
         }
 
         /* Notification bell specific styles */
@@ -349,11 +414,14 @@
             left: auto;
             z-index: 1000;
             display: none;
+            max-height: 80vh;
+            overflow: hidden;
+            flex-direction: column;
             background-color: #fff;
         }
 
         .dropdown-menu.show {
-            display: block;
+            display: flex !important;
         }
 
         .dropdown-menu-end {
