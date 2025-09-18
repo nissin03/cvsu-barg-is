@@ -98,6 +98,7 @@
                         <tr>
                             <th class="border-0 fw-semibold text-gray-700 py-3 px-4">User</th>
                             <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Facility</th>
+                            <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Reservation Dates</th>
                             <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">Status</th>
                             <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Total Amount</th>
                             <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Actions</th>
@@ -118,6 +119,16 @@
                             </td>
                             <td class="py-4 px-4">
                                 <div class="fw-medium text-gray-800">{{ $payment->availability->facility->name }}</div>
+                            </td>
+                            <td class="py-4 px-4">
+                                @if($payment->date_from && $payment->date_to)
+                                    <div class="fw-medium text-gray-700">
+                                        {{ \Carbon\Carbon::parse($payment->date_from)->format('M d, Y') }} - 
+                                        {{ \Carbon\Carbon::parse($payment->date_to)->format('M d, Y') }}
+                                    </div>
+                                @else
+                                    <div class="text-muted small">No dates specified</div>
+                                @endif
                             </td>
                             <td class="py-4 px-4 text-center">
                                 @php
@@ -154,7 +165,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center py-5">
+                            <td colspan="6" class="text-center py-5">
                                 <div class="d-flex flex-column align-items-center">
                                     <div class="bg-gray-100 rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
                                         <i class="fas fa-file-alt text-gray-400" style="font-size: 1.5rem;"></i>
@@ -172,7 +183,7 @@
     </div>
 </div>
 
-<!-- Modal remains the same -->
+<!-- Modal -->
 <div class="modal fade" id="paymentDetailsModal" tabindex="-1" aria-labelledby="paymentDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg-responsive">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">

@@ -498,6 +498,17 @@
         background-color: #9ca3af;
         cursor: not-allowed;
     }
+  
+    .disabled-date {
+        background-color: #f8f9fa !important;
+        color: #6c757d !important;
+        cursor: not-allowed !important;
+    }
+    
+    .disabled-date:hover {
+        background-color: #f8f9fa !important;
+    }
+   
 
     /* Responsive Design */
     @media (max-width: 1200px) {

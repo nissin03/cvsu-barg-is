@@ -114,6 +114,17 @@
             background-color: #dc3545;
             color: #fff;
         }
+            .prepared-by {
+      margin-top: 40px;
+      text-align: right;
+      width: 100%;
+    }
+    .signature-line {
+      border-top: 1px solid #000;
+      width: 250px;
+      /* margin-top: 40px; */
+      margin-left: auto;
+    }
     </style>
 </head>
 <body>
@@ -143,7 +154,7 @@
     </div>
     <!-- End Header Section -->
 
-    <h2>Inventory Report of Marketing Center</h2>
+    <h2>INVENTORY REPORT OF BUSINESS AFFAIRS AND MARKETING OFFICE</h2>
     <p>
         Downloaded on: {{ \Carbon\Carbon::now()->setTimezone('Asia/Manila')->format('F j, Y, g:i a') }}<br>
         @if(isset($statusLabel))
@@ -215,5 +226,12 @@
             @endforeach
         </tbody>
     </table>
+        <div class="prepared-by">
+    <div>Prepared by:</div>
+    <div class="signature-line"></div>
+    <div>{{ Auth::user()->name }}</div>
+    <div>{{ Auth::user()->role ? ucfirst(Auth::user()->role) : 'Administrator' }}</div>
+    <div>Business Affairs and Marketing Office</div>
+    <div>Cavite State University</div>
 </body>
 </html>

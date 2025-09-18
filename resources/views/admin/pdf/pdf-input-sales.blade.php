@@ -101,6 +101,17 @@
             font-weight: bold;
             background-color: #f4f4f4;
         }
+            .prepared-by {
+      margin-top: 40px;
+      text-align: right;
+      width: 100%;
+    }
+    .signature-line {
+      border-top: 1px solid #000;
+      width: 250px;
+      /* margin-top: 40px; */
+      margin-left: auto;
+    }
     </style>
 </head>
 <body>
@@ -131,7 +142,7 @@
         </div>
    
         
-        <h2>Sales Report</h2>
+        <h2>SALES REPORT OF BUSINESS AFFAIRS AND MARKETING OFFICE</h2>
         <p>
             <strong>Period:</strong> {{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}
         </p>
@@ -169,6 +180,14 @@
                 </tr>
             </tbody>
         </table>
+
+        <div class="prepared-by">
+        <div>Prepared by:</div>
+        <div class="signature-line"></div>
+        <div>{{ Auth::user()->name }}</div>
+        <div>{{ Auth::user()->role ? ucfirst(Auth::user()->role) : 'Administrator' }}</div>
+        <div>Business Affairs and Marketing Office</div>
+        <div>Cavite State University</div>
     </div>
 </body>
 </html>

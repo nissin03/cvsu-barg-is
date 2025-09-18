@@ -1,12 +1,10 @@
 @extends('layouts.app')
 @section('content')
 
-
 @php
     $user = auth()->user();
     $currentRoute = request()->route()->getName();
 
-    // Determine the base home route based on user type
     $homeRoute = match ($user->utype ?? 'guest') {
         'USR' => route('user.index'),
         'DIR' => route('director.index'),
@@ -14,10 +12,8 @@
         default => route('home.index'),
     };
 
-    // Initialize breadcrumbs array with the Home link
     $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
 
-    // Breadcrumbs logic
     $routesWithBreadcrumbs = [
         'facilities.index' => ['Rentals'],
         'facilities.details' => ['Rentals', 'Rental Details'],
@@ -39,26 +35,21 @@
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
 
-
     <main class="container my-5">
         <section class="facilities-single container">
             <div class="row">
-                <!-- Facility Gallery -->
                 <div class="col-lg-7">
                     <div class="facility-gallery">
                         <div class="gallery-wrapper">
-                            <!-- Thumbnails -->
                             <div class="thumbnails">
                                 <div class="swiper-container thumbnail-swiper">
                                     <div class="swiper-wrapper">
-                                        <!-- Main Image Thumbnail -->
                                         <div class="swiper-slide">
                                             <img loading="lazy" class="thumbnail-img"
                                                 src="{{ asset('storage/' . $facility->image) }}" alt="{{ $facility->name }}"
                                                 height="204">
                                         </div>
 
-                                        <!-- Loop through gallery images for thumbnails -->
                                         @foreach (explode(',', $facility->images) as $gimg)
                                             <div class="swiper-slide">
                                                 <img loading="lazy" class="thumbnail-img"
@@ -69,43 +60,95 @@
                                 </div>
                             </div>
 
-                            <!-- Main Image -->
                             <div class="main-image">
                                 <div class="swiper-container main-swiper">
                                     <div class="swiper-wrapper">
-                                        <!-- Main Image -->
                                         <div class="swiper-slide">
-                                            <img loading="lazy" class="h-auto main-img"
+                                            <img loading="lazy" class="h-auto main-img image-clickable"
                                                 src="{{ asset('storage/' . $facility->image) }}"
-                                                alt="{{ $facility->name }}">
+                                                alt="{{ $facility->name }}"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#imageModal"
+                                                data-image-src="{{ asset('storage/' . $facility->image) }}"
+                                                data-image-alt="{{ $facility->name }}"
+                                                style="cursor: pointer;">
                                             <a data-fancybox="gallery" href="{{ asset('storage/' . $facility->image) }}"
                                                 data-bs-toggle="tooltip" data-bs-placement="left"
-                                                title="{{ $facility->name }}"></a>
+                                                title="{{ $facility->name }}" style="display: none;"></a>
                                         </div>
 
-                                        <!-- Loop through gallery images for main images -->
                                         @foreach (explode(',', $facility->images) as $gimg)
                                             <div class="swiper-slide">
-                                                <img loading="lazy" class="h-auto main-img"
+                                                <img loading="lazy" class="h-auto main-img image-clickable"
                                                     src="{{ asset('storage/' . trim($gimg)) }}"
-                                                    alt="{{ $facility->name }}">
+                                                    alt="{{ $facility->name }}"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#imageModal"
+                                                    data-image-src="{{ asset('storage/' . trim($gimg)) }}"
+                                                    data-image-alt="{{ $facility->name }}"
+                                                    style="cursor: pointer;">
                                                 <a data-fancybox="gallery" href="{{ asset('storage/' . trim($gimg)) }}"
                                                     data-bs-toggle="tooltip" data-bs-placement="left"
-                                                    title="{{ $facility->name }}"></a>
+                                                    title="{{ $facility->name }}" style="display: none;"></a>
                                             </div>
                                         @endforeach
                                     </div>
 
-                                    <!-- Navigation buttons -->
                                     <div class="swiper-button-prev"></div>
                                     <div class="swiper-button-next"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    @php
+                        $refundableAddons = $facility->addons->filter(function($addon) {
+                            return $addon->price_type === 'flat_rate' && 
+                                   $addon->is_refundable == 1 && 
+                                   $addon->show === 'both' && 
+                                   $addon->is_available == 1;
+                        });
+                    @endphp
+
+                    @if($refundableAddons && $refundableAddons->count() > 0)
+                        <div class="addons-section mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="addons-title mb-0 fw-semibold" style="font-size: 1.4rem;">
+                                    <i class="fas fa-plus-circle me-2" style="color: #1864ab; font-size: 1.2rem;"></i>
+                                    Refundable Fee
+                                </h4>
+                                <span class="badge rounded-pill px-3 py-1" style="background-color: #0aa130; font-size: 0.9rem;">
+                                    {{ $refundableAddons->count() }} available
+                                </span>
+                            </div>
+
+                            <div class="addons-list">
+                                @foreach($refundableAddons as $addon)
+                                    <div class="addon-item border rounded-3 p-3 mb-3 bg-white shadow-sm">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="addon-info flex-grow-1">
+                                                <h6 class="addon-name mb-1 fw-bold" style="font-size: 1.1rem;">{{ $addon->name }}</h6>
+                                                <div class="addon-price text-success mb-2" style="font-size: 1.3rem; font-weight: 600;">
+                                                    ₱{{ number_format($addon->base_price, 2) }}
+                                                </div>
+                                                <button class="btn btn-sm"
+                                                        style="background-color: #3b82f6; color: white; border-color: #3b82f6; font-size: 0.9rem; padding: 6px 12px;"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#addonDescModal" 
+                                                        data-addon-name="{{ $addon->name }}" 
+                                                        data-addon-description="{{ $addon->description }}">
+                                                    <i class="fas fa-info-circle me-1"></i>View Description
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
                 </div>
 
-                <!-- Rental Info -->
                 <div class="col-lg-5">
                     @if (Session::has('status'))
                         <p class="alert alert-success">{{ Session::get('status') }}</p>
@@ -146,17 +189,16 @@
                         @include('components.facility_both_building')
                     @endif
 
-                       {{-- must be disabled for validation--}}
                          <button type="submit" class="btn btn-shop btn-addtocart" id="reserve-btn"
                             style="padding: 15px 30px; font-size: 18px">
                             Reserve
                         </button>
                     </form>
                 </div>
+            </div>
         </section>
 
        <div class="rental-single__details-tab mt-5">
-            <!-- Tabs Navigation -->
             <ul class="nav nav-tabs nav-justified border-0 mb-4" id="myTab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <a class="nav-link text-dark fw-medium px-4 py-3 rounded-top active" 
@@ -174,19 +216,15 @@
                 </li>
             </ul>
 
-            <!-- Tab Content -->
             <div class="tab-content bg-white rounded-3 shadow-sm p-4">
-                <!-- Description Tab -->
                 <div class="tab-pane fade show active" id="tab-description" role="tabpanel" aria-labelledby="tab-description-tab">
                     <div class="rental-single__description text-gray-700 lh-lg">
                         {{ $facility->description }}
                     </div>
                 </div>
 
-                <!-- Rules Tab -->
                 <div class="tab-pane fade" id="tab-rules" role="tabpanel" aria-labelledby="tab-rules-tab">
                     <div class="rental-single__rules mb-4">
-                        <!-- Rules Header (Collapsible) -->
                         <div class="rules-header cursor-pointer" data-bs-toggle="collapse" data-bs-target="#rules-content" aria-expanded="false">
                             <div class="d-flex justify-content-between align-items-center p-4 bg-light rounded-3 shadow-sm">
                                 <h5 class="mb-0 d-flex align-items-center text-primary">
@@ -200,7 +238,6 @@
                             </div>
                         </div>
 
-                        <!-- Rules Content (Collapsible) -->
                         <div class="collapse" id="rules-content">
                             <div class="rules-container bg-white p-0 mt-3">
                                 <div class="rules-content">
@@ -236,30 +273,150 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Agreement Checkbox -->
-                   {{-- <div class="form-check mt-4 ms-4 ps-0">
-                        <div class="border-top pt-4">
-                            <input class="form-check-input me-2" type="checkbox" id="agreeToRules" required>
-                            <label class="form-check-label text-gray-700" for="agreeToRules">
-                                I agree to the <a href="#tab-rules" data-bs-toggle="collapse" 
-                                data-bs-target="#rules-content" class="text-primary fw-medium">Rules and Regulations</a>
-                            </label>
-                            <div class="invalid-feedback text-danger mt-2">
-                                <i class="fas fa-exclamation-circle me-2"></i>You must agree to the rules and regulations before proceeding.
-                            </div>
-                        </div>
-                    </div> --}}
                 </div>
             </div>
         </div>
     </main>
+
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white" id="imageModalLabel">
+                        <i class="fas fa-image me-2"></i>
+                        <span id="imageModalTitle">{{ $facility->name }}</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body d-flex align-items-center justify-content-center p-0">
+                    <div class="position-relative w-100 h-100 d-flex align-items-center justify-content-center">
+                        <img id="modalImage" src="" alt="" class="img-fluid" style="max-height: 90vh; max-width: 100%; object-fit: contain;">
+                        
+                        <button type="button" id="modalPrevBtn" class="btn btn-light position-absolute start-0 top-50 translate-middle-y ms-3 rounded-circle" style="width: 50px; height: 50px; opacity: 0.8;">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button type="button" id="modalNextBtn" class="btn btn-light position-absolute end-0 top-50 translate-middle-y me-3 rounded-circle" style="width: 50px; height: 50px; opacity: 0.8;">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <div class="text-white-50 small">
+                        <span id="imageCounter">1 of 1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addonDescModal" tabindex="-1" aria-labelledby="addonDescModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-white" style="background-color: #1864ab;">
+                    <h5 class="modal-title" id="addonDescModalLabel">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <span id="addonModalName">Add-on Details</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="addon-description-content">
+                        <p id="addonModalDescription" class="text-gray-700 lh-lg mb-0"></p>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background-color: #f8f9fa;">
+                    <button type="button" class="btn" style="background-color: #3b82f6; color: white; border-color: #3b82f6;" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <hr class="mt-5 text-secondary" />
 @endsection
+
 
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const addonDescModal = document.getElementById('addonDescModal');
+            
+            addonDescModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const addonName = button.getAttribute('data-addon-name');
+                const addonDescription = button.getAttribute('data-addon-description');
+                
+                document.getElementById('addonModalName').textContent = addonName;
+                document.getElementById('addonModalDescription').textContent = addonDescription;
+            });
+
+            const imageModal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            const imageModalTitle = document.getElementById('imageModalTitle');
+            const imageCounter = document.getElementById('imageCounter');
+            const modalPrevBtn = document.getElementById('modalPrevBtn');
+            const modalNextBtn = document.getElementById('modalNextBtn');
+            
+            let allImages = [];
+            let currentImageIndex = 0;
+            
+            const mainImage = "{{ asset('storage/' . $facility->image) }}";
+            allImages.push({
+                src: mainImage,
+                alt: "{{ $facility->name }}"
+            });
+            
+            @foreach (explode(',', $facility->images) as $gimg)
+                allImages.push({
+                    src: "{{ asset('storage/' . trim($gimg)) }}",
+                    alt: "{{ $facility->name }}"
+                });
+            @endforeach
+            
+            function updateModalImage(index) {
+                if (allImages[index]) {
+                    modalImage.src = allImages[index].src;
+                    modalImage.alt = allImages[index].alt;
+                    imageCounter.textContent = `${index + 1} of ${allImages.length}`;
+                    currentImageIndex = index;
+                    
+                    modalPrevBtn.style.display = allImages.length > 1 ? 'block' : 'none';
+                    modalNextBtn.style.display = allImages.length > 1 ? 'block' : 'none';
+                }
+            }
+            
+            function showPrevImage() {
+                const newIndex = currentImageIndex > 0 ? currentImageIndex - 1 : allImages.length - 1;
+                updateModalImage(newIndex);
+            }
+            
+            function showNextImage() {
+                const newIndex = currentImageIndex < allImages.length - 1 ? currentImageIndex + 1 : 0;
+                updateModalImage(newIndex);
+            }
+            
+            imageModal.addEventListener('show.bs.modal', function(event) {
+                const trigger = event.relatedTarget;
+                const imageSrc = trigger.getAttribute('data-image-src');
+                const imageAlt = trigger.getAttribute('data-image-alt');
+                
+                const clickedIndex = allImages.findIndex(img => img.src === imageSrc);
+                updateModalImage(clickedIndex >= 0 ? clickedIndex : 0);
+            });
+            
+            modalPrevBtn.addEventListener('click', showPrevImage);
+            modalNextBtn.addEventListener('click', showNextImage);
+            
+            imageModal.addEventListener('keydown', function(event) {
+                if (event.key === 'ArrowLeft') {
+                    event.preventDefault();
+                    showPrevImage();
+                } else if (event.key === 'ArrowRight') {
+                    event.preventDefault();
+                    showNextImage();
+                }
+            });
+
+   
             const mainSwiper = new Swiper('.main-swiper', {
                 navigation: {
                     nextEl: '.swiper-button-next',
@@ -302,373 +459,9 @@
         });
     </script>
 
-@if ($facility->facility_type === 'whole_place')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var dateFromInput = document.getElementById('date_from');
-            var dateToInput = document.getElementById('date_to');
-            var timeStartSelect = document.getElementById('time_start');
-            var timeEndSelect = document.getElementById('time_end');
-            var clientTypeDropdown = document.getElementById('client_type');
-            var totalPriceElement = document.getElementById('total-price').querySelector('span');
-            
-            var hasDayBasedPricing = @json($facility->prices->contains('is_based_on_days', true));
-            var userType = @json(auth()->user()->utype ?? 'USR');
-            
-            var availabilities = @json($facility->availabilities ?? []);
-            var facilityCapacity = @json($wholeAttr->whole_capacity ?? 0);
-
-            var today = new Date();
-            var tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 7);
-            var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
-
-            function getMaxDate() {
-                if (userType === 'ADM') return null;
-                var maxDate = new Date();
-                maxDate.setMonth(maxDate.getMonth() + 3);
-                return maxDate.toISOString().split('T')[0];
-            }
-
-            function isDateFullyBooked(dateStr) {
-                if (!availabilities || availabilities.length === 0) return false;
-                
-                const checkDate = new Date(dateStr);
-                let totalBookedCapacity = 0;
-                let hasMatchingAvailability = false;
-                
-                availabilities.forEach(function(availability) {
-                    const availFromDate = new Date(availability.date_from);
-                    const availToDate = new Date(availability.date_to);
-                    
-                    if (checkDate >= availFromDate && checkDate <= availToDate) {
-                        hasMatchingAvailability = true;
-                        
-                        if (availability.remaining_capacity <= 0) {
-                            totalBookedCapacity = facilityCapacity;
-                            return;
-                        }
-                        
-                        const bookedCapacity = facilityCapacity - availability.remaining_capacity;
-                        totalBookedCapacity += bookedCapacity;
-                    }
-                });
-                
-                return hasMatchingAvailability && (totalBookedCapacity >= facilityCapacity);
-            }
-
-            function getReservedDates() {
-                if (!availabilities || availabilities.length === 0) return [];
-                
-                const reservedDates = [];
-                
-                availabilities.forEach(function(availability) {
-                    if (availability.remaining_capacity <= 0) {
-                        const startDate = new Date(availability.date_from);
-                        const endDate = new Date(availability.date_to);
-                        
-                        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                            const dateStr = d.toISOString().split('T')[0];
-                            if (!reservedDates.includes(dateStr)) {
-                                reservedDates.push(dateStr);
-                            }
-                        }
-                    }
-                });
-                
-                return reservedDates;
-            }
-
-            function formatTimeTo12Hour(time) {
-                var hour = parseInt(time.split(':')[0]);
-                var minutes = time.split(':')[1];
-                var ampm = hour >= 12 ? 'PM' : 'AM';
-                var displayHour = hour % 12;
-                if (displayHour === 0) displayHour = 12;
-                return displayHour + ':' + minutes + ' ' + ampm;
-            }
-
-            function updateEndTimeOptions() {
-                var startTime = timeStartSelect.value;
-                if (!startTime) return;
-                
-                timeEndSelect.innerHTML = '';
-                
-                var startHour = parseInt(startTime.split(':')[0]);
-                var maxHour = Math.min(startHour + 8, 22);
-                
-                for (var hour = startHour + 1; hour <= maxHour; hour++) {
-                    var option = document.createElement('option');
-                    var value = (hour === 24 ? '00' : String(hour).padStart(2, '0')) + ':00';
-                    var displayHour = hour > 12 ? hour - 12 : hour;
-                    if (hour === 12) displayHour = 12;
-                    if (hour === 0) displayHour = 12;
-                    var ampm = hour >= 12 ? 'PM' : 'AM';
-                    option.value = value;
-                    option.textContent = displayHour + ':00 ' + ampm;
-                    timeEndSelect.appendChild(option);
-                }
-                
-                timeEndSelect.disabled = false;
-            }
-
-            if (!hasDayBasedPricing) {
-                const calendarEl = document.getElementById('calendar');
-                if (calendarEl) {
-                    let selectedDates = [];
-                    let startDate = null;
-                    let endDate = null;
-                    
-                    const calendarOptions = {
-                        initialView: 'dayGridMonth',
-                        headerToolbar: {
-                            left: 'prev,next today',
-                            center: 'title',
-                            right: 'dayGridMonth'
-                        },
-                        selectable: true,
-                        selectMirror: true,
-                        dayMaxEvents: false,
-                        weekends: true,
-                        validRange: { start: tomorrowFormatted },
-                        
-                        dateClick: function(info) {
-                            const clickedDate = info.dateStr;
-                            const dateEl = info.dayEl;
-                            
-                            if (isDateFullyBooked(clickedDate)) {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Unavailable',
-                                    text: 'This date is fully reserved and unavailable for booking.'
-                                });
-                                return;
-                            }
-                            
-                            if (typeof calendar.clickCount === 'undefined') {
-                                calendar.clickCount = 0;
-                            }
-                            calendar.clickCount++;
-                            
-                            if (calendar.clickCount % 2 === 1) {
-                                startDate = clickedDate;
-                                selectedDates = [clickedDate];
-                                endDate = null;
-                            } else {
-                                if (startDate) {
-                                    const start = new Date(startDate);
-                                    const end = new Date(clickedDate);
-                                    
-                                    if (end >= start) {
-                                        const dateRange = getDatesInRange(startDate, clickedDate);
-                                        const hasReservedDate = dateRange.some(date => isDateFullyBooked(date));
-                                        
-                                        if (hasReservedDate) {
-                                            Swal.fire({
-                                                icon: 'error',
-                                                title: 'Unavailable',
-                                                text: 'One or more dates in your selected range are reserved.'
-                                            });
-                                            calendar.clickCount--;
-                                            return;
-                                        }
-                                        
-                                        endDate = clickedDate;
-                                        selectedDates = dateRange;
-                                    } else {
-                                        startDate = clickedDate;
-                                        selectedDates = [clickedDate];
-                                        endDate = null;
-                                        calendar.clickCount = 1;
-                                    }
-                                } else {
-                                    startDate = clickedDate;
-                                    selectedDates = [clickedDate];
-                                    endDate = null;
-                                    calendar.clickCount = 1;
-                                }
-                            }
-                            
-                            updateInputs();
-                            updateDateDisplay();
-                            updateTotalPrice();
-                            highlightDates();
-                        },
-                        
-                        dayCellClassNames: function(info) {
-                            let classes = [];
-                            
-                            if (isDateFullyBooked(info.dateStr)) {
-                                classes.push('fully-booked-date');
-                            }
-                            
-                            if (selectedDates.includes(info.dateStr) && !isDateFullyBooked(info.dateStr)) {
-                                if (info.dateStr === startDate) {
-                                    classes.push('selected-start-date');
-                                } else if (info.dateStr === endDate) {
-                                    classes.push('selected-end-date');
-                                } else {
-                                    classes.push('selected-range-date');
-                                }
-                            }
-                            
-                            return classes;
-                        },
-                        
-                        events: function(fetchInfo, successCallback, failureCallback) {
-                            const reservedDates = getReservedDates();
-                            const events = reservedDates.map(date => ({
-                                id: `reserved-${date}`,
-                                title: 'booked',
-                                start: date,
-                                allDay: true,
-                                backgroundColor: 'transparent',
-                                borderColor: '#bd2130',
-                                textColor: 'white',
-                                classNames: ['fully-booked-event'],
-                                display: 'block'
-                            }));
-                            
-                            successCallback(events);
-                        }
-                    };
-
-                    if (userType === 'USR') {
-                        calendarOptions.validRange.end = getMaxDate();
-                    }
-
-                    const calendar = new FullCalendar.Calendar(calendarEl, calendarOptions);
-                    calendar.render();
-                    
-                    function getDatesInRange(start, end) {
-                        const dates = [];
-                        const startDate = new Date(start);
-                        const endDate = new Date(end);
-                        
-                        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                            dates.push(d.toISOString().split('T')[0]);
-                        }
-                        
-                        return dates;
-                    }
-                    
-                    function updateDateDisplay() {
-                        const startDisplay = document.getElementById('start-date-display');
-                        const endDisplay = document.getElementById('end-date-display');
-                        const modalStart = document.getElementById('modal-start-date');
-                        const modalEnd = document.getElementById('modal-end-date');
-                        
-                        if (startDate) {
-                            const formattedStart = new Date(startDate).toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            });
-                            startDisplay.textContent = formattedStart;
-                            modalStart.textContent = formattedStart;
-                        } else {
-                            startDisplay.textContent = 'Click on calendar to select';
-                            modalStart.textContent = 'Not selected';
-                        }
-                        
-                        if (endDate) {
-                            const formattedEnd = new Date(endDate).toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            });
-                            endDisplay.textContent = formattedEnd;
-                            modalEnd.textContent = formattedEnd;
-                        } else {
-                            endDisplay.textContent = 'Click on calendar to select';
-                            modalEnd.textContent = 'Not selected';
-                        }
-                    }
-                    
-                    function updateInputs() {
-                        dateFromInput.value = startDate || '';
-                        dateToInput.value = endDate || '';
-                    }
-                    
-                    function highlightDates() {
-                        calendar.render();
-                    }
-
-                    document.getElementById('calendarModal').addEventListener('shown.bs.modal', function () {
-                        calendar.updateSize();
-                    });
-                }
-            }
-
-            function updateTotalPrice() {
-                var ctVal = clientTypeDropdown.value;
-                var total = 0;
-                
-                if (hasDayBasedPricing) {
-                    if (ctVal) {
-                        total = parseFloat(ctVal);
-                        totalPriceElement.textContent = '₱' + total.toLocaleString('en-PH', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        });
-                    } else {
-                        totalPriceElement.textContent = '₱0.00';
-                    }
-                } else {
-                    var f = dateFromInput.value;
-                    var t = dateToInput.value;
-
-                    if (ctVal && f && t) {
-                        var fromDate = new Date(f),
-                            toDate = new Date(t),
-                            diffMs = toDate - fromDate,
-                            daysDiff = Math.floor(diffMs / (1000*60*60*24)) + 1;
-                        
-                        if (daysDiff > 0) {
-                            total = daysDiff * parseFloat(ctVal);
-                            totalPriceElement.textContent = '₱' + total.toLocaleString('en-PH', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            });
-                        } else {
-                            totalPriceElement.textContent = '₱0.00';
-                        }
-                    } else {
-                        totalPriceElement.textContent = '₱0.00';
-                    }
-                }
-                
-                document.getElementById('total_price_input').value = total.toFixed(2);
-            }
-
-            timeStartSelect.addEventListener('change', function() {
-                updateEndTimeOptions();
-                updateTotalPrice();
-            });
-            
-            timeEndSelect.addEventListener('change', updateTotalPrice);
-            clientTypeDropdown.addEventListener('change', updateTotalPrice);
-            
-            if (!hasDayBasedPricing) {
-                dateFromInput.addEventListener('change', updateTotalPrice);
-                dateToInput.addEventListener('change', updateTotalPrice);
-            }
-            
-            updateEndTimeOptions();
-        });
-
-        document.getElementById('client_type').addEventListener('change', function() {
-            var selectedPrice = this.value;  
-            document.getElementById('selected_price').value = selectedPrice;  
-            updateTotalPrice();  
-        });
-    </script>
-@endif
 
 
-@if ($facility->facility_type === 'both' && $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty())
+{{-- @if ($facility->facility_type === 'both' && $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty())
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var dateFromInput = document.getElementById('date_from');
@@ -1363,7 +1156,851 @@
         updateTotalPrice();
     });
 </script>
-@endif
+@endif --}}
+
+{{-- New for both building withs addons --}}
+{{-- @if ($facility->facility_type === 'both' && $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty())
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var dateFromInput = document.getElementById('date_from');
+    var dateToInput = document.getElementById('date_to');
+    var wholeDateFromInput = document.getElementById('whole_date_from');
+    var wholeDateToInput = document.getElementById('whole_date_to');
+    var sharedDateFromInput = document.getElementById('date_from');
+    var sharedDateToInput = document.getElementById('date_to');
+    var wholeTimeStartInput = document.getElementById('whole_time_start');
+    var wholeTimeEndInput = document.getElementById('whole_time_end');
+    var wholeClientTypeDropdown = document.getElementById('whole_client_type');
+
+    var today = new Date();
+    var tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 7);
+    var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
+    
+    var userType = @json(auth()->user()->utype);
+    var maxDate = null;
+    var maxDateFormatted = null;
+    
+    if (userType === 'USR') {
+        maxDate = new Date(today);
+        maxDate.setMonth(maxDate.getMonth() + 3);
+        maxDateFormatted = maxDate.toISOString().split('T')[0];
+    }
+    
+    if (dateFromInput) {
+        dateFromInput.min = tomorrowFormatted;
+        if (maxDateFormatted) dateFromInput.max = maxDateFormatted;
+    }
+    if (dateToInput) {
+        dateToInput.min = tomorrowFormatted;
+        if (maxDateFormatted) dateToInput.max = maxDateFormatted;
+    }
+    if (wholeDateFromInput) {
+        wholeDateFromInput.min = tomorrowFormatted;
+        if (maxDateFormatted) wholeDateFromInput.max = maxDateFormatted;
+    }
+    if (wholeDateToInput) {
+        wholeDateToInput.min = tomorrowFormatted;
+        if (maxDateFormatted) wholeDateToInput.max = maxDateFormatted;
+    }
+    if (sharedDateFromInput) {
+        sharedDateFromInput.min = tomorrowFormatted;
+        if (maxDateFormatted) sharedDateFromInput.max = maxDateFormatted;
+    }
+    if (sharedDateToInput) {
+        sharedDateToInput.min = tomorrowFormatted;
+        if (maxDateFormatted) sharedDateToInput.max = maxDateFormatted;
+    }
+
+    if (wholeTimeStartInput) {
+        wholeTimeStartInput.value = '07:00';
+        calculateWholeEndTime();
+    }
+
+    var hasDayBasedPricing = @json($facility->prices->contains('is_based_on_days', true));
+    var availabilities = @json($facility->availabilities ?? []);
+    var facilityAttributes = @json($facility->facilityAttributes ?? []);
+    var facilityCapacity = @json($wholeAttr->whole_capacity ?? 0);
+    var wholeCalendarInitialized = false;
+    var sharedCalendarInitialized = false;
+
+    function getAvailabilityForDate(dateStr) {
+        const checkDate = new Date(dateStr);
+        const matchingAvailabilities = availabilities.filter(avail => {
+            const availFrom = avail.date_from ? new Date(avail.date_from) : null;
+            const availTo = avail.date_to ? new Date(avail.date_to) : null;
+            
+            if (avail.date_from && !avail.date_to && new Date(avail.date_from).toDateString() === checkDate.toDateString()) {
+                return true;
+            }
+            if (availFrom && availTo && checkDate >= availFrom && checkDate <= availTo) {
+                return true;
+            }
+            return false;
+        });
+        
+        return matchingAvailabilities[0];
+    }
+
+    function getMinCapacityForDateRange(startDate, endDate) {
+        const dates = getDatesInRange(startDate, endDate);
+        let minCapacity = facilityCapacity;
+        
+        dates.forEach(dateStr => {
+            const availability = getAvailabilityForDate(dateStr);
+            if (availability) {
+                if (availability.remaining_capacity < minCapacity) {
+                    minCapacity = availability.remaining_capacity;
+                }
+            }
+        });
+        
+        return minCapacity;
+    }
+
+    function isDateFullyBooked(dateStr) {
+        const availability = getAvailabilityForDate(dateStr);
+        if (!availability) return false;
+        return availability.remaining_capacity <= 0;
+    }
+
+    function isDateOccupied(dateStr) {
+        const availability = getAvailabilityForDate(dateStr);
+        if (!availability) return false;
+        const attribute = facilityAttributes.find(attr => attr.id === availability.facility_attribute_id);
+        if (!attribute) return false;
+        return attribute.whole_capacity !== availability.remaining_capacity;
+    }
+
+    function formatDateForDisplay(dateStr) {
+        if (!dateStr) return 'Not selected';
+        const date = new Date(dateStr + 'T00:00:00+08:00');
+        return date.toLocaleDateString('en-PH', { 
+            weekday: 'long',
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+    }
+
+    function getDatesInRange(start, end) {
+        const dates = [];
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            dates.push(d.toISOString().split('T')[0]);
+        }
+        return dates;
+    }
+
+    function updateDateDisplay(startDisplay, endDisplay, startDate, endDate) {
+        if (startDisplay) {
+            startDisplay.textContent = formatDateForDisplay(startDate);
+        }
+        if (endDisplay) {
+            endDisplay.textContent = formatDateForDisplay(endDate);
+        }
+    }
+
+    function calculateWholeEndTime() {
+        if (!wholeTimeStartInput || !wholeTimeEndInput) return;
+        var st = wholeTimeStartInput.value;
+        if (!st) return;
+        var parts = st.split(':').map(Number),
+            h = (parts[0] + 8) % 24,
+            m = parts[1];
+        wholeTimeEndInput.value = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+    }
+
+    function updateRequiredFields(activeSection) {
+        document.querySelectorAll('#shared-section [required], #whole-section [required]').forEach(field => {
+            field.removeAttribute('required');
+        });
+        if (activeSection === 'shared') {
+            const sharedFields = document.querySelectorAll('#shared-section input[type="date"], #shared-section select');
+            sharedFields.forEach(field => {
+                if (field.style.display !== 'none' && !field.closest('[style*="display: none"]')) {
+                    field.setAttribute('required', 'required');
+                }
+            });
+        } else if (activeSection === 'whole') {
+            if (wholeDateFromInput) wholeDateFromInput.setAttribute('required', 'required');
+            if (wholeDateToInput) wholeDateToInput.setAttribute('required', 'required');
+            if (wholeClientTypeDropdown) wholeClientTypeDropdown.setAttribute('required', 'required');
+        }
+    }
+
+    function initializeCalendar(section) {
+        const isWhole = section === 'whole';
+        const calendarEl = document.getElementById(isWhole ? 'whole-calendar' : 'shared-calendar');
+        const modalId = isWhole ? 'wholeCalendarModal' : 'sharedCalendarModal';
+        const modalEl = document.getElementById(modalId);
+        
+        if (!modalEl || !calendarEl) return;
+        if ((isWhole && wholeCalendarInitialized) || (!isWhole && sharedCalendarInitialized)) return;
+        
+        modalEl.addEventListener('shown.bs.modal', function initCalendarOnShow() {
+            modalEl.removeEventListener('shown.bs.modal', initCalendarOnShow);
+            
+            if ((isWhole && wholeCalendarInitialized) || (!isWhole && sharedCalendarInitialized)) {
+                const calendar = calendarEl._fullCalendar;
+                if (calendar) {
+                    calendar.render();
+                    return;
+                }
+            }
+
+            const dateFromInput = isWhole ? wholeDateFromInput : sharedDateFromInput;
+            const dateToInput = isWhole ? wholeDateToInput : sharedDateToInput;
+            const startDisplay = document.getElementById(isWhole ? 'whole-start-date-display' : 'shared-start-date-display');
+            const endDisplay = document.getElementById(isWhole ? 'whole-end-date-display' : 'shared-end-date-display');
+            const modalStartDisplay = document.getElementById(isWhole ? 'whole-modal-start-date' : 'shared-modal-start-date');
+            const modalEndDisplay = document.getElementById(isWhole ? 'whole-modal-end-date' : 'shared-modal-end-date');
+            const confirmButton = document.getElementById(isWhole ? 'whole-confirm-dates' : 'shared-confirm-dates');
+            
+            if (!hasDayBasedPricing && calendarEl && !calendarEl._fullCalendar) {
+                let selectedDates = [];
+                let startDate = null;
+                let endDate = null;
+                
+                const calendar = new FullCalendar.Calendar(calendarEl, {
+                    timeZone: 'Asia/Manila',
+                    locale: 'en',
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth'
+                    },
+                    selectable: true,
+                    selectMirror: true,
+                    dayMaxEvents: false,
+                    weekends: true,
+                    validRange: { 
+                        start: tomorrowFormatted,
+                        end: maxDateFormatted || undefined
+                    },
+                    moreLinkClick: function(info) { return false; },
+                    dateClick: function(info) {
+                        const clickedDate = info.dateStr;
+                        if (isDateFullyBooked(clickedDate)) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Not Available',
+                                text: 'This date is fully reserved and unavailable for booking.',
+                                confirmButtonColor: '#3085d6',
+                            });
+                            return;
+                        }
+                        if (isWhole && isDateOccupied(clickedDate)) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Partially Occupied',
+                                text: 'This date is partially occupied. Please select dates that are completely available.',
+                                confirmButtonColor: '#3085d6',
+                            });
+                            return;
+                        }
+                        if (typeof calendar.clickCount === 'undefined') calendar.clickCount = 0;
+                        calendar.clickCount++;
+                        if (calendar.clickCount % 2 === 1) {
+                            startDate = clickedDate;
+                            selectedDates = [clickedDate];
+                            endDate = null;
+                            
+                            if (modalStartDisplay) modalStartDisplay.textContent = formatDateForDisplay(startDate);
+                            if (modalEndDisplay) modalEndDisplay.textContent = 'Not selected';
+                        } else {
+                            if (startDate) {
+                                const start = new Date(startDate);
+                                const end = new Date(clickedDate);
+                                if (end >= start) {
+                                    const dateRange = getDatesInRange(startDate, clickedDate);
+                                    const hasReservedDate = dateRange.some(date => isDateFullyBooked(date));
+                                    const hasOccupiedDate = isWhole ? dateRange.some(date => isDateOccupied(date)) : false;
+                                    if (hasReservedDate) {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Reserved Dates',
+                                            text: 'One or more dates in your selected range are fully reserved.',
+                                            confirmButtonColor: '#3085d6',
+                                        });
+                                        calendar.clickCount--;
+                                        return;
+                                    }
+                                    if (hasOccupiedDate) {
+                                        Swal.fire({
+                                            icon: 'warning',
+                                            title: 'Occupied Dates',
+                                            text: 'One or more dates in your selected range are partially occupied. Please select a different range.',
+                                            confirmButtonColor: '#3085d6',
+                                        });
+                                        calendar.clickCount--;
+                                        return;
+                                    }
+                                    endDate = clickedDate;
+                                    selectedDates = dateRange;
+                                    
+                                    if (modalEndDisplay) modalEndDisplay.textContent = formatDateForDisplay(endDate);
+                                } else {
+                                    startDate = clickedDate;
+                                    selectedDates = [clickedDate];
+                                    endDate = null;
+                                    calendar.clickCount = 1;
+                                    
+                                    if (modalStartDisplay) modalStartDisplay.textContent = formatDateForDisplay(startDate);
+                                    if (modalEndDisplay) modalEndDisplay.textContent = 'Not selected';
+                                }
+                            } else {
+                                startDate = clickedDate;
+                                selectedDates = [clickedDate];
+                                endDate = null;
+                                calendar.clickCount = 1;
+                                
+                                if (modalStartDisplay) modalStartDisplay.textContent = formatDateForDisplay(startDate);
+                                if (modalEndDisplay) modalEndDisplay.textContent = 'Not selected';
+                            }
+                        }
+                        if (dateFromInput) dateFromInput.value = startDate || '';
+                        if (dateToInput) dateToInput.value = endDate || '';
+                        
+                        if (confirmButton) {
+                            confirmButton.disabled = !(startDate && endDate);
+                        }
+                        
+                        if (isWhole) {
+                            updateWholeTotalPrice();
+                        } else {
+                            updateTotalPrice();
+                        }
+                        
+                        calendar.render();
+                    },
+                    dayCellClassNames: function(info) {
+                        let classes = [];
+                        if (isDateFullyBooked(info.dateStr)) classes.push('fully-booked-date');
+                        if (isDateOccupied(info.dateStr)) classes.push('occupied-date');
+                        if (selectedDates.includes(info.dateStr) && !isDateFullyBooked(info.dateStr) && !isDateOccupied(info.dateStr)) {
+                            if (info.dateStr === startDate) classes.push('selected-start-date');
+                            else if (info.dateStr === endDate) classes.push('selected-end-date');
+                            else classes.push('selected-range-date');
+                        }
+                        return classes;
+                    },
+                    dayCellContent: function(args) {
+                        const dateStr = args.date.toISOString().split('T')[0];
+                        const dayNumberEl = document.createElement('div');
+                        dayNumberEl.className = 'fc-daygrid-day-number';
+                        dayNumberEl.textContent = args.dayNumberText;
+                        
+                        const availability = getAvailabilityForDate(dateStr);
+                        const attribute = availability ? facilityAttributes.find(attr => attr.id === availability.facility_attribute_id) : null;
+                        
+                        if (!isWhole) {
+                            if (availability) {
+                                if (availability.remaining_capacity <= 0) {
+                                    const statusEl = document.createElement('div');
+                                    statusEl.className = 'fc-day-status fc-status-booked';
+                                    statusEl.textContent = 'Booked';
+                                    return { domNodes: [dayNumberEl, statusEl] };
+                                } else {
+                                    const capacityEl = document.createElement('div');
+                                    capacityEl.className = 'fc-day-capacity';
+                                    const capacityClass = availability.remaining_capacity < 3 ? 'fc-capacity-warning' : 'fc-capacity-success';
+                                    capacityEl.classList.add(capacityClass);
+                                    capacityEl.textContent = `${availability.remaining_capacity} left`;
+                                    return { domNodes: [dayNumberEl, capacityEl] };
+                                }
+                            } else {
+                                const capacityEl = document.createElement('div');
+                                capacityEl.className = 'fc-day-capacity fc-capacity-success';
+                                capacityEl.textContent = `${facilityCapacity} left`;
+                                return { domNodes: [dayNumberEl, capacityEl] };
+                            }
+                        } else {
+                            if (availability) {
+                                if (availability.remaining_capacity <= 0) {
+                                    const statusEl = document.createElement('div');
+                                    statusEl.className = 'fc-day-status fc-status-booked';
+                                    statusEl.textContent = 'Booked';
+                                    return { domNodes: [dayNumberEl, statusEl] };
+                                } else if (attribute && availability.remaining_capacity !== attribute.whole_capacity) {
+                                    const statusEl = document.createElement('div');
+                                    statusEl.className = 'fc-day-status fc-status-occupied';
+                                    statusEl.textContent = 'Occupied';
+                                    return { domNodes: [dayNumberEl, statusEl] };
+                                } else {
+                                    const capacityEl = document.createElement('div');
+                                    capacityEl.className = 'fc-day-capacity fc-capacity-success';
+                                    capacityEl.textContent = `${attribute ? attribute.whole_capacity : facilityCapacity} left`;
+                                    return { domNodes: [dayNumberEl, capacityEl] };
+                                }
+                            } else {
+                                const capacityEl = document.createElement('div');
+                                capacityEl.className = 'fc-day-capacity fc-capacity-success';
+                                capacityEl.textContent = `${facilityCapacity} left`;
+                                return { domNodes: [dayNumberEl, capacityEl] };
+                            }
+                        }
+                    },
+                    events: function(fetchInfo, successCallback, failureCallback) {
+                        const events = availabilities.map(avail => ({
+                            id: `avail-${avail.id}`,
+                            start: avail.date_from,
+                            end: avail.date_to ? new Date(new Date(avail.date_to).setDate(new Date(avail.date_to).getDate() + 1)) : null,
+                            display: 'background',
+                            backgroundColor: avail.remaining_capacity <= 0 ? 'rgba(220, 53, 69, 0.2)' : (avail.remaining_capacity < avail.whole_capacity ? 'rgba(253, 126, 20, 0.2)' : 'transparent'),
+                            extendedProps: {
+                                remaining_capacity: avail.remaining_capacity
+                            }
+                        }));
+                        successCallback(events);
+                    }
+                });
+                calendar.render();
+                calendarEl._fullCalendar = calendar;
+                if (isWhole) wholeCalendarInitialized = true;
+                else sharedCalendarInitialized = true;
+            }
+        });
+    }
+
+    function updateModalCapacityDisplay() {
+        const dateFrom = document.getElementById('date_from');
+        const dateTo = document.getElementById('date_to');
+        const modalCapacityElement = document.querySelector('#priceQuantityModal .capacity-value');
+        
+        if (dateFrom && dateTo && dateFrom.value && dateTo.value && modalCapacityElement) {
+            const minCapacity = getMinCapacityForDateRange(dateFrom.value, dateTo.value);
+            modalCapacityElement.textContent = minCapacity;
+            
+            const quantityInputs = document.querySelectorAll('.quantity-input');
+            quantityInputs.forEach(input => {
+                input.max = minCapacity;
+            });
+        } else if (modalCapacityElement) {
+            modalCapacityElement.textContent = facilityCapacity;
+            
+            const quantityInputs = document.querySelectorAll('.quantity-input');
+            quantityInputs.forEach(input => {
+                input.max = facilityCapacity;
+            });
+        }
+    }
+
+    function validateQuantityInput(input) {
+        const dateFrom = document.getElementById('date_from');
+        const dateTo = document.getElementById('date_to');
+        
+        let maxCapacity = facilityCapacity;
+        if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
+            maxCapacity = getMinCapacityForDateRange(dateFrom.value, dateTo.value);
+        }
+        
+        const quantity = parseInt(input.value) || 0;
+        
+        if (quantity > maxCapacity) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Capacity Exceeded',
+                text: `The quantity exceeds the maximum capacity of ${maxCapacity} persons.`,
+                confirmButtonColor: '#3085d6',
+            }).then(() => {
+                input.value = '';
+                input.focus();
+            });
+            return false;
+        }
+        
+        const quantityInputs = document.querySelectorAll('.quantity-input');
+        let totalQuantity = 0;
+        
+        quantityInputs.forEach(qInput => {
+            const qty = parseInt(qInput.value) || 0;
+            totalQuantity += qty;
+        });
+        
+        if (totalQuantity > maxCapacity) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Total Capacity Exceeded',
+                text: `The total number of persons (${totalQuantity}) exceeds the maximum capacity of ${maxCapacity} persons.`,
+                confirmButtonColor: '#3085d6',
+            }).then(() => {
+                input.value = '';
+                input.focus();
+            });
+            return false;
+        }
+        
+        return true;
+    }
+
+    function updateAddonSelection(section, element) {
+        const addonId = element.dataset.addonId;
+        const displayContainer = document.getElementById(`${section}-selected-addons-display`);
+        const noAddonsMessage = displayContainer.querySelector('.no-addons-message');
+        
+        const existingDisplay = displayContainer.querySelector(`[data-addon-id="${addonId}"]`);
+        if (existingDisplay) {
+            existingDisplay.remove();
+        }
+        
+        const addonName = document.querySelector(`input[name="addon_names[${addonId}]"]`).value;
+        const addonPrice = parseFloat(document.querySelector(`input[name="addon_values[${addonId}]"]`).value);
+        const addonType = document.querySelector(`input[name="addon_types[${addonId}]"]`).value;
+        
+        let quantity = 0;
+        let isSelected = false;
+        
+        if (element.type === 'checkbox') {
+            isSelected = element.checked;
+            quantity = isSelected ? 1 : 0;
+        } else if (element.type === 'number') {
+            quantity = parseInt(element.value) || 0;
+            isSelected = quantity > 0;
+        }
+        
+        if (isSelected) {
+            if (noAddonsMessage) {
+                noAddonsMessage.style.display = 'none';
+            }
+            
+            const addonDisplay = document.createElement('div');
+            addonDisplay.className = 'selected-addon-item mb-2 p-2 border rounded';
+            addonDisplay.dataset.addonId = addonId;
+            
+            let displayText = `<strong>${addonName}</strong> - ₱${addonPrice.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            
+            if (element.type === 'number') {
+                displayText += ` (Qty: ${quantity})`;
+            }
+            
+            if (addonType === 'per_night') {
+                displayText += ' per night';
+            } else if (addonType === 'per_unit') {
+                displayText += ' per unit';
+            }
+            
+            addonDisplay.innerHTML = displayText;
+            displayContainer.appendChild(addonDisplay);
+        }
+        
+        const hasSelectedAddons = displayContainer.querySelectorAll('[data-addon-id]').length > 0;
+        if (noAddonsMessage) {
+            noAddonsMessage.style.display = hasSelectedAddons ? 'none' : 'block';
+        }
+    }
+
+    function calculateDateDifference(startDate, endDate) {
+        if (!startDate || !endDate) return 1;
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const timeDiff = end - start;01
+        
+        const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        return Math.max(1, daysDiff + 1); 
+    }
+
+    function calculateAddonPrices(section) {
+        let addonTotal = 0;
+        const selectedBookingType = document.querySelector('input[name="booking_type"]:checked');
+        
+        if (!selectedBookingType) return 0;
+        
+        let daysDiff = 1;
+        if (selectedBookingType.value === 'shared') {
+            const dateFrom = document.getElementById('date_from');
+            const dateTo = document.getElementById('date_to');
+            if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
+                daysDiff = calculateDateDifference(dateFrom.value, dateTo.value);
+            }
+        } else if (selectedBookingType.value === 'whole') {
+            const dateFrom = document.getElementById('whole_date_from');
+            const dateTo = document.getElementById('whole_date_to');
+            if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
+                daysDiff = calculateDateDifference(dateFrom.value, dateTo.value);
+            }
+        }
+        
+        const quantityInputs = document.querySelectorAll(`input[name^="${section}_addon_quantity["]`);
+        quantityInputs.forEach(input => {
+            const quantity = parseInt(input.value) || 0;
+            if (quantity > 0) {
+                const addonId = input.name.match(/\[(.*?)\]/)[1];
+                const addonPrice = parseFloat(document.querySelector(`input[name="addon_values[${addonId}]"]`).value);
+                const addonType = document.querySelector(`input[name="addon_types[${addonId}]"]`).value;
+                
+                let addonCost = addonPrice * quantity * daysDiff;
+                addonTotal += addonCost;
+            }
+        });
+        
+        const checkboxInputs = document.querySelectorAll(`input[name^="${section}_addon_checkbox["]`);
+        checkboxInputs.forEach(checkbox => {
+            if (checkbox.checked) {
+                const addonId = checkbox.name.match(/\[(.*?)\]/)[1];
+                const addonPrice = parseFloat(document.querySelector(`input[name="addon_values[${addonId}]"]`).value);
+                const addonType = document.querySelector(`input[name="addon_types[${addonId}]"]`).value;
+                
+                addonTotal += addonPrice * daysDiff;
+            }
+        });
+        
+        return addonTotal;
+    }
+
+    function updateTotalPrice() {
+        let total = 0;
+        const selectedBookingType = document.querySelector('input[name="booking_type"]:checked');
+        
+        if (!selectedBookingType) {
+            updatePriceDisplay(0);
+            return;
+        }
+        
+        if (selectedBookingType.value === 'shared') {
+            const priceDropdown = document.getElementById('price_id');
+            if (priceDropdown && priceDropdown.value) {
+                const selectedOption = priceDropdown.options[priceDropdown.selectedIndex];
+                const priceValue = parseFloat(selectedOption.dataset.value) || 0;
+                total += priceValue;
+                const selectedPriceInput = document.getElementById('selected_price_value');
+                if (selectedPriceInput) {
+                    selectedPriceInput.value = priceValue;
+                }
+            }
+            
+            const quantityInputs = document.querySelectorAll('.quantity-input:not(.addon-quantity)');
+            quantityInputs.forEach(input => {
+                const quantity = parseInt(input.value) || 0;
+                if (quantity > 0) {
+                    const priceId = input.name.match(/\[(\d+)\]/)[1];
+                    const priceValue = document.querySelector(`input[name="price_values[${priceId}]"]`);
+                    if (priceValue) {
+                        total += parseFloat(priceValue.value) * quantity;
+                    }
+                }
+            });
+            
+            const dateFrom = document.getElementById('date_from');
+            const dateTo = document.getElementById('date_to');
+            if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
+                const daysDiff = calculateDateDifference(dateFrom.value, dateTo.value);
+                if (daysDiff > 1) {
+                    total *= daysDiff;
+                }
+            }
+            
+            total += calculateAddonPrices('shared');
+            
+        } else if (selectedBookingType.value === 'whole') {
+            const clientTypeDropdown = document.getElementById('whole_client_type');
+            if (clientTypeDropdown && clientTypeDropdown.value) {
+                const priceValue = parseFloat(clientTypeDropdown.value) || 0;
+                total = priceValue;
+                
+                const dateFrom = document.getElementById('whole_date_from');
+                const dateTo = document.getElementById('whole_date_to');
+                if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
+                    const daysDiff = calculateDateDifference(dateFrom.value, dateTo.value);
+                    if (daysDiff > 1) {
+                        total *= daysDiff;
+                    }
+                }
+                
+                total += calculateAddonPrices('whole');
+            }
+        }
+        
+        updatePriceDisplay(total, selectedBookingType.value);
+    }
+
+    function updateWholeTotalPrice() {
+        updateTotalPrice();
+    }
+
+    function updatePriceDisplay(total, bookingType) {
+        const computedTotal = document.getElementById('computed-total');
+        const totalPriceInput = document.getElementById('total_price_input');
+        const wholeTotalPriceInput = document.getElementById('whole_total_price_input');
+        
+        if (computedTotal) {
+            computedTotal.textContent = `₱${total.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+        
+        if (totalPriceInput) {
+            totalPriceInput.value = total;
+        }
+        
+        if (wholeTotalPriceInput) {
+            wholeTotalPriceInput.value = total;
+        }
+    }
+
+    function setupAddonEventListeners() {
+        document.querySelectorAll('.addon-quantity').forEach(input => {
+            input.addEventListener('input', function() {
+                const section = this.name.includes('shared_') ? 'shared' : 'whole';
+                updateAddonSelection(section, this);
+                updateTotalPrice();
+            });
+        });
+        
+        document.querySelectorAll('.addon-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const section = this.name.includes('shared_') ? 'shared' : 'whole';
+                updateAddonSelection(section, this);
+                updateTotalPrice();
+            });
+        });
+        
+        document.querySelectorAll('[id$="AddonsModal"] .btn-primary').forEach(button => {
+            button.addEventListener('click', function() {
+                updateTotalPrice();
+            });
+        });
+    }
+
+    function updateClientTypeDisplay() {
+        const container = document.getElementById('selected-client-types-display');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        const quantityInputs = document.querySelectorAll('.quantity-input:not(.addon-quantity)');
+        let hasSelection = false;
+        
+        quantityInputs.forEach(input => {
+            if (input.value && parseInt(input.value) > 0) {
+                hasSelection = true;
+                const priceId = input.name.match(/\[(.*?)\]/)[1];
+                const priceNameInput = document.querySelector(`input[name="price_names[${priceId}]"]`);
+                const priceValueInput = document.querySelector(`input[name="price_values[${priceId}]"]`);
+                
+                if (priceNameInput && priceValueInput) {
+                    const priceName = priceNameInput.value;
+                    const priceValue = parseFloat(priceValueInput.value);
+                    
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'client-type-item';
+                    itemDiv.innerHTML = `
+                        <strong>${priceName}</strong>
+                        <span>Price: ₱${priceValue.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span><br>
+                        <span>Qty: ${parseInt(input.value).toLocaleString()}</span>
+                    `;
+                    
+                    container.appendChild(itemDiv);
+                }
+            }
+        });
+        
+        if (hasSelection) {
+            container.style.display = 'flex'; 
+        } else {
+            container.style.display = 'none';
+        }
+        
+        updateTotalPrice();
+    }
+
+    document.querySelectorAll('input[name="booking_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'shared') {
+                document.getElementById('shared-section').style.display = 'block';
+                document.getElementById('whole-section').style.display = 'none';
+                updateRequiredFields('shared');
+                if (!sharedCalendarInitialized) initializeCalendar('shared');
+            } else {
+                document.getElementById('shared-section').style.display = 'none';
+                document.getElementById('whole-section').style.display = 'block';
+                updateRequiredFields('whole');
+                if (!wholeCalendarInitialized) initializeCalendar('whole');
+            }
+            updateTotalPrice();
+        });
+    });
+
+    if (wholeTimeStartInput) {
+        wholeTimeStartInput.addEventListener('change', function() {
+            calculateWholeEndTime();
+            updateWholeTotalPrice();
+        });
+    }
+
+    if (wholeClientTypeDropdown) {
+        wholeClientTypeDropdown.addEventListener('change', function() {
+            updateWholeTotalPrice();
+        });
+    }
+
+    const priceQuantityModal = document.getElementById('priceQuantityModal');
+    if (priceQuantityModal) {
+        priceQuantityModal.addEventListener('hidden.bs.modal', function () {
+            updateClientTypeDisplay();
+        });
+    }
+
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+    quantityInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            validateQuantityInput(this);
+        });
+    });
+
+    const sharedConfirmBtn = document.getElementById('shared-confirm-dates');
+    if (sharedConfirmBtn) {
+        sharedConfirmBtn.addEventListener('click', function() {
+            const startDate = document.getElementById('date_from').value;
+            const endDate = document.getElementById('date_to').value;
+            
+            const startDisplay = document.getElementById('shared-start-date-display');
+            const endDisplay = document.getElementById('shared-end-date-display');
+            
+            if (startDisplay) startDisplay.textContent = formatDateForDisplay(startDate);
+            if (endDisplay) endDisplay.textContent = formatDateForDisplay(endDate);
+            
+            updateModalCapacityDisplay();
+        });
+    }
+
+    const wholeConfirmBtn = document.getElementById('whole-confirm-dates');
+    if (wholeConfirmBtn) {
+        wholeConfirmBtn.addEventListener('click', function() {
+            const startDate = document.getElementById('whole_date_from').value;
+            const endDate = document.getElementById('whole_date_to').value;
+            
+            const startDisplay = document.getElementById('whole-start-date-display');
+            const endDisplay = document.getElementById('whole-end-date-display');
+            
+            if (startDisplay) startDisplay.textContent = formatDateForDisplay(startDate);
+            if (endDisplay) endDisplay.textContent = formatDateForDisplay(endDate);
+        });
+    }
+
+    const defaultBookingType = document.querySelector('input[name="booking_type"]:checked');
+    if (defaultBookingType) {
+        const activeSection = defaultBookingType.value;
+        updateRequiredFields(activeSection);
+        if (activeSection === 'whole' && !wholeCalendarInitialized) {
+            initializeCalendar('whole');
+        } else if (activeSection === 'shared' && !sharedCalendarInitialized) {
+            initializeCalendar('shared');
+        }
+    }
+
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+        });
+    }
+
+    setupAddonEventListeners();
+    updateClientTypeDisplay();
+    updateTotalPrice();
+});
+</script>
+@endif --}}
 
 @if ( $facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty())
 <script>
@@ -1991,15 +2628,5 @@
     });
 </script>
 @endif
-
-
-
-
-
-
-
-    
-
-
 
 @endpush
