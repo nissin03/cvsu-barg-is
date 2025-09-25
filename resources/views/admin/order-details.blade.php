@@ -167,7 +167,6 @@
                 <div class="col-md-7">
                     <div class="wg-box">
                         <div class="d-flex align-items-center justify-content-between gap10 flex-wrap">
-                            <h5>User Details</h5>
                             <div id="pdf-download-container" @if ($order->status !== 'pickedup') style="display:none;" @endif>
                                 <a id="download-receipt-btn" href="{{ route('admin.order-receipt.pdf', $order->id) }}"
                                     target="_blank" class="btn btn-outline-danger mt-3">
@@ -177,38 +176,38 @@
 
                         </div>
                         <div class="my-account__address-item">
-                            <div class="my-account__address-item__detail col-md-6">
-                                <div class="d-flex align-items-center gap-2 mb-5">
-                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Name:</p>
-                                    <p class="body-text mb-2">
-                                        {{ $order->user->name ?? '--' }}</p>
-                                </div>
-                                @if ($order->user->role === 'student')
-                                    <div class="d-flex align-items-center gap-2 mb-5">
-                                        <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Year
-                                            Level:</p>
-                                        <p class="body-text mb-2">
-                                            {{ $order->user->year_level ?? '--' }}</p>
+                            <div class="my-account__address-item__detail">
+                                {{-- User Details --}}
+                                <h5 class="mb-4">User Details</h5>
+                                <div class="row g-3">
+                                    <div class="col-12 d-flex">
+                                        <p class="fw-bold me-2">Name:</p>
+                                        <p class="flex-grow-1 mb-0">{{ $order->user->name ?? '--' }}</p>
                                     </div>
-                                    <div class="d-flex align-items-center gap-2 mb-5">
-                                        <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">
-                                            College:
-                                        <p class="body-text mb-2">
-                                            {{ $order->user->college->name ?? '--' }}</p>
+
+                                    @if ($order->user->role === 'student')
+                                        <div class="col-12 d-flex">
+                                            <p class="fw-bold me-2">Year Level:</p>
+                                            <p class="flex-grow-1 mb-0">{{ $order->user->year_level ?? '--' }}</p>
+                                        </div>
+                                        <div class="col-12 d-flex">
+                                            <p class="fw-bold me-2">College:</p>
+                                            <p class="flex-grow-1 mb-0">{{ $order->user->college->name ?? '--' }}</p>
+                                        </div>
+                                        <div class="col-12 d-flex">
+                                            <p class="fw-bold me-2">Course:</p>
+                                            <p class="flex-grow-1 mb-0">{{ $order->user->course->name ?? '--' }}</p>
+                                        </div>
+                                    @endif
+
+                                    <div class="col-12 d-flex">
+                                        <p class="fw-bold me-2">Mobile:</p>
+                                        <p class="flex-grow-1 mb-0">{{ $order->user->phone_number ?? '--' }}</p>
                                     </div>
-                                    <div class="d-flex align-items-center gap-2 mb-5">
-                                        <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Course:
-                                        <p class="body-text mb-2">
-                                            {{ $order->user->course->name ?? '--' }}</p>
-                                    </div>
-                                @endif
-                                <div class="d-flex align-items-center gap-2 mb-5">
-                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Mobile:
-                                    <p class="body-text mb-2">
-                                        {{ $order->user->phone_number ?? '--' }}</p>
                                 </div>
                             </div>
                         </div>
+
 
                         <h5 class="text-capitalize mt-5">Reservation Details</h5>
                         <div class="my-account__address-item">
@@ -257,7 +256,7 @@
                                             @if ($order->canceled_date)
                                                 <p class="text-muted d-block">
                                                     <i class="fas fa-calendar-times me-1"></i>
-                                                    {{ \Carbon\Carbon::parse($order->canceled_date)->format('F d, Y h:i A') }}
+                                                    {{ $order->canceled_date->timezone(config('app.timezone'))->format('F d, Y h:i A') }}
                                                 </p>
                                             @endif
                                         </div>
@@ -284,12 +283,6 @@
                                     <i class="fas fa-info-circle me-2"></i>
                                     This order has already been {{ $order->status }}. No further actions can be performed.
                                 </div>
-
-                                @if ($order->status === 'canceled' && !empty($order->canceled_reason))
-                                    <div class="alert alert-warning mt-2 fs-6">
-                                        <strong>Reason for Cancellation:</strong> {{ $order->canceled_reason }}
-                                    </div>
-                                @endif
                             @endif
                         </div>
 

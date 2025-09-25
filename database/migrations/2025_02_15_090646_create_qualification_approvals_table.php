@@ -16,7 +16,8 @@ return new class extends Migration
             $table->foreignId('availability_id')->constrained('availabilities')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('qualification')->nullable();
-            $table->enum('status', ['reserved', 'canceled', 'completed', 'pending'])->default('pending');
+            $table->enum('status', ['pending', 'approved', 'canceled',])->default('pending');
+            $table->string('canceled_reason')->nullable();
             $table->timestamps();
         });
     }

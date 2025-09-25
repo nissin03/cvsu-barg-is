@@ -1,8 +1,10 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use App\Models\User;
+use App\Models\Contact;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -13,9 +15,13 @@ return new class extends Migration
     {
         Schema::create('contact_replies', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('contact_id')->constrained()->onDelete('cascade'); 
-            $table->text('admin_reply'); 
-            $table->unsignedBigInteger('admin_id'); 
+            $table->foreignIdFor(Contact::class)
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->foreignIdFor(User::class, 'admin_id')
+                ->constrained('users')
+                ->cascadeOnDelete();
+            $table->text('admin_reply');
             $table->timestamps();
         });
     }

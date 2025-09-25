@@ -19,10 +19,10 @@ class TransactionReservation extends Model
         'status',
     ];
 
-    public function facility()
-    {
-        return $this->belongsTo(Facility::class);
-    }
+    // public function facility()
+    // {
+    //     return $this->belongsTo(Facility::class);
+    // }
     public function availability()
     {
         return $this->belongsTo(Availability::class);
@@ -46,5 +46,17 @@ class TransactionReservation extends Model
     public function payment()
     {
         return $this->belongsTo(Payment::class);
+    }
+
+    public function facility()
+    {
+        return $this->hasOneThrough(
+            Facility::class,
+            Availability::class,
+            'id',
+            'id',
+            'availability_id',
+            'facility_id'
+        );
     }
 }

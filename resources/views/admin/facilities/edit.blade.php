@@ -76,6 +76,10 @@
             position: relative;
         }
 
+        .custom-icon {
+            fill: oklch(55.1% 0.027 264.364);
+        }
+
         .remove-room {
             position: absolute;
             top: 10px;
@@ -124,494 +128,83 @@
                 </ul>
             </div>
             <!-- form-add-rental -->
-            <form action="{{ route('admin.facilities.update', $facility->id) }}" class="tf-section-2 form-update-rental"
-                method="POST" enctype="multipart/form-data">
+            @if ($errors->any())
+                <div class="alert alert-danger mb-4">
+                    <h6><i class="bi bi-exclamation-triangle me-2"></i>Please fix the following errors:</h6>
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+            <form action="{{ route('admin.facilities.update', $facility->id) }}" id="facilityForm"
+                class="tf-section-2 form-update-rental" method="POST" enctype="multipart/form-data">
                 @csrf
-                @method('PUT')
+                @if (isset($facility))
+                    @method('PUT')
+                @endif
+                {{-- <input type="hidden" id="facilityAttributesJson" name="facility_attributes_json">
+                <input type="hidden" id="pricesJson" name="prices_json"> --}}
                 <input type="hidden" id="facilityAttributesJson" name="facility_attributes_json"
-                    value='@json($facilityAttributes)' />
-                <input type="hidden" id="pricesJson" name="prices_json" value='@json($prices)' />
+                    value='@json($facilityAttributes ?? [])'>
+                <input type="hidden" id="pricesJson" name="prices_json" value='@json($prices ?? [])'>
 
-                <div class="wg-box">
-                    <div class="container mx-auto">
-                        @if ($errors->any())
-                            <div class="alert alert-danger">
-                                <ul class="">
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
-                    </div>
-                    <fieldset class="name">
-                        <div class="body-title mb-10">Facility name <span class="tf-color-1">*</span></div>
-                        <input class="form-control" type="text" value="{{ $facility->name }}"
-                            placeholder="Facility name ..." name="name" tabindex="0" required>
-                    </fieldset>
-                    @error('name')
-                        <span class="alert alert-danger text-center">{{ $message }} </span>
-                    @enderror
+                @include('admin.facilities.partials.basic-info')
 
-                    <div class="gap22 cols">
-                        <fieldset class="type">
-                            <div class="body-title mb-10">Facility Type<span class="tf-color-1">*</span></div>
-                            <div class="select">
-                                <select id="rentalType" name="facility_type" required>
-                                    <option value="" selected disabled>Choose Facility Type...</option>
-                                    <option value="individual"
-                                        {{ old('facility_type') === 'individual' || $facility->facility_type === 'individual' ? 'selected' : '' }}>
-                                        Individual
-                                    </option>
-                                    <option value="whole_place"
-                                        {{ old('facility_type') === 'whole_place' || $facility->facility_type === 'whole_place' ? 'selected' : '' }}>
-                                        Whole Place
-                                    </option>
-                                    <option value="both"
-                                        {{ old('facility_type') === 'both' || $facility->facility_type === 'both' ? 'selected' : '' }}>
-                                        Both
-                                    </option>
-                                </select>
-                            </div>
-                        </fieldset>
-                    </div>
-                    @error('facility_type')
-                        <span class="alert alert-danger text-center">{{ $message }} </span>
-                    @enderror
+                @include('admin.facilities.partials.media-upload')
 
-
-                    {{-- Description --}}
-                    <fieldset class="description">
-                        <div class="body-title mb-10">Description <span class="tf-color-1">*</span></div>
-                        <textarea class="mb-10" id="description" name="description" placeholder="Description" tabindex="0"
-                            aria-required="true" required="">{{ old('description') ?? $facility->description }}</textarea>
-                    </fieldset>
-                    @error('description')
-                        <span class="alert alert-danger text-center">{{ $message }} </span>
-                    @enderror
-
-
-                    <fieldset class="rules_and_regulations">
-                        <div class="body-title mb-10">Rules and Regulation <span class="tf-color-1">*</span></div>
-                        <textarea class="mb-10" id="rules" name="rules_and_regulations" placeholder="rules_and_regulations" tabindex="0"
-                            aria-required="true">{{ old('rules_and_regulations') ?? $facility->rules_and_regulations }}</textarea>
-                    </fieldset>
-                    @error('rules_and_regulations')
-                        <span class="alert alert-danger text-center">{{ $message }} </span>
-                    @enderror
-
-                </div>
-
-                <div class="wg-box">
-                    <fieldset>
-                        <div class="body-title mb-10">Requirements <span class="tf-color-1">*</span></div>
-                        <div class="upload-image flex-grow">
-                            <div class="item" id="requirementsPreview"
-                                style="{{ $facility->requirements ? '' : 'display:none' }}">
-                                @if ($facility->requirements)
-                                    <p class="file-name-overlay">Current file: {{ $facility->requirements }}</p>
-                                @endif
-                                <img src="{{ asset('images/upload/upload-1.png') }}" id="requirements-preview-img"
-                                    class="effect8" alt="">
-                                <button type="button" class="remove-upload"
-                                    onclick="removeUpload('requirementsPreview', 'requirementsFile')">Remove</button>
-                            </div>
-                            <div id="upload-requirements" class="item up-load">
-                                <label class="uploadfile" for="requirementsFile">
-                                    <span class="icon">
-                                        <i class="icon-upload-cloud"></i>
-                                    </span>
-                                    <span class="body-text">Select your Requirements file here or click to browse</span>
-                                    <input type="file" id="requirementsFile" name="requirements"
-                                        accept=".pdf,.doc,.docx,.jpg,.png">
-
-                                </label>
-                            </div>
-                        </div>
-                    </fieldset>
-                    @error('requirements')
-                        <span class="alert alert-danger text-center">{{ $message }} </span>
-                    @enderror
-
-                    <!-- Image upload -->
-                    <fieldset>
-                        <div class="body-title">Upload main image <span class="tf-color-1">*</span></div>
-                        <div class="upload-image flex-grow">
-                            <div class="item" id="imgpreview" style="{{ $facility->image ? '' : 'display:none' }}">
-                                @if ($facility->image)
-                                    <p class="file-name-overlay">Current file: {{ $facility->image }}</p>
-                                    <img src="{{ asset('storage/' . $facility->image) }}" id="preview-img"
-                                        class="effect8" alt="">
-                                @endif
-                                <button type="button" class="remove-upload"
-                                    onclick="removeUpload('imgpreview', 'myFile')">Remove</button>
-                            </div>
-                            <div id="upload-file" class="item up-load">
-                                <label class="uploadfile" for="myFile">
-                                    <span class="icon">
-                                        <i class="icon-upload-cloud"></i>
-                                    </span>
-                                    <span class="body-text">Select your main image here or click to browse</span>
-                                    <input type="file" id="myFile" name="image" accept="image/*">
-                                </label>
-                            </div>
-                        </div>
-                    </fieldset>
-                    @error('image')
-                        <span class="alert alert-danger text-center">{{ $message }} </span>
-                    @enderror
-
-
-                    <!-- Gallery images upload -->
-                    <fieldset>
-                        <div class="body-title mb-10">Upload Gallery Images</div>
-                        <div class="upload-image mb-16 flex-grow" id="gallery-container">
-                            @if ($facility->images)
-                                @foreach (explode(',', $facility->images) as $img)
-                                    <div class="item gitems">
-                                        <p class="file-name-overlay">Current file: {{ $img }}</p>
-                                        <img src="{{ asset('storage/' . $img) }}"
-                                            style="width: 100px; height: 100px; object-fit: cover;" />
-                                        <button type="button" class="remove-upload show"
-                                            onclick="removeGalleryImage(this, 'gFile')">Remove</button>
-                                    </div>
-                                @endforeach
-                            @endif
-                            <div id="galUpload" class="item up-load">
-                                <label class="uploadfile" for="gFile">
-                                    <span class="icon">
-                                        <i class="icon-upload-cloud"></i>
-                                    </span>
-                                    <span class="text-tiny">Select your images here or click to browse</span>
-                                    <input type="file" id="gFile" name="images[]" accept="image/*" multiple>
-                                </label>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    @error('images')
-                        <span class="alert alert-danger text-center">{{ $message }} </span>
-                    @enderror
-                </div>
                 <div class="wg-box" id="roomBox">
-                    <div id="selectionBothType">
-                        <div class="d-flex align-items-center justify-items-center gap-5">
-                            <div class="d-flex align-items-center gap-2">
-                                <input type="radio" id="hasWholeCapacity" name="facility_selection_both"
-                                    value="whole"
-                                    {{ old('facility_selection_both') === 'whole' || $facility->facility_selection_both === 'whole' ? 'checked' : '' }}>
-                                <label for="hasWholeCapacity">Has Whole Capacity?</label>
-
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <input type="radio" id="hasRooms" name="facility_selection_both" value="room"
-                                    {{ old('facility_selection_both') === 'room' || $facility->facility_selection_both === 'room' ? 'checked' : '' }}>
-                                <label for="hasRooms">Has a Room(s)?</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="selectionContent" class="mt-4">
-                        <div class="card" style="border: none;">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center justify-content-center gap-2">
-                                    <img src="{{ asset('images/choose.svg') }}" alt="no selection"
-                                        class="img-fluid custom-icon"
-                                        style="width: 100px; height: 100px; fill: oklch(55.1% 0.027 264.364);">
-                                    <h5 class="card-title">Choose one option
-                                        to show the content</h5>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <fieldset class="name" id="hideRoomBox" style="display: none;">
-                        <div class="body-title mb-10">Whole Place Capacity</div>
-                        <input type="number" min="0" id="roomCapacityWhole" name="whole_capacity"
-                            placeholder="Enter whole capacity"
-                            value="{{ old('whole_capacity', $facility->facilityAttributes->whereNotNull('whole_capacity')->first()->whole_capacity ?? '') }}">
-                    </fieldset>
-
-                    @if (optional($facility->facilityAttributes->first())->whole_capacity === null)
-                        <div id="dormitoryRooms" class="mt-4">
-                            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
-                                <h4>Rooms</h4>
-                                <div class="d-flex gap-2">
-                                    <button type="button" data-bs-toggle="modal" data-bs-target="#addBulkRoomsModal">
-                                        <i class="bi bi-plus-circle"></i> Add Multiple Rooms
-                                    </button>
-                                    <button type="button" data-bs-toggle="modal"
-                                        data-bs-target="#addMultipleRoomsModal">
-                                        <i class="bi bi-plus-circle"></i> Add Rooms
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="card-header" id="checkAllRooms">
-                                <div class="d-flex align-items-center justify-items-start gap-2">
-                                    <input type="checkbox" />
-                                    <p>Select All</p>
-                                    <button type="button" id="editSelectedRoomsBtn"
-                                        class="btn btn-lg btn-outline-warning me-2 edit-selected-btn"
-                                        style="display: none; ">
-                                        <i class="icon-pen"></i>
-                                        Edit Selected
-                                    </button>
-                                    <button type="button" id="deleteSelectedRoomsBtn"
-                                        class="btn btn-lg btn-outline-danger delete-selected-btn" style="display: none; ">
-                                        <i class="icon-trash"></i>
-                                        Delete Selected
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div id="noRoomsMessage" class="alert alert-warning">
-                                <i class="bi bi-info-circle me-2"></i> No rooms added yet:(. Click "Add Rooms" to get
-                                started.
-                            </div>
-
-                            <div id="roomContainer" class="mt-4">
-                                <div class="row" id="roomCardsContainer">
-                                    <!-- Room cards will be rendered here -->
-                                </div>
-                            </div>
-
-                            <div class="modal fade" id="addMultipleRoomsModal" tabindex="-1"
-                                aria-labelledby="addMultipleRoomsLabel">
-                                <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="addMultipleRoomsLabel">Manage Rooms</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                aria-label="Close"></button>
-                                        </div>
-
-                                        <div class="modal-body">
-                                            <div class="room-form-card mb-3 p-3 border rounded">
-                                                <div class="row g-3">
-                                                    <div class="col-md-4">
-                                                        <label class="form-label">Room Name</label>
-                                                        <input type="text" class="form-control room-name"
-                                                            placeholder="Enter room name">
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <label class="form-label">Capacity</label>
-                                                        <input type="number" class="form-control room-capacity"
-                                                            min="1" placeholder="Enter capacity">
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label">Sex Restriction</label>
-                                                        <div class="select">
-                                                            <select class="room-sex-restriction">
-                                                                <option value="">No Restriction</option>
-                                                                <option value="male">Male</option>
-                                                                <option value="female">Female</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        </div>
-
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                data-bs-dismiss="modal">Close</button>
-                                            <button type="button" class="btn btn-primary" id="saveMultipleRoomsBtn">Save
-                                                All</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                        @if ($errors->has('facility_attributes_json'))
-                            <span
-                                class="alert alert-danger text-center">{{ $errors->first('facility_attributes_json') }}</span>
-                        @endif
-                    @endif
+                    @include('admin.facilities.partials.room-management')
                 </div>
 
                 <div class="wg-box" id="priceBox">
-                    <div id="dormitoryFields"
-                        class="d-flex justify-content-between align-items-center border-bottom pb-3">
-                        <h4>Prices</h4>
-                        <button type="button" data-bs-toggle="modal" data-bs-target="#addPrice">
-                            <i class="bi bi-plus-circle"></i> Add Price
-                        </button>
-                    </div>
 
-                    <div class="row mt-3 p-3 bg-light rounded">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center gap-2">
-                                <input type="checkbox" class="is-based-on-days" id="isBasedOnDaysGlobal">
-                                <label for="isBasedOnDaysGlobal">Is Based on Days?</label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center gap-2">
-                                <input type="checkbox" class="is-there-a-quantity" id="isThereAQuantityGlobal">
-                                <label for="isThereAQuantityGlobal">Is There a Quantity?</label>
-                            </div>
-                        </div>
-                        <div id="dateFieldsContainerGlobal" class="col-12 mt-3" style="display: none;">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label for="date_from_global">Date From:</label>
-                                    <input type="date" id="date_from_global" name="date_from_global">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="date_to_global">Date To:</label>
-                                    <input type="date" id="date_to_global" name="date_to_global">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <p id="noPricesMessage" class="alert alert-warning">
-                        <i class="bi bi-info-circle me-2"></i> No prices added yet :(
-                    </p>
-
-                    <div id="priceTypeContainer" style="display: none;">
-                        <div class="d-flex align-items-center justify-items-center gap-4 text-white">
-                            <div class="box bg-primary"></div>
-                            <p>Individual</p>
-                            <div class="box bg-warning "></div>
-                            <p>Whole Place</p>
-                        </div>
-                    </div>
-                    <div id="priceContainer" class="mt-4">
-                        <div class="row" id="priceCardsContainer">
-                        </div>
-                    </div>
-                    @if ($errors->has('prices_json'))
-                        <span class="alert alert-danger text-center">{{ $errors->first('prices_json') }}</span>
-                    @endif
+                    @include('admin.facilities.partials.pricing-management')
 
                     <div class="cols gap10">
                         <button id="facilitySubmitBtn" class="tf-button w-full" type="submit">
-                            <span class="btn-text">Update Facility</span>
+                            <span class="btn-text">Edit Facility</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Modal for Adding Prices -->
-                <div class="modal fade" id="addPrice" tabindex="-1" aria-labelledby="addPriceLabel">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h1 class="modal-title fs-5" id="addPriceLabel">Add Price</h1>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <!-- Hidden template for price form card -->
-                                <div id="priceFormTemplate" style="display:none;">
-                                    <div class="price-form-card mb-3 p-3 border rounded">
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label">Price Name</label>
-                                                <input type="text" class="form-control price-name"
-                                                    placeholder="Enter price name">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Price</label>
-                                                <input type="number" class="form-control price-value" min="1"
-                                                    placeholder="Enter price">
-                                            </div>
-                                            <div class="col-md-12">
-                                                <label class="form-label">Price Type</label>
-                                                <select class="price-type">
-                                                    <option value="">Choose Price Type</option>
-                                                    <option value="individual">Individual</option>
-                                                    <option value="whole">Whole Place</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-12 d-flex align-items-center justify-items-center mt-5 gap-5">
-                                            <button type="button"
-                                                class="btn btn-lg btn-outline-danger removePriceBtn mb-3">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="priceFormContainer">
-                                </div>
-                                <button type="button" id="addMultiplePricesRowBtn" style="margin-top: 10px;">
-                                    <i class="fa-solid fa-plus"></i> Add Another Price
-                                </button>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-primary" id="saveMultiplePricesBtn">Save
-                                    All</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                @include('admin.facilities.partials.modals.add-price-modal')
+                {{-- @include('admin.facilities.partials.addons-selection') --}}
+                {{-- @include('admin.facilities.partials.addons-selection', [
+                    'facility' => $facility,
+                    'addons' => $addons,
+                ]) --}}
 
             </form>
+
 
             <!-- /form-add-rental -->
         </div>
         <!-- /main-content-wrap -->
     </div>
     <!-- /main-content-wrap -->
-    <div class="modal fade" id="addBulkRoomsModal" tabindex="-1" aria-labelledby="addBulkRoomsLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addBulkRoomsLabel">Add Multiple Rooms</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="bulkRoomForm">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Room Prefix</label>
-                                <input type="text" class="form-control" id="roomPrefix" placeholder="e.g., Room">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Start Number</label>
-                                <input type="number" class="form-control" id="startNumber" min="1" required>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">End Number</label>
-                                <input type="number" class="form-control" id="endNumber" min="1" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Capacity</label>
-                                <input type="number" class="form-control" id="bulkCapacity" min="1" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Sex Restriction</label>
-                                <select class="select" id="bulkSexRestriction">
-                                    <option value="">No Restriction</option>
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                </select>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="saveBulkRoomsBtn">Save
-                        Rooms</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    @include('admin.facilities.partials.modals.bulk-rooms-modal')
 @endsection
 
 @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
+    <script src="{{ asset('assets/js/form-validation.js') }}"></script>
+    <script src="{{ asset('assets/js/rooms-management.js') }}"></script>
+    <script src="{{ asset('assets/js/pricing-management.js') }}"></script>
+    {{-- <script src="{{ asset('assets/js/addons-management.js') }}"></script> --}}
+
+    <script src="{{ asset('assets/js/hideFields.js') }}"></script>
+    <script src="{{ asset('assets/js/imagefile.js') }}"></script>
+
     <script>
         let rooms = [];
         let prices = [];
         let priceEditMode = false;
         let priceEditIndex = -1;
+        let roomEditMode = false;
+        let roomEditIndex = -1;
+        let bulkRoomPreview = [];
 
         let globalPriceSettings = {
             isBasedOnDays: false,
@@ -620,31 +213,125 @@
             dateTo: ''
         };
 
+        window.facilityFormConfig = {
+            hasValidationErrors: {!! json_encode($errors->any()) !!},
+            isEditMode: {{ isset($facility) ? 'true' : 'false' }},
+            existingRooms: {!! json_encode($facilityAttributes ?? []) !!},
+            existingPrices: {!! json_encode($prices ?? []) !!}
+        };
+
         $(document).ready(function() {
+            initializeForm();
+            setupRadioButtonHandlers();
+
+            // Add form submission debug
+            $('#facilityForm').on('submit', function(e) {
+                const facilityType = $('#rentalType').val();
+                if (facilityType === 'both') {
+                    console.log('🔍 PRE-SUBMIT CHECK for facility type "both":');
+
+                    // Check all facility_selection_both fields
+                    $('input[name="facility_selection_both"]').each(function(i, field) {
+                        console.log(`Field ${i}:`, {
+                            type: field.type,
+                            value: field.value,
+                            disabled: field.disabled,
+                            checked: field.checked
+                        });
+                    });
+
+                    // Ensure we have at least one non-disabled field with a value
+                    const activeField = $('input[name="facility_selection_both"]:not([disabled])').first();
+                    const hiddenField = $('input[name="facility_selection_both"][type="hidden"]').first();
+
+                    console.log('Active field value:', activeField.val());
+                    console.log('Hidden field value:', hiddenField.val());
+
+                    // Emergency backup - ensure we have a value
+                    if (!activeField.val() && !hiddenField.val()) {
+                        const hasWholeCapacity = $('#roomCapacityWhole').val() !== '';
+                        const hasRooms = rooms && rooms.length > 0;
+
+                        let emergencyValue = '';
+                        if (hasWholeCapacity && !hasRooms) {
+                            emergencyValue = 'whole';
+                        } else if (hasRooms) {
+                            emergencyValue = 'room';
+                        }
+
+                        if (emergencyValue) {
+                            // Remove existing hidden fields and create new one
+                            $('input[name="facility_selection_both"][type="hidden"]').remove();
+                            $(this).append(
+                                `<input type="hidden" name="facility_selection_both" value="${emergencyValue}">`
+                            );
+                            console.log('🚨 EMERGENCY: Added missing hidden field with value:',
+                                emergencyValue);
+                        }
+                    }
+                }
+            });
+        });
+
+        function initializeForm() {
+            console.log("=== Starting Form Initialization ===");
+
+            if (window.facilityFormConfig && window.facilityFormConfig.isEditMode) {
+                loadExistingData();
+            }
+
+            preserveFormData();
+            setupFormValidation();
+            setupRoomsManagement();
+            setupPricingManagement();
+            handleInitialUIState();
+        }
+
+        function loadExistingData() {
             try {
+                console.log("=== Loading Existing Data ===");
+
+                // Load rooms data
                 let roomsRaw = $('#facilityAttributesJson').val();
                 if (roomsRaw) {
                     rooms = typeof roomsRaw === 'string' ? JSON.parse(roomsRaw) : roomsRaw;
+                    rooms = rooms.filter(room => room !== null && room !== undefined);
+
+                    console.log("Loaded rooms:", rooms);
+
+                    // Check for whole_capacity in room data and populate field if empty
+                    const roomWithWholeCapacity = rooms.find(room => room.whole_capacity && room.whole_capacity > 0);
+                    const wholeCapacityField = $('#roomCapacityWhole');
+
+                    if (roomWithWholeCapacity && !wholeCapacityField.val()) {
+                        wholeCapacityField.val(roomWithWholeCapacity.whole_capacity);
+                        console.log('Populated whole_capacity field with:', roomWithWholeCapacity.whole_capacity);
+                    }
+
+                    // Ensure we preserve whole_capacity records even if they don't have individual room data
+                    if (roomWithWholeCapacity && !wholeCapacityField.val()) {
+                        wholeCapacityField.val(roomWithWholeCapacity.whole_capacity);
+                    }
                 }
 
+                // Load prices data
                 let pricesRaw = $('#pricesJson').val();
                 if (pricesRaw) {
                     prices = typeof pricesRaw === 'string' ? JSON.parse(pricesRaw) : pricesRaw;
 
                     prices = prices.map(price => ({
-                        id: price.id,
+                        id: price.id || null,
                         priceName: price.priceName || price.name || '',
                         priceValue: price.priceValue || price.value || '',
                         priceType: price.priceType || price.price_type || 'individual',
                         isBasedOnDays: price.isBasedOnDays != null ? price.isBasedOnDays : (price
                             .is_based_on_days == 1 ? '1' : '0'),
-                        isThereAQuantity: price.isThereAQuantity != null ? price.isThereAQuantity : (
-                            price.is_there_a_quantity == 1 ? '1' : '0'),
+                        isThereAQuantity: price.isThereAQuantity != null ? price.isThereAQuantity : (price
+                            .is_there_a_quantity == 1 ? '1' : '0'),
                         dateFrom: price.dateFrom || price.date_from || '',
                         dateTo: price.dateTo || price.date_to || ''
                     }));
 
-                    // Set global settings based on first price (if any)
                     if (prices.length > 0) {
                         const firstPrice = prices[0];
                         globalPriceSettings.isBasedOnDays = firstPrice.isBasedOnDays === '1';
@@ -652,7 +339,6 @@
                         globalPriceSettings.dateFrom = firstPrice.dateFrom || '';
                         globalPriceSettings.dateTo = firstPrice.dateTo || '';
 
-                        // Update global checkboxes
                         $('#isBasedOnDaysGlobal').prop('checked', globalPriceSettings.isBasedOnDays);
                         $('#isThereAQuantityGlobal').prop('checked', globalPriceSettings.isThereAQuantity);
 
@@ -663,714 +349,270 @@
                         }
                     }
                 }
+
+                console.log("Final loaded state - Rooms:", rooms.length, "Prices:", prices.length);
+
             } catch (error) {
                 console.error('Failed to parse room/price JSON:', error);
-            }
-            renderRoomList();
-            renderPriceList();
-        });
-
-
-        $(document).on('change', '#checkAllRooms input[type="checkbox"]', function() {
-            const isChecked = $(this).is(':checked');
-            $('.edit-selected-btn, .delete-selected-btn').toggle(isChecked);
-            $('.room-checkbox').prop('checked', isChecked ? 1 : 0);
-            updateActionVisibility();
-        });
-
-        const updateActionVisibility = () => {
-            const checkedCount = $('.room-checkbox:checked').length;
-            $('#checkAllRooms').toggle(checkedCount >= 1);
-            $('.edit-selected-btn, .delete-selected-btn').toggle(checkedCount >= 1);
-        }
-
-        const updateSelectAllCheckbox = () => {
-            const totalCheckboxes = $('.room-checkbox').length;
-            const checkedCheckboxes = $('.room-checkbox:checked').length;
-            const selectAllCheckbox = $('#checkAllRooms input[type="checkbox"]');
-
-            if (checkedCheckboxes === 0) {
-                selectAllCheckbox.prop('checked', false).prop('indeterminate', false);
-            } else if (checkedCheckboxes === totalCheckboxes) {
-                selectAllCheckbox.prop('checked', true).prop('indeterminate', false);
-            } else {
-                selectAllCheckbox.prop('checked', false).prop('indeterminate', true);
-            }
-        }
-
-        $(document).on('change', '.room-checkbox', function() {
-            updateActionVisibility();
-            updateSelectAllCheckbox();
-        });
-
-        function renderRoomList() {
-            const container = $('#roomCardsContainer').empty();
-            const wholeCapacityField = $('#roomCapacityWhole');
-
-            const isWholeCapacityOnly = rooms.length === 1 &&
-                !rooms[0].room_name &&
-                !rooms[0].capacity &&
-                !rooms[0].sex_restriction &&
-                rooms[0].whole_capacity;
-
-            if (isWholeCapacityOnly) {
-                $('#hideRoomBox').show();
-                $('#roomCapacityWhole').val(rooms[0].whole_capacity).prop('disabled', false);
-                $('#dormitoryRooms').hide();
-                return;
-            }
-            if (rooms.length === 0) {
-                $('#noRoomsMessage').show();
-                $('#checkAllRooms').hide();
-                return;
-            }
-            $('#noRoomsMessage').hide();
-            $('#checkAllRooms').show();
-
-            rooms.forEach((room, index) => {
-                const card = $(`
-                        <div class="card p-3 mb-3 room-card" data-index="${index}">
-                            <div class="card-body d-flex justify-content-between align-items-center">
-                                <div class="d-flex flex-column">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <input type="checkbox" class="room-checkbox" data-index="${index}">
-                                        <h4 class="pe-2">${room.room_name}</h4>
-                                        <span class="badge bg-primary">${room.sex_restriction || 'No Restriction'}</span>
-                                    </div>
-                                    <p class="fw-bold">Capacity: <span>${room.capacity}</span></p>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-outline-warning edit-room-btn" data-index="${index}">
-                                        <i class="icon-pen"></i> Edit
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger delete-room-btn" data-index="${index}">
-                                        <i class="icon-trash"></i> Delete
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `);
-                container.append(card);
-            });
-            $('#facilityAttributesJson').val(JSON.stringify(rooms));
-            updateActionVisibility();
-            updateSelectAllCheckbox();
-            const facilityType = $('#rentalType').val();
-            if (facilityType === 'both') {
-                const wholeCapacityField = $('#roomCapacityWhole');
-                if (rooms.length > 0) {
-                    wholeCapacityField.prop('disabled', true).val('');
-                    $('#roomButtonsMessage').hide();
-                } else {
-                    wholeCapacityField.prop('disabled', false);
-                }
-            }
-        }
-
-        $('#saveMultipleRoomsBtn').on("click", function(e) {
-            e.preventDefault();
-            const name = $('.room-name').val().trim();
-            const capacity = $('.room-capacity').val().trim();
-            const sex = $('.room-sex-restriction ').val();
-
-            if (!name || !capacity || !sex) {
-                alert('Name and capacity required.');
-                return;
-            }
-
-            rooms.push({
-                room_name: name,
-                capacity: capacity,
-                sex_restriction: sex
-            });
-
-            $('#addMultipleRoomsModal').modal('hide');
-            $('.room-name, .room-capacity').val('');
-            $('.room-sex-restriction').val('');
-            renderRoomList();
-
-        });
-
-        $(document).on('click', '.edit-room-btn', function() {
-            const index = $(this).data('index');
-            const room = rooms[index];
-
-            $('.room-name').val(room.room_name);
-            $('.room-capacity').val(room.capacity);
-            $('.room-sex-restriction').val(room.sex_restriction);
-
-            $('#addMultipleRoomsModal').modal('show');
-            $('#saveMultipleRoomsBtn').off().click(function() {
-                rooms[index] = {
-                    room_name: $('.room-name').val(),
-                    capacity: $('.room-capacity').val(),
-                    sex_restriction: $('.room-sex-restriction').val()
-                };
-                $('#addMultipleRoomsModal').modal('hide');
-                $('.room-name, .room-capacity').val('');
-                $('.room-sex-restriction').val('');
-                renderRoomList();
-            });
-        });
-
-        $(document).on('click', '.delete-room-btn', function() {
-            if (confirm('Are you sure you want to delete this room?')) {
-                const index = $(this).data('index');
-                rooms.splice(index, 1);
-                renderRoomList();
-            }
-        });
-
-
-        $('#saveBulkRoomsBtn').on('click', function() {
-            const prefix = $('#roomPrefix').val().trim();
-            const start = parseInt($('#startNumber').val());
-            const end = parseInt($('#endNumber').val());
-            const capacity = $('#bulkCapacity').val().trim();
-            const sex = $('#bulkSexRestriction').val();
-
-            if (!prefix || !start || !end || !capacity || !sex) {
-                alert('All fields are required.');
-                return;
-            }
-            if (sex !== 'male' && sex !== 'female') {
-                alert('Sex restriction must be either male or female.');
-                return;
-            }
-
-            for (let i = start; i <= end; i++) {
-                rooms.push({
-                    room_name: `${prefix}${i}`,
-                    capacity: capacity,
-                    sex_restriction: sex,
-                });
-            }
-
-            $('#addBulkRoomsModal').modal('hide');
-            $('#bulkRoomForm')[0].reset();
-            renderRoomList();
-        });
-
-        const getSelectedRooms = () => {
-            return $('.room-checkbox:checked').map(function() {
-                return $(this).data('index');
-            }).get();
-        };
-        $('#deleteSelectedRoomsBtn').on('click', function() {
-            if (confirm('Are you sure you want to delete the selected rooms?')) {
-                const selected = getSelectedRooms();
-
-                if (selected.length === 0) {
-                    alert('Please select at least one room to delete.');
-                    return;
-                }
-                rooms = rooms.filter((_, index) => !selected.includes(index));
-                renderRoomList();
-            }
-        });
-
-        $('#editSelectedRoomsBtn').off('click').on('click', function() {
-            const selected = getSelectedRooms();
-            if (selected.length === 0) {
-                alert('Select at least one room to edit.');
-                return;
-            }
-            const originalValues = {};
-            let modalContent = '';
-
-            selected.forEach(index => {
-                const room = rooms[index];
-                originalValues[index] = {
-                    room_name: room.room_name,
-                    capacity: room.capacity,
-                    sex_restriction: room.sex_restriction || ''
-                };
-
-                modalContent += `
-                    <div class="room-edit-section mb-4 p-3 border rounded">
-                        <div class="row">
-                            <div class="col-md-5 mb-3">
-                                <label class="form-label">Room Name</label>
-                                <input type="text" class="form-control edit-room-name" data-index="${index}" value="${room.room_name}">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">Capacity</label>
-                                <input type="number" class="form-control edit-room-capacity" data-index="${index}" value="${room.capacity}">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Sex Restriction</label>
-                                <select class=" edit-room-sex-restriction" data-index="${index}">
-                                    <option value="">No Restriction</option>
-                                    <option value="male" ${room.sex_restriction === 'male' ? 'selected' : ''}>Male</option>
-                                    <option value="female" ${room.sex_restriction === 'female' ? 'selected' : ''}>Female</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-        `;
-            });
-            const modalBody = $('#addMultipleRoomsModal .modal-body');
-            const originalContent = modalBody.html();
-
-            modalBody.html(`
-            <div class="bulk-edit-container">
-                <h6 class="mb-3">Edit ${selected.length} Selected Room(s)</h6>
-                ${modalContent}
-            </div>
-        `);
-
-            $('#addMultipleRoomsModal').modal('show');
-            $('#saveMultipleRoomsBtn').off('click').click(function(e) {
-                e.preventDefault();
-
-                let hasChanges = false;
-                let hasErrors = false;
-
-                selected.forEach(index => {
-                    const newName = $(`.edit-room-name[data-index="${index}"]`).val()
-                        .trim();
-                    const newCapacity = $(`.edit-room-capacity[data-index="${index}"]`)
-                        .val()
-                        .trim();
-                    const newSexRestriction = $(
-                            `.edit-room-sex-restriction[data-index="${index}"]`)
-                        .val();
-
-                    if (!newName || !newCapacity) {
-                        hasErrors = true;
-                        return;
-                    }
-
-                    const original = originalValues[index];
-
-                    if (newName !== original.room_name) {
-                        rooms[index].room_name = newName;
-                        hasChanges = true;
-                    }
-
-                    if (newCapacity !== original.capacity) {
-                        rooms[index].capacity = newCapacity;
-                        hasChanges = true;
-                    }
-
-                    if (newSexRestriction !== original.sex_restriction) {
-                        rooms[index].sex_restriction = newSexRestriction;
-                        hasChanges = true;
-                    }
-                });
-
-                if (hasErrors) {
-                    alert('Name and capacity are required for all rooms.');
-                    return;
-                }
-                modalBody.html(originalContent);
-
-                $('#addMultipleRoomsModal').modal('hide');
-                renderRoomList();
-
-                if (hasChanges) {
-                    alert(`${selected.length} room(s) updated successfully!`);
-                } else {
-                    alert('No changes were made.');
-                }
-            });
-            $('#addMultipleRoomsModal').on('hidden.bs.modal.bulk-edit', function() {
-                modalBody.html(originalContent);
-                $(this).off('hidden.bs.modal.bulk-edit');
-            });
-        });
-
-        // $('#dateFieldsContainer').hide();
-        $('#isBasedOnDaysGlobal').on('change', function() {
-            const isChecked = $(this).is(':checked');
-            globalPriceSettings.isBasedOnDays = isChecked;
-
-            if (isChecked) {
-                $('#dateFieldsContainerGlobal').fadeIn(200);
-                let today = new Date().toISOString().split('T')[0];
-                $('#date_from_global, #date_to_global').attr('min', today);
-
-                // Set current dates if available
-                if (globalPriceSettings.dateFrom) {
-                    $('#date_from_global').val(globalPriceSettings.dateFrom);
-                }
-                if (globalPriceSettings.dateTo) {
-                    $('#date_to_global').val(globalPriceSettings.dateTo);
-                }
-            } else {
-                $('#dateFieldsContainerGlobal').fadeOut(200);
-                globalPriceSettings.dateFrom = '';
-                globalPriceSettings.dateTo = '';
-                $('#date_from_global, #date_to_global').val('');
-
-                // Clear date fields for all existing prices when unchecked
-                prices.forEach(price => {
-                    price.dateFrom = null;
-                    price.dateTo = null;
-                });
-            }
-
-            // Apply to ALL existing prices immediately
-            prices.forEach(price => {
-                price.isBasedOnDays = isChecked ? '1' : '0';
-            });
-
-            renderPriceList();
-        });
-
-        $('#isThereAQuantityGlobal').on('change', function() {
-            const isChecked = $(this).is(':checked');
-            globalPriceSettings.isThereAQuantity = isChecked;
-
-            // Apply to ALL existing prices immediately
-            prices.forEach(price => {
-                price.isThereAQuantity = isChecked ? '1' : '0';
-            });
-
-            renderPriceList();
-        });
-
-        $('#date_from_global').on('change', function() {
-            let selectedDate = new Date($(this).val());
-            selectedDate.setDate(selectedDate.getDate() + 1);
-            let nextDay = selectedDate.toISOString().split('T')[0];
-
-            $('#date_to_global').val(nextDay);
-            $('#date_to_global').attr('min', nextDay);
-
-            globalPriceSettings.dateFrom = $(this).val();
-            globalPriceSettings.dateTo = nextDay;
-
-            // Apply dates to ALL existing prices immediately
-            prices.forEach(price => {
-                if (price.isBasedOnDays === '1') {
-                    price.dateFrom = globalPriceSettings.dateFrom;
-                    price.dateTo = globalPriceSettings.dateTo;
-                }
-            });
-
-            renderPriceList();
-        });
-
-        $('#date_to_global').on('change', function() {
-            globalPriceSettings.dateTo = $(this).val();
-
-            // Apply dates to ALL existing prices immediately
-            prices.forEach(price => {
-                if (price.isBasedOnDays === '1') {
-                    price.dateTo = globalPriceSettings.dateTo;
-                }
-            });
-
-            renderPriceList();
-        });
-
-
-        function renderPriceList() {
-            const container = $('#priceContainer').empty();
-            if (prices.length === 0) {
-                $('#noPricesMessage').show();
-                $('#priceTypeContainer').hide();
-                return;
-            }
-            $('#noPricesMessage').hide();
-            $('#priceTypeContainer').show();
-
-            prices.forEach((price, index) => {
-                let badgeType = price.priceType === 'individual' ? 'bg-primary text-white' :
-                    price.priceType === 'whole' ? 'bg-warning text-white' : '';
-
-                const card = $(`
-                           <div class="card p-3 mb-3">
-                               <div class="card-body d-flex justify-content-between align-items-center">
-                                   <div>
-                                       <div class="d-flex align-items-center gap-2">
-                                           <h4>${price.priceName}</h4>
-                                           <p><span class="badge ${badgeType}">${price.priceType.charAt(0).toUpperCase() + price.priceType.slice(1)}</span></p>
-                                       </div>
-                                       <p class="fw-bold h4">₱ ${price.priceValue}.00</p>
-                                       <p>Is Based on Days?: <span class="badge ${price.isBasedOnDays == '1' ? 'bg-success' : 'bg-secondary'}">${price.isBasedOnDays == '1' ? 'Yes' : 'No'}</span></p>
-                                       <p>Is There a Quantity?: <span class="badge ${price.isThereAQuantity == '1' ? 'bg-success' : 'bg-secondary'}">${price.isThereAQuantity == '1' ? 'Yes' : 'No'}</span></p>
-                                       ${price.dateFrom && price.isBasedOnDays == '1' ? `<p><i class="fa-solid fa-calendar-alt me-2 text-info"></i> Date From: <span class="">${price.dateFrom}</span></p>` : ''}
-                                       ${price.dateTo && price.isBasedOnDays == '1' ? `<p><i class="fa-solid fa-calendar-check me-2 text-info"></i> Date To: <span class="">${price.dateTo}</span></p>` : ''}
-                                   </div>
-                                   <div class="d-flex">
-                                       <button type="button" class="btn btn-lg btn-outline-warning me-2 edit-price" data-index="${index}">
-                                           <i class="fa-solid fa-pen"></i> Edit
-                                       </button>
-                                       <button type="button" class="btn btn-lg btn-outline-danger delete-price" data-index="${index}">
-                                           <i class="fa-solid fa-trash"></i>
-                                       </button>
-                                   </div>
-                               </div>
-                           </div>
-                       `);
-                container.append(card);
-            });
-            $('#pricesJson').val(JSON.stringify(prices));
-        }
-        $(document).on('click', '[data-bs-target="#addPrice"]', function() {
-            priceEditMode = false;
-            priceEditIndex = -1;
-            resetPriceModal();
-        });
-
-        $('#addMultiplePricesRowBtn').off('click').on('click', function(e) {
-            e.preventDefault();
-            if (!priceEditMode) {
-                let newPriceForm = $('#priceFormTemplate .price-form-card').clone();
-                newPriceForm.find('input, select').val('');
-                newPriceForm.find('.removePriceBtn').parent().remove();
-                $('#priceFormContainer').append(newPriceForm);
-            }
-        });
-
-        $(document).on('click', '.removePriceBtn', function() {
-            if ($('.price-form-card').length > 1 && !priceEditMode) {
-                $(this).closest('.price-form-card').remove();
-            } else {
-                $(this).closest('.price-form-card').find('input, select').val('');
-            }
-        });
-
-        $('#saveMultiplePricesBtn').off('click').on('click', function() {
-            if (priceEditMode) {
-                updateSinglePrice(priceEditIndex);
-            } else {
-                saveAllPrices();
-            }
-        });
-
-        $(document).on('click', '.edit-price', function() {
-            let index = $(this).data('index');
-            let price = prices[index];
-            priceEditMode = true;
-            priceEditIndex = index;
-
-            $('#priceFormContainer').empty();
-            let $form = $('#priceFormTemplate .price-form-card').clone();
-
-            $form.find('.removePriceBtn').parent().remove();
-
-            $form.find('.price-name').val(price.priceName);
-            $form.find('.price-value').val(price.priceValue);
-            $form.find('.price-type').val(price.priceType);
-            $('#priceFormContainer').append($form);
-
-            // Update global settings to match the price being edited
-            $('#isBasedOnDaysGlobal').prop('checked', price.isBasedOnDays == '1');
-            $('#isThereAQuantityGlobal').prop('checked', price.isThereAQuantity == '1');
-
-            if (price.isBasedOnDays == '1') {
-                $('#dateFieldsContainerGlobal').show();
-                $('#date_from_global').val(price.dateFrom || '');
-                $('#date_to_global').val(price.dateTo || '');
-                globalPriceSettings.dateFrom = price.dateFrom || '';
-                globalPriceSettings.dateTo = price.dateTo || '';
-            } else {
-                $('#dateFieldsContainerGlobal').hide();
-                $('#date_from_global, #date_to_global').val('');
-            }
-
-            globalPriceSettings.isBasedOnDays = price.isBasedOnDays == '1';
-            globalPriceSettings.isThereAQuantity = price.isThereAQuantity == '1';
-
-            $('#addPriceLabel').text('Edit Price');
-            $('#saveMultiplePricesBtn').text('Update Price');
-            $('#addPrice').modal('show');
-        });
-
-        $(document).on('click', '.delete-price', function() {
-            if (confirm('Are you sure you want to delete this price?')) {
-                const index = $(this).data('index');
-                prices.splice(index, 1);
-                renderPriceList();
-            }
-        });
-        $('#addPrice').on('hidden.bs.modal', function() {
-            priceEditMode = false;
-            priceEditIndex = -1;
-            resetPriceModal();
-        });
-
-
-        function resetPriceModal() {
-            $('#priceFormContainer').empty();
-            let $form = $('#priceFormTemplate .price-form-card').clone();
-            $form.find('input, select').val('');
-            $('#priceFormContainer').append($form);
-
-            $('#addPriceLabel').text('Add Price');
-            $('#saveMultiplePricesBtn').text('Save All');
-        }
-
-        function saveAllPrices() {
-            let valid = true;
-            let newPrices = [];
-
-            // Get values from global settings outside modal
-            let isBasedOnDays = $('#isBasedOnDaysGlobal').is(':checked') ? '1' : '0';
-            let isThereAQuantity = $('#isThereAQuantityGlobal').is(':checked') ? '1' : '0';
-            let dateFrom = $('#date_from_global').val();
-            let dateTo = $('#date_to_global').val();
-
-            $('#priceFormContainer .price-form-card').each(function() {
-                const priceName = $(this).find('.price-name').val();
-                const priceValue = $(this).find('.price-value').val();
-                const priceType = $(this).find('.price-type').val();
-
-                if (!priceName || !priceValue || !priceType) {
-                    valid = false;
-                    return false;
-                }
-
-                newPrices.push({
-                    priceName,
-                    priceValue,
-                    priceType,
-                    isBasedOnDays,
-                    isThereAQuantity,
-                    dateFrom: (isBasedOnDays === '1' && dateFrom) ? dateFrom : null,
-                    dateTo: (isBasedOnDays === '1' && dateTo) ? dateTo : null,
-                });
-            });
-
-            if (!valid) {
-                alert('Please fill all required fields for all prices.');
-                return;
-            }
-
-            prices.push(...newPrices);
-            renderPriceList();
-            resetPriceModal();
-            $('#addPrice').modal('hide');
-        }
-
-        function updateSinglePrice(index) {
-            let $form = $('#priceFormContainer .price-form-card').first();
-            const priceName = $form.find('.price-name').val();
-            const priceValue = $form.find('.price-value').val();
-            const priceType = $form.find('.price-type').val();
-
-            // Get values from global settings outside modal
-            let isBasedOnDays = $('#isBasedOnDaysGlobal').is(':checked') ? '1' : '0';
-            let isThereAQuantity = $('#isThereAQuantityGlobal').is(':checked') ? '1' : '0';
-            let dateFrom = $('#date_from_global').val();
-            let dateTo = $('#date_to_global').val();
-
-            if (!priceName || !priceValue || !priceType) {
-                alert('Please fill all required fields.');
-                return;
-            }
-
-            prices[index] = {
-                id: prices[index].id, // Preserve the existing ID
-                priceName,
-                priceValue,
-                priceType,
-                isBasedOnDays,
-                isThereAQuantity,
-                dateFrom: (isBasedOnDays === '1' && dateFrom) ? dateFrom : null,
-                dateTo: (isBasedOnDays === '1' && dateTo) ? dateTo : null,
-            };
-
-            renderPriceList();
-            resetPriceModal();
-            $('#addPrice').modal('hide');
-        }
-
-        $('#roomCapacityWhole').on('input', function() {
-            const facilityType = $('#rentalType').val();
-            if (facilityType === 'both') {
-                const hasValue = $(this).val().trim() !== '';
-                const addRoomButtons = $('#dormitoryRooms .d-flex.gap-2 button');
-
-                if (hasValue) {
-                    addRoomButtons.prop('disabled', true);
-                    $('#roomButtonsMessage').show();
-                    $('#noRoomsMessage').hide();
-                } else {
-                    addRoomButtons.prop('disabled', false);
-                    $('#roomButtonsMessage').hide();
-                    if (rooms.length === 0) {
-                        $('#noRoomsMessage').show();
-                    }
-                }
-            }
-        });
-
-        $('#rentalType').on('change', function() {
-            const facilityType = $(this).val();
-            if (facilityType) {
-                $('#roomCapacityWhole').val('');
                 rooms = [];
-                renderRoomList();
-
                 prices = [];
-                renderPriceList();
-
-                // Reset global settings
-                globalPriceSettings = {
-                    isBasedOnDays: false,
-                    isThereAQuantity: false,
-                    dateFrom: '',
-                    dateTo: ''
-                };
-
-                // Reset global checkboxes and fields
-                $('#isBasedOnDaysGlobal').prop('checked', false);
-                $('#isThereAQuantityGlobal').prop('checked', false);
-                $('#date_from_global, #date_to_global').val('');
-                $('#dateFieldsContainerGlobal').hide();
-                $(".price-type").val('');
             }
-        });
+        }
 
-        // Form submission handler
-        $('.form-update-rental').on('submit', function(e) {
-            e.preventDefault();
+        function preserveFormData() {
+            // Only override with old data if there were validation errors
+            if (window.facilityFormConfig && window.facilityFormConfig.hasValidationErrors) {
+                const oldRooms = {!! json_encode(old('facility_attributes_json', '[]')) !!};
+                if (oldRooms && oldRooms !== '[]') {
+                    try {
+                        rooms = JSON.parse(oldRooms);
+                        console.log("Using old rooms data due to validation errors:", rooms);
+                    } catch (e) {
+                        console.error("Failed to parse old rooms data:", e);
+                    }
+                }
+
+                const oldPrices = {!! json_encode(old('prices_json', '[]')) !!};
+                if (oldPrices && oldPrices !== '[]') {
+                    try {
+                        prices = JSON.parse(oldPrices);
+                        console.log("Using old prices data due to validation errors:", prices);
+                    } catch (e) {
+                        console.error("Failed to parse old prices data:", e);
+                    }
+                }
+            }
+
             const facilityType = $('#rentalType').val();
+            if (facilityType) {
+                showFacilityTypeFields(facilityType);
+            }
+        }
+
+        function setupRadioButtonHandlers() {
+            $('input[name="facility_selection_both"]').on('change', function() {
+                const selectedValue = $(this).val();
+                console.log("Radio button changed to:", selectedValue);
+
+                // Update hidden field if it exists (for consistency)
+                const hiddenField = $('input[name="facility_selection_both"][type="hidden"]');
+                if (hiddenField.length > 0) {
+                    hiddenField.val(selectedValue);
+                    console.log('Updated hidden field to:', selectedValue);
+                }
+
+                if (selectedValue === 'whole') {
+                    $('#selectionContent').hide();
+                    $('#hideRoomBox').show();
+                    $('#dormitoryRooms').hide();
+                } else if (selectedValue === 'room') {
+                    $('#selectionContent').hide();
+                    $('#hideRoomBox').hide();
+                    $('#dormitoryRooms').show();
+                }
+            });
+
+            // Handle facility type changes
+            $('#rentalType').on('change', function() {
+                const facilityType = $(this).val();
+                showFacilityTypeFields(facilityType);
+            });
+        }
+
+        function handleInitialUIState() {
+            const facilityType = $('#rentalType').val();
+            console.log("=== Handling Initial UI State ===");
+            console.log("Facility Type:", facilityType);
+
+            if (!facilityType) {
+                console.log("No facility type selected, hiding all sections");
+                resetToDefaultState();
+                return;
+            }
+
+            $('#roomBox').show();
+            $('#priceBox').show();
 
             if (facilityType === 'both') {
-                const hasRooms = rooms && rooms.length > 0;
-                const hasWholeCapacity = $('#roomCapacityWhole').val() && $('#roomCapacityWhole').val()
-                    .trim() !== '';
-
-            }
-
-            if (facilityType === 'individual') {
-                if (!rooms || rooms.length === 0) {
-                    alert('For "Individual" facility type, you must add at least one room.');
-                    return false;
-                }
-            }
-
-            if (facilityType === 'whole_place') {
-                const wholeCapacity = $('#roomCapacityWhole').val();
-                if (!wholeCapacity || wholeCapacity.trim() === '') {
-                    alert('For "Whole Place" facility type, you must provide a whole capacity.');
-                    return false;
-                }
-            }
-
-            if (facilityType === 'both') {
-                const hasRooms = rooms && rooms.length > 0;
-                if (hasRooms) {
-                    $('#facilityAttributesJson').val(JSON.stringify(rooms));
-                } else {
-                    $('#facilityAttributesJson').val(JSON.stringify([]));
-                }
+                handleBothTypeInitialization();
             } else if (facilityType === 'individual') {
-                $('#facilityAttributesJson').val(JSON.stringify(rooms));
+                handleIndividualTypeInitialization();
             } else if (facilityType === 'whole_place') {
-                $('#facilityAttributesJson').val(JSON.stringify([]));
+                handleWholePlaceTypeInitialization();
             }
 
-            $('#pricesJson').val(JSON.stringify(prices));
-            this.submit();
-        });
-    </script>
+            if (facilityType === 'individual' || facilityType === 'both' || facilityType === 'whole_place') {
+                $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+            }
 
-    <script src="{{ asset('assets/js/hideFields.js') }}"></script>
-    <script src="{{ asset('assets/js/imagefile.js') }}"></script>
+            renderRoomList();
+            renderPriceList();
+        }
+
+        function handleBothTypeInitialization() {
+            $('#selectionBothType').show();
+
+            let hasWholeCapacity = $('#roomCapacityWhole').val() !== '';
+
+
+            if (!hasWholeCapacity && window.facilityFormConfig && window.facilityFormConfig.isEditMode) {
+                // Check if any existing room data has whole_capacity
+                const existingRooms = window.facilityFormConfig.existingRooms || [];
+                hasWholeCapacity = existingRooms.some(room => room.whole_capacity && room.whole_capacity > 0);
+
+                // If we found whole_capacity in data but field is empty, populate it
+                if (hasWholeCapacity) {
+                    const wholeCapacityValue = existingRooms.find(room => room.whole_capacity && room.whole_capacity > 0)
+                        ?.whole_capacity;
+                    if (wholeCapacityValue) {
+                        $('#roomCapacityWhole').val(wholeCapacityValue);
+                        console.log('🔧 Populated whole capacity field with:', wholeCapacityValue);
+                    }
+                }
+            }
+            const hasRooms = rooms.length > 0;
+            const isEditMode = window.facilityFormConfig && window.facilityFormConfig.isEditMode;
+
+            let selectedMode = $('input[name="facility_selection_both"]:checked').val();
+
+            // Determine selection mode based on existing data
+            if (!selectedMode) {
+                if (hasWholeCapacity && !hasRooms) {
+                    selectedMode = 'whole';
+                    $('#hasWholeCapacity').prop('checked', true);
+                } else if (hasRooms && !hasWholeCapacity) {
+                    selectedMode = 'room';
+                    $('#hasRooms').prop('checked', true);
+                } else if (hasRooms) {
+                    // If both exist, prioritize rooms
+                    selectedMode = 'room';
+                    $('#hasRooms').prop('checked', true);
+                }
+            }
+
+            console.log('Both type initialization - selectedMode:', selectedMode);
+            console.log('hasWholeCapacity:', hasWholeCapacity);
+            console.log('hasRooms:', hasRooms);
+            console.log('isEditMode:', isEditMode);
+
+            // In edit mode, disable radio buttons and ALWAYS ensure hidden field exists
+            if (isEditMode && selectedMode) {
+                $('input[name="facility_selection_both"]').prop('disabled', true);
+
+                // CRITICAL FIX: Remove any existing hidden fields first
+                $('input[name="facility_selection_both"][type="hidden"]').remove();
+
+                // CRITICAL FIX: Append to the FORM, not to #selectionBothType
+                $('#facilityForm').append(
+                    `<input type="hidden" name="facility_selection_both" value="${selectedMode}" id="hiddenFacilitySelection">`
+                );
+
+                console.log('✅ Created hidden field with value:', selectedMode);
+                console.log('✅ Hidden field location: inside form =', $(
+                    '#facilityForm input[name="facility_selection_both"][type="hidden"]').length > 0);
+
+                // Add notice if not exists
+                if (!$('#edit-mode-notice').length) {
+                    $('#selectionBothType').append(`
+                <small class="text-muted mt-2 d-block" id="edit-mode-notice">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Selection is locked in edit mode to preserve facility structure.
+                </small>
+            `);
+                }
+            }
+
+            // Show appropriate sections based on selection
+            if (selectedMode === 'whole') {
+                $('#selectionContent').hide();
+                $('#hideRoomBox').show();
+                $('#dormitoryRooms').hide();
+            } else if (selectedMode === 'room') {
+                $('#selectionContent').hide();
+                $('#hideRoomBox').hide();
+                $('#dormitoryRooms').show();
+            } else {
+                // No selection made yet
+                $('#selectionContent').show();
+                $('#hideRoomBox').hide();
+                $('#dormitoryRooms').hide();
+            }
+        }
+
+        function handleIndividualTypeInitialization() {
+            console.log("=== Handling Individual Type Initialization ===");
+            $('#selectionBothType').hide();
+            $('#selectionContent').hide();
+            $('#hideRoomBox').hide();
+            $('#dormitoryRooms').show();
+        }
+
+        function handleWholePlaceTypeInitialization() {
+            $('#selectionBothType').hide();
+            $('#selectionContent').hide();
+            $('#hideRoomBox').show();
+            $('#dormitoryRooms').hide();
+        }
+
+        function showFacilityTypeFields(facilityType) {
+            if (facilityType === 'both') {
+                $('#selectionBothType').show();
+                $('#roomBox').show();
+                $('#priceBox').show();
+                $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+
+                const hasWholeCapacity = $('#roomCapacityWhole').val() !== '';
+                const hasRooms = rooms.length > 0;
+
+                if (hasWholeCapacity) {
+                    $('#hasWholeCapacity').prop('checked', true);
+                    $('#selectionContent').hide();
+                    $('#hideRoomBox').show();
+                    $('#dormitoryRooms').hide();
+                } else if (hasRooms) {
+                    $('#hasRooms').prop('checked', true);
+                    $('#selectionContent').hide();
+                    $('#hideRoomBox').hide();
+                    $('#dormitoryRooms').show();
+                } else {
+                    $('#selectionContent').show();
+                    $('#hideRoomBox').hide();
+                    $('#dormitoryRooms').hide();
+                }
+
+            } else if (facilityType === 'individual') {
+                $('#selectionBothType').hide();
+                $('#roomBox').show();
+                $('#hideRoomBox').hide();
+                $('#dormitoryRooms').show();
+                $('#selectionContent').hide();
+                $('#priceBox').show();
+                $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+            } else if (facilityType === 'whole_place') {
+                $('#selectionBothType').hide();
+                $('#roomBox').show();
+                $('#hideRoomBox').show();
+                $('#dormitoryRooms').hide();
+                $('#selectionContent').hide();
+                $('#priceBox').show();
+                $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+            } else {
+                $('#roomBox').hide();
+                $('#priceBox').hide();
+            }
+
+            renderRoomList();
+            renderPriceList();
+        }
+
+        function resetToDefaultState() {
+            $('#roomBox').hide();
+            $('#priceBox').hide();
+            $('#selectionBothType').hide();
+            $('#selectionContent').hide();
+            $('#hideRoomBox').hide();
+            $('#dormitoryRooms').hide();
+            $('#isBasedOnDaysContainer, #isThereAQuantityContainer').hide();
+        }
+    </script>
 @endpush

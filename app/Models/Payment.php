@@ -28,9 +28,14 @@ class Payment extends Model
         return $this->belongsTo(User::class);
     }
 
+    // public function updatedBy()
+    // {
+    //     return $this->belongsTo(User::class, 'updated_by');
+    // }
+
     public function updatedBy()
     {
-        return $this->belongsTo(User::class, 'updated_by');
+        return $this->belongsTo(User::class, 'updated_by')->where('utype', 'ADM');
     }
 
     public function paymentDetails()

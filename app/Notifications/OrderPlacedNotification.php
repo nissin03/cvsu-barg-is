@@ -25,7 +25,7 @@ class OrderPlacedNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['mail', 'database', 'broadcast'];
     }
 
     /**
@@ -36,10 +36,9 @@ class OrderPlacedNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject('Reservation Confirmed')
             ->line("Your reservation #{$this->order->id} is confirmed.")
-            ->line('Total Amount: ₱' . number_format($this->order->total_amount, 2))
+            ->line('Total Amount: ₱' . number_format($this->order->total, 2))
             ->line('Please proceed to the cashier on your reserved date and timeslot to pick up your order. Kindly prepare the exact amount.')
-            ->action('View Reservation Details', route('user.order.details', $this->order->id))
-            ->line('Thank you for choosing us!');
+            ->action('View Reservation Details', route('user.order.details', $this->order->id));
     }
 
     /**
@@ -49,11 +48,12 @@ class OrderPlacedNotification extends Notification implements ShouldQueue
     {
         return [
             'order_id' => $this->order->id,
-            'title' => 'Order Placed Successfully!',
+            'title' => 'Reservation Confirmed!',
             'body' => "Your reservation #{$this->order->id} is confirmed. Please proceed to the cashier on your reserved date and timeslot.",
             'url' => route('user.order.details', $this->order->id),
             'icon' => 'fas fa-check-circle',
             'order_number' => $this->order->id,
+            'total' => $this->order->total,
             'message' => "Reservation #{$this->order->id} confirmed. See you on your scheduled date!",
         ];
     }

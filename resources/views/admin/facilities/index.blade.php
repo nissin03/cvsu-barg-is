@@ -214,6 +214,12 @@
                 };
             }
 
+            function initRowClicks() {
+                $('.facility-row').off('click').on('click', function() {
+                    window.location = $(this).data('href');
+                });
+            }
+
             const performSearch = function() {
                 const searchTerm = $('#facility-search').val();
                 lastScrollPosition = $(window).scrollTop();
@@ -231,6 +237,7 @@
                         $('#loading-indicator').hide();
                         initArchiveButton();
                         initTooltips();
+                        initRowClicks();
                         $(window).scrollTop(lastScrollPosition);
                     },
                     error: function(xhr, status, error) {
@@ -296,6 +303,7 @@
 
             initArchiveButton();
             initTooltips();
+            initRowClicks();
         });
     </script>
 @endpush

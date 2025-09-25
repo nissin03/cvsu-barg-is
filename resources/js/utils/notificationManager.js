@@ -293,7 +293,6 @@ class NotificationManager {
             return;
         }
 
-        // Listen to user-specific channel
         this.echo
             .private(`App.Models.User.${this.userId}`)
             .notification((notification) => {
@@ -301,7 +300,13 @@ class NotificationManager {
                 this.handleNewNotification(notification);
             });
 
-        // Listen to admin channel if user is admin
+        this.echo
+            .private(`App.Models.User.${this.userId}`)
+            .listen(".ReservationCreated", (event) => {
+                console.log("Reservation notification received:", event);
+                this.handleReservation(event.reservationData);
+            });
+
         if (this.isAdmin) {
             this.echo
                 .private("admin-notification")
@@ -323,10 +328,7 @@ class NotificationManager {
      * Handle new notification from Echo
      */
     handleNewNotification(notification) {
-        // Show toast notification
         this.showToast(notification.data || notification);
-
-        // Refresh notification list
         this.fetchNotifications();
     }
 
@@ -380,6 +382,24 @@ class NotificationManager {
         };
         this.handleNewNotification(notification);
     }
+
+    handleReservation(payment) {
+        const notification = {
+            id: Date.now(),
+            data: {
+                title: "Reservation Created",
+                body: `Your reservation for ${payment.facility_name} has been created and is pending approval.`,
+                icon: "fas fa-calendar-check",
+                url:
+                    payment.url ||
+                    `/user/reservation/details/${payment.payment_id}`,
+            },
+            created_at: new Date().toISOString(),
+        };
+
+        this.handleNewNotification(notification);
+    }
+
     /**
      * Show toast notification
      */
@@ -476,14 +496,6 @@ class NotificationManager {
                         );
                     }
                 });
-
-                // if (
-                //     confirm(
-                //         "Are you sure you want to remove all notifications?"
-                //     )
-                // ) {
-                //     this.removeAllNotifications();
-                // }
             });
         }
 

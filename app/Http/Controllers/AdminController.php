@@ -7,7 +7,9 @@ use Dompdf\Options;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Slide;
+use App\Models\Course;
 use App\Models\Rental;
+use App\Models\College;
 use App\Models\Contact;
 use App\Models\Product;
 use App\Models\Category;
@@ -15,20 +17,16 @@ use App\Models\MonthName;
 use App\Models\OrderItem;
 use App\Models\Reservation;
 use App\Models\Transaction;
-use App\Models\College;
-use App\Models\Course;
 use Illuminate\Support\Str;
 use App\Mail\ReplyToContact;
+use App\Models\ContactReply;
 use Illuminate\Http\Request;
-use App\Models\DormitoryRoom;
-use App\Models\ContactReplies;
 use Illuminate\Support\Carbon;
 use App\Helpers\TimeSlotHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProductAttribute;
 use App\Services\ImageProcessor;
 use App\Notifications\StockUpdate;
-use App\Notifications\OrderCanceledNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -39,6 +37,7 @@ use App\Models\ProductAttributeValue;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Notification;
 use Intervention\Image\Laravel\Facades\Image;
+use App\Notifications\OrderCanceledNotification;
 
 
 class AdminController extends Controller
@@ -1175,32 +1174,44 @@ class AdminController extends Controller
     // Contact PAGE
     public function contacts()
     {
-        $contacts = Contact::orderBy('created_at', 'DESC')->paginate(10);
+        $contacts = Contact::with(['user', 'replies.admin'])
+            ->latest()
+            ->paginate(10);
         return view('admin.contacts', compact('contacts'));
     }
     public function contact_delete($id)
     {
         $contact = Contact::find($id);
         $contact->delete();
-        return redirect()->route(route: 'admin.contacts')->with('status', 'Contact has been deleted successfully !');
+        return redirect()
+            ->route('admin.contacts')
+            ->with('status', 'Contact has been deleted successfully!');
     }
 
     public function contact_reply(Request $request, $id)
     {
-        $contact = Contact::find($id);
-        if (!$contact) {
-            return redirect()->route('admin.contacts')->with('error', 'Contact not found.');
+        $contact = Contact::findOrFail($id);
+
+        if (Auth::user()->utype !== 'ADM') {
+            abort(403, 'Only admins can reply to contacts.');
         }
         $validated = $request->validate([
-            'replyMessage' => 'required|string',
+            'replyMessage' => 'required|string|max:5000',
         ]);
-        $reply = new ContactReplies();
-        $reply->contact_id = $contact->id;
-        $reply->admin_reply = $request->input('replyMessage');
-        $reply->admin_id = Auth::id();
-        $reply->save();
-        Mail::to($contact->email)->send(new ReplyToContact($contact, $request->input('replyMessage')));
-        return redirect()->route('admin.contacts')->with('status', 'Reply sent successfully!');
+
+        $reply = ContactReply::create([
+            'contact_id' => $contact->id,
+            'admin_id' => Auth::id(),
+            'admin_reply' => $validated['replyMessage']
+        ]);
+
+        Mail::to($contact->user?->email)->send(
+            new ReplyToContact($contact, $validated['replyMessage'])
+        );
+
+        return redirect()
+            ->route('admin.contacts')
+            ->with('status', 'Reply sent successfully!');
     }
 
     public function filter(Request $request)
@@ -1280,32 +1291,78 @@ class AdminController extends Controller
     }
 
 
+    public function getCoursesByCollege($collegeId)
+    {
+        // $courses = Course::where('college_id', $collegeId)->orderBy('name')->get();
+        $courses = Course::where('college_id', $collegeId)
+            ->select('id', 'code', 'name')
+            ->orderBy('name')
+            ->get();
+        return response()->json($courses);
+    }
     public function users(Request $request)
     {
         $query = User::with(['college', 'course']);
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('email', 'like', '%' . $searchTerm . '%')
+                    ->orWhereHas('college', function ($collegeQuery) use ($searchTerm) {
+                        $collegeQuery->where('code', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('name', 'like', '%' . $searchTerm . '%');
+                    })
+                    ->orWhereHas('course', function ($courseQuery) use ($searchTerm) {
+                        $courseQuery->where('code', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('name', 'like', '%' . $searchTerm . '%');
+                    });
+            });
+        }
 
         if ($request->filled('year_level')) {
             $query->where('year_level', $request->year_level);
         }
 
+
         if ($request->filled('college_id')) {
             $query->where('college_id', $request->college_id);
         }
 
+        // Course filter
         if ($request->filled('course_id')) {
             $query->where('course_id', $request->course_id);
         }
 
-        if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+        // Email filter - filter by email domain
+        if ($request->filled('email_filter')) {
+            $emailDomain = $request->email_filter;
+            $query->where('email', 'like', '%@' . $emailDomain);
+        }
+
+        // Sorting
+        $sortBy = $request->get('sort_by', 'newest');
+        switch ($sortBy) {
+            case 'newest':
+                $query->orderBy('created_at', 'desc');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
+                break;
+            default:
+                $query->orderBy('created_at', 'desc');
         }
 
         $users = $query->paginate(10);
-        $colleges = College::all();
-        $courses = Course::all();
+        $colleges = College::orderBy('name')->get();
+        $courses = Course::with('college')->orderBy('name')->get();
 
         if ($request->ajax()) {
-            // Format the users data to include college and course codes
             $formattedUsers = $users->map(function ($user) {
                 return [
                     'id' => $user->id,
@@ -1313,14 +1370,23 @@ class AdminController extends Controller
                     'email' => $user->email,
                     'phone_number' => $user->phone_number,
                     'year_level' => $user->year_level,
-                    'college' => $user->college ? ['code' => $user->college->code] : null,
-                    'course' => $user->course ? ['code' => $user->course->code] : null,
+                    'college' => $user->college ? [
+                        'id' => $user->college->id,
+                        'code' => $user->college->code,
+                        'name' => $user->college->name
+                    ] : null,
+                    'course' => $user->course ? [
+                        'id' => $user->course->id,
+                        'code' => $user->course->code,
+                        'name' => $user->course->name
+                    ] : null,
                 ];
             });
 
             return response()->json([
-                'users' => $formattedUsers,
-                'links' => (string) $users->links('pagination::bootstrap-5'),
+                'users' => view('partials._users-table', ['users' => $users])->render(),
+                'pagination' => view('partials._users-pagination', ['users' => $users])->render(),
+                'count' => $users->total(),
             ]);
         }
 
@@ -1424,53 +1490,40 @@ class AdminController extends Controller
 
     public function users_update(Request $request, $id)
     {
+
+        // dd($request->all());
         $user = User::findOrFail($id);
 
-        $validationRules = [
-            'phone_number' => 'nullable|string|regex:/^9\d{9}$/',
+        $isStudent = $user->role === 'student';
+
+        $rules = [
+            'phone_number' => ['nullable', 'string', 'regex:/^9\d{9}$/'],
+            'year_level'   => $isStudent ? ['required', 'in:1st Year,2nd Year,3rd Year,4th Year,5th Year'] : ['nullable'],
+            'college_id'   => $isStudent ? ['required', 'exists:colleges,id'] : ['nullable'],
+            'course_id'    => $isStudent ? ['required', 'exists:courses,id'] : ['nullable'],
         ];
 
-        if ($user->role === 'student') {
-            $validationRules['year_level'] = 'required|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
-            $validationRules['college_id'] = 'required|exists:colleges,id';
-            $validationRules['course_id'] = 'required|exists:courses,id';
-        } else {
-            $validationRules['year_level'] = 'nullable';
-            $validationRules['college_id'] = 'nullable';
-            $validationRules['course_id'] = 'nullable';
-        }
-
-        $customMessages = [
+        $messages = [
             'phone_number.regex' => 'Phone number must start with 9 and be exactly 10 digits.',
             'year_level.required' => 'Year level is required for students.',
             'college_id.required' => 'College is required for students.',
             'course_id.required' => 'Course is required for students.',
         ];
-
-        $request->validate($validationRules, $customMessages);
+        $validated = $request->validate($rules, $messages);
+        $user->phone_number = $validated['phone_number'] ?? null;
 
         $user->phone_number = $request->phone_number;
 
-        if ($user->role === 'student') {
-            $user->year_level = $request->year_level;
-            $user->college_id = $request->college_id;
-            $user->course_id = $request->course_id;
-
-            $college = College::find($request->college_id);
-            $course = Course::find($request->course_id);
-
-            $user->department = $college->name;
-            $user->course = $course->name;
+        if ($isStudent) {
+            $user->year_level = $validated['year_level'];
+            $user->college_id = $validated['college_id'];
+            $user->course_id  = $validated['course_id'];
         } else {
             $user->year_level = null;
             $user->college_id = null;
-            $user->course_id = null;
-            $user->department = null;
-            $user->course = null;
+            $user->course_id  = null;
         }
-
         $user->save();
-
         return redirect()->route('admin.users')->with('status', 'User has been updated successfully!');
     }
 
@@ -1534,198 +1587,6 @@ class AdminController extends Controller
 
         return response()->json($products);
     }
-    public function reservations(Request $request)
-    {
-        // Initial query for reservations with related models
-        $query = Reservation::with('rental', 'user', 'dormitoryRoom')
-            ->orderBy('created_at', 'DESC');
-
-        // Search functionality
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->whereHas('user', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone_number', 'like', "%{$search}%");
-            })->orWhereHas('rental', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
-            });
-        }
-
-        // Fetch reservations with pagination
-        $reservations = $query->paginate(10)->withQueryString();
-
-        // List of rental names that need specific payment statuses
-        $rentalNames = ['Male Dormitory', 'Female Dormitory', 'International House II'];
-
-        // Get rental IDs that match these names
-        $filteredRentals = Rental::whereIn('name', $rentalNames)->pluck('id')->toArray();
-
-        // Get available dormitory rooms for the filtered rentals
-        $availableRooms = DormitoryRoom::whereIn('rental_id', $filteredRentals)
-            ->withCount([
-                'reservations' => function ($query) {
-                    $query->where('rent_status', 'reserved');
-                }
-            ])
-            ->get()
-            ->filter(function ($room) {
-                return $room->reservations_count < $room->room_capacity;
-            })
-            ->groupBy('rental_id');
-
-        // Filter reservations to only include those with rental IDs from the filtered rentals
-        $reservations = $reservations->filter(function ($reservation) use ($filteredRentals) {
-            return in_array($reservation->rental_id, $filteredRentals);
-        });
-
-        // Return the view with the filtered data
-        return view("admin.reservation", compact('reservations', 'availableRooms'));
-    }
-
-    public function reservationHistory($reservation_id)
-    {
-        // Fetch the reservation record with related user and admin information
-        $reservation = Reservation::with(['user', 'updatedBy'])->find($reservation_id);
-
-        if (!$reservation) {
-            return redirect()->route('admin.reservation')->with('error', 'Reservation not found.');
-        }
-
-        // Create a history array with admin and user data
-        $history = [
-            [
-                'user_name' => $reservation->user->name,
-                'user_email' => $reservation->user->email,
-                'admin_email' => $reservation->updatedBy ? $reservation->updatedBy->email : 'N/A', // Admin email
-                'payment_status' => $reservation->payment_status,
-                'rent_status' => $reservation->rent_status,
-                'updated_at' => $reservation->updated_at->format('Y-m-d H:i:s')
-            ]
-        ];
-
-        return view('admin.reservation-history', compact('reservation', 'history'));
-    }
-
-    public function event_items($reservation_id)
-    {
-        $reservation = Reservation::with('rental', 'user', 'dormitoryRoom')->find($reservation_id);
-        if (!$reservation) {
-            return redirect()->route('admin.reservations')->with('error', 'Reservation not found.');
-        }
-
-        $reservedDates = [];
-        if (in_array($reservation->rental->name, ['Male Dormitory', 'Female Dormitory', 'International House II'])) {
-            $reservedDates = Reservation::where('rental_id', $reservation->rental_id)
-                ->where('rent_status', 'reserved')
-                ->pluck('reservation_date')
-                ->toArray();
-        }
-
-
-        return view('admin.reservation-events', compact('reservation', 'reservedDates'));
-    }
-
-    public function updateReservationStatus(Request $request, $reservation_id)
-    {
-        $request->validate([
-            'payment_status' => 'required|in:pending,advance/deposit complete,1st month complete,2nd month complete,3rd month complete,4th month complete,5th month complete,6th month complete,full payment complete,canceled',
-            'rent_status' => 'required|in:pending,reserved,completed,canceled',
-        ]);
-
-        $reservation = Reservation::with('dormitoryRoom', 'user', 'rental')->find($reservation_id);
-
-        if (!$reservation) {
-            return redirect()->route('admin.reservation')->with('error', 'Reservation not found.');
-        }
-
-        $rentalName = $reservation->rental->name;
-
-        // Automatically mark as "completed" if the reservation_date equals the end_date
-        if ($reservation->reservation_date && $reservation->end_date) {
-            $reservationDate = \Carbon\Carbon::parse($reservation->reservation_date);
-            $endDate = \Carbon\Carbon::parse($reservation->end_date);
-
-            if ($reservationDate->isSameDay($endDate)) {
-                $reservation->rent_status = 'completed';
-                $reservation->save();
-            }
-        }
-
-        if ($reservation->ih_start_date && $reservation->ih_end_date) {
-            $ihStartDate = \Carbon\Carbon::parse($reservation->ih_start_date);
-            $ihEndDate = \Carbon\Carbon::parse($reservation->ih_end_date);
-
-            if ($ihStartDate->isSameDay($ihEndDate)) {
-                $reservation->rent_status = 'completed';
-                $reservation->save();
-            }
-        }
-        if ($request->input('rent_status') === 'reserved') {
-            // Check for existing reserved status on the same reservation_date
-            $existingReservation = Reservation::where('reservation_date', $reservation->reservation_date)
-                ->where('rent_status', 'reserved')
-                ->where('rental_id', $reservation->rental_id) // Same rental_id if necessary
-                ->first();
-
-            if ($existingReservation) {
-                // Prevent update if there's already a reserved reservation for the same date
-                return redirect()->route('admin.reservation')
-                    ->with('error', 'This date is already reserved for another reservation.');
-            }
-
-            if (in_array($rentalName, ['Male Dormitory', 'Female Dormitory', 'International House II'])) {
-                $rooms = DormitoryRoom::where('rental_id', $reservation->rental_id)
-                    ->orderBy('room_number')
-                    ->get();
-
-                $roomAssigned = false;
-
-                foreach ($rooms as $room) {
-                    $reservedCount = Reservation::where('dormitory_room_id', $room->id)
-                        ->where('rent_status', 'reserved')
-                        ->count();
-
-                    if ($reservedCount < $room->room_capacity) {
-                        $reservation->dormitory_room_id = $room->id;
-                        $roomAssigned = true;
-                        break;
-                    }
-                }
-
-                if (!$roomAssigned) {
-                    return redirect()->route('admin.reservation')
-                        ->with('error', 'No available rooms with sufficient capacity.');
-                }
-            }
-        } elseif ($reservation->rent_status === 'reserved' && $request->input('rent_status') !== 'reserved') {
-            // Free up the room if the rent status is being changed from 'reserved' to something else
-            $reservation->dormitory_room_id = null;
-        }
-
-        $historyEntry = [
-            'user_name' => $reservation->user->name,
-            'user_email' => $reservation->user->email,
-            'admin_email' => Auth::user()->email,
-            'payment_status' => $request->input('payment_status'),
-            'rent_status' => $request->input('rent_status'),
-            'updated_at' => now()->format('Y-m-d H:i:s'),
-        ];
-
-        $history = $reservation->history ? json_decode($reservation->history, true) : [];
-        array_unshift($history, $historyEntry);
-
-        $reservation->history = json_encode($history);
-        $reservation->payment_status = $request->input('payment_status');
-        $reservation->rent_status = $request->input('rent_status');
-        $reservation->updated_by = Auth::id();
-
-        $reservation->save();
-
-        return redirect()->route('admin.reservation-events', ['reservation_id' => $reservation_id])
-            ->with('success', 'Status updated successfully.');
-    }
-
 
     // Rentals Reports
 

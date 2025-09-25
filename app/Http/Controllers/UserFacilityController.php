@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Price;
 use App\Models\Payment;
 use App\Models\Facility;
+use Carbon\CarbonPeriod;
+use Illuminate\Support\Str;
 use App\Models\Availability;
-use App\Models\QualificationApproval;
 use Illuminate\Http\Request;
 use App\Models\PaymentDetail;
 use Illuminate\Support\Carbon;
@@ -15,11 +16,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use App\Models\QualificationApproval;
 use App\Models\TransactionReservation;
 use Illuminate\Support\Facades\Session;
-use Carbon\CarbonPeriod;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use App\Notifications\ReservationCreateNotification;
 
 
 
@@ -42,49 +43,49 @@ class UserFacilityController extends Controller
         }
     }
 
-public function show($slug)
-{
-    if (!Auth::check()) {
-        return redirect()->route('login');
+    public function show($slug)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $user = Auth::user();
+
+        if ($user->utype !== 'ADM' && (empty($user->phone_number) || empty($user->sex))) {
+            session()->put('url.intended', route('user.facilities.index', ['slug' => $request->facility_slug ?? '']));
+
+            return redirect()->route('user.profile')
+                ->with('error', 'Please complete your profile by adding your phone number and selecting your sex before accessing facilities.');
+        }
+
+        $facility = Facility::with('facilityAttributes', 'prices', 'addons')->where('slug', $slug)->firstOrFail();
+
+        $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first();
+        $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
+        $availableRoom = $facility->facilityAttributes->first(function ($attribute) {
+            return $attribute->capacity > 0;
+        });
+
+        if (!$availableRoom) {
+            $availableRoom = null;
+        }
+
+        if ($facility->facility_type === 'whole_place' || $facility->facility_type === 'both') {
+            $facility->load(['availabilities' => function ($query) {
+                $query->where(function ($q) {
+                    $q->where('date_from', '>=', now()->toDateString())
+                        ->orWhere('date_to', '>=', now()->toDateString());
+                })->orderBy('created_at', 'desc');
+            }]);
+        }
+
+        return view('user.facilities.details', compact('availableRoom', 'wholeAttr', 'facility', 'sexRestriction'));
     }
-
-    $user = Auth::user();
-
-    if ($user->utype !== 'ADM' && (empty($user->phone_number) || empty($user->sex))) {
-        session()->put('url.intended', route('user.facilities.index', ['slug' => $request->facility_slug ?? '']));
-
-        return redirect()->route('user.profile')
-            ->with('error', 'Please complete your profile by adding your phone number and selecting your sex before accessing facilities.');
-    }
-    
-    $facility = Facility::with('facilityAttributes', 'prices', 'addons')->where('slug', $slug)->firstOrFail();
-    
-    $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first();
-    $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
-    $availableRoom = $facility->facilityAttributes->first(function ($attribute) {
-        return $attribute->capacity > 0;
-    });
-    
-    if (!$availableRoom) {
-        $availableRoom = null;
-    }
-
-    if ($facility->facility_type === 'whole_place' || $facility->facility_type === 'both') {
-        $facility->load(['availabilities' => function ($query) {
-            $query->where(function ($q) {
-                $q->where('date_from', '>=', now()->toDateString())
-                    ->orWhere('date_to', '>=', now()->toDateString());
-            })->orderBy('created_at', 'desc');
-        }]);
-    }
-
-    return view('user.facilities.details', compact('availableRoom', 'wholeAttr', 'facility', 'sexRestriction'));
-}
 
 
     public function reserve(Request $request)
     {
-       
+
 
         $request->validate([
             'facility_id' => 'required|exists:facilities,id',
@@ -754,6 +755,8 @@ public function show($slug)
                         'total_price'     => $reservationData['total_price'],
                     ]);
 
+                    $user->notify(new ReservationCreateNotification($payment));
+
                     PaymentDetail::create([
                         'payment_id'  => $payment->id,
                         'facility_id' => $facility->id,
@@ -850,6 +853,8 @@ public function show($slug)
                         'status'          => 'pending',
                         'total_price'     => $totalPrice,
                     ]);
+
+                    $user->notify(new ReservationCreateNotification($payment));
 
                     PaymentDetail::create([
                         'payment_id'  => $payment->id,
@@ -964,6 +969,8 @@ public function show($slug)
                             'total_price' => $reservationData['total_price'],
                         ]);
 
+                        $user->notify(new ReservationCreateNotification($payment));
+
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
                             'facility_id' => $facility->id,
@@ -1047,6 +1054,8 @@ public function show($slug)
                             'status' => 'pending',
                             'total_price' => $reservationData['total_price'],
                         ]);
+
+                        $user->notify(new ReservationCreateNotification($payment));
 
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
@@ -1172,6 +1181,8 @@ public function show($slug)
                             'total_price' => $reservationData['total_price'],
                         ]);
 
+                        $user->notify(new ReservationCreateNotification($payment));
+
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
                             'facility_id' => $facility->id,
@@ -1259,6 +1270,8 @@ public function show($slug)
                             'total_price' => $reservationData['total_price'],
                         ]);
 
+                        $user->notify(new ReservationCreateNotification($payment));
+
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
                             'facility_id' => $facility->id,
@@ -1337,9 +1350,9 @@ public function show($slug)
 
         $payments->each(function ($payment) {
             if ($payment->availability) {
-                $relatedAvailabilities = \App\Models\Availability::whereIn(
+                $relatedAvailabilities = Availability::whereIn(
                     'id',
-                    \App\Models\TransactionReservation::where('payment_id', $payment->id)
+                    TransactionReservation::where('payment_id', $payment->id)
                         ->pluck('availability_id')
                 )->orderBy('date_from')->get();
                 $payment->grouped_availabilities = $relatedAvailabilities;
@@ -1427,13 +1440,8 @@ public function show($slug)
         $qualificationApproval = QualificationApproval::where('availability_id', $payment->availability_id)
             ->where('user_id', $user->id)
             ->first();
-
-        // Process grouped availabilities for this single payment
         $this->processPaymentAvailabilities($payment);
-
-        // Calculate total days across all availability periods
         $days = $this->calculateTotalDays($payment);
-
         return view('user.reservation_details', compact(
             'payment',
             'qualificationApproval',

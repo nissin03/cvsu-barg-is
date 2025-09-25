@@ -11,6 +11,12 @@
                             <span class="title-form">Set Your Password</span>
                         </div>
                         <div class="card-body">
+                            <div class="alert alert-warning mb-4" role="alert">
+                                <i class="fa fa-exclamation-triangle me-2"></i>
+                                The password you set here will be used <strong>only for this system</strong>.
+                                It will <strong>not overwrite</strong> your original institutional or personal account
+                                password.
+                            </div>
                             <form method="POST" action="{{ route('password.set') }}" class="needs-validation" novalidate>
                                 @csrf
 

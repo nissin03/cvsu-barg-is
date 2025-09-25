@@ -10,6 +10,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\AddonController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AddonsController;
 use App\Http\Controllers\ReportController;
@@ -179,6 +180,7 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/facility/{facilityId}/rooms', [FacilityController::class, 'getRooms'])
             ->name('facility.rooms.get');
 
+
         // Admin notification routes
         Route::prefix('notifications')->group(function () {
             Route::get('/', [NotificationController::class, 'allNotifications'])->name('admin.notifications.all');
@@ -232,6 +234,7 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::delete('/contact/{id}/delete', [AdminController::class, 'contact_delete'])->name('admin.contact.delete');
         Route::post('/contact/{id}/reply', [AdminController::class, 'contact_reply'])->name('admin.contact.reply');
 
+        Route::get('/courses-by-college/{college}', [AdminController::class, 'getCoursesByCollege'])->name('admin.courses.by.college');
         Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
         Route::get('/user/filter', [AdminController::class, 'filter'])->name('admin.users.filter');
         Route::get('/user/search', [AdminController::class, 'search'])->name('admin.users.search');
@@ -240,7 +243,7 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::put('/users/{id}/update', [AdminController::class, 'users_update'])->name('admin.users.update');
         Route::get('/add', [AdminController::class, 'users_add'])->name('admin.users.add');
         Route::post('/store', [AdminController::class, 'users_store'])->name('admin.users.store');
-        Route::get('/admin/courses-by-college/{collegeId}', [UserController::class, 'coursesByCollege'])->name('admin.courses.by.college');
+        // Route::get('/admin/courses-by-college/{collegeId}', [UserController::class, 'coursesByCollege'])->name('admin.courses.by.college');
 
         // College routes
         Route::get('/admin/colleges', [AdminCollegeController::class, 'index'])->name('admin.colleges.index');
@@ -265,18 +268,24 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::delete('/courses/{id}/force-delete', [AdminCourseController::class, 'forceDelete'])->name('admin.courses.force-delete');
 
         // Addons
-        Route::get('addons', [AddonsController::class, 'index'])->name('admin.addons');
-        Route::get('addons/create', [AddonsController::class, 'create'])->name('admin.addons.create');
-        Route::post('addons', [AddonsController::class, 'store'])->name('admin.addons.store');
-        Route::get('/addons/{id}/edit', [AddonsController::class, 'edit'])->name('admin.addons.edit');
-        Route::put('/addons/update/{id}', [AddonsController::class, 'update'])->name('admin.addons.update');
-        Route::delete('/addons/{id}', [AddonsController::class, 'destroy'])->name('admin.addons.destroy');
+        // Route::get('addons', [AddonsController::class, 'index'])->name('admin.addons');
+        // Route::get('addons/create', [AddonsController::class, 'create'])->name('admin.addons.create');
+        // Route::post('addons', [AddonsController::class, 'store'])->name('admin.addons.store');
+        // Route::get('/addons/{id}/edit', [AddonsController::class, 'edit'])->name('admin.addons.edit');
+        // Route::put('/addons/update/{id}', [AddonsController::class, 'update'])->name('admin.addons.update');
+        // Route::delete('/addons/{id}', [AddonsController::class, 'destroy'])->name('admin.addons.destroy');
 
-        // Addon archive routes
-        Route::get('/addons/archive', [AddonsController::class, 'archive'])->name('admin.addons.archive');
-        Route::patch('/addons/{id}/restore', [AddonsController::class, 'restore'])->name('admin.addons.restore');
-        Route::delete('/addons/{id}/force-delete', [AddonsController::class, 'forceDelete'])->name('admin.addons.force-delete');
+        // // Addon archive routes
+        // Route::get('/addons/archive', [AddonsController::class, 'archive'])->name('admin.addons.archive');
+        // Route::patch('/addons/{id}/restore', [AddonsController::class, 'restore'])->name('admin.addons.restore');
+        // Route::delete('/addons/{id}/force-delete', [AddonsController::class, 'forceDelete'])->name('admin.addons.force-delete');
 
+        Route::get('/addons', [AddonController::class, 'index'])->name('admin.addons');
+        Route::get('/addons/create', [AddonController::class, 'create'])->name('admin.addons.create');
+        Route::post('/addons', [AddonController::class, 'store'])->name('admin.addons.store');
+        Route::get('/addons/{id}/edit', [AddonController::class, 'edit'])->name('admin.addons.edit');
+        Route::put('/addons/update/{id}', [AddonController::class, 'update'])->name('admin.addons.update');
+        Route::delete('/addons/{id}', [AddonController::class, 'destroy'])->name('admin.addons.destroy');
 
 
         Route::get('/search', [AdminController::class, 'searchproduct'])->name('admin.searchproduct');

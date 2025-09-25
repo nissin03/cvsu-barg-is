@@ -3,12 +3,13 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\College;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Notifications\Notifiable;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
@@ -38,7 +39,7 @@ class User extends Authenticatable
         }
         return asset('images/profile.jpg');
     }
-  
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -76,6 +77,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(Contact::class);
     }
+
+    public function sentReplies()
+    {
+        return $this->hasMany(ContactReply::class, 'admin_id');
+    }
     public function payments()
     {
         return $this->hasMany(Payment::class);
@@ -95,5 +101,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(Addon::class);
     }
-  
 }

@@ -10,11 +10,8 @@ class College extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = [
-        'name',
-        'code'
-    ];
-     protected $casts = [
+    protected $fillable = ['name', 'code'];
+    protected $casts = [
         'deleted_at' => 'datetime',
     ];
 
@@ -27,5 +24,4 @@ class College extends Model
     {
         return $this->hasMany(User::class);
     }
-    
 }
