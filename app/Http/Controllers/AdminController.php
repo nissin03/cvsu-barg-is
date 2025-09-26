@@ -823,7 +823,7 @@ class AdminController extends Controller
     {
         $product = Product::findOrFail($id);
         $product->archived = 1;
-        $product->archived_at = \Carbon\Carbon::now();
+        $product->archived_at = Carbon::now();
         $product->save();
         return redirect()->route('admin.products')->with('status', 'Product archived successfully!');
     }
@@ -902,30 +902,128 @@ class AdminController extends Controller
 
     public function orders(Request $request)
     {
-        $status = $request->input('status');
-        $timeSlot = $request->input('time_slot');
-        $search = $request->input('search');
         $timeSlots = TimeSlotHelper::time();
+        $query = Order::with([
+            'user.course.college',
+            'orderItems.product',
+            'orderItems.variant'
+        ]);
 
-        $query = Order::with('user');
+        if ($request->filled('search')) {
+            $search = trim($request->search);
 
-        $query->when($status, fn($q) => $q->where('status', $status))
-            ->when($timeSlot, fn($q) => $q->where('time_slot', $timeSlot))
-            ->when($search, function ($q) use ($search) {
-                $q->where(function ($subQuery) use ($search) {
-                    $subQuery->where('id', $search)
-                        ->orWhereHas('user', function ($userQuery) use ($search) {
-                            $userQuery->where('name', 'LIKE', "%{$search}%")
-                                ->orWhere('email', 'LIKE', "%{$search}%");
-                        });
-                });
+            $query->where(function ($q) use ($search) {
+                $q->where('id', $search)
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('email', 'LIKE', "%{$search}%");
+                    })
+                    ->orWhereHas('orderItems.product', function ($productQuery) use ($search) {
+                        $productQuery->where('name', 'LIKE', "%{$search}%");
+                    })
+                    ->orWhere(function ($transQuery) use ($search) {
+                        $searchLower = strtolower($search);
+                        if (in_array($searchLower, ['paid', 'unpaid'])) {
+                            if ($searchLower === 'paid') {
+                                $transQuery->whereHas('transaction', function ($tq) {
+                                    $tq->where('status', 'paid');
+                                });
+                            } else {
+                                $transQuery->whereDoesntHave('transaction')
+                                    ->orWhereDoesntHave('transaction', function ($tq) {
+                                        $tq->where('status', 'paid');
+                                    });
+                            }
+                        }
+                    });
             });
+        }
 
-        $orders = $query
-            ->orderByRaw("FIELD(status, 'reserved', 'canceled', 'pickedup')")
-            ->latest()
-            ->paginate(12)
-            ->withQueryString();
+        if ($request->filled('order_status')) {
+            $query->where('status', $request->order_status);
+        }
+
+        if ($request->filled('time_slot_range')) {
+            $query->where('time_slot', $request->time_slot_range);
+        }
+
+        if ($request->filled('transaction_status')) {
+            if ($request->transaction_status === 'paid') {
+                $query->whereHas('transaction', function ($q) {
+                    $q->where('status', 'paid');
+                });
+            } elseif ($request->transaction_status === 'unpaid') {
+                $query->whereDoesntHave('transaction')
+                    ->orWhereDoesntHave('transaction', function ($q) {
+                        $q->where('status', 'paid');
+                    });
+            }
+        }
+
+        $dateType = $request->input('date_type', 'created_at');
+        $validDateTypes = ['created_at', 'reservation_date', 'picked_up_date', 'canceled_date'];
+
+        if (!in_array($dateType, $validDateTypes)) {
+            $dateType = 'created_at';
+        }
+
+        if ($request->filled('date_from')) {
+            $dateFrom = Carbon::parse($request->date_from)->startOfDay();
+
+            if ($dateType === 'created_at') {
+                $query->where('created_at', '>=', $dateFrom);
+            } elseif ($dateType === 'reservation_date') {
+                $query->where('reservation_date', '>=', $dateFrom);
+            } elseif ($dateType === 'picked_up_date') {
+                $query->where('picked_up_date', '>=', $dateFrom);
+            } elseif ($dateType === 'canceled_date') {
+                $query->where('canceled_date', '>=', $dateFrom);
+            }
+        }
+
+        if ($request->filled('date_to')) {
+            $dateTo = Carbon::parse($request->date_to)->endOfDay();
+
+            if ($dateType === 'created_at') {
+                $query->where('created_at', '<=', $dateTo);
+            } elseif ($dateType === 'reservation_date') {
+                $query->where('reservation_date', '<=', $dateTo);
+            } elseif ($dateType === 'picked_up_date') {
+                $query->where('picked_up_date', '<=', $dateTo);
+            } elseif ($dateType === 'canceled_date') {
+                $query->where('canceled_date', '<=', $dateTo);
+            }
+        }
+
+        $sortBy = $request->input('sort_by', 'newest');
+        switch ($sortBy) {
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'amount_high':
+                $query->orderBy('total', 'desc');
+                break;
+            case 'amount_low':
+                $query->orderBy('total', 'asc');
+                break;
+            case 'reservation_date':
+                $query->orderBy('reservation_date', 'desc');
+                break;
+            case 'newest':
+            default:
+
+                $query->orderByRaw("FIELD(status, 'reserved', 'canceled', 'pickedup')")
+                    ->latest();
+                break;
+        }
+
+        $orders = $query->paginate(12)->withQueryString();
+        $orders->getCollection()->transform(function ($order) {
+            $paidTransaction = $order->transaction()->where('status', 'paid')->first();
+            $order->transaction_status = $paidTransaction ? 'paid' : 'unpaid';
+            $order->items_count = $order->orderItems->sum('quantity');
+            return $order;
+        });
 
         if ($request->ajax()) {
             return response()->json([
@@ -936,34 +1034,6 @@ class AdminController extends Controller
         }
 
         return view('admin.orders', compact('orders', 'timeSlots'));
-    }
-
-    public function filterOrders(Request $request)
-    {
-        $status = $request->input('status');
-        $timeSlot = $request->input('time_slot');
-
-        $query = Order::query();
-
-        if ($status) {
-            $query->where('status', $status);
-        }
-
-        if ($timeSlot) {
-            $query->where('time_slot', $timeSlot);
-        }
-
-        $orders = $query->orderBy('created_at', 'DESC')->paginate(12)->withQueryString();
-
-        if ($request->ajax()) {
-            return response()->json([
-                'orders' => view('partials._orders-table', compact('orders'))->render(),
-                'pagination' => view('partials._orders-pagination', compact('orders'))->render(),
-                'count' => $orders->total()
-            ]);
-        }
-
-        return redirect()->route('admin.orders', compact('orders'));
     }
 
     public function order_details($order_id)
@@ -1038,14 +1108,19 @@ class AdminController extends Controller
                 }]
             ]);
             $change = $request->amount_paid - $order->total;
-            $transaction = Transaction::create([
-                'order_id' => $order->id,
-                'amount_paid' => $request->amount_paid,
-                'change' => $change,
-                'status' => 'paid',
-                'processed_by' => Auth::user()->id,
-                'processed_at' => now()
-            ]);
+            $transaction = $order->transaction;
+
+            $transaction = Transaction::updateOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'amount_paid' => $request->amount_paid,
+                    'change' => $change,
+                    'status' => 'paid',
+                    'processed_by' => Auth::id(),
+                    'processed_at' => now()
+                ]
+            );
+
             $order->update([
                 'status' => 'pickedup',
                 'picked_up_date' => now(),

@@ -277,22 +277,8 @@
 
                         <div>
                             <a class="tf-button w-auto" href="{{ route('admin.users.add') }}">
-                                <i class="icon-plus"></i>Add new
+                                <i class="icon-plus"></i>Add User
                             </a>
-                        </div>
-
-                        <div>
-                            <button type="button" class="tf-button w-auto" data-bs-toggle="modal"
-                                data-bs-target="#addCollegesModal">
-                                <i class="icon-plus"></i>Add colleges
-                            </button>
-                        </div>
-
-                        <div>
-                            <button type="button" class="tf-button w-auto" data-bs-toggle="modal"
-                                data-bs-target="#addCoursesModal">
-                                <i class="icon-plus"></i>Add Courses
-                            </button>
                         </div>
                     </div>
 

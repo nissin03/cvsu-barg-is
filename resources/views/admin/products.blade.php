@@ -207,7 +207,7 @@
                         </form>
                     </div>
                     <a class="tf-button w-auto" href="{{ route('admin.product.add') }}"><i class="icon-plus"></i>Add
-                        new</a>
+                        Product</a>
                     <a class="tf-button w-auto" href="{{ route('admin.product-attribute-add') }}"><i
                             class="icon-plus"></i>Add Variations</a>
                     <a class="tf-button w-auto" href="{{ route('admin.archived-products') }}"><i class="icon-archive"></i>
