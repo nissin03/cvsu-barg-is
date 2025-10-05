@@ -34,7 +34,8 @@
             }
 
         @endphp
-        <tr>
+        <tr class="product-row" data-href="{{ route('admin.product.edit', ['id' => $product->id]) }}"
+            style="cursor: pointer;">
             {{-- <td >{{ $product->id }}</td> --}}
             <td scope="row" class="pname">
                 <div class="image">
@@ -119,13 +120,8 @@
             </td>
 
 
-            <td>
-                <div class="list-icon-function">
-                    <a href="{{ route('admin.product.edit', ['id' => $product->id]) }}">
-                        <div class="item edit">
-                            <i class="icon-edit-3"></i>
-                        </div>
-                    </a>
+            <td class="text-center align-middle">
+                <div class="list-icon-function d-flex justify-content-center align-items-center">
                     <form action="{{ route('admin.product.archive', ['id' => $product->id]) }}" method="POST">
                         @csrf
                         @method('DELETE')
@@ -135,6 +131,8 @@
                     </form>
                 </div>
             </td>
+
+
         </tr>
     @endforeach
 @else

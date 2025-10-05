@@ -183,7 +183,7 @@
                                         @elseif($order->status == 'canceled')
                                             <span class="badge badge-danger">Canceled</span>
                                         @else
-                                            <span class="badge badge-warning">Ordered</span>
+                                            <span class="badge badge-warning">Reserved</span>
                                         @endif
                                     </p>
                                 </div>
@@ -247,7 +247,7 @@
 
                     <!-- Ordered Items -->
                     <div class="wg-box">
-                        <h5>Ordered Items</h5>
+                        <h5>Reserved Items</h5>
                         @if ($orderItems->count() > 0)
                             <table class="table-custom">
                                 <thead>

@@ -125,23 +125,54 @@
     <script>
         let selectedDate = null;
 
+        // Simple function to check if a date is Monday-Thursday (1-4)
+        function isValidDay(date) {
+            const day = date.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+            return day >= 1 && day <= 4; // Monday(1) to Thursday(4)
+        }
+
+        // Check if date is too early (less than 3 days from today)
+        function isTooEarly(date) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset time to midnight
+
+            // Calculate minimum allowed date (3 days from today)
+            const minDate = new Date(today);
+            minDate.setDate(today.getDate() + 3);
+
+            const checkDate = new Date(date);
+            checkDate.setHours(0, 0, 0, 0);
+
+            return checkDate < minDate;
+        }
+
+        // Check if date should be disabled
+        function isDateDisabled(date) {
+            return isTooEarly(date) || !isValidDay(date);
+        }
+
         function dateClick(info) {
             const clickedDate = info.date;
-            const day = clickedDate.getDay();
-            if (day < 1 || day > 4) {
-                return;
-            }
+
+            // Prevent selection of invalid days
             if (isDateDisabled(clickedDate)) {
                 return;
             }
 
             const calendarApi = info.view.calendar;
+
+            // Handle month navigation
             if (clickedDate.getMonth() !== calendarApi.getDate().getMonth()) {
                 calendarApi.gotoDate(clickedDate);
                 return;
             }
 
-            const dateStr = clickedDate.toLocaleDateString('en-CA');
+            // Format date as YYYY-MM-DD for consistent handling
+            const year = clickedDate.getFullYear();
+            const month = String(clickedDate.getMonth() + 1).padStart(2, '0');
+            const day = String(clickedDate.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+
             const isSameDate = selectedDate === dateStr;
             selectedDate = dateStr;
 
@@ -149,13 +180,16 @@
                 return;
             }
 
+            // Set the reservation date
             $('#reservation_date').val(dateStr);
             $('#timeSlotContainer').removeClass('d-none');
+
             if (!isSameDate) {
                 $('#time_slot').val('');
                 $('#selectedSlots').text('0').removeClass('text-danger');
             }
 
+            // Fetch available slots for the selected date
             fetch(`/api/slots?date=${dateStr}`)
                 .then(res => res.json())
                 .then(data => {
@@ -178,55 +212,36 @@
                     $('#selectedSlots').text(selectedSlotCount).toggleClass('text-danger', selectedSlotCount === 0);
                     $('#slotDisplay').toggleClass('d-none', selectedSlotCount === 0);
                     toggleSubmitButton();
+                })
+                .catch(error => {
+                    console.error('Error fetching slots:', error);
                 });
 
+            // Update visual selection
             $('.fc-day').removeClass('selected-date');
             setTimeout(() => {
                 const selector = `.fc-day[data-date="${dateStr}"]`;
                 $(selector).addClass('selected-date');
             }, 0);
+
             calendarApi.unselect();
         }
 
-        function isDateDisabled(date) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            const dateMidnight = new Date(date);
-            dateMidnight.setHours(0, 0, 0, 0);
-
-            if (dateMidnight < today) {
-                return false;
-            }
-
-            let businessDaysCount = 0;
-            let checkDate = new Date(today);
-
-            while (businessDaysCount < 2) {
-                const dayOfWeek = checkDate.getDay();
-                if (dayOfWeek >= 1 && dayOfWeek <= 4) {
-                    const checkDateMidnight = new Date(checkDate);
-                    checkDateMidnight.setHours(0, 0, 0, 0);
-
-                    if (checkDateMidnight.getTime() === dateMidnight.getTime()) {
-                        return true;
-                    }
-                    businessDaysCount++;
-                }
-                checkDate.setDate(checkDate.getDate() + 1);
-            }
-            return false;
-        }
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
             const today = new Date();
-            const todayDate = today.toISOString().split('T')[0];
-            const nextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
-            const nextMonthDate =
-                `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-${String(nextMonth.getDate()).padStart(2, '0')}`;
 
-            const todayMidnight = new Date(today);
-            todayMidnight.setHours(0, 0, 0, 0);
+            // Set up date range (3 days from today to 2 months from now)
+            const minDate = new Date(today);
+            minDate.setDate(today.getDate() + 3);
+            const minDateStr = minDate.getFullYear() + '-' +
+                String(minDate.getMonth() + 1).padStart(2, '0') + '-' +
+                String(minDate.getDate()).padStart(2, '0');
+
+            const nextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+            const nextMonthStr = nextMonth.getFullYear() + '-' +
+                String(nextMonth.getMonth() + 1).padStart(2, '0') + '-' +
+                String(nextMonth.getDate()).padStart(2, '0');
 
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 aspectRatio: window.innerWidth < 768 ? 1.0 : window.innerWidth < 992 ? 1.3 : 1.6,
@@ -236,25 +251,17 @@
                 height: 'auto',
                 contentHeight: 'auto',
                 validRange: {
-                    start: todayDate,
-                    end: nextMonthDate,
+                    start: minDateStr,
+                    end: nextMonthStr,
                 },
                 selectAllow: function(selectInfo) {
-                    const day = selectInfo.start.getDay();
-                    return day >= 1 && day <= 4 && !isDateDisabled(selectInfo.start);
+                    return !isDateDisabled(selectInfo.start);
                 },
                 dayCellClassNames: function(arg) {
-                    const day = arg.date.getDay();
-                    const dateMidnight = new Date(arg.date);
-                    dateMidnight.setHours(0, 0, 0, 0);
-
-                    const dateStr = dateMidnight.toISOString().split('T')[0];
-                    const isDisabled = dateMidnight < todayMidnight ||
-                        day === 0 || day === 5 || day === 6 ||
-                        isDateDisabled(arg.date);
-                    if (isDisabled) {
+                    if (isDateDisabled(arg.date)) {
                         return ['fc-disabled-day'];
                     }
+                    return [];
                 },
                 windowResize: function(view) {
                     calendar.setOption('aspectRatio', window.innerWidth < 768 ? 1.0 :
@@ -264,7 +271,12 @@
 
             calendar.render();
 
+            // Handle time slot selection
             $(document).on('click', '.time-btn', function() {
+                if ($(this).prop('disabled')) {
+                    return;
+                }
+
                 $('.time-btn').removeClass('active');
                 $(this).addClass('active');
 
@@ -275,14 +287,19 @@
                 $('#slotDisplay').removeClass('d-none');
                 $('#time_slot').val(time);
 
+                // Update display date and time
                 const selectedISODate = $('#reservation_date').val();
-                const formattedDate = new Date(selectedISODate).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: '2-digit'
-                });
-                $('#displayDate').text(formattedDate);
-                $('#displayTime').text($('#time_slot').val() || '');
+                if (selectedISODate) {
+                    const formattedDate = new Date(selectedISODate + 'T00:00:00').toLocaleDateString(
+                        'en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: '2-digit'
+                        });
+                    $('#displayDate').text(formattedDate);
+                }
+                $('#displayTime').text(time);
+
                 toggleSubmitButton();
             });
         });
@@ -364,6 +381,24 @@
             background: rgba(25, 135, 84, 0.1);
             border-radius: 8px;
             padding: 8px 16px;
+        }
+
+        /* Disabled day styling */
+        .fc-disabled-day {
+            background-color: #f8f9fa !important;
+            color: #6c757d !important;
+            cursor: not-allowed !important;
+            opacity: 0.5 !important;
+        }
+
+        .fc-disabled-day:hover {
+            background-color: #f8f9fa !important;
+        }
+
+        /* Selected date styling */
+        .selected-date {
+            background-color: #0d6efd !important;
+            color: white !important;
         }
 
         /* Mobile Responsive Styles */

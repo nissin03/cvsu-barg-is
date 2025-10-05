@@ -87,10 +87,10 @@ class UserSeeder extends Seeder
         }
 
         // Create Students (100 users)
-        for ($i = 1; $i <= 100; $i++) {
+        for ($i = 1; $i <= 10; $i++) {
             $college = $colleges->random();
             $collegeCourses = $courses->where('college_id', $college->id);
-            
+
             User::create([
                 'name' => 'Student ' . $i,
                 'email' => 'student' . $i . '@cvsu.edu.ph',
@@ -109,7 +109,7 @@ class UserSeeder extends Seeder
         }
 
         // Create Employees (20 users)
-        for ($i = 1; $i <= 20; $i++) {
+        for ($i = 1; $i <= 10; $i++) {
             User::create([
                 'name' => 'Employee ' . $i,
                 'email' => 'employee' . $i . '@cvsu.edu.ph',
@@ -128,7 +128,7 @@ class UserSeeder extends Seeder
         }
 
         // Create Non-employees (20 users)
-        for ($i = 1; $i <= 20; $i++) {
+        for ($i = 1; $i <= 10; $i++) {
             User::create([
                 'name' => 'Non-Employee ' . $i,
                 'email' => 'nonemployee' . $i . '@cvsu.edu.ph',

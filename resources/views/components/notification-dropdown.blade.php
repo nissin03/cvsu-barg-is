@@ -39,9 +39,7 @@
                                     {{ Str::limit($notification->data['body'] ?? ($notification->data['message'] ?? 'No message'), 30) }}
                                     </p>
                                 </div>
-                                <div class="remove-notification" data-id="{{ $notification->id }}">
-                                    <i class="fas fa-times"></i>
-                                </div>
+
                             </div>
                         @endforeach
                     @endif

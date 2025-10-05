@@ -33,8 +33,11 @@ class DatabaseSeeder extends Seeder
             ReservationSeeder::class,
             // AddonSeeder::class,
             // AddonsFacilitySeeder::class,
+<<<<<<< HEAD
+=======
 
-       
+>>>>>>> bc52b149c2f1166cd2a1fd2a3e749aa6c5679233
+
 
 
         ]);

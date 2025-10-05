@@ -207,11 +207,11 @@
                         </form>
                     </div>
                     <a class="tf-button w-auto" href="{{ route('admin.product.add') }}"><i class="icon-plus"></i>Add
-                        new</a>
+                        Product</a>
                     <a class="tf-button w-auto" href="{{ route('admin.product-attribute-add') }}"><i
                             class="icon-plus"></i>Add Variations</a>
-                    <a class="tf-button w-auto" href="{{ route('admin.archived-products') }}"><i
-                            class="icon-archive"></i> Archived Products</a>
+                    <a class="tf-button w-auto" href="{{ route('admin.archived-products') }}"><i class="icon-archive"></i>
+                        Archived Products</a>
                 </div>
                 <div class="table-responsive">
                     @if (Session::has('status'))
@@ -220,11 +220,11 @@
                     <table class="table table-striped table-bordered">
                         <thead>
                             <tr>
-                                <th scope="col">Name</th>
-                                <th scope="col" width="15%">Quantity</th>
-                                <th scope="col">Price</th>
-                                <th scope="col">Category</th>
-                                <th scope="col">Action</th>
+                                <th class="text-center align-middle" scope="col" style="width: 20%">Name</th>
+                                <th class="text-center align-middle" scope="col" style="width: 10%">Quantity</th>
+                                <th class="text-center align-middle" scope="col" style="width: 15%">Price</th>
+                                <th class="text-center align-middle" scope="col" style="width: 15%">Category</th>
+                                <th class="text-center align-middle" scope="col" style="width: 15%">Action</th>
                             </tr>
                         </thead>
                         <tbody id="js-products-partial-target">
@@ -281,6 +281,7 @@
                         initPaginationEvents();
                         initArchiveButtons();
                         initTooltips();
+                        initRowClicks();
                         $(window).scrollTop(lastScrollPosition);
                     },
                     error: function(xhr, status, error) {
@@ -289,6 +290,12 @@
                     }
                 });
             };
+
+            function initRowClicks() {
+                $('.product-row').off('click').on('click', function() {
+                    window.location = $(this).data('href');
+                });
+            }
 
             function determineSortColumn(searchTerm) {
                 if (!searchTerm) return 'created_at';
@@ -325,6 +332,7 @@
                             initPaginationEvents();
                             initArchiveButtons();
                             initTooltips();
+                            initRowClicks();
                             $(window).scrollTop(lastScrollPosition);
                         },
                         error: function(xhr, status, error) {
@@ -384,6 +392,7 @@
             initPaginationEvents();
             initArchiveButtons();
             initTooltips();
+            initRowClicks();
         });
     </script>
 @endpush

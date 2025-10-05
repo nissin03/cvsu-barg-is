@@ -159,27 +159,50 @@ class CartController extends Controller
     {
         $cartItem = Cart::instance('cart')->get($rowId);
         if (!$cartItem) {
-            return response()->json(['error' => 'The item does not exist in the cart.']);
+            return response()->json([
+                'success' => false,
+                'error' => 'The item does not exist in the cart.'
+            ]);
         }
 
-        $newQty = $cartItem->qty - 1;
+        if ($cartItem->qty <= 1) {
+            Cart::instance('cart')->remove($rowId);
+            return response()->json([
+                'success' => true,
+                'newQty' => 0,
+                'subtotal' => Cart::subtotal(),
+                'total' => Cart::total(),
+                'itemTotal' => 0
+            ]);
+        } else {
+            Cart::instance('cart')->update($rowId, $cartItem->qty - 1);
+            $updatedItem = Cart::instance('cart')->get($rowId);
 
-        if ($newQty < 1) {
-            return response()->json(['error' => 'Quantity cannot be less than 1.']);
+            return response()->json([
+                'success' => true,
+                'removed' => false,
+                'newQty' => $updatedItem->qty,
+                'total' => Cart::instance('cart')->total(),
+                'itemTotal' => number_format($updatedItem->price * $updatedItem->qty, 2)
+            ]);
         }
 
-        Cart::instance('cart')->update($rowId, $newQty);
+        // $newQty = $cartItem->qty - 1;
 
-        return response()->json([
-            'success' => true,
-            'newQty' => $newQty,
-            'subtotal' => Cart::subtotal(),
-            'total' => Cart::total(),
-            'itemTotal' => number_format($cartItem->price * $newQty, 2)
-        ]);
+        // if ($newQty < 1) {
+        //     return response()->json(['error' => 'Quantity cannot be less than 1.']);
+        // }
+
+        // Cart::instance('cart')->update($rowId, $newQty);
+
+        // return response()->json([
+        //     'success' => true,
+        //     'newQty' => $newQty,
+        //     'subtotal' => Cart::subtotal(),
+        //     'total' => Cart::total(),
+        //     'itemTotal' => number_format($cartItem->price * $newQty, 2)
+        // ]);
     }
-
-
     public function updateVariant(Request $request, $rowId)
     {
         $cartItem = Cart::instance('cart')->get($rowId);
@@ -279,7 +302,6 @@ class CartController extends Controller
         if (!Auth::check()) {
             return redirect()->route('login');
         }
-
 
         $user = Auth::user()->load('course.college');
         Log::info('Checkout attempt', [
