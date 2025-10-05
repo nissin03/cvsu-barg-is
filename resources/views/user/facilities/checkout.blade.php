@@ -1,381 +1,5 @@
 @extends('layouts.app')
 @section('content')
-    {{-- <style>
-        :root {
-            --primary: #3B82F6;
-            --primary-light: #EFF6FF;
-            --primary-dark: #1D4ED8;
-            --text: #1F2937;
-            --text-light: #6B7280;
-            --text-lighter: #9CA3AF;
-            --border: #E5E7EB;
-            --surface: #FFFFFF;
-            --background: #F9FAFB;
-            --success: #10B981;
-            --error: #EF4444;
-            --radius-sm: 4px;
-            --radius-md: 8px;
-            --radius-lg: 12px;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
-            --space-xxs: 4px;
-            --space-xs: 8px;
-            --space-sm: 12px;
-            --space-md: 16px;
-            --space-lg: 24px;
-            --space-xl: 32px;
-            --space-xxl: 48px;
-        }
-
-        .checkout-container {
-            background-color: var(--background);
-            min-height: 100vh;
-            padding: var(--space-xl) 0;
-        }
-
-        .checkout-wrapper {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 var(--space-md);
-        }
-
-        .checkout-card {
-            background: var(--surface);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
-            overflow: hidden;
-        }
-
-        .card-header {
-            background: var(--primary);
-            color: white;
-            padding: var(--space-lg);
-            text-align: center;
-        }
-
-        .card-header h2 {
-            margin: 0;
-            font-weight: 600;
-            font-size: 20px;
-            letter-spacing: 0.2px;
-        }
-
-        .card-body {
-            padding: var(--space-xl);
-        }
-
-        .section {
-            margin-bottom: var(--space-xl);
-        }
-
-        .section-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: var(--space-md);
-            padding-bottom: var(--space-sm);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .section-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--primary);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: var(--space-xs);
-        }
-
-        .section-title svg {
-            width: 18px;
-            height: 18px;
-            color: var(--primary);
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: var(--space-sm);
-        }
-
-        .info-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .info-label {
-            font-size: 13px;
-            color: var(--text-light);
-            margin-bottom: var(--space-xxs);
-            font-weight: 500;
-        }
-
-        .info-value {
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--text);
-        }
-
-        .summary-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .summary-table th,
-        .summary-table td {
-            padding: var(--space-sm) 0;
-            text-align: left;
-            vertical-align: top;
-        }
-
-        .summary-table th {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-light);
-        }
-
-        .summary-table td {
-            font-size: 15px;
-            text-align: right;
-        }
-
-        .summary-table tr:not(:last-child) {
-            border-bottom: 1px solid var(--border);
-        }
-
-        .total-row {
-            background: var(--primary-light);
-        }
-
-        .total-row td {
-            font-weight: 600;
-            color: var(--primary-dark);
-            padding: var(--space-sm) var(--space-md);
-        }
-
-        .divider {
-            height: 1px;
-            background: var(--border);
-            margin: var(--space-xl) 0;
-        }
-
-        .requirements-card {
-            background: var(--surface);
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border);
-            overflow: hidden;
-            margin-bottom: var(--space-lg);
-        }
-
-        .requirements-header {
-            background: var(--primary-light);
-            padding: var(--space-md);
-            border-bottom: 1px solid var(--border);
-            font-weight: 600;
-            color: var(--primary-dark);
-            font-size: 15px;
-        }
-
-        .requirements-body {
-            padding: var(--space-md);
-        }
-
-        .download-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-xs);
-            background: var(--primary-light);
-            color: var(--primary-dark);
-            padding: var(--space-sm) var(--space-md);
-            border-radius: var(--radius-sm);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            margin-bottom: var(--space-md);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-        }
-
-        .download-btn:hover {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .download-btn svg {
-            width: 16px;
-            height: 16px;
-        }
-
-        .file-upload {
-            margin-top: var(--space-lg);
-        }
-
-        .file-upload label {
-            display: block;
-            margin-bottom: var(--space-xs);
-            font-weight: 500;
-            font-size: 14px;
-            color: var(--text);
-        }
-
-        .file-input {
-            width: 100%;
-            padding: var(--space-sm) var(--space-md);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 14px;
-            transition: all 0.2s ease;
-        }
-
-        .file-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-        }
-
-        .submit-btn {
-            width: 100%;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: var(--space-md);
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-top: var(--space-md);
-        }
-
-        .submit-btn:hover {
-            background: var(--primary-dark);
-        }
-
-        .error-text {
-            color: var(--error);
-            font-size: 13px;
-            margin-top: var(--space-xxs);
-            display: flex;
-            align-items: center;
-            gap: var(--space-xxs);
-        }
-
-        @media (max-width: 768px) {
-            .checkout-container {
-                padding: var(--space-lg) 0;
-            }
-            
-            .card-body {
-                padding: var(--space-lg);
-            }
-            
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .section {
-                margin-bottom: var(--space-lg);
-            }
-            
-            .divider {
-                margin: var(--space-lg) 0;
-            }
-        }
-
-        /* Style for Uploading */
-            .file-upload-wrapper {
-            margin-top: 1.5rem;
-        }
-
-        .file-upload-label {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1.5rem;
-            border: 2px dashed #d1d5db;
-            border-radius: 0.5rem;
-            background-color: #f9fafb;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .file-upload-label:hover {
-            border-color: #3b82f6;
-            background-color: #f0f7ff;
-        }
-
-        .file-upload-icon {
-            width: 2.5rem;
-            height: 2.5rem;
-            color: #3b82f6;
-        }
-
-        .file-upload-text {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .file-upload-title {
-            font-weight: 600;
-            color: #111827;
-        }
-
-        .file-upload-subtitle {
-            font-size: 0.875rem;
-            color: #6b7280;
-        }
-
-        .file-upload-input {
-            display: none;
-        }
-
-        .file-upload-preview {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 0.75rem;
-            padding: 0.75rem 1rem;
-            background-color: #f3f4f6;
-            border-radius: 0.375rem;
-        }
-
-        .file-upload-name {
-            font-size: 0.875rem;
-            color: #374151;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .file-upload-clear {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 1.5rem;
-            height: 1.5rem;
-            border: none;
-            background: none;
-            color: #6b7280;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .file-upload-clear:hover {
-            color: #ef4444;
-        }
-
-        .file-upload-clear svg {
-            width: 1rem;
-            height: 1rem;
-        }
-
-        .file-upload-error {
-            margin-top: 0.5rem;
-            font-size: 0.75rem;
-            color: #ef4444;
-        }
-    </style> --}}
 
     @php
         $user = auth()->user();
@@ -501,47 +125,122 @@
                                         </tr>
                                     @endif
 
-                                @elseif ($facility->facility_type === 'whole_place')
-                                    @php
-                                        $dateFrom = \Carbon\Carbon::parse($reservationData['date_from'] ?? 'N/A');
-                                        $dateTo = \Carbon\Carbon::parse($reservationData['date_to'] ?? 'N/A');
-                                        $timeStartRaw = $reservationData['time_start'] ?? null;
-                                        $timeEndRaw   = $reservationData['time_end']   ?? null;
-                                        $timeStart = $timeStartRaw ? \Carbon\Carbon::parse($timeStartRaw) : null;
-                                        $timeEnd = $timeEndRaw ? \Carbon\Carbon::parse($timeEndRaw) : null;
-                                    @endphp
+                               
+@elseif ($facility->facility_type === 'whole_place')
+    @php
+        $dateFrom = \Carbon\Carbon::parse($reservationData['date_from'] ?? 'N/A');
+        $dateTo = \Carbon\Carbon::parse($reservationData['date_to'] ?? 'N/A');
+        $timeStartRaw = $reservationData['time_start'] ?? null;
+        $timeEndRaw   = $reservationData['time_end']   ?? null;
+        $timeStart = $timeStartRaw ? \Carbon\Carbon::parse($timeStartRaw) : null;
+        $timeEnd = $timeEndRaw ? \Carbon\Carbon::parse($timeEndRaw) : null;
+        $addons = $reservationData['addons'] ?? [];
+        $addonTotal = $reservationData['addon_total'] ?? 0;
+        $hasDayBasedPricing = $reservationData['has_day_based_pricing'] ?? false;
+        $daysDifference = $reservationData['days_difference'] ?? 1;
+        $clientTypeTotal = $reservationData['client_type_total'] ?? 0;
+        $clientTypePrice = $reservationData['client_type_price'] ?? 0;
+    @endphp
+    
+    <tr>
+        <th>Date From</th>
+        <td>{{ $dateFrom->format('F d, Y') }}</td>
+    </tr>
+    <tr>
+        <th>Date To</th>
+        <td>{{ $dateTo->format('F d, Y') }}</td>
+    </tr>
+    
+    @if($timeStart && $timeEnd)
+        <tr>
+            <th>Start Time to End Time</th>
+            <td>
+                @if($timeStart->eq($timeEnd))
+                    {{ $timeStart->format('h:i A') }}
+                @else
+                    {{ $timeStart->format('h:i A') }} to {{ $timeEnd->format('h:i A') }}
+                @endif
+            </td>
+        </tr>
+    @endif
+    
+    @if(!$hasDayBasedPricing)
+        <tr>
+            <th>Facilities Price</th>
+            <td>₱{{ number_format($clientTypePrice, 2) }} × {{ $daysDifference }} {{ $daysDifference === 1 ? 'day' : 'days' }} = ₱{{ number_format($clientTypeTotal, 2) }}</td>
+        </tr>
+    @else
+        <tr>
+            <th>Facilities Price</th>
+            <td>₱{{ number_format($clientTypeTotal, 2) }}</td>
+        </tr>
+    @endif
+    
+    @if(!empty($addons))
+        <th><b>Add-ons</b></th>
+        @foreach($addons as $addon)
+            <tr>
+                <th>{{ $addon['name'] }}</th>
+                <td>
+                    @php
+                        $priceType = $addon['price_type'];
+                        $basePrice = $addon['base_price'];
+                        $quantity = $addon['quantity'];
+                        $nights = $addon['nights'] ?? 1;
+                        $isQuantityBased = $addon['is_quantity_based'] ?? false;
+                        $calculatedPrice = $addon['calculated_price'];
+                    @endphp
 
-                                    <tr>
-                                        <th>Price</th>
-                                        <td>₱{{ number_format($reservationData['price'] ?? 0, 2) }}</td>
-                                    </tr>
-                                
-                                    <tr>
-                                        <th>Date From</th>
-                                        <td>
-                                            {{ $dateFrom->format('F d, Y') }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>Date To</th>
-                                        <td>
-                                            {{ $dateTo->format('F d, Y') }}
-                                        </td>
-                                    </tr>
+                    @if($priceType === 'per_item')
+                        @if(!$hasDayBasedPricing && !$isQuantityBased)
+                            {{-- Second: is_based_on_days = false, is_based_on_quantity = false --}}
+                            {{ $nights }} {{ $nights === 1 ? 'day' : 'days' }} × ₱{{ number_format($basePrice, 2) }} = ₱{{ number_format($calculatedPrice, 2) }}
+                        @elseif(!$hasDayBasedPricing && $isQuantityBased)
+                            {{-- Third: is_based_on_days = false, is_based_on_quantity = true --}}
+                            {{ $quantity }} {{ $quantity === 1 ? 'item' : 'items' }} × ₱{{ number_format($basePrice, 2) }} × {{ $nights }} {{ $nights === 1 ? 'day' : 'days' }} = ₱{{ number_format($calculatedPrice, 2) }}
+                        @elseif($hasDayBasedPricing && !$isQuantityBased)
+                            {{-- Fourth: is_based_on_days = true, is_based_on_quantity = false --}}
+                            ₱{{ number_format($calculatedPrice, 2) }}
+                        @elseif($hasDayBasedPricing && $isQuantityBased)
+                            {{-- Fifth: is_based_on_days = true, is_based_on_quantity = true --}}
+                            {{ $quantity }} {{ $quantity === 1 ? 'item' : 'items' }} × ₱{{ number_format($basePrice, 2) }} = ₱{{ number_format($calculatedPrice, 2) }}
+                        @endif
 
-                                    @if($timeStart && $timeEnd)
-                                    <tr>
-                                        <th>Start Time to End Time</th>
-                                        <td>
-                                            @if($timeStart->eq($timeEnd))
-                                                {{ $timeStart->format('h:i A') }}
-                                            @else
-                                                {{ $timeStart->format('h:i A') }} to {{ $timeEnd->format('h:i A') }}
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    @endif
+                    @elseif($priceType === 'flat_rate')
+                        @if(!$hasDayBasedPricing)
+                            {{-- First: is_based_on_days = false --}}
+                            {{ $nights }} {{ $nights === 1 ? 'day' : 'days' }} × ₱{{ number_format($basePrice, 2) }} = ₱{{ number_format($calculatedPrice, 2) }}
+                        @else
+                            {{-- Second: is_based_on_days = true --}}
+                            ₱{{ number_format($calculatedPrice, 2) }}
+                        @endif
 
+                    @elseif($priceType === 'per_unit')
+                        @if(!$hasDayBasedPricing)
+                            {{-- First: is_based_on_days = false --}}
+                            {{ $nights }} {{ $nights === 1 ? 'day' : 'days' }} × ₱{{ number_format($basePrice, 2) }} = ₱{{ number_format($calculatedPrice, 2) }}
+                        @else
+                            {{-- Second: is_based_on_days = true --}}
+                            ₱{{ number_format($calculatedPrice, 2) }}
+                        @endif
+
+                    @elseif($priceType === 'per_night')
+                        {{-- Per night logic: base_price * nights --}}
+                        {{ $nights }} {{ $nights === 1 ? 'night' : 'nights' }} × ₱{{ number_format($basePrice, 2) }} = ₱{{ number_format($calculatedPrice, 2) }}
+
+                    @else
+                        {{-- Default fallback --}}
+                        ₱{{ number_format($calculatedPrice, 2) }}
+                    @endif
+                </td>
+            </tr>
+        @endforeach
+        
+        <tr>
+            <th>Total Add-ons</th>
+            <td>₱{{ number_format($addonTotal, 2) }}</td>
+        </tr>
+    @endif
                                 @elseif($facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty()) 
 
                                     <tr>
@@ -586,15 +285,6 @@
                                             </td>
                                         </tr>
                                     @endif
-                                    
-                                    {{-- @if($reservationData['booking_type'] === 'whole')
-                                        @if(isset($reservationData['time_start']) && isset($reservationData['time_end']))
-                                            <tr>
-                                                <th>Time</th>
-                                                <td>{{ $reservationData['time_start'] }} - {{ $reservationData['time_end'] }}</td>
-                                            </tr>
-                                        @endif
-                                    @endif --}}
 
                                 @elseif ($facility->facility_type === 'both' && $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty())
                                     @php
@@ -646,11 +336,44 @@
                                     @endif
                                 @endif
                                 
-                                <tr class="total-row">
-                                    <td colspan="2">
-                                        <strong>Total Price: ₱{{ number_format($reservationData['total_price'] ?? 0, 2) }}</strong>
-                                    </td>
-                                </tr>
+                                {{-- Refundable section --}}
+                                @php
+                                    $displayAddons = \App\Models\Addon::where('facility_id', $facility->id)
+                                        ->where('price_type', 'flat_rate')
+                                        ->where('show', 'both')
+                                        ->where('is_refundable', true)
+                                        ->get();
+                                @endphp
+
+                                @if($displayAddons->isNotEmpty())
+
+                                  <th><b>Refundable Fee's</b></th>
+                                    @foreach($displayAddons as $addon)
+                                        <tr>
+                                            <th>{{ $addon->name }}</th>
+                                            <td>₱{{ number_format($addon->base_price, 2) }}</td>
+                                        </tr>
+                                    @endforeach
+                                    
+                                    @php
+                                        $addonsTotal = $displayAddons->sum('base_price');
+                                        $finalTotal = ($reservationData['total_price'] ?? 0) + $addonsTotal;
+                                    @endphp
+                                    
+                                    <tr class="total-row">
+                                        <td colspan="2" class="text-end">
+                                            <strong>Total Price: ₱{{ number_format($finalTotal, 2) }}</strong>
+                                        </td>
+                                    </tr>
+                                @else
+                                    <tr class="total-row">
+                                        <td colspan="2"class="text-end">
+                                            <strong>Total Price: ₱{{ number_format($reservationData['total_price'] ?? 0, 2) }}</strong>
+                                        </td>
+                                    </tr>
+
+                                @endif
+
                             </tbody>
                         </table>
                     </div>
@@ -667,15 +390,36 @@
                                 value="{{ $facilityAttribute->id ?? $reservationData['facility_attribute_id'] }}">
                             <input type="hidden" name="date_from" value="{{ $reservationData['date_from'] }}">
                             <input type="hidden" name="date_to" value="{{ $reservationData['date_to'] }}">
-                        @elseif($facility->facility_type === 'whole_place')
-                            <div>
-                                <input type="hidden" id="date_from" name="date_from" value="{{ old('date_from', $reservationData['date_from'] ?? '') }}">
-                                <input type="hidden" id="date_to" name="date_to" value="{{ old('date_to', $reservationData['date_to'] ?? '') }}">
-                                <div id="selected-date">
-                                    <input type="hidden" name="time_start" value="{{ $reservationData['time_start'] ?? '' }}">
-                                    <input type="hidden" name="time_end" value="{{ $reservationData['time_end'] ?? '' }}">
-                                </div>
-                            </div>
+                       @elseif($facility->facility_type === 'whole_place')
+    <div>
+        <input type="hidden" id="date_from" name="date_from" value="{{ old('date_from', $reservationData['date_from'] ?? '') }}">
+        <input type="hidden" id="date_to" name="date_to" value="{{ old('date_to', $reservationData['date_to'] ?? '') }}">
+        <input type="hidden" name="addon_total" value="{{ $reservationData['addon_total'] ?? 0 }}">
+        <input type="hidden" name="days_difference" value="{{ $reservationData['days_difference'] ?? 1 }}">
+        <input type="hidden" name="has_day_based_pricing" value="{{ $reservationData['has_day_based_pricing'] ? '1' : '0' }}">
+        <input type="hidden" name="client_type_total" value="{{ $reservationData['client_type_total'] ?? 0 }}">
+        <input type="hidden" name="client_type_subtotal" value="{{ $reservationData['client_type_subtotal'] ?? 0 }}">
+        <input type="hidden" name="base_price_per_day" value="{{ $reservationData['price'] ?? 0 }}">
+        
+        @if(!empty($reservationData['addons']))
+            @foreach($reservationData['addons'] as $index => $addon)
+                <input type="hidden" name="addons[{{ $index }}][addon_id]" value="{{ $addon['addon_id'] }}">
+                <input type="hidden" name="addons[{{ $index }}][name]" value="{{ $addon['name'] }}">
+                <input type="hidden" name="addons[{{ $index }}][price_type]" value="{{ $addon['price_type'] }}">
+                <input type="hidden" name="addons[{{ $index }}][base_price]" value="{{ $addon['base_price'] }}">
+                <input type="hidden" name="addons[{{ $index }}][quantity]" value="{{ $addon['quantity'] }}">
+                <input type="hidden" name="addons[{{ $index }}][nights]" value="{{ $addon['nights'] }}">
+                <input type="hidden" name="addons[{{ $index }}][calculated_price]" value="{{ $addon['calculated_price'] }}">
+                <input type="hidden" name="addons[{{ $index }}][is_quantity_based]" value="{{ $addon['is_quantity_based'] ? '1' : '0' }}">
+                <input type="hidden" name="addons[{{ $index }}][capacity]" value="{{ $addon['capacity'] }}">
+            @endforeach
+        @endif
+        
+        <div id="selected-date">
+            <input type="hidden" name="time_start" value="{{ $reservationData['time_start'] ?? '' }}">
+            <input type="hidden" name="time_end" value="{{ $reservationData['time_end'] ?? '' }}">
+        </div>
+    </div>
                         @elseif($facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty()) 
                             <div>
                                 <input type="hidden" name="facility_id" value="{{ $reservationData['facility_id'] }}">

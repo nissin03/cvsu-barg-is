@@ -17,6 +17,9 @@ return new class extends Migration
             $table->foreignId('facility_attribute_id')->nullable()->constrained('facility_attributes')->onDelete('cascade');
             $table->foreignId('payment_id')->nullable()->constrained('payments')->onDelete('cascade');
             $table->foreignId('price_id')->constrained('prices')->onDelete('cascade');
+            $table->foreignId('addon_id')->nullable()->constrained('addons')->onDelete('cascade');
+            $table->foreignId('addon_reservation_id')->nullable()->constrained('addons_reservations')->onDelete('cascade');
+            $table->foreignId('addon_payment_id')->nullable()->constrained('addon_payments')->onDelete('cascade');
             $table->unsignedInteger('quantity')->default(0);
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->enum('status', ['reserved', 'canceled', 'completed', 'pending'])->default('pending');

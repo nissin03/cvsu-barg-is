@@ -42,50 +42,51 @@ class UserFacilityController extends Controller
         }
     }
 
-public function show($slug)
-{
-    if (!Auth::check()) {
-        return redirect()->route('login');
+    public function show($slug)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $user = Auth::user();
+
+        if ($user->utype !== 'ADM' && (empty($user->phone_number) || empty($user->sex))) {
+            session()->put('url.intended', route('user.facilities.index', ['slug' => $request->facility_slug ?? '']));
+
+            return redirect()->route('user.profile')
+                ->with('error', 'Please complete your profile by adding your phone number and selecting your sex before accessing facilities.');
+        }
+        
+        $facility = Facility::with('facilityAttributes', 'prices', 'addons')->where('slug', $slug)->firstOrFail();
+        
+        $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first();
+        $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
+        $availableRoom = $facility->facilityAttributes->first(function ($attribute) {
+            return $attribute->capacity > 0;
+        });
+        
+        if (!$availableRoom) {
+            $availableRoom = null;
+        }
+
+            $hasDayBasedPricing = $facility->prices->contains('is_based_on_days', true);
+
+        if ($facility->facility_type === 'whole_place' || $facility->facility_type === 'both') {
+            $facility->load(['availabilities' => function ($query) {
+                $query->where(function ($q) {
+                    $q->where('date_from', '>=', now()->toDateString())
+                        ->orWhere('date_to', '>=', now()->toDateString());
+                })->orderBy('created_at', 'desc');
+            }]);
+        }
+
+        return view('user.facilities.details', compact('availableRoom', 'wholeAttr', 'facility', 'sexRestriction'));
     }
-
-    $user = Auth::user();
-
-    if ($user->utype !== 'ADM' && (empty($user->phone_number) || empty($user->sex))) {
-        session()->put('url.intended', route('user.facilities.index', ['slug' => $request->facility_slug ?? '']));
-
-        return redirect()->route('user.profile')
-            ->with('error', 'Please complete your profile by adding your phone number and selecting your sex before accessing facilities.');
-    }
-    
-    $facility = Facility::with('facilityAttributes', 'prices', 'addons')->where('slug', $slug)->firstOrFail();
-    
-    $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first();
-    $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
-    $availableRoom = $facility->facilityAttributes->first(function ($attribute) {
-        return $attribute->capacity > 0;
-    });
-    
-    if (!$availableRoom) {
-        $availableRoom = null;
-    }
-
-    if ($facility->facility_type === 'whole_place' || $facility->facility_type === 'both') {
-        $facility->load(['availabilities' => function ($query) {
-            $query->where(function ($q) {
-                $q->where('date_from', '>=', now()->toDateString())
-                    ->orWhere('date_to', '>=', now()->toDateString());
-            })->orderBy('created_at', 'desc');
-        }]);
-    }
-
-    return view('user.facilities.details', compact('availableRoom', 'wholeAttr', 'facility', 'sexRestriction'));
-}
 
 
     public function reserve(Request $request)
     {
-       
-
+        dd($request->all());
         $request->validate([
             'facility_id' => 'required|exists:facilities,id',
             'total_price' => 'required|numeric|min:0',
@@ -146,30 +147,176 @@ public function show($slug)
 
             Session::put('reservation_data', $reservationData);
         } elseif ($facility->facility_type === 'whole_place') {
-            $selectedPrice = $request->total_price;
+    $selectedDateFrom = $request->date_from;
+    $selectedDateTo = $request->date_to;
+    $selectedClientTypePrice = $request->input('client_type');
+    
+    $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
 
-            $selectedDateFrom = $request->date_from;
-            $selectedDateTo = $request->date_to;
-            $price = $facility->prices()->where('value', $selectedPrice)->first();
-            $selectPrice = $request->input('selected_price');
+    $addonData = [];
+    $addonTotal = 0;
 
-            $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
+    $addonValues = $request->input('addon_values', []);
+    $addonNames = $request->input('addon_names', []);
+    $addonTypes = $request->input('addon_types', []);
+    $addonCapacities = $request->input('addon_capacity', []);
+    $addonQuantities = $request->input('addon_quantity', []);
+    $addonCheckboxes = $request->input('addon_checkbox', []);
+    $addonNights = $request->input('addon_nights', []);
+    $addonIsQuantityBased = $request->input('addon_is_quantity_based', []);
 
-            $reservationData = [
-                'facility_id' => $facility->id,
-                'facility_name' => $facility->name,
-                'facility_slug' => $facility->slug,
-                'total_price' => $selectedPrice,
-                'facility_type' => $facility->facility_type,
-                'facility_attribute_id' => $wholeAttr ? $wholeAttr->id : null,
-                'date_from' => $selectedDateFrom,
-                'date_to' => $selectedDateTo,
-                'time_start' => $request->time_start,
-                'time_end' => $request->time_end,
-                'price' => $selectPrice,
-            ];
+    $hasDayBasedPricing = $facility->prices->contains('is_based_on_days', true);
 
-            Session::put('reservation_data', $reservationData);
+    $daysDiff = 1;
+    $clientTypeTotal = 0;
+    $totalPrice = 0;
+    
+    if ($selectedDateFrom && $selectedDateTo) {
+        $fromDate = new \Carbon\Carbon($selectedDateFrom);
+        $toDate = new \Carbon\Carbon($selectedDateTo);
+        $daysDiff = $fromDate->diffInDays($toDate) + 1;
+    }
+    
+    if ($selectedClientTypePrice) {
+        $clientTypeBasePrice = (float)$selectedClientTypePrice;
+        
+        if ($hasDayBasedPricing) {
+            $clientTypeTotal = $clientTypeBasePrice;
+        } else {
+            $clientTypeTotal = $clientTypeBasePrice * $daysDiff;
+        }
+    }
+
+foreach ($addonValues as $addonId => $basePrice) {
+    $addonName = $addonNames[$addonId] ?? '';
+    $priceType = $addonTypes[$addonId] ?? 'flat_rate';
+    $capacity = $addonCapacities[$addonId] ?? 0;
+    $isQuantityBased = isset($addonIsQuantityBased[$addonId]) && $addonIsQuantityBased[$addonId] == '1';
+    
+    $isSelected = false;
+    $quantity = 0;
+
+    if ($isQuantityBased && isset($addonQuantities[$addonId])) {
+        $quantity = (int)$addonQuantities[$addonId];
+        $isSelected = $quantity > 0;
+    } elseif (isset($addonCheckboxes[$addonId])) {
+        $isSelected = $addonCheckboxes[$addonId] == '1';
+        $quantity = 1;
+    }
+
+    if (!$isSelected) continue;
+
+    $addonPrice = 0;
+    $nights = isset($addonNights[$addonId]) ? (int)$addonNights[$addonId] : 1;
+    $basePrice = (float)$basePrice;
+
+    switch ($priceType) {
+        case 'per_item':
+            if (!$hasDayBasedPricing && !$isQuantityBased) {
+                // Second: is_based_on_days = false, is_based_on_quantity = false
+                // "how many days" value * base_price
+                $addonPrice = $nights * $basePrice;
+            } elseif (!$hasDayBasedPricing && $isQuantityBased) {
+                // Third: is_based_on_days = false, is_based_on_quantity = true
+                // quantity * base_price * "how many days" value
+                $addonPrice = $quantity * $basePrice * $nights;
+            } elseif ($hasDayBasedPricing && !$isQuantityBased) {
+                // Fourth: is_based_on_days = true, is_based_on_quantity = false
+                // base_price only
+                $addonPrice = $basePrice;
+            } elseif ($hasDayBasedPricing && $isQuantityBased) {
+                // Fifth: is_based_on_days = true, is_based_on_quantity = true
+                // base_price * quantity
+                $addonPrice = $basePrice * $quantity;
+            }
+            break;
+
+        case 'flat_rate':
+            if (!$hasDayBasedPricing) {
+                // First: is_based_on_days = false
+                // "how many days" value * base_price
+                $addonPrice = $nights * $basePrice;
+            } else {
+                // Second: is_based_on_days = true
+                // base_price only
+                $addonPrice = $basePrice;
+            }
+            break;
+
+        case 'per_unit':
+            if (!$hasDayBasedPricing) {
+                // First: is_based_on_days = false
+                // "how many days" value * base_price
+                $addonPrice = $nights * $basePrice;
+            } else {
+                // Second: is_based_on_days = true
+                // base_price only
+                $addonPrice = $basePrice;
+            }
+            break;
+
+        case 'per_night':
+            if (!$hasDayBasedPricing) {
+                // First: is_based_on_days = false
+                // base_price * "how many nights" value
+                $addonPrice = $basePrice * $nights;
+            } else {
+                // Note: You didn't specify logic for per_night when is_based_on_days = true
+                // Using same logic as false case for consistency
+                $addonPrice = $basePrice * $nights;
+            }
+            break;
+
+        default:
+            // Default fallback to flat_rate logic
+            if (!$hasDayBasedPricing) {
+                $addonPrice = $nights * $basePrice;
+            } else {
+                $addonPrice = $basePrice;
+            }
+            break;
+    }
+
+    $addonData[] = [
+        'addon_id' => $addonId,
+        'name' => $addonName,
+        'price_type' => $priceType,
+        'base_price' => $basePrice,
+        'quantity' => $quantity,
+        'nights' => $nights,
+        'calculated_price' => $addonPrice,
+        'is_quantity_based' => $isQuantityBased,
+        'capacity' => $capacity
+    ];
+
+    $addonTotal += $addonPrice;
+}
+
+    $totalPrice = $clientTypeTotal + $addonTotal;
+
+    $reservationData = [
+        'facility_id' => $facility->id,
+        'facility_name' => $facility->name,
+        'facility_slug' => $facility->slug,
+        'total_price' => $totalPrice,
+        'facility_type' => $facility->facility_type,
+        'facility_attribute_id' => $wholeAttr ? $wholeAttr->id : null,
+        'date_from' => $selectedDateFrom,
+        'date_to' => $selectedDateTo,
+        'time_start' => $request->time_start,
+        'time_end' => $request->time_end,
+        'client_type_price' => $selectedClientTypePrice,
+        'client_type_total' => $clientTypeTotal,
+        'addons' => $addonData,
+        'addon_total' => $addonTotal,
+        'days_difference' => $daysDiff,
+        'has_day_based_pricing' => $hasDayBasedPricing
+    ];
+
+    Session::put('reservation_data', $reservationData);
+    return redirect()->route('facility.checkout');
+
+   
         } elseif ($facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty()) {
             $bookingType = $request->input('booking_type');
 
@@ -430,22 +577,75 @@ public function show($slug)
                     ];
                 }
             }
-        } elseif ($facility->facility_type === 'whole_place') {
+        }  elseif ($facility->facility_type === 'whole_place') {
             $date_from = $reservationData['date_from'] ?? null;
             $date_to = $reservationData['date_to'] ?? null;
             $roomName = $reservationData['facility_name'] ?? 'Not Applicable';
             $time_start = $reservationData['time_start'] ?? null;
             $time_end = $reservationData['time_end'] ?? null;
+        
             $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
             $facilityAttribute = $wholeAttr;
+            
+            // Get client type pricing information
+            $clientTypeTotal = $reservationData['client_type_total'] ?? 0;
+            $basePricePerDay = $reservationData['price'] ?? 0;
+            
+            // Validate addon data integrity
+            $addons = $reservationData['addons'] ?? [];
+            $addonTotal = $reservationData['addon_total'] ?? 0;
+            $hasDayBasedPricing = $reservationData['has_day_based_pricing'] ?? false;
+            $daysDifference = $reservationData['days_difference'] ?? 1;
 
-            $selectedDate = Carbon::parse($date_to)->startOfDay();
-            $minDate = Carbon::today()->addDays(3)->startOfDay();
+            // Recalculate addon total to ensure accuracy (optional security check)
+            $recalculatedAddonTotal = 0;
+            if (!empty($addons)) {
+                foreach ($addons as $addon) {
+                    $recalculatedAddonTotal += $addon['calculated_price'] ?? 0;
+                }
+                
+                // Update if there's a discrepancy
+                if (abs($recalculatedAddonTotal - $addonTotal) > 0.01) {
+                    $reservationData['addon_total'] = $recalculatedAddonTotal;
+                    $addonTotal = $recalculatedAddonTotal;
+                    Session::put('reservation_data', $reservationData);
+                }
+            }
 
-            $existingReservation = Availability::where('facility_id', $facility->id)
-                ->where('date_to', $date_to)
-                ->where('facility_attribute_id', $wholeAttr ? $wholeAttr->id : null)
-                ->first();
+            // Validate date range for availability check
+            if ($date_to) {
+                $selectedDate = Carbon::parse($date_to)->startOfDay();
+                $minDate = Carbon::today()->addDays(3)->startOfDay();
+                
+                $existingReservation = Availability::where('facility_id', $facility->id)
+                    ->where('date_to', $date_to)
+                    ->where('facility_attribute_id', $wholeAttr ? $wholeAttr->id : null)
+                    ->first();
+            }
+
+            // Prepare addon summary for display
+            $addonSummary = [];
+            if (!empty($addons)) {
+                foreach ($addons as $addon) {
+                    $addonSummary[] = [
+                        'name' => $addon['name'],
+                        'price_type' => $addon['price_type'],
+                        'quantity' => $addon['quantity'],
+                        'nights' => $addon['nights'] ?? 1,
+                        'calculated_price' => $addon['calculated_price'],
+                        'is_quantity_based' => $addon['is_quantity_based'] ?? false,
+                        'base_price' => $addon['base_price'] ?? 0,
+                    ];
+                }
+            }
+
+            
+            // Add client type and addon information to reservation data for the view
+            $reservationData['client_type_total'] = $clientTypeTotal;
+            $reservationData['base_price_per_day'] = $basePricePerDay;
+            $reservationData['addon_summary'] = $addonSummary;
+            $reservationData['addon_display_total'] = $addonTotal;
+    
         } elseif ($facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty()) {
 
             $bookingType = $reservationData['booking_type'] ?? null;
@@ -834,7 +1034,7 @@ public function show($slug)
                             $firstAvailability = $availability;
                         }
 
-                        \Log::info('Marked reserved: ' . $day->toDateString());
+                        // \Log::info('Marked reserved: ' . $day->toDateString());
                     }
 
                     if (!$firstAvailability) {

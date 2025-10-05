@@ -26,6 +26,7 @@ class Addon extends Model
         'is_refundable',
         'is_available',
         'capacity',
+        'quantity',
         'is_based_on_quantity',
         'show'
     ];
@@ -44,6 +45,28 @@ class Addon extends Model
       {
         return $this->belongsTo(FacilityAttribute::class);
     }
+
+    public function reservation()
+    {
+        return $this->hasMany(AddonReservation::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(AddonPayment::class);
+    }
+
+    public function transactionReservations()
+    {
+        return $this->hasMany(TransactionReservation::class);
+    }
+
+    
+
+
+
+
+
 }
 
 

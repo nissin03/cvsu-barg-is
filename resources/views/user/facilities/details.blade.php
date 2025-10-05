@@ -337,6 +337,7 @@
 
 @push('scripts')
     <script>
+        // image modal and swipers
         document.addEventListener('DOMContentLoaded', function() {
             const addonDescModal = document.getElementById('addonDescModal');
             
@@ -1158,852 +1159,9 @@
 </script>
 @endif --}}
 
-{{-- New for both building withs addons --}}
-{{-- @if ($facility->facility_type === 'both' && $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty())
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var dateFromInput = document.getElementById('date_from');
-    var dateToInput = document.getElementById('date_to');
-    var wholeDateFromInput = document.getElementById('whole_date_from');
-    var wholeDateToInput = document.getElementById('whole_date_to');
-    var sharedDateFromInput = document.getElementById('date_from');
-    var sharedDateToInput = document.getElementById('date_to');
-    var wholeTimeStartInput = document.getElementById('whole_time_start');
-    var wholeTimeEndInput = document.getElementById('whole_time_end');
-    var wholeClientTypeDropdown = document.getElementById('whole_client_type');
-
-    var today = new Date();
-    var tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 7);
-    var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
-    
-    var userType = @json(auth()->user()->utype);
-    var maxDate = null;
-    var maxDateFormatted = null;
-    
-    if (userType === 'USR') {
-        maxDate = new Date(today);
-        maxDate.setMonth(maxDate.getMonth() + 3);
-        maxDateFormatted = maxDate.toISOString().split('T')[0];
-    }
-    
-    if (dateFromInput) {
-        dateFromInput.min = tomorrowFormatted;
-        if (maxDateFormatted) dateFromInput.max = maxDateFormatted;
-    }
-    if (dateToInput) {
-        dateToInput.min = tomorrowFormatted;
-        if (maxDateFormatted) dateToInput.max = maxDateFormatted;
-    }
-    if (wholeDateFromInput) {
-        wholeDateFromInput.min = tomorrowFormatted;
-        if (maxDateFormatted) wholeDateFromInput.max = maxDateFormatted;
-    }
-    if (wholeDateToInput) {
-        wholeDateToInput.min = tomorrowFormatted;
-        if (maxDateFormatted) wholeDateToInput.max = maxDateFormatted;
-    }
-    if (sharedDateFromInput) {
-        sharedDateFromInput.min = tomorrowFormatted;
-        if (maxDateFormatted) sharedDateFromInput.max = maxDateFormatted;
-    }
-    if (sharedDateToInput) {
-        sharedDateToInput.min = tomorrowFormatted;
-        if (maxDateFormatted) sharedDateToInput.max = maxDateFormatted;
-    }
-
-    if (wholeTimeStartInput) {
-        wholeTimeStartInput.value = '07:00';
-        calculateWholeEndTime();
-    }
-
-    var hasDayBasedPricing = @json($facility->prices->contains('is_based_on_days', true));
-    var availabilities = @json($facility->availabilities ?? []);
-    var facilityAttributes = @json($facility->facilityAttributes ?? []);
-    var facilityCapacity = @json($wholeAttr->whole_capacity ?? 0);
-    var wholeCalendarInitialized = false;
-    var sharedCalendarInitialized = false;
-
-    function getAvailabilityForDate(dateStr) {
-        const checkDate = new Date(dateStr);
-        const matchingAvailabilities = availabilities.filter(avail => {
-            const availFrom = avail.date_from ? new Date(avail.date_from) : null;
-            const availTo = avail.date_to ? new Date(avail.date_to) : null;
-            
-            if (avail.date_from && !avail.date_to && new Date(avail.date_from).toDateString() === checkDate.toDateString()) {
-                return true;
-            }
-            if (availFrom && availTo && checkDate >= availFrom && checkDate <= availTo) {
-                return true;
-            }
-            return false;
-        });
-        
-        return matchingAvailabilities[0];
-    }
-
-    function getMinCapacityForDateRange(startDate, endDate) {
-        const dates = getDatesInRange(startDate, endDate);
-        let minCapacity = facilityCapacity;
-        
-        dates.forEach(dateStr => {
-            const availability = getAvailabilityForDate(dateStr);
-            if (availability) {
-                if (availability.remaining_capacity < minCapacity) {
-                    minCapacity = availability.remaining_capacity;
-                }
-            }
-        });
-        
-        return minCapacity;
-    }
-
-    function isDateFullyBooked(dateStr) {
-        const availability = getAvailabilityForDate(dateStr);
-        if (!availability) return false;
-        return availability.remaining_capacity <= 0;
-    }
-
-    function isDateOccupied(dateStr) {
-        const availability = getAvailabilityForDate(dateStr);
-        if (!availability) return false;
-        const attribute = facilityAttributes.find(attr => attr.id === availability.facility_attribute_id);
-        if (!attribute) return false;
-        return attribute.whole_capacity !== availability.remaining_capacity;
-    }
-
-    function formatDateForDisplay(dateStr) {
-        if (!dateStr) return 'Not selected';
-        const date = new Date(dateStr + 'T00:00:00+08:00');
-        return date.toLocaleDateString('en-PH', { 
-            weekday: 'long',
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        });
-    }
-
-    function getDatesInRange(start, end) {
-        const dates = [];
-        const startDate = new Date(start);
-        const endDate = new Date(end);
-        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-            dates.push(d.toISOString().split('T')[0]);
-        }
-        return dates;
-    }
-
-    function updateDateDisplay(startDisplay, endDisplay, startDate, endDate) {
-        if (startDisplay) {
-            startDisplay.textContent = formatDateForDisplay(startDate);
-        }
-        if (endDisplay) {
-            endDisplay.textContent = formatDateForDisplay(endDate);
-        }
-    }
-
-    function calculateWholeEndTime() {
-        if (!wholeTimeStartInput || !wholeTimeEndInput) return;
-        var st = wholeTimeStartInput.value;
-        if (!st) return;
-        var parts = st.split(':').map(Number),
-            h = (parts[0] + 8) % 24,
-            m = parts[1];
-        wholeTimeEndInput.value = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-    }
-
-    function updateRequiredFields(activeSection) {
-        document.querySelectorAll('#shared-section [required], #whole-section [required]').forEach(field => {
-            field.removeAttribute('required');
-        });
-        if (activeSection === 'shared') {
-            const sharedFields = document.querySelectorAll('#shared-section input[type="date"], #shared-section select');
-            sharedFields.forEach(field => {
-                if (field.style.display !== 'none' && !field.closest('[style*="display: none"]')) {
-                    field.setAttribute('required', 'required');
-                }
-            });
-        } else if (activeSection === 'whole') {
-            if (wholeDateFromInput) wholeDateFromInput.setAttribute('required', 'required');
-            if (wholeDateToInput) wholeDateToInput.setAttribute('required', 'required');
-            if (wholeClientTypeDropdown) wholeClientTypeDropdown.setAttribute('required', 'required');
-        }
-    }
-
-    function initializeCalendar(section) {
-        const isWhole = section === 'whole';
-        const calendarEl = document.getElementById(isWhole ? 'whole-calendar' : 'shared-calendar');
-        const modalId = isWhole ? 'wholeCalendarModal' : 'sharedCalendarModal';
-        const modalEl = document.getElementById(modalId);
-        
-        if (!modalEl || !calendarEl) return;
-        if ((isWhole && wholeCalendarInitialized) || (!isWhole && sharedCalendarInitialized)) return;
-        
-        modalEl.addEventListener('shown.bs.modal', function initCalendarOnShow() {
-            modalEl.removeEventListener('shown.bs.modal', initCalendarOnShow);
-            
-            if ((isWhole && wholeCalendarInitialized) || (!isWhole && sharedCalendarInitialized)) {
-                const calendar = calendarEl._fullCalendar;
-                if (calendar) {
-                    calendar.render();
-                    return;
-                }
-            }
-
-            const dateFromInput = isWhole ? wholeDateFromInput : sharedDateFromInput;
-            const dateToInput = isWhole ? wholeDateToInput : sharedDateToInput;
-            const startDisplay = document.getElementById(isWhole ? 'whole-start-date-display' : 'shared-start-date-display');
-            const endDisplay = document.getElementById(isWhole ? 'whole-end-date-display' : 'shared-end-date-display');
-            const modalStartDisplay = document.getElementById(isWhole ? 'whole-modal-start-date' : 'shared-modal-start-date');
-            const modalEndDisplay = document.getElementById(isWhole ? 'whole-modal-end-date' : 'shared-modal-end-date');
-            const confirmButton = document.getElementById(isWhole ? 'whole-confirm-dates' : 'shared-confirm-dates');
-            
-            if (!hasDayBasedPricing && calendarEl && !calendarEl._fullCalendar) {
-                let selectedDates = [];
-                let startDate = null;
-                let endDate = null;
-                
-                const calendar = new FullCalendar.Calendar(calendarEl, {
-                    timeZone: 'Asia/Manila',
-                    locale: 'en',
-                    initialView: 'dayGridMonth',
-                    headerToolbar: {
-                        left: 'prev,next today',
-                        center: 'title',
-                        right: 'dayGridMonth'
-                    },
-                    selectable: true,
-                    selectMirror: true,
-                    dayMaxEvents: false,
-                    weekends: true,
-                    validRange: { 
-                        start: tomorrowFormatted,
-                        end: maxDateFormatted || undefined
-                    },
-                    moreLinkClick: function(info) { return false; },
-                    dateClick: function(info) {
-                        const clickedDate = info.dateStr;
-                        if (isDateFullyBooked(clickedDate)) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Not Available',
-                                text: 'This date is fully reserved and unavailable for booking.',
-                                confirmButtonColor: '#3085d6',
-                            });
-                            return;
-                        }
-                        if (isWhole && isDateOccupied(clickedDate)) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Partially Occupied',
-                                text: 'This date is partially occupied. Please select dates that are completely available.',
-                                confirmButtonColor: '#3085d6',
-                            });
-                            return;
-                        }
-                        if (typeof calendar.clickCount === 'undefined') calendar.clickCount = 0;
-                        calendar.clickCount++;
-                        if (calendar.clickCount % 2 === 1) {
-                            startDate = clickedDate;
-                            selectedDates = [clickedDate];
-                            endDate = null;
-                            
-                            if (modalStartDisplay) modalStartDisplay.textContent = formatDateForDisplay(startDate);
-                            if (modalEndDisplay) modalEndDisplay.textContent = 'Not selected';
-                        } else {
-                            if (startDate) {
-                                const start = new Date(startDate);
-                                const end = new Date(clickedDate);
-                                if (end >= start) {
-                                    const dateRange = getDatesInRange(startDate, clickedDate);
-                                    const hasReservedDate = dateRange.some(date => isDateFullyBooked(date));
-                                    const hasOccupiedDate = isWhole ? dateRange.some(date => isDateOccupied(date)) : false;
-                                    if (hasReservedDate) {
-                                        Swal.fire({
-                                            icon: 'error',
-                                            title: 'Reserved Dates',
-                                            text: 'One or more dates in your selected range are fully reserved.',
-                                            confirmButtonColor: '#3085d6',
-                                        });
-                                        calendar.clickCount--;
-                                        return;
-                                    }
-                                    if (hasOccupiedDate) {
-                                        Swal.fire({
-                                            icon: 'warning',
-                                            title: 'Occupied Dates',
-                                            text: 'One or more dates in your selected range are partially occupied. Please select a different range.',
-                                            confirmButtonColor: '#3085d6',
-                                        });
-                                        calendar.clickCount--;
-                                        return;
-                                    }
-                                    endDate = clickedDate;
-                                    selectedDates = dateRange;
-                                    
-                                    if (modalEndDisplay) modalEndDisplay.textContent = formatDateForDisplay(endDate);
-                                } else {
-                                    startDate = clickedDate;
-                                    selectedDates = [clickedDate];
-                                    endDate = null;
-                                    calendar.clickCount = 1;
-                                    
-                                    if (modalStartDisplay) modalStartDisplay.textContent = formatDateForDisplay(startDate);
-                                    if (modalEndDisplay) modalEndDisplay.textContent = 'Not selected';
-                                }
-                            } else {
-                                startDate = clickedDate;
-                                selectedDates = [clickedDate];
-                                endDate = null;
-                                calendar.clickCount = 1;
-                                
-                                if (modalStartDisplay) modalStartDisplay.textContent = formatDateForDisplay(startDate);
-                                if (modalEndDisplay) modalEndDisplay.textContent = 'Not selected';
-                            }
-                        }
-                        if (dateFromInput) dateFromInput.value = startDate || '';
-                        if (dateToInput) dateToInput.value = endDate || '';
-                        
-                        if (confirmButton) {
-                            confirmButton.disabled = !(startDate && endDate);
-                        }
-                        
-                        if (isWhole) {
-                            updateWholeTotalPrice();
-                        } else {
-                            updateTotalPrice();
-                        }
-                        
-                        calendar.render();
-                    },
-                    dayCellClassNames: function(info) {
-                        let classes = [];
-                        if (isDateFullyBooked(info.dateStr)) classes.push('fully-booked-date');
-                        if (isDateOccupied(info.dateStr)) classes.push('occupied-date');
-                        if (selectedDates.includes(info.dateStr) && !isDateFullyBooked(info.dateStr) && !isDateOccupied(info.dateStr)) {
-                            if (info.dateStr === startDate) classes.push('selected-start-date');
-                            else if (info.dateStr === endDate) classes.push('selected-end-date');
-                            else classes.push('selected-range-date');
-                        }
-                        return classes;
-                    },
-                    dayCellContent: function(args) {
-                        const dateStr = args.date.toISOString().split('T')[0];
-                        const dayNumberEl = document.createElement('div');
-                        dayNumberEl.className = 'fc-daygrid-day-number';
-                        dayNumberEl.textContent = args.dayNumberText;
-                        
-                        const availability = getAvailabilityForDate(dateStr);
-                        const attribute = availability ? facilityAttributes.find(attr => attr.id === availability.facility_attribute_id) : null;
-                        
-                        if (!isWhole) {
-                            if (availability) {
-                                if (availability.remaining_capacity <= 0) {
-                                    const statusEl = document.createElement('div');
-                                    statusEl.className = 'fc-day-status fc-status-booked';
-                                    statusEl.textContent = 'Booked';
-                                    return { domNodes: [dayNumberEl, statusEl] };
-                                } else {
-                                    const capacityEl = document.createElement('div');
-                                    capacityEl.className = 'fc-day-capacity';
-                                    const capacityClass = availability.remaining_capacity < 3 ? 'fc-capacity-warning' : 'fc-capacity-success';
-                                    capacityEl.classList.add(capacityClass);
-                                    capacityEl.textContent = `${availability.remaining_capacity} left`;
-                                    return { domNodes: [dayNumberEl, capacityEl] };
-                                }
-                            } else {
-                                const capacityEl = document.createElement('div');
-                                capacityEl.className = 'fc-day-capacity fc-capacity-success';
-                                capacityEl.textContent = `${facilityCapacity} left`;
-                                return { domNodes: [dayNumberEl, capacityEl] };
-                            }
-                        } else {
-                            if (availability) {
-                                if (availability.remaining_capacity <= 0) {
-                                    const statusEl = document.createElement('div');
-                                    statusEl.className = 'fc-day-status fc-status-booked';
-                                    statusEl.textContent = 'Booked';
-                                    return { domNodes: [dayNumberEl, statusEl] };
-                                } else if (attribute && availability.remaining_capacity !== attribute.whole_capacity) {
-                                    const statusEl = document.createElement('div');
-                                    statusEl.className = 'fc-day-status fc-status-occupied';
-                                    statusEl.textContent = 'Occupied';
-                                    return { domNodes: [dayNumberEl, statusEl] };
-                                } else {
-                                    const capacityEl = document.createElement('div');
-                                    capacityEl.className = 'fc-day-capacity fc-capacity-success';
-                                    capacityEl.textContent = `${attribute ? attribute.whole_capacity : facilityCapacity} left`;
-                                    return { domNodes: [dayNumberEl, capacityEl] };
-                                }
-                            } else {
-                                const capacityEl = document.createElement('div');
-                                capacityEl.className = 'fc-day-capacity fc-capacity-success';
-                                capacityEl.textContent = `${facilityCapacity} left`;
-                                return { domNodes: [dayNumberEl, capacityEl] };
-                            }
-                        }
-                    },
-                    events: function(fetchInfo, successCallback, failureCallback) {
-                        const events = availabilities.map(avail => ({
-                            id: `avail-${avail.id}`,
-                            start: avail.date_from,
-                            end: avail.date_to ? new Date(new Date(avail.date_to).setDate(new Date(avail.date_to).getDate() + 1)) : null,
-                            display: 'background',
-                            backgroundColor: avail.remaining_capacity <= 0 ? 'rgba(220, 53, 69, 0.2)' : (avail.remaining_capacity < avail.whole_capacity ? 'rgba(253, 126, 20, 0.2)' : 'transparent'),
-                            extendedProps: {
-                                remaining_capacity: avail.remaining_capacity
-                            }
-                        }));
-                        successCallback(events);
-                    }
-                });
-                calendar.render();
-                calendarEl._fullCalendar = calendar;
-                if (isWhole) wholeCalendarInitialized = true;
-                else sharedCalendarInitialized = true;
-            }
-        });
-    }
-
-    function updateModalCapacityDisplay() {
-        const dateFrom = document.getElementById('date_from');
-        const dateTo = document.getElementById('date_to');
-        const modalCapacityElement = document.querySelector('#priceQuantityModal .capacity-value');
-        
-        if (dateFrom && dateTo && dateFrom.value && dateTo.value && modalCapacityElement) {
-            const minCapacity = getMinCapacityForDateRange(dateFrom.value, dateTo.value);
-            modalCapacityElement.textContent = minCapacity;
-            
-            const quantityInputs = document.querySelectorAll('.quantity-input');
-            quantityInputs.forEach(input => {
-                input.max = minCapacity;
-            });
-        } else if (modalCapacityElement) {
-            modalCapacityElement.textContent = facilityCapacity;
-            
-            const quantityInputs = document.querySelectorAll('.quantity-input');
-            quantityInputs.forEach(input => {
-                input.max = facilityCapacity;
-            });
-        }
-    }
-
-    function validateQuantityInput(input) {
-        const dateFrom = document.getElementById('date_from');
-        const dateTo = document.getElementById('date_to');
-        
-        let maxCapacity = facilityCapacity;
-        if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
-            maxCapacity = getMinCapacityForDateRange(dateFrom.value, dateTo.value);
-        }
-        
-        const quantity = parseInt(input.value) || 0;
-        
-        if (quantity > maxCapacity) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Capacity Exceeded',
-                text: `The quantity exceeds the maximum capacity of ${maxCapacity} persons.`,
-                confirmButtonColor: '#3085d6',
-            }).then(() => {
-                input.value = '';
-                input.focus();
-            });
-            return false;
-        }
-        
-        const quantityInputs = document.querySelectorAll('.quantity-input');
-        let totalQuantity = 0;
-        
-        quantityInputs.forEach(qInput => {
-            const qty = parseInt(qInput.value) || 0;
-            totalQuantity += qty;
-        });
-        
-        if (totalQuantity > maxCapacity) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Total Capacity Exceeded',
-                text: `The total number of persons (${totalQuantity}) exceeds the maximum capacity of ${maxCapacity} persons.`,
-                confirmButtonColor: '#3085d6',
-            }).then(() => {
-                input.value = '';
-                input.focus();
-            });
-            return false;
-        }
-        
-        return true;
-    }
-
-    function updateAddonSelection(section, element) {
-        const addonId = element.dataset.addonId;
-        const displayContainer = document.getElementById(`${section}-selected-addons-display`);
-        const noAddonsMessage = displayContainer.querySelector('.no-addons-message');
-        
-        const existingDisplay = displayContainer.querySelector(`[data-addon-id="${addonId}"]`);
-        if (existingDisplay) {
-            existingDisplay.remove();
-        }
-        
-        const addonName = document.querySelector(`input[name="addon_names[${addonId}]"]`).value;
-        const addonPrice = parseFloat(document.querySelector(`input[name="addon_values[${addonId}]"]`).value);
-        const addonType = document.querySelector(`input[name="addon_types[${addonId}]"]`).value;
-        
-        let quantity = 0;
-        let isSelected = false;
-        
-        if (element.type === 'checkbox') {
-            isSelected = element.checked;
-            quantity = isSelected ? 1 : 0;
-        } else if (element.type === 'number') {
-            quantity = parseInt(element.value) || 0;
-            isSelected = quantity > 0;
-        }
-        
-        if (isSelected) {
-            if (noAddonsMessage) {
-                noAddonsMessage.style.display = 'none';
-            }
-            
-            const addonDisplay = document.createElement('div');
-            addonDisplay.className = 'selected-addon-item mb-2 p-2 border rounded';
-            addonDisplay.dataset.addonId = addonId;
-            
-            let displayText = `<strong>${addonName}</strong> - ₱${addonPrice.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            
-            if (element.type === 'number') {
-                displayText += ` (Qty: ${quantity})`;
-            }
-            
-            if (addonType === 'per_night') {
-                displayText += ' per night';
-            } else if (addonType === 'per_unit') {
-                displayText += ' per unit';
-            }
-            
-            addonDisplay.innerHTML = displayText;
-            displayContainer.appendChild(addonDisplay);
-        }
-        
-        const hasSelectedAddons = displayContainer.querySelectorAll('[data-addon-id]').length > 0;
-        if (noAddonsMessage) {
-            noAddonsMessage.style.display = hasSelectedAddons ? 'none' : 'block';
-        }
-    }
-
-    function calculateDateDifference(startDate, endDate) {
-        if (!startDate || !endDate) return 1;
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const timeDiff = end - start;01
-        
-        const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-        return Math.max(1, daysDiff + 1); 
-    }
-
-    function calculateAddonPrices(section) {
-        let addonTotal = 0;
-        const selectedBookingType = document.querySelector('input[name="booking_type"]:checked');
-        
-        if (!selectedBookingType) return 0;
-        
-        let daysDiff = 1;
-        if (selectedBookingType.value === 'shared') {
-            const dateFrom = document.getElementById('date_from');
-            const dateTo = document.getElementById('date_to');
-            if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
-                daysDiff = calculateDateDifference(dateFrom.value, dateTo.value);
-            }
-        } else if (selectedBookingType.value === 'whole') {
-            const dateFrom = document.getElementById('whole_date_from');
-            const dateTo = document.getElementById('whole_date_to');
-            if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
-                daysDiff = calculateDateDifference(dateFrom.value, dateTo.value);
-            }
-        }
-        
-        const quantityInputs = document.querySelectorAll(`input[name^="${section}_addon_quantity["]`);
-        quantityInputs.forEach(input => {
-            const quantity = parseInt(input.value) || 0;
-            if (quantity > 0) {
-                const addonId = input.name.match(/\[(.*?)\]/)[1];
-                const addonPrice = parseFloat(document.querySelector(`input[name="addon_values[${addonId}]"]`).value);
-                const addonType = document.querySelector(`input[name="addon_types[${addonId}]"]`).value;
-                
-                let addonCost = addonPrice * quantity * daysDiff;
-                addonTotal += addonCost;
-            }
-        });
-        
-        const checkboxInputs = document.querySelectorAll(`input[name^="${section}_addon_checkbox["]`);
-        checkboxInputs.forEach(checkbox => {
-            if (checkbox.checked) {
-                const addonId = checkbox.name.match(/\[(.*?)\]/)[1];
-                const addonPrice = parseFloat(document.querySelector(`input[name="addon_values[${addonId}]"]`).value);
-                const addonType = document.querySelector(`input[name="addon_types[${addonId}]"]`).value;
-                
-                addonTotal += addonPrice * daysDiff;
-            }
-        });
-        
-        return addonTotal;
-    }
-
-    function updateTotalPrice() {
-        let total = 0;
-        const selectedBookingType = document.querySelector('input[name="booking_type"]:checked');
-        
-        if (!selectedBookingType) {
-            updatePriceDisplay(0);
-            return;
-        }
-        
-        if (selectedBookingType.value === 'shared') {
-            const priceDropdown = document.getElementById('price_id');
-            if (priceDropdown && priceDropdown.value) {
-                const selectedOption = priceDropdown.options[priceDropdown.selectedIndex];
-                const priceValue = parseFloat(selectedOption.dataset.value) || 0;
-                total += priceValue;
-                const selectedPriceInput = document.getElementById('selected_price_value');
-                if (selectedPriceInput) {
-                    selectedPriceInput.value = priceValue;
-                }
-            }
-            
-            const quantityInputs = document.querySelectorAll('.quantity-input:not(.addon-quantity)');
-            quantityInputs.forEach(input => {
-                const quantity = parseInt(input.value) || 0;
-                if (quantity > 0) {
-                    const priceId = input.name.match(/\[(\d+)\]/)[1];
-                    const priceValue = document.querySelector(`input[name="price_values[${priceId}]"]`);
-                    if (priceValue) {
-                        total += parseFloat(priceValue.value) * quantity;
-                    }
-                }
-            });
-            
-            const dateFrom = document.getElementById('date_from');
-            const dateTo = document.getElementById('date_to');
-            if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
-                const daysDiff = calculateDateDifference(dateFrom.value, dateTo.value);
-                if (daysDiff > 1) {
-                    total *= daysDiff;
-                }
-            }
-            
-            total += calculateAddonPrices('shared');
-            
-        } else if (selectedBookingType.value === 'whole') {
-            const clientTypeDropdown = document.getElementById('whole_client_type');
-            if (clientTypeDropdown && clientTypeDropdown.value) {
-                const priceValue = parseFloat(clientTypeDropdown.value) || 0;
-                total = priceValue;
-                
-                const dateFrom = document.getElementById('whole_date_from');
-                const dateTo = document.getElementById('whole_date_to');
-                if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
-                    const daysDiff = calculateDateDifference(dateFrom.value, dateTo.value);
-                    if (daysDiff > 1) {
-                        total *= daysDiff;
-                    }
-                }
-                
-                total += calculateAddonPrices('whole');
-            }
-        }
-        
-        updatePriceDisplay(total, selectedBookingType.value);
-    }
-
-    function updateWholeTotalPrice() {
-        updateTotalPrice();
-    }
-
-    function updatePriceDisplay(total, bookingType) {
-        const computedTotal = document.getElementById('computed-total');
-        const totalPriceInput = document.getElementById('total_price_input');
-        const wholeTotalPriceInput = document.getElementById('whole_total_price_input');
-        
-        if (computedTotal) {
-            computedTotal.textContent = `₱${total.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        }
-        
-        if (totalPriceInput) {
-            totalPriceInput.value = total;
-        }
-        
-        if (wholeTotalPriceInput) {
-            wholeTotalPriceInput.value = total;
-        }
-    }
-
-    function setupAddonEventListeners() {
-        document.querySelectorAll('.addon-quantity').forEach(input => {
-            input.addEventListener('input', function() {
-                const section = this.name.includes('shared_') ? 'shared' : 'whole';
-                updateAddonSelection(section, this);
-                updateTotalPrice();
-            });
-        });
-        
-        document.querySelectorAll('.addon-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const section = this.name.includes('shared_') ? 'shared' : 'whole';
-                updateAddonSelection(section, this);
-                updateTotalPrice();
-            });
-        });
-        
-        document.querySelectorAll('[id$="AddonsModal"] .btn-primary').forEach(button => {
-            button.addEventListener('click', function() {
-                updateTotalPrice();
-            });
-        });
-    }
-
-    function updateClientTypeDisplay() {
-        const container = document.getElementById('selected-client-types-display');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        const quantityInputs = document.querySelectorAll('.quantity-input:not(.addon-quantity)');
-        let hasSelection = false;
-        
-        quantityInputs.forEach(input => {
-            if (input.value && parseInt(input.value) > 0) {
-                hasSelection = true;
-                const priceId = input.name.match(/\[(.*?)\]/)[1];
-                const priceNameInput = document.querySelector(`input[name="price_names[${priceId}]"]`);
-                const priceValueInput = document.querySelector(`input[name="price_values[${priceId}]"]`);
-                
-                if (priceNameInput && priceValueInput) {
-                    const priceName = priceNameInput.value;
-                    const priceValue = parseFloat(priceValueInput.value);
-                    
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'client-type-item';
-                    itemDiv.innerHTML = `
-                        <strong>${priceName}</strong>
-                        <span>Price: ₱${priceValue.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span><br>
-                        <span>Qty: ${parseInt(input.value).toLocaleString()}</span>
-                    `;
-                    
-                    container.appendChild(itemDiv);
-                }
-            }
-        });
-        
-        if (hasSelection) {
-            container.style.display = 'flex'; 
-        } else {
-            container.style.display = 'none';
-        }
-        
-        updateTotalPrice();
-    }
-
-    document.querySelectorAll('input[name="booking_type"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.value === 'shared') {
-                document.getElementById('shared-section').style.display = 'block';
-                document.getElementById('whole-section').style.display = 'none';
-                updateRequiredFields('shared');
-                if (!sharedCalendarInitialized) initializeCalendar('shared');
-            } else {
-                document.getElementById('shared-section').style.display = 'none';
-                document.getElementById('whole-section').style.display = 'block';
-                updateRequiredFields('whole');
-                if (!wholeCalendarInitialized) initializeCalendar('whole');
-            }
-            updateTotalPrice();
-        });
-    });
-
-    if (wholeTimeStartInput) {
-        wholeTimeStartInput.addEventListener('change', function() {
-            calculateWholeEndTime();
-            updateWholeTotalPrice();
-        });
-    }
-
-    if (wholeClientTypeDropdown) {
-        wholeClientTypeDropdown.addEventListener('change', function() {
-            updateWholeTotalPrice();
-        });
-    }
-
-    const priceQuantityModal = document.getElementById('priceQuantityModal');
-    if (priceQuantityModal) {
-        priceQuantityModal.addEventListener('hidden.bs.modal', function () {
-            updateClientTypeDisplay();
-        });
-    }
-
-    const quantityInputs = document.querySelectorAll('.quantity-input');
-    quantityInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            validateQuantityInput(this);
-        });
-    });
-
-    const sharedConfirmBtn = document.getElementById('shared-confirm-dates');
-    if (sharedConfirmBtn) {
-        sharedConfirmBtn.addEventListener('click', function() {
-            const startDate = document.getElementById('date_from').value;
-            const endDate = document.getElementById('date_to').value;
-            
-            const startDisplay = document.getElementById('shared-start-date-display');
-            const endDisplay = document.getElementById('shared-end-date-display');
-            
-            if (startDisplay) startDisplay.textContent = formatDateForDisplay(startDate);
-            if (endDisplay) endDisplay.textContent = formatDateForDisplay(endDate);
-            
-            updateModalCapacityDisplay();
-        });
-    }
-
-    const wholeConfirmBtn = document.getElementById('whole-confirm-dates');
-    if (wholeConfirmBtn) {
-        wholeConfirmBtn.addEventListener('click', function() {
-            const startDate = document.getElementById('whole_date_from').value;
-            const endDate = document.getElementById('whole_date_to').value;
-            
-            const startDisplay = document.getElementById('whole-start-date-display');
-            const endDisplay = document.getElementById('whole-end-date-display');
-            
-            if (startDisplay) startDisplay.textContent = formatDateForDisplay(startDate);
-            if (endDisplay) endDisplay.textContent = formatDateForDisplay(endDate);
-        });
-    }
-
-    const defaultBookingType = document.querySelector('input[name="booking_type"]:checked');
-    if (defaultBookingType) {
-        const activeSection = defaultBookingType.value;
-        updateRequiredFields(activeSection);
-        if (activeSection === 'whole' && !wholeCalendarInitialized) {
-            initializeCalendar('whole');
-        } else if (activeSection === 'shared' && !sharedCalendarInitialized) {
-            initializeCalendar('shared');
-        }
-    }
-
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-        });
-    }
-
-    setupAddonEventListeners();
-    updateClientTypeDisplay();
-    updateTotalPrice();
-});
-</script>
-@endif --}}
 
 @if ( $facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty())
-<script>
+{{-- <script>
     document.addEventListener('DOMContentLoaded', function() {
         var dateFromInput = document.getElementById('date_from');
         var dateToInput = document.getElementById('date_to');
@@ -2626,7 +1784,191 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('DOMContentLoaded', function() {
         updateClientTypeDisplay();
     });
-</script>
+</script> --}}
+
+{{-- Validation --}}
+{{-- <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const reserveBtn = document.getElementById('reserve-btn');
+    reserveBtn.disabled = true;
+
+    function checkFormValidity() {
+        const bookingType = document.querySelector('input[name="booking_type"]:checked')?.value;
+        let isValid = true;
+
+        if (bookingType === 'shared') {
+            const hasQuantityPrices = @json($facility->prices->where('price_type', 'individual')->where('is_there_a_quantity', true)->isNotEmpty());
+            const hasNonQuantityPrices = @json($facility->prices->where('price_type', 'individual')->where('is_there_a_quantity', false)->isNotEmpty());
+            const isBasedOnDays = @json($facility->prices->where('price_type', 'individual')->first()?->is_based_on_days ?? false);
+
+            if (isBasedOnDays) {
+                const dateFrom = document.getElementById('date_from')?.value;
+                const dateTo = document.getElementById('date_to')?.value;
+                if (!dateFrom || !dateTo) isValid = false;
+            }
+
+            const roomSelect = document.getElementById('shared_selected_room');
+            if (roomSelect && roomSelect.value === "") isValid = false;
+
+            if (hasQuantityPrices) {
+                let hasQuantity = false;
+                document.querySelectorAll('.quantity-input').forEach(input => {
+                    if (parseInt(input.value) > 0) hasQuantity = true;
+                });
+                if (!hasQuantity) isValid = false;
+            }
+
+            if (hasNonQuantityPrices) {
+                const priceSelect = document.getElementById('price_id');
+                if (!priceSelect || priceSelect.value === "") isValid = false;
+            }
+        } 
+        else if (bookingType === 'whole') {
+            const dateFrom = document.getElementById('whole_date_from')?.value;
+            const dateTo = document.getElementById('whole_date_to')?.value;
+            const roomSelect = document.getElementById('selected_room');
+            const priceSelect = document.getElementById('whole_price_id');
+
+            if (!dateFrom || !dateTo) isValid = false;
+            if (!roomSelect || roomSelect.value === "") isValid = false;
+            if (!priceSelect || priceSelect.value === "") isValid = false;
+        }
+
+        if (isValid) {
+            isValid = validateQuantitiesAgainstCapacity();
+        }
+
+        reserveBtn.disabled = !isValid;
+    }
+
+    function getMinRemainingCapacity(selectedDates) {
+        let minCapacity = Infinity;
+        const availabilities = @json($facility->availabilities ?? []);
+        const selectedRoomId = document.getElementById('shared_selected_room')?.value;
+        
+        selectedDates.forEach(date => {
+            const availability = availabilities.find(avail => 
+                avail.facility_attribute_id == selectedRoomId &&
+                new Date(date) >= new Date(avail.date_from) &&
+                new Date(date) <= new Date(avail.date_to)
+            );
+            
+            if (availability) {
+                minCapacity = Math.min(minCapacity, availability.remaining_capacity);
+            } else {
+                const roomSelect = document.getElementById('shared_selected_room');
+                const roomCapacity = roomSelect ? 
+                    parseInt(roomSelect.options[roomSelect.selectedIndex]?.getAttribute('data-capacity')) : 0;
+                minCapacity = Math.min(minCapacity, roomCapacity);
+            }
+        });
+        
+        return minCapacity === Infinity ? 0 : minCapacity;
+    }
+
+    function validateQuantitiesAgainstCapacity() {
+        const bookingType = document.querySelector('input[name="booking_type"]:checked')?.value;
+        
+        if (bookingType === 'shared') {
+            let maxCapacity;
+            const dateFrom = document.getElementById('date_from')?.value;
+            const dateTo = document.getElementById('date_to')?.value;
+            
+            if (dateFrom && dateTo) {
+                const selectedDates = getDatesInRange(dateFrom, dateTo);
+                maxCapacity = getMinRemainingCapacity(selectedDates);
+            } else {
+                const roomSelect = document.getElementById('shared_selected_room');
+                const assignedRoom = document.querySelector('.capacity-card');
+                
+                if (roomSelect && roomSelect.value) {
+                    maxCapacity = parseInt(roomSelect.options[roomSelect.selectedIndex].getAttribute('data-capacity')) || 0;
+                } else if (assignedRoom) {
+                    const capacityText = assignedRoom.querySelector('.capacity-value').textContent;
+                    maxCapacity = parseInt(capacityText) || 0;
+                }
+            }
+            
+            const capacityValueElement = document.querySelector('.alert-info .capacity-value');
+            if (capacityValueElement) {
+                capacityValueElement.textContent = maxCapacity;
+            }
+            
+            let totalQuantity = 0;
+            document.querySelectorAll('.quantity-input').forEach(input => {
+                totalQuantity += parseInt(input.value) || 0;
+            });
+            
+            if (totalQuantity > maxCapacity) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Capacity Exceeded',
+                    html: `The total number of guests (${totalQuantity}) exceeds the maximum capacity of ${maxCapacity} for the selected dates.<br><br>Please adjust your selections.`,
+                    confirmButtonColor: '#3085d6',
+                });
+                
+                document.querySelectorAll('.quantity-input').forEach(input => {
+                    input.value = '';
+                });
+                
+                updateClientTypeDisplay();
+                updateTotalPrice();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function getDatesInRange(startDate, endDate) {
+        const dates = [];
+        const currentDate = new Date(startDate);
+        const end = new Date(endDate);
+        
+        while (currentDate <= end) {
+            dates.push(new Date(currentDate).toISOString().split('T')[0]);
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        return dates;
+    }
+
+    document.querySelectorAll('.quantity-input').forEach(input => {
+        input.addEventListener('input', function() {
+            validateQuantitiesAgainstCapacity();
+            checkFormValidity();
+        });
+    });
+    
+    document.getElementById('shared_selected_room')?.addEventListener('change', function() {
+        validateQuantitiesAgainstCapacity();
+        checkFormValidity();
+    });
+    
+    document.querySelectorAll('input[name="booking_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            validateQuantitiesAgainstCapacity();
+            checkFormValidity();
+        });
+    });
+    
+    document.getElementById('confirm-dates')?.addEventListener('click', function() {
+        setTimeout(function() {
+            validateQuantitiesAgainstCapacity();
+            checkFormValidity();
+        }, 100);
+    });
+
+    document.getElementById('price_id')?.addEventListener('change', checkFormValidity);
+    document.getElementById('whole_price_id')?.addEventListener('change', checkFormValidity);
+    document.getElementById('selected_room')?.addEventListener('change', checkFormValidity);
+    document.getElementById('whole-confirm-dates')?.addEventListener('click', function() {
+        setTimeout(checkFormValidity, 100);
+    });
+
+    // Initial check
+    checkFormValidity();
+});
+</script> --}}
 @endif
 
 @endpush

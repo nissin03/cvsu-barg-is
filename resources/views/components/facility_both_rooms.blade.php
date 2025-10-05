@@ -414,6 +414,7 @@
                 </div>
             @endif
         @endif
+         @include('components.facility_both_addons_rooms', ['section' => 'shared', 'facility' => $facility])
     </div>
 
 <div id="whole-section" @if(!$defaultWhole) style="display: none;" @endif>
@@ -564,6 +565,7 @@
                 </div>
             </div>
         @endif
+         @include('components.facility_both_addons_rooms', ['section' => 'whole', 'facility' => $facility])   
     </div>
 
     <div id="total-price" class="total-price-section">
@@ -572,187 +574,21 @@
     </div>
 </div>
 
-
-{{-- Validation --}}
+{{-- JavaScript includes --}}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const reserveBtn = document.getElementById('reserve-btn');
-    reserveBtn.disabled = true;
-
-    function checkFormValidity() {
-        const bookingType = document.querySelector('input[name="booking_type"]:checked')?.value;
-        let isValid = true;
-
-        if (bookingType === 'shared') {
-            const hasQuantityPrices = @json($facility->prices->where('price_type', 'individual')->where('is_there_a_quantity', true)->isNotEmpty());
-            const hasNonQuantityPrices = @json($facility->prices->where('price_type', 'individual')->where('is_there_a_quantity', false)->isNotEmpty());
-            const isBasedOnDays = @json($facility->prices->where('price_type', 'individual')->first()?->is_based_on_days ?? false);
-
-            if (isBasedOnDays) {
-                const dateFrom = document.getElementById('date_from')?.value;
-                const dateTo = document.getElementById('date_to')?.value;
-                if (!dateFrom || !dateTo) isValid = false;
-            }
-
-            const roomSelect = document.getElementById('shared_selected_room');
-            if (roomSelect && roomSelect.value === "") isValid = false;
-
-            if (hasQuantityPrices) {
-                let hasQuantity = false;
-                document.querySelectorAll('.quantity-input').forEach(input => {
-                    if (parseInt(input.value) > 0) hasQuantity = true;
-                });
-                if (!hasQuantity) isValid = false;
-            }
-
-            if (hasNonQuantityPrices) {
-                const priceSelect = document.getElementById('price_id');
-                if (!priceSelect || priceSelect.value === "") isValid = false;
-            }
-        } 
-        else if (bookingType === 'whole') {
-            const dateFrom = document.getElementById('whole_date_from')?.value;
-            const dateTo = document.getElementById('whole_date_to')?.value;
-            const roomSelect = document.getElementById('selected_room');
-            const priceSelect = document.getElementById('whole_price_id');
-
-            if (!dateFrom || !dateTo) isValid = false;
-            if (!roomSelect || roomSelect.value === "") isValid = false;
-            if (!priceSelect || priceSelect.value === "") isValid = false;
-        }
-
-        if (isValid) {
-            isValid = validateQuantitiesAgainstCapacity();
-        }
-
-        reserveBtn.disabled = !isValid;
-    }
-
-    function getMinRemainingCapacity(selectedDates) {
-        let minCapacity = Infinity;
-        const availabilities = @json($facility->availabilities ?? []);
-        const selectedRoomId = document.getElementById('shared_selected_room')?.value;
-        
-        selectedDates.forEach(date => {
-            const availability = availabilities.find(avail => 
-                avail.facility_attribute_id == selectedRoomId &&
-                new Date(date) >= new Date(avail.date_from) &&
-                new Date(date) <= new Date(avail.date_to)
-            );
-            
-            if (availability) {
-                minCapacity = Math.min(minCapacity, availability.remaining_capacity);
-            } else {
-                const roomSelect = document.getElementById('shared_selected_room');
-                const roomCapacity = roomSelect ? 
-                    parseInt(roomSelect.options[roomSelect.selectedIndex]?.getAttribute('data-capacity')) : 0;
-                minCapacity = Math.min(minCapacity, roomCapacity);
-            }
-        });
-        
-        return minCapacity === Infinity ? 0 : minCapacity;
-    }
-
-    function validateQuantitiesAgainstCapacity() {
-        const bookingType = document.querySelector('input[name="booking_type"]:checked')?.value;
-        
-        if (bookingType === 'shared') {
-            let maxCapacity;
-            const dateFrom = document.getElementById('date_from')?.value;
-            const dateTo = document.getElementById('date_to')?.value;
-            
-            if (dateFrom && dateTo) {
-                const selectedDates = getDatesInRange(dateFrom, dateTo);
-                maxCapacity = getMinRemainingCapacity(selectedDates);
-            } else {
-                const roomSelect = document.getElementById('shared_selected_room');
-                const assignedRoom = document.querySelector('.capacity-card');
-                
-                if (roomSelect && roomSelect.value) {
-                    maxCapacity = parseInt(roomSelect.options[roomSelect.selectedIndex].getAttribute('data-capacity')) || 0;
-                } else if (assignedRoom) {
-                    const capacityText = assignedRoom.querySelector('.capacity-value').textContent;
-                    maxCapacity = parseInt(capacityText) || 0;
-                }
-            }
-            
-            const capacityValueElement = document.querySelector('.alert-info .capacity-value');
-            if (capacityValueElement) {
-                capacityValueElement.textContent = maxCapacity;
-            }
-            
-            let totalQuantity = 0;
-            document.querySelectorAll('.quantity-input').forEach(input => {
-                totalQuantity += parseInt(input.value) || 0;
-            });
-            
-            if (totalQuantity > maxCapacity) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Capacity Exceeded',
-                    html: `The total number of guests (${totalQuantity}) exceeds the maximum capacity of ${maxCapacity} for the selected dates.<br><br>Please adjust your selections.`,
-                    confirmButtonColor: '#3085d6',
-                });
-                
-                document.querySelectorAll('.quantity-input').forEach(input => {
-                    input.value = '';
-                });
-                
-                updateClientTypeDisplay();
-                updateTotalPrice();
-                return false;
-            }
-        }
-        return true;
-    }
-
-    function getDatesInRange(startDate, endDate) {
-        const dates = [];
-        const currentDate = new Date(startDate);
-        const end = new Date(endDate);
-        
-        while (currentDate <= end) {
-            dates.push(new Date(currentDate).toISOString().split('T')[0]);
-            currentDate.setDate(currentDate.getDate() + 1);
-        }
-        
-        return dates;
-    }
-
-    document.querySelectorAll('.quantity-input').forEach(input => {
-        input.addEventListener('input', function() {
-            validateQuantitiesAgainstCapacity();
-            checkFormValidity();
-        });
-    });
-    
-    document.getElementById('shared_selected_room')?.addEventListener('change', function() {
-        validateQuantitiesAgainstCapacity();
-        checkFormValidity();
-    });
-    
-    document.querySelectorAll('input[name="booking_type"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            validateQuantitiesAgainstCapacity();
-            checkFormValidity();
-        });
-    });
-    
-    document.getElementById('confirm-dates')?.addEventListener('click', function() {
-        setTimeout(function() {
-            validateQuantitiesAgainstCapacity();
-            checkFormValidity();
-        }, 100);
-    });
-
-    document.getElementById('price_id')?.addEventListener('change', checkFormValidity);
-    document.getElementById('whole_price_id')?.addEventListener('change', checkFormValidity);
-    document.getElementById('selected_room')?.addEventListener('change', checkFormValidity);
-    document.getElementById('whole-confirm-dates')?.addEventListener('click', function() {
-        setTimeout(checkFormValidity, 100);
-    });
-
-    // Initial check
-    checkFormValidity();
-});
+    // Global variables for JavaScript modules
+    window.userType = @json(auth()->user()->utype ?? 'USR');
+    window.availabilities = @json($facility->availabilities ?? []);
+    window.facilityAttributes = @json($facility->facilityAttributes ?? []);
+    window.hasQuantityPrices = @json($facility->prices->where('price_type', 'individual')->where('is_there_a_quantity', true)->isNotEmpty());
+    window.hasNonQuantityPrices = @json($facility->prices->where('price_type', 'individual')->where('is_there_a_quantity', false)->isNotEmpty());
+    window.isBasedOnDays = @json($facility->prices->where('price_type', 'individual')->first()?->is_based_on_days ?? false);
 </script>
+
+{{-- Include JavaScript modules --}}
+<script src="{{ asset('js/facilities_both_rooms/calendar.js') }}"></script>
+<script src="{{ asset('js/facilities_both_rooms/client-types.js') }}"></script>
+<script src="{{ asset('js/facilities_both_rooms/price-computation.js') }}"></script>
+<script src="{{ asset('js/facilities_both_rooms/validation.js') }}"></script>
+
+

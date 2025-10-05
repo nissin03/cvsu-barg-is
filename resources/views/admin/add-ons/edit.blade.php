@@ -196,7 +196,7 @@
             </ul>
         </div>
 
-        <div class="addon-form-container">
+          <div class="addon-form-container">
             <form id="addonForm" action="{{ route('admin.addons.update', $addon->id) }}" method="POST">
                 @csrf
                 @method('PUT')
@@ -242,6 +242,7 @@
                             <option value="per_unit" {{ old('price_type', $addon->price_type) == 'per_unit' ? 'selected' : '' }}>Per Unit</option>
                             <option value="flat_rate" {{ old('price_type', $addon->price_type) == 'flat_rate' ? 'selected' : '' }}>Flat Rate</option>
                             <option value="per_night" {{ old('price_type', $addon->price_type) == 'per_night' ? 'selected' : '' }}>Per Night</option>
+                            <option value="per_item" {{ old('price_type', $addon->price_type) == 'per_item' ? 'selected' : '' }}>Per Item</option>
                         </select>
                         @error('price_type')
                             <span class="error-message">{{ $message }}</span>
@@ -284,70 +285,46 @@
                     @enderror
                 </div>
                 
-                <div id="capacityField" class="field-group conditional-field">
-                    <label class="field-label">
-                        Capacity
-                        <span class="required-asterisk">*</span>
-                    </label>
-                    <input 
-                        class="field-input" 
-                        type="number" 
-                        min="1" 
-                        placeholder="Enter capacity" 
-                        name="capacity" 
-                        value="{{ old('capacity', $addon->capacity) }}"
-                    >
-                    @error('capacity')
-                        <span class="error-message">{{ $message }}</span>
-                    @enderror
-                </div>
-                
+                <!-- Conditional Fields -->
                 <div id="conditionalFields">
+                    <!-- Per Unit Fields -->
                     <div id="perUnitFields" class="conditional-field">
                         <div class="checkbox-group">
                             <input 
                                 class="checkbox-input" 
                                 type="checkbox" 
-                                id="is_based_on_quantity" 
-                                name="is_based_on_quantity" 
-                                value="1" 
-                                {{ old('is_based_on_quantity', $addon->is_based_on_quantity) ? 'checked' : '' }}
-                            >
-                            <label class="checkbox-label" for="is_based_on_quantity">
-                                Based on quantity
-                            </label>
-                        </div>
-                        
-                        <div class="checkbox-group">
-                            <input 
-                                class="checkbox-input" 
-                                type="checkbox" 
-                                id="is_available" 
+                                id="is_available_unit" 
                                 name="is_available" 
                                 value="1" 
                                 {{ old('is_available', $addon->is_available) ? 'checked' : '' }}
                             >
-                            <label class="checkbox-label" for="is_available">
+                            <label class="checkbox-label" for="is_available_unit">
                                 Currently available
                             </label>
                         </div>
+                        
+                        <div class="field-group">
+                            <label class="field-label">
+                                Capacity
+                                <span class="required-asterisk">*</span>
+                            </label>
+                            <input 
+                                class="field-input" 
+                                type="number" 
+                                min="1" 
+                                placeholder="Enter capacity" 
+                                name="capacity" 
+                                value="{{ old('capacity', $addon->capacity ?? 1) }}"
+                                required
+                            >
+                            @error('capacity')
+                                <span class="error-message">{{ $message }}</span>
+                            @enderror
+                        </div>
                     </div>
                     
+                    <!-- Flat Rate Fields -->
                     <div id="flatRateFields" class="conditional-field">
-                        <div id="refundableField" class="checkbox-group">
-                            <input 
-                                class="checkbox-input" 
-                                type="checkbox" 
-                                id="is_refundable_flat" 
-                                name="is_refundable" 
-                                value="1" 
-                                {{ old('is_refundable', $addon->is_refundable) ? 'checked' : '' }}
-                            >
-                            <label class="checkbox-label" for="is_refundable_flat">
-                                Refundable
-                            </label>
-                        </div>
-                        
                         <div class="checkbox-group">
                             <input 
                                 class="checkbox-input" 
@@ -361,23 +338,24 @@
                                 Currently available
                             </label>
                         </div>
-                    </div>
-                    
-                    <div id="perNightFields" class="conditional-field">
+                        
                         <div class="checkbox-group">
                             <input 
                                 class="checkbox-input" 
                                 type="checkbox" 
-                                id="is_based_on_quantity_night" 
-                                name="is_based_on_quantity" 
+                                id="is_refundable_flat" 
+                                name="is_refundable" 
                                 value="1" 
-                                {{ old('is_based_on_quantity', $addon->is_based_on_quantity) ? 'checked' : '' }}
+                                {{ old('is_refundable', $addon->is_refundable) ? 'checked' : '' }}
                             >
-                            <label class="checkbox-label" for="is_based_on_quantity_night">
-                                Based on quantity
+                            <label class="checkbox-label" for="is_refundable_flat">
+                                Refundable
                             </label>
                         </div>
-                        
+                    </div>
+                    
+                    <!-- Per Night Fields -->
+                    <div id="perNightFields" class="conditional-field">
                         <div class="checkbox-group">
                             <input 
                                 class="checkbox-input" 
@@ -390,6 +368,56 @@
                             <label class="checkbox-label" for="is_available_night">
                                 Currently available
                             </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Per Item Fields -->
+                    <div id="perItemFields" class="conditional-field">
+                        <div class="checkbox-group">
+                            <input 
+                                class="checkbox-input" 
+                                type="checkbox" 
+                                id="is_available_item" 
+                                name="is_available" 
+                                value="1" 
+                                {{ old('is_available', $addon->is_available) ? 'checked' : '' }}
+                            >
+                            <label class="checkbox-label" for="is_available_item">
+                                Currently available
+                            </label>
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input 
+                                class="checkbox-input" 
+                                type="checkbox" 
+                                id="is_based_on_quantity_item" 
+                                name="is_based_on_quantity" 
+                                value="1" 
+                                {{ old('is_based_on_quantity', $addon->is_based_on_quantity) ? 'checked' : '' }}
+                            >
+                            <label class="checkbox-label" for="is_based_on_quantity_item">
+                                Based on quantity
+                            </label>
+                        </div>
+                        
+                        <div class="field-group">
+                            <label class="field-label">
+                                Quantity
+                                <span class="required-asterisk">*</span>
+                            </label>
+                            <input 
+                                class="field-input" 
+                                type="number" 
+                                min="1" 
+                                placeholder="Enter quantity" 
+                                name="quantity" 
+                                value="{{ old('quantity', $addon->quantity ?? 1) }}"
+                                required
+                            >
+                            @error('quantity')
+                                <span class="error-message">{{ $message }}</span>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -413,21 +441,17 @@
 document.addEventListener('DOMContentLoaded', function() {
     const priceTypeSelect = document.getElementById('priceType');
     const showField = document.getElementById('showField');
-    const staffOption = showField.querySelector('option[value="staff"]');
-    const capacityField = document.getElementById('capacityField');
     const perUnitFields = document.getElementById('perUnitFields');
     const flatRateFields = document.getElementById('flatRateFields');
     const perNightFields = document.getElementById('perNightFields');
-    const refundableField = document.getElementById('refundableField');
-    const isBasedOnQuantityCheckbox = document.getElementById('is_based_on_quantity');
-    const isBasedOnQuantityNightCheckbox = document.getElementById('is_based_on_quantity_night');
+    const perItemFields = document.getElementById('perItemFields');
 
     function toggleConditionalFields() {
         // Hide all conditional sections first
         perUnitFields.classList.remove('visible');
         flatRateFields.classList.remove('visible');
         perNightFields.classList.remove('visible');
-        capacityField.classList.remove('visible');
+        perItemFields.classList.remove('visible');
 
         switch(priceTypeSelect.value) {
             case 'per_unit':
@@ -438,51 +462,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
             case 'per_night':
                 perNightFields.classList.add('visible');
-                // For per_night, hide the "based on quantity" checkbox by adding CSS
-                const quantityCheckboxGroup = isBasedOnQuantityNightCheckbox.closest('.checkbox-group');
-                if (quantityCheckboxGroup) {
-                    quantityCheckboxGroup.style.display = 'none';
-                }
-                // Uncheck the "based on quantity" checkbox for per_night
-                if (isBasedOnQuantityNightCheckbox) {
-                    isBasedOnQuantityNightCheckbox.checked = false;
-                }
                 break;
-        }
-
-        // Show/hide staff option based on price type
-        if (priceTypeSelect.value === 'per_unit' || priceTypeSelect.value === 'per_night') {
-            staffOption.style.display = 'none';
-            if (showField.value === 'staff') {
-                showField.value = "";
-            }
-        } else {
-            staffOption.style.display = 'block';
-        }
-
-        // Show/hide refundable field based on show selection
-        if (showField.value === 'staff') {
-            refundableField.style.display = 'none';
-        } else {
-            refundableField.style.display = 'flex';
-        }
-
-        // Handle capacity field visibility - only show for per_unit when based on quantity is checked
-        // For per_night, capacity should always be hidden
-        if (priceTypeSelect.value === 'per_unit' && isBasedOnQuantityCheckbox && isBasedOnQuantityCheckbox.checked) {
-            capacityField.classList.add('visible');
-            capacityField.querySelector('input').setAttribute('required', 'required');
-        } else {
-            // For per_night or when not based on quantity, hide capacity and remove required
-            capacityField.querySelector('input').removeAttribute('required');
-        }
-
-        // Show the "based on quantity" checkbox for per_unit and hide for per_night
-        if (priceTypeSelect.value === 'per_unit') {
-            const perUnitQuantityGroup = isBasedOnQuantityCheckbox ? isBasedOnQuantityCheckbox.closest('.checkbox-group') : null;
-            if (perUnitQuantityGroup) {
-                perUnitQuantityGroup.style.display = 'flex';
-            }
+            case 'per_item':
+                perItemFields.classList.add('visible');
+                break;
         }
     }
 
@@ -491,16 +474,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event listeners
     priceTypeSelect.addEventListener('change', toggleConditionalFields);
-    showField.addEventListener('change', toggleConditionalFields);
-
-    if (isBasedOnQuantityCheckbox) {
-        isBasedOnQuantityCheckbox.addEventListener('change', toggleConditionalFields);
-    }
-
-    // Remove the event listener for per_night quantity checkbox since it's now hidden
-    // if (isBasedOnQuantityNightCheckbox) {
-    //     isBasedOnQuantityNightCheckbox.addEventListener('change', toggleConditionalFields);
-    // }
 
     // Form validation
     document.getElementById('addonForm').addEventListener('submit', function(e) {

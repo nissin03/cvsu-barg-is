@@ -1,7 +1,8 @@
 <link href="{{ asset('css/facility/whole_place.css') }}" rel="stylesheet"> 
 
 <div class="facility-booking-container mb-4">
-  <input type="hidden" name="facility_attribute_id" value="{{ $wholeAttr?->id ?? '' }}">
+  <input type="hidden" name="facility_attribute_id" value="{{ $wholeAttr?->id ?? '' }}" 
+         data-has-day-based-pricing="{{ $facility->prices->contains('is_based_on_days', true) ? 'true' : 'false' }}">
     @if ($facility->prices->isNotEmpty())
         @foreach ($facility->prices as $price)
         @endforeach
@@ -24,6 +25,7 @@
         $hasDayBasedPricing = $facility->prices->contains('is_based_on_days', true);
         $userRole = auth()->user()->role ?? 'student';
         $userType = auth()->user()->utype ?? 'USR';
+        $tomorrowFormatted = \Carbon\Carbon::tomorrow()->format('Y-m-d');
     @endphp
     
     @if ($hasDayBasedPricing)
@@ -91,7 +93,13 @@
                         <div class="container-fluid">
                             <div class="row">
                                 <div class="col-md-8">
-                                    <div id="calendar" style="max-width: 100%; margin: 0 auto;"></div>
+                                    <div id="calendar" 
+                                         data-user-type="{{ $userType }}" 
+                                         data-user-role="{{ $userRole }}"
+                                         data-availabilities="{{ json_encode($facility->availabilities ?? []) }}"
+                                         data-facility-capacity="{{ $wholeAttr->whole_capacity ?? 0 }}"
+                                         data-tomorrow-formatted="{{ $tomorrowFormatted }}"
+                                         style="max-width: 100%; margin: 0 auto;"></div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="selected-dates-card p-3">
@@ -128,7 +136,9 @@
             <div id="time-slot-container" class="time-slot-grid">
                 <div class="time-input-group">
                     <label for="time_start" class="time-label">Start Time</label>
-                    <select id="time_start" name="time_start" class="form-select time-select">
+                    <select id="time_start" name="time_start" class="form-select time-select"
+                            data-user-type="{{ $userType }}" 
+                            data-user-role="{{ $userRole }}">
                     
                     </select>
                 </div>
@@ -147,7 +157,7 @@
             <span><strong>Client Type:</strong></span>
         </div>
         <div class="section-content">
-            <select id="client_type" class="client-type-select">
+            <select id="client_type" name="client_type" class="client-type-select">
                 <option value="" disabled selected>Select a client type</option>
                 @foreach ($facility->prices as $price)
                     <option value="{{ $price->value }}" data-name="{{ $price->name }}">
@@ -157,17 +167,25 @@
             </select>
         </div>
     </div>
+
+     @include('components.facility_whole_addons')
     
     <div id="total-price" class="total-price-section">
         <strong class="total-price-label">Total Price: </strong>
         <span class="total-price-value">₱ 0.00</span>
     </div>
 
-    <input type="hidden" name="total_price" id="total_price_input" value="0">
+    <input type="hidden" name="total_price" id="total_price_input" value="0">  
 </div>
 
+<!-- Include JavaScript files -->
+<script src="{{ asset('js/facilities_whole_building/priceComputation.js') }}"></script>
+<script src="{{ asset('js/facilities_whole_building/validation.js') }}"></script>
+<script src="{{ asset('js/facilities_whole_building/clientType.js') }}"></script>
+<script src="{{ asset('js/facilities_whole_building/timeSelection.js') }}"></script>
+<script src="{{ asset('js/facilities_whole_building/calendar.js') }}"></script>
 
-@if ($facility->facility_type === 'whole_place')
+{{-- @if ($facility->facility_type === 'whole_place')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var dateFromInput = document.getElementById('date_from');
@@ -649,13 +667,13 @@
             updateTotalPrice();  
         });
     </script>
-@endif
+@endif --}}
 
 
 
 
 {{-- Validation --}}
-<script>
+{{-- <script>
 document.addEventListener('DOMContentLoaded', function() {
     const reserveBtn = document.getElementById('reserve-btn');
     const clientTypeDropdown = document.getElementById('client_type');
@@ -707,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
     validateReserveButton();
     setTimeout(validateReserveButton, 1000);
 });
-</script>
+</script> --}}
 
 
 

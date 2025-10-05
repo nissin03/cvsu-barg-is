@@ -36,47 +36,52 @@ class AddonsController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'price_type' => 'required|in:per_unit,flat_rate,per_night',
+            'price_type' => 'required|in:per_unit,flat_rate,per_night,per_item',
             'description' => 'nullable|string',
             'base_price' => 'required|numeric|min:0',
-            'is_based_on_quantity' => 'sometimes|boolean',
-            'is_available' => 'sometimes|boolean',
             'show' => 'required|in:both,staff',
+            'is_available' => 'sometimes|boolean',
             'is_refundable' => 'sometimes|boolean',
-            'capacity' => 'nullable|integer',
+            'is_based_on_quantity' => 'sometimes|boolean',
+            'capacity' => 'nullable|integer|min:1',
+            'quantity' => 'nullable|integer|min:1',
         ]);
 
-        if ($validated['price_type'] === 'per_unit') {
-            $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
-            $validated['is_refundable'] = false;
-
-            if ($validated['is_based_on_quantity']) {
-                $request->validate([
-                    'capacity' => 'required|integer'
-                ]);
-                $validated['capacity'] = $request->capacity;
-            } else {
+        switch ($validated['price_type']) {
+            case 'per_unit':
+                $validated['is_based_on_quantity'] = false;
+                $validated['is_refundable'] = false;
+                $validated['is_available'] = $request->has('is_available');
+                $validated['capacity'] = $request->input('capacity', 1);
+                $validated['quantity'] = 1;
+                break;
+                
+            case 'flat_rate':
+                $validated['is_based_on_quantity'] = false;
                 $validated['capacity'] = null;
-            }
-        } elseif ($validated['price_type'] === 'per_night') {
-            $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
-            $validated['is_refundable'] = false;
-
-            if ($validated['is_based_on_quantity']) {
-                $request->validate([
-                    'capacity' => 'required|integer'
-                ]);
-                $validated['capacity'] = $request->capacity;
-            } else {
+                $validated['quantity'] = null;
+                $validated['is_available'] = $request->has('is_available');
+                $validated['is_refundable'] = $request->has('is_refundable');
+                break;
+                
+            case 'per_night':
+                $validated['is_based_on_quantity'] = false;
+                $validated['is_refundable'] = false;
                 $validated['capacity'] = null;
-            }
-        } else {
-            $validated['is_based_on_quantity'] = false;
-            $validated['is_refundable'] = $request->has('is_refundable');
-            $validated['capacity'] = null;
+                $validated['quantity'] = null;
+                $validated['is_available'] = $request->has('is_available');
+                break;
+                
+            case 'per_item':
+                $validated['is_refundable'] = false;
+                $validated['capacity'] = null;
+                $validated['is_available'] = $request->has('is_available');
+                $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
+                // Fix: Ensure quantity is properly handled for per_item
+                $validated['quantity'] = $request->input('quantity', 1);
+                break;
         }
 
-        $validated['is_available'] = $request->has('is_available');
         $validated['user_id'] = Auth::id();
 
         Addon::create($validated);
@@ -98,47 +103,51 @@ class AddonsController extends Controller
         
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'price_type' => 'required|in:per_unit,flat_rate,per_night',
+            'price_type' => 'required|in:per_unit,flat_rate,per_night,per_item',
             'description' => 'nullable|string',
             'base_price' => 'required|numeric|min:0',
-            'is_based_on_quantity' => 'sometimes|boolean',
-            'is_available' => 'sometimes|boolean',
             'show' => 'required|in:both,staff',
+            'is_available' => 'sometimes|boolean',
             'is_refundable' => 'sometimes|boolean',
-            'capacity' => 'nullable|integer',
+            'is_based_on_quantity' => 'sometimes|boolean',
+            'capacity' => 'nullable|integer|min:1',
+            'quantity' => 'nullable|integer|min:1',
         ]);
 
-        if ($validated['price_type'] === 'per_unit') {
-            $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
-            $validated['is_refundable'] = false;
-
-            if ($validated['is_based_on_quantity']) {
-                $request->validate([
-                    'capacity' => 'required|integer|min:1'
-                ]);
-                $validated['capacity'] = $request->capacity;
-            } else {
+        switch ($validated['price_type']) {
+            case 'per_unit':
+                $validated['is_based_on_quantity'] = false;
+                $validated['is_refundable'] = false;
+                $validated['is_available'] = $request->has('is_available');
+                $validated['capacity'] = $request->input('capacity', 1);
+                $validated['quantity'] = 1;
+                break;
+                
+            case 'flat_rate':
+                $validated['is_based_on_quantity'] = false;
                 $validated['capacity'] = null;
-            }
-        } elseif ($validated['price_type'] === 'per_night') {
-            $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
-            $validated['is_refundable'] = false;
-
-            if ($validated['is_based_on_quantity']) {
-                $request->validate([
-                    'capacity' => 'required|integer|min:1'
-                ]);
-                $validated['capacity'] = $request->capacity;
-            } else {
+                $validated['quantity'] = null;
+                $validated['is_available'] = $request->has('is_available');
+                $validated['is_refundable'] = $request->has('is_refundable');
+                break;
+                
+            case 'per_night':
+                $validated['is_based_on_quantity'] = false;
+                $validated['is_refundable'] = false;
                 $validated['capacity'] = null;
-            }
-        } else {
-            $validated['is_based_on_quantity'] = false;
-            $validated['is_refundable'] = $request->has('is_refundable');
-            $validated['capacity'] = null;
+                $validated['quantity'] = null;
+                $validated['is_available'] = $request->has('is_available');
+                break;
+                
+            case 'per_item':
+                $validated['is_refundable'] = false;
+                $validated['capacity'] = null;
+                $validated['is_available'] = $request->has('is_available');
+                $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
+                // Fix: Ensure quantity is properly handled for per_item
+                $validated['quantity'] = $request->input('quantity', 1);
+                break;
         }
-
-        $validated['is_available'] = $request->has('is_available');
 
         $addon->update($validated);
 
