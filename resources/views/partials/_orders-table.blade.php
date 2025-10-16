@@ -6,6 +6,11 @@
             <td class="text-start">
                 <div class="name">
                     {{ $order->user->name }}
+                    @if ($order->transaction && $order->transaction->status === 'paid')
+                        <span class="badge bg-success ms-2">Paid</span>
+                    @else
+                        <span class="badge bg-secondary ms-2">Unpaid</span>
+                    @endif
                     <div class="status-badge-container">
                         <span
                             class="badge status-badge
@@ -16,12 +21,24 @@
                 </div>
             </td>
 
-            <!-- Reservation Date with Tooltip -->
             <td class="text-center reservation-date" data-time-slot="{{ $order->time_slot }}">
-                <span class="reservation-date">
+                <div>
                     {{ \Carbon\Carbon::parse($order->reservation_date)->format('M d, Y') }}
-                </span>
+                </div>
+
+                <div class="mt-1">
+                    @if ($order->time_slot)
+                        <span class="badge bg-secondary text-white">
+                            {{ $order->time_slot }}
+                        </span>
+                    @else
+                        <span class="badge bg-light text-muted">
+                            No time slot
+                        </span>
+                    @endif
+                </div>
             </td>
+
 
             <td class="text-center">
                 {{ $order->orderItems->count() }}

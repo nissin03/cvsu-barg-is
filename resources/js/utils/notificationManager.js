@@ -81,54 +81,64 @@ class NotificationManager {
         }
     }
 
-    /**
-     * Generate HTML for a single notification (backward compatible)
-     */
     generateNotificationHTML(notification) {
         const data = notification.data || notification;
         const isRead = notification.read_at !== null;
 
-        // Support both new and old data formats
         const title = data.title || data.name || "Notification";
         const body = data.body || data.message || "No message provided";
         const icon = data.icon || "fas fa-envelope";
+        const url = data.url || null;
 
         return `
-            <div class="notification-item ${
-                isRead ? "read" : ""
-            }" data-notification-id="${notification.id}">
-                <div class="badge-icon h5">
-                    <i class="${icon} text-dark"></i>
-                </div>
-                <div class="notification-content">
-                    <p class="notification-text fw-bold">${title}</p>
-                    <p class="notification-subtext">
-                        ${body}
-                        ${!isRead ? '<div class="unread-indicator"></div>' : ""}
-                    </p>
-                </div>
-                <div class="remove-notification" data-id="${notification.id}">
-                    <i class="fas fa-times"></i>
-                </div>
+        <div
+            class="notification-item ${isRead ? "read" : ""}"
+            data-notification-id="${notification.id}"
+            data-notification-data='${JSON.stringify({ url })}'
+        >
+            <div class="badge-icon h5">
+                <i class="${icon} text-dark"></i>
             </div>
-        `;
+            <div class="notification-content">
+                <p class="notification-text fw-bold">${title}</p>
+                <p class="notification-subtext">${body}</p>
+            </div>
+            ${
+                !isRead
+                    ? `<div class="unread-indicator" title="Unread"></div>`
+                    : ""
+            }
+        </div>
+    `;
     }
 
-    /**
-     * Add event handlers to notification elements
-     */
     addNotificationHandlers(container) {
         container
             .querySelectorAll(".notification-item[data-notification-id]")
             .forEach((item) => {
-                item.addEventListener("click", (event) => {
+                item.addEventListener("click", async (event) => {
                     if (event.target.closest(".remove-notification")) {
                         return;
                     }
+
                     const notificationId = item.getAttribute(
                         "data-notification-id"
                     );
-                    this.markAsRead(notificationId, item);
+                    const notificationData = JSON.parse(
+                        item.getAttribute("data-notification-data") || "{}"
+                    );
+
+                    try {
+                        this.markAsRead(notificationId, item);
+                        if (notificationData.url) {
+                            window.location.href = notificationData.url;
+                        }
+                    } catch (error) {
+                        console.error(
+                            "Error handling notification click:",
+                            error
+                        );
+                    }
                 });
             });
 
@@ -283,7 +293,6 @@ class NotificationManager {
             return;
         }
 
-        // Listen to user-specific channel
         this.echo
             .private(`App.Models.User.${this.userId}`)
             .notification((notification) => {
@@ -291,7 +300,13 @@ class NotificationManager {
                 this.handleNewNotification(notification);
             });
 
-        // Listen to admin channel if user is admin
+        this.echo
+            .private(`App.Models.User.${this.userId}`)
+            .listen(".ReservationCreated", (event) => {
+                console.log("Reservation notification received:", event);
+                this.handleReservation(event.reservationData);
+            });
+
         if (this.isAdmin) {
             this.echo
                 .private("admin-notification")
@@ -313,14 +328,12 @@ class NotificationManager {
      * Handle new notification from Echo
      */
     handleNewNotification(notification) {
-        // Show toast notification
         this.showToast(notification.data || notification);
-
-        // Refresh notification list
         this.fetchNotifications();
     }
 
     /**
+     *
      * Handle contact message event
      */
     handleContactMessage(contactMessage) {
@@ -349,6 +362,37 @@ class NotificationManager {
                 body: `${product.name} is running low on stock`,
                 icon: "fas fa-exclamation-triangle",
                 url: `/admin/product/edit/${product.id}`,
+            },
+            created_at: new Date().toISOString(),
+        };
+
+        this.handleNewNotification(notification);
+    }
+
+    handleStockUpdate(product, message) {
+        const notification = {
+            id: Date.now(),
+            data: {
+                title: "Stock Update",
+                body: `Good news! ${message}`,
+                icon: "fas fa-box",
+                url: `/shop/product/${product.slug || product.id}`,
+            },
+            created_at: new Date().toISOString(),
+        };
+        this.handleNewNotification(notification);
+    }
+
+    handleReservation(payment) {
+        const notification = {
+            id: Date.now(),
+            data: {
+                title: "Reservation Created",
+                body: `Your reservation for ${payment.facility_name} has been created and is pending approval.`,
+                icon: "fas fa-calendar-check",
+                url:
+                    payment.url ||
+                    `/user/reservation/details/${payment.payment_id}`,
             },
             created_at: new Date().toISOString(),
         };
@@ -418,27 +462,40 @@ class NotificationManager {
             });
         }
 
-        // Remove all button
         const removeAllBtn = document.querySelector(".remove-all");
         if (removeAllBtn) {
             removeAllBtn.addEventListener("click", (e) => {
                 e.preventDefault();
                 e.stopPropagation();
 
-                const countElement = document.querySelector(
-                    ".notification-count"
+                const notifications = document.querySelectorAll(
+                    "#notification-list .notification-item[data-notification-id], #all-notification-list .notification-item[data-notification-id]"
                 );
-                if (countElement && parseInt(countElement.textContent) > 0) {
-                    if (
-                        confirm(
-                            "Are you sure you want to remove all notifications?"
-                        )
-                    ) {
-                        this.removeAllNotifications();
-                    }
-                } else {
+
+                if (notifications.length === 0) {
                     this.showError("No notifications to remove");
+                    return;
                 }
+
+                Swal.fire({
+                    title: "Remove All Notifications?",
+                    text: "This action cannot be undone.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#d33",
+                    cancelButtonColor: "#6c757d",
+                    confirmButtonText: "Yes, remove all",
+                    cancelButtonText: "Cancel",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.removeAllNotifications();
+                        Swal.fire(
+                            "Removed!",
+                            "All notifications have been deleted.",
+                            "success"
+                        );
+                    }
+                });
             });
         }
 

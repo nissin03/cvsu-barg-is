@@ -150,7 +150,7 @@
                     <div class="wg-filter flex-grow">
                         <form class="form-search" onsubmit="return false;">
                             <fieldset class="name">
-                                <input type="text" id="facility-search" placeholder="Search here..." name="search"
+                                <input type="text" id="facility-search" placeholder="Search Facilities..." name="search"
                                     aria-required="true" value="{{ request('search') }}">
                             </fieldset>
                             <div class="button-submit">
@@ -158,10 +158,10 @@
                             </div>
                         </form>
                     </div>
-                    <a class="tf-button w-auto" href="{{ route('admin.facility.create') }}"><i class="icon-plus"></i>Add
-                        New</a>
+                    <a class="tf-button w-auto" href="{{ route('admin.facility.create') }}"><i class="icon-plus"></i>Create
+                        Facility</a>
                     <a class="tf-button w-auto" href="{{ route('admin.facilities.archive.index') }}"><i
-                            class="icon-archive"></i> Archived Facility</a>
+                            class="icon-archive"></i> Archived Facilities </a>
                 </div>
                 <div class="table-responsive">
                     @if (Session::has('success'))
@@ -215,6 +215,12 @@
                 };
             }
 
+            function initRowClicks() {
+                $('.facility-row').off('click').on('click', function() {
+                    window.location = $(this).data('href');
+                });
+            }
+
             const performSearch = function() {
                 const searchTerm = $('#facility-search').val();
                 lastScrollPosition = $(window).scrollTop();
@@ -232,6 +238,7 @@
                         $('#loading-indicator').hide();
                         initArchiveButton();
                         initTooltips();
+                        initRowClicks();
                         $(window).scrollTop(lastScrollPosition);
                     },
                     error: function(xhr, status, error) {
@@ -297,6 +304,7 @@
 
             initArchiveButton();
             initTooltips();
+            initRowClicks();
         });
     </script>
 @endpush

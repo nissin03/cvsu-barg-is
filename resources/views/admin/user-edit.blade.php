@@ -79,29 +79,36 @@
                     </fieldset>
 
                     <fieldset class="mb-4">
-                        <div class="body-title">Department</div>
-                        <select class="" name="department" id="studentDepartment">
-                            <option value="" disabled>Select Department</option>
-                            @foreach (['CEIT', 'GSOLC', 'CAFENR', 'CAS', 'CCJ', 'CEMDS', 'CED', 'CON', 'CVMBS'] as $dept)
-                                <option value="{{ $dept }}"
-                                    {{ old('department', $user->department) == $dept ? 'selected' : '' }}>
-                                    {{ $dept }}
+                        <div class="body-title">College</div>
+                        <select class="" name="college_id" id="collegeSelect">
+                            <option value="" disabled>Select College</option>
+                            @foreach ($colleges as $college)
+                                <option value="{{ $college->id }}"
+                                    {{ old('college_id', $user->college_id) == $college->id ? 'selected' : '' }}>
+                                    {{ $college->name }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('department')
+                        @error('college_id')
                             <span class="text-red-600">{{ $message }}</span>
                         @enderror
                     </fieldset>
 
                     <fieldset class="mb-4">
                         <div class="body-title">Course</div>
-                        <select class="" name="course" id="course">
+                        <select name="course_id" id="courseSelect">
                             <option value="" disabled>Select Course</option>
+                            @foreach ($courses as $course)
+                                <option value="{{ $course->id }}"
+                                    {{ old('course_id', $user->course_id) == $course->id ? 'selected' : '' }}>
+                                    {{ $course->name }}
+                                </option>
+                            @endforeach
                         </select>
-                        @error('course')
+                        @error('course_id')
                             <span class="text-red-600">{{ $message }}</span>
                         @enderror
+                    </fieldset>
                     </fieldset>
 
                     <div class="cols gap-10">

@@ -4,6 +4,7 @@ $(function () {
     const $hideRoomBox = $("#hideRoomBox");
     const $dormitoryRooms = $("#dormitoryRooms");
     const $priceBox = $("#priceBox");
+    const $addonsBox = $("#addonsBox");
     const $isBasedOnDays = $("#isBasedOnDaysContainer");
     const $isThereAQuantity = $("#isThereAQuantityContainer");
     const $priceTypeIndividual = $(".price-type option[value='individual']");
@@ -15,6 +16,7 @@ $(function () {
         if (!selectedType) {
             $roomBox.hide();
             $priceBox.hide();
+            $addonsBox.hide();
             $selectionBothType.hide();
             return;
         }
@@ -54,6 +56,7 @@ $(function () {
         if (!facilityType) {
             $roomBox.hide();
             $priceBox.hide();
+            $addonsBox.hide();
             $selectionBothType.hide();
             $("#selectionContent").hide();
             return;
@@ -62,6 +65,7 @@ $(function () {
         // Show boxes
         $roomBox.show();
         $priceBox.show();
+        $addonsBox.show();
 
         switch (facilityType) {
             case "individual":

@@ -5,122 +5,125 @@
             <div class="container mt-6">
 
                 <div class="container my-5">
-    <div class="row g-4">
-        <div class="col-12 col-sm-6 col-lg-4">
-            <div class="stats-card card border-0 h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-shopping-bag text-blue-500"></i>
+                    <div class="row g-4">
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <div class="stats-card card border-0 h-100">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-4">
+                                        <div class="icon-wrapper">
+                                            <i class="fas fa-shopping-bag text-blue-500"></i>
+                                        </div>
+                                        <div class="trend-indicator positive">
+                                            <i class="fas fa-trending-up"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stats-content">
+                                        <p class="stats-label mb-2">Total Reservation</p>
+                                        <h3 class="stats-value mb-0">{{ $dashboardData[0]->Total }}</h3>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="trend-indicator positive">
-                            <i class="fas fa-trending-up"></i>
-                        </div>
-                    </div>
-                    <div class="stats-content">
-                        <p class="stats-label mb-2">Total Reservation</p>
-                        <h3 class="stats-value mb-0">{{ $dashboardData[0]->Total }}</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="col-12 col-sm-6 col-lg-4">
-            <div class="stats-card card border-0 h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-peso-sign text-green-500"></i>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <div class="stats-card card border-0 h-100">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-4">
+                                        <div class="icon-wrapper">
+                                            <i class="fas fa-peso-sign text-green-500"></i>
+                                        </div>
+                                        <div class="trend-indicator positive">
+                                            <i class="fas fa-trending-up"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stats-content">
+                                        <p class="stats-label mb-2">Total Amount of Reserve Items</p>
+                                        <h3 class="stats-value mb-0">
+                                            ₱{{ number_format($dashboardData[0]->TotalReservedAmount, 2) }}</h3>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="trend-indicator positive">
-                            <i class="fas fa-trending-up"></i>
-                        </div>
-                    </div>
-                    <div class="stats-content">
-                        <p class="stats-label mb-2">Total Amount of Reserve Items</p>
-                        <h3 class="stats-value mb-0">₱{{ number_format($dashboardData[0]->TotalReservedAmount, 2) }}</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="col-12 col-sm-6 col-lg-4">
-            <div class="stats-card card border-0 h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-check-circle text-purple-500"></i>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <div class="stats-card card border-0 h-100">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-4">
+                                        <div class="icon-wrapper">
+                                            <i class="fas fa-check-circle text-purple-500"></i>
+                                        </div>
+                                        <div class="trend-indicator positive">
+                                            <i class="fas fa-trending-up"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stats-content">
+                                        <p class="stats-label mb-2">Total Claimed Items</p>
+                                        <h3 class="stats-value mb-0">{{ $dashboardData[0]->TotalPickedUp }}</h3>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="trend-indicator positive">
-                            <i class="fas fa-trending-up"></i>
-                        </div>
-                    </div>
-                    <div class="stats-content">
-                        <p class="stats-label mb-2">Total Claimed Items</p>
-                        <h3 class="stats-value mb-0">{{ $dashboardData[0]->TotalPickedUp }}</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="col-12 col-sm-6 col-lg-4">
-            <div class="stats-card card border-0 h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-coins text-yellow-500"></i>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <div class="stats-card card border-0 h-100">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-4">
+                                        <div class="icon-wrapper">
+                                            <i class="fas fa-coins text-yellow-500"></i>
+                                        </div>
+                                        <div class="trend-indicator positive">
+                                            <i class="fas fa-trending-up"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stats-content">
+                                        <p class="stats-label mb-2">Total Amount of Claimed Items</p>
+                                        <h3 class="stats-value mb-0">
+                                            ₱{{ number_format($dashboardData[0]->TotalPickedUpAmount, 2) }}</h3>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="trend-indicator positive">
-                            <i class="fas fa-trending-up"></i>
-                        </div>
-                    </div>
-                    <div class="stats-content">
-                        <p class="stats-label mb-2">Total Amount of Claimed Items</p>
-                        <h3 class="stats-value mb-0">₱{{ number_format($dashboardData[0]->TotalPickedUpAmount, 2) }}</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="col-12 col-sm-6 col-lg-4">
-            <div class="stats-card card border-0 h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-times-circle text-red-500"></i>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <div class="stats-card card border-0 h-100">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-4">
+                                        <div class="icon-wrapper">
+                                            <i class="fas fa-times-circle text-red-500"></i>
+                                        </div>
+                                        <div class="trend-indicator negative">
+                                            <i class="fas fa-trending-down"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stats-content">
+                                        <p class="stats-label mb-2">Total Canceled Orders</p>
+                                        <h3 class="stats-value mb-0">{{ $dashboardData[0]->TotalCanceled }}</h3>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="trend-indicator negative">
-                            <i class="fas fa-trending-down"></i>
-                        </div>
-                    </div>
-                    <div class="stats-content">
-                        <p class="stats-label mb-2">Total Canceled Orders</p>
-                        <h3 class="stats-value mb-0">{{ $dashboardData[0]->TotalCanceled }}</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="col-12 col-sm-6 col-lg-4">
-            <div class="stats-card card border-0 h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <div class="icon-wrapper">
-                            <i class="fas fa-ban text-gray-500"></i>
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <div class="stats-card card border-0 h-100">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-4">
+                                        <div class="icon-wrapper">
+                                            <i class="fas fa-ban text-gray-500"></i>
+                                        </div>
+                                        <div class="trend-indicator negative">
+                                            <i class="fas fa-trending-down"></i>
+                                        </div>
+                                    </div>
+                                    <div class="stats-content">
+                                        <p class="stats-label mb-2">Total Amount of Cancelled Orders</p>
+                                        <h3 class="stats-value mb-0">
+                                            ₱{{ number_format($dashboardData[0]->TotalCanceledAmount, 2) }}</h3>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="trend-indicator negative">
-                            <i class="fas fa-trending-down"></i>
-                        </div>
-                    </div>
-                    <div class="stats-content">
-                        <p class="stats-label mb-2">Total Amount of Cancelled Orders</p>
-                        <h3 class="stats-value mb-0">₱{{ number_format($dashboardData[0]->TotalCanceledAmount, 2) }}</h3>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
             </div>
 
             <div class="main-content-wrap">
@@ -174,8 +177,8 @@
                                         <option value="">Select Week</option>
                                     </select>
 
-                                    <div id="loading-spinner" class="spinner-border spinner-border-sm me-2" role="status"
-                                        style="display: none;">
+                                    <div id="loading-spinner" class="spinner-border spinner-border-sm me-2"
+                                        role="status" style="display: none;">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                 </div>
@@ -340,7 +343,7 @@
                                                         {{ $order->user->name ?? '--' }}
                                                         @if (optional($order->user)->utype === 'ADM')
                                                             <span class="badge badge-admin ms-1">Admin</span>
-                                                        @endif      
+                                                        @endif
                                                     </div>
                                                     <div class="order-status">
                                                         @if ($order->status == 'pickedup')
@@ -354,25 +357,30 @@
                                                 </div>
                                             </td>
                                             <td class="text-center course-cell">
-                                                <span class="course-text">{{ $order->user->course ?? '--' }}</span>
+                                                <span class="course-text">{{ $order->user->course->name ?? '--' }}</span>
                                             </td>
                                             <td class="text-center date-cell">
-                                                <span class="reservation-date">{{ $order->reservation_date ?? '--'}}</span>
+                                                <span
+                                                    class="reservation-date">{{ $order->reservation_date ?? '--' }}</span>
                                             </td>
                                             <td class="text-center items-cell">
                                                 <span class="items-count">{{ $order->orderItems->count() }}</span>
                                             </td>
                                             <td class="text-center price-cell">
-                                                <span class="total-price">₱{{ number_format($order->total ?? 0, 2) }}</span>
+                                                <span
+                                                    class="total-price">₱{{ number_format($order->total ?? 0, 2) }}</span>
                                             </td>
                                             <td class="text-center date-cell">
                                                 <div class="order-date-info">
-                                                    <div class="order-date">{{ $order->created_at->format('M j, Y') }}</div>
-                                                    <div class="order-time">{{ $order->created_at->format('g:i A') }}</div>
+                                                    <div class="order-date">{{ $order->created_at->format('M j, Y') }}
+                                                    </div>
+                                                    <div class="order-time">{{ $order->created_at->format('g:i A') }}
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td class="text-center action-cell">
-                                                <a href="{{ route('admin.order.details', ['order_id' => $order->id]) }}" class="action-btn">
+                                                <a href="{{ route('admin.order.details', ['order_id' => $order->id]) }}"
+                                                    class="action-btn">
                                                     <div class="list-icon-function view-icon">
                                                         <div class="item eye">
                                                             <i class="icon-eye"></i>
@@ -820,6 +828,7 @@
         }
 
         @media (max-width: 576px) {
+
             .name-column,
             .course-column,
             .date-column,
@@ -856,12 +865,29 @@
             transition: all 0.2s ease;
         }
 
-        .text-blue-500 { color: #3b82f6 !important; }
-        .text-green-500 { color: #10b981 !important; }
-        .text-purple-500 { color: #8b5cf6 !important; }
-        .text-yellow-500 { color: #f59e0b !important; }
-        .text-red-500 { color: #ef4444 !important; }
-        .text-gray-500 { color: #6b7280 !important; }
+        .text-blue-500 {
+            color: #3b82f6 !important;
+        }
+
+        .text-green-500 {
+            color: #10b981 !important;
+        }
+
+        .text-purple-500 {
+            color: #8b5cf6 !important;
+        }
+
+        .text-yellow-500 {
+            color: #f59e0b !important;
+        }
+
+        .text-red-500 {
+            color: #ef4444 !important;
+        }
+
+        .text-gray-500 {
+            color: #6b7280 !important;
+        }
 
         .icon-wrapper {
             width: 48px;
@@ -879,7 +905,7 @@
             transform: scale(1.05);
             background: rgba(0, 0, 0, 0.08);
         }
-</style>
+    </style>
 @endpush
 
 @push('scripts')
@@ -1037,24 +1063,24 @@
                     this.showLoading(false);
                 }
             }
-                formatCurrency(amount) {
-                    return new Intl.NumberFormat('en-PH', {
-                        style: 'decimal',
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }).format(amount || 0);
-                }
+            formatCurrency(amount) {
+                return new Intl.NumberFormat('en-PH', {
+                    style: 'decimal',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(amount || 0);
+            }
 
-                updateSummaryCards(totals) {
-                    document.getElementById('total-amount').textContent = 
-                        `₱${this.formatCurrency(totals.total)}`;
-                    document.getElementById('reserved-amount').textContent =
-                        `₱${this.formatCurrency(totals.reserved)}`;
-                    document.getElementById('pickedup-amount').textContent =
-                        `₱${this.formatCurrency(totals.pickedUp)}`;
-                    document.getElementById('canceled-amount').textContent =
-                        `₱${this.formatCurrency(totals.canceled)}`;
-                }
+            updateSummaryCards(totals) {
+                document.getElementById('total-amount').textContent =
+                    `₱${this.formatCurrency(totals.total)}`;
+                document.getElementById('reserved-amount').textContent =
+                    `₱${this.formatCurrency(totals.reserved)}`;
+                document.getElementById('pickedup-amount').textContent =
+                    `₱${this.formatCurrency(totals.pickedUp)}`;
+                document.getElementById('canceled-amount').textContent =
+                    `₱${this.formatCurrency(totals.canceled)}`;
+            }
 
             updateChart(chartData) {
                 const options = {
@@ -1124,5 +1150,5 @@
 @push('styles')
     <style>
 
-        </style>
+    </style>
 @endpush

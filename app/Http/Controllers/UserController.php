@@ -79,7 +79,7 @@ class UserController extends Controller
 
         $thirtyDaysAgo = Carbon::now()->subDays(30);
         $orders = Order::where('user_id', $userId)
-            ->whereIn('status', ['accepted', 'canceled', 'pickedup'])
+            ->whereIn('status', ['canceled', 'pickedup'])
             ->where('created_at', '>=', $thirtyDaysAgo)
             ->orderBy('created_at', 'desc')
             ->paginate(10);

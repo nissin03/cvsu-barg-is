@@ -24,6 +24,7 @@ use App\Models\QualificationApproval;
 use App\Models\TransactionReservation;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use App\Notifications\ReservationCreateNotification;
 
 
 
@@ -60,20 +61,18 @@ class UserFacilityController extends Controller
             return redirect()->route('user.profile')
                 ->with('error', 'Please complete your profile by adding your phone number and selecting your sex before accessing facilities.');
         }
-        
+
         $facility = Facility::with('facilityAttributes', 'prices', 'addons')->where('slug', $slug)->firstOrFail();
-        
+
         $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first();
         $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
         $availableRoom = $facility->facilityAttributes->first(function ($attribute) {
             return $attribute->capacity > 0;
         });
-        
+
         if (!$availableRoom) {
             $availableRoom = null;
         }
-
-            $hasDayBasedPricing = $facility->prices->contains('is_based_on_days', true);
 
         if ($facility->facility_type === 'whole_place' || $facility->facility_type === 'both') {
             $facility->load(['availabilities' => function ($query) {
@@ -984,6 +983,8 @@ if ($facility->facility_type === 'individual') {
                     'total_price'     => $reservationData['subtotal'],
                 ]);
 
+                    $user->notify(new ReservationCreateNotification($payment));
+
                 PaymentDetail::create([
                     'payment_id'  => $payment->id,
                     'facility_id' => $facility->id,
@@ -1349,6 +1350,8 @@ if ($facility->facility_type === 'individual') {
                             'total_price' => $reservationData['total_price'],
                         ]);
 
+                        $user->notify(new ReservationCreateNotification($payment));
+
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
                             'facility_id' => $facility->id,
@@ -1432,6 +1435,8 @@ if ($facility->facility_type === 'individual') {
                             'status' => 'pending',
                             'total_price' => $reservationData['total_price'],
                         ]);
+
+                        $user->notify(new ReservationCreateNotification($payment));
 
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
@@ -1558,6 +1563,8 @@ if ($facility->facility_type === 'individual') {
                             'total_price' => $reservationData['total_price'],
                         ]);
 
+                        $user->notify(new ReservationCreateNotification($payment));
+
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
                             'facility_id' => $facility->id,
@@ -1644,6 +1651,8 @@ if ($facility->facility_type === 'individual') {
                             'status' => 'pending',
                             'total_price' => $reservationData['total_price'],
                         ]);
+
+                        $user->notify(new ReservationCreateNotification($payment));
 
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
@@ -2110,9 +2119,9 @@ private function addon_transaction(
 
         $payments->each(function ($payment) {
             if ($payment->availability) {
-                $relatedAvailabilities = \App\Models\Availability::whereIn(
+                $relatedAvailabilities = Availability::whereIn(
                     'id',
-                    \App\Models\TransactionReservation::where('payment_id', $payment->id)
+                    TransactionReservation::where('payment_id', $payment->id)
                         ->pluck('availability_id')
                 )->orderBy('date_from')->get();
                 $payment->grouped_availabilities = $relatedAvailabilities;
@@ -2200,13 +2209,8 @@ private function addon_transaction(
         $qualificationApproval = QualificationApproval::where('availability_id', $payment->availability_id)
             ->where('user_id', $user->id)
             ->first();
-
-        // Process grouped availabilities for this single payment
         $this->processPaymentAvailabilities($payment);
-
-        // Calculate total days across all availability periods
         $days = $this->calculateTotalDays($payment);
-
         return view('user.reservation_details', compact(
             'payment',
             'qualificationApproval',

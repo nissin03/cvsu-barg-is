@@ -20,10 +20,10 @@ class TransactionReservation extends Model
         'status',
     ];
 
-    public function facility()
-    {
-        return $this->belongsTo(Facility::class);
-    }
+    // public function facility()
+    // {
+    //     return $this->belongsTo(Facility::class);
+    // }
     public function availability()
     {
         return $this->belongsTo(Availability::class);

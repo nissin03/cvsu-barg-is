@@ -72,22 +72,9 @@ class HomeController extends Controller
                 'message_limit' => 'You have reached your daily limit of 3 messages. Please try again tomorrow.'
             ]);
         }
-
-        // $lastContact = Contact::where('user_id', $user->id)
-        //     ->latest()
-        //     ->first();
-        // $timeWindow = 60;
-
-        // if ($lastContact && Carbon::parse($lastContact->created_at)->diffInMinutes(Carbon::now()) < $timeWindow) {
-        //     return redirect()->back()->with('error', 'You can only send one message every ' . $timeWindow . ' minutes.');
-        // }
-
         $contact = new Contact();
-        $contact->name = $user->name;
-        $contact->email = $user->email;
-        $contact->phone = $user->phone_number;
-        $contact->message = $request->message;
         $contact->user_id = $user->id;
+        $contact->message = $request->message;
         $contact->save();
 
         $admin = User::where('utype', 'ADM')->get();

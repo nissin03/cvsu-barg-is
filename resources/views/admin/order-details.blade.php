@@ -15,9 +15,8 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            font-family: "Inter", sans-serif;
-            font-size: 14px;
-            font-weight: 700;
+            font-size: 15px;
+            font-weight: 600;
             line-height: 20px;
             border-radius: 12px;
             background-size: 100%;
@@ -81,6 +80,15 @@
             letter-spacing: 0.5px;
             transition: all 0.2s;
         }
+
+        .small-label {
+            font-size: 1.50rem;
+        }
+
+        .small-textarea {
+            font-size: 2rem;
+            padding: 0.25rem;
+        }
     </style>
 
     <div class="main-content-inner">
@@ -127,7 +135,7 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="cancelReasonModalLabel">Cancel Order</h5>
+                            <h5 class="modal-title" id="cancelReasonModalLabel">Provide Cancellation Reason</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <form action="{{ route('admin.order.status.update') }}" method="POST" id="cancel-order-form">
@@ -137,17 +145,17 @@
                             <input type="hidden" name="order_status" value="canceled" />
                             <div class="modal-body">
                                 <div class="mb-3">
-                                    <label for="canceled_reason" class="form-label">
+                                    <label for="canceled_reason" class="form-label small-label">
                                         Reason for Cancellation <span class="text-danger">*</span>
                                     </label>
-                                    <textarea name="canceled_reason" id="canceled_reason" class="form-control" rows="4"
+                                    <textarea name="canceled_reason" id="canceled_reason" class="form-control small-textarea" rows="4"
                                         placeholder="Please provide a reason for canceling this order..." required maxlength="500"></textarea>
-                                    <div class="form-text">Maximum 500 characters</div>
+                                    <div class="form-text" style="font-size:1rem;">Maximum 500 characters</div>
                                 </div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-danger">Cancel Order</button>
+                                <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
                             </div>
                         </form>
 
@@ -159,7 +167,6 @@
                 <div class="col-md-7">
                     <div class="wg-box">
                         <div class="d-flex align-items-center justify-content-between gap10 flex-wrap">
-                            <h5>User Details</h5>
                             <div id="pdf-download-container" @if ($order->status !== 'pickedup') style="display:none;" @endif>
                                 <a id="download-receipt-btn" href="{{ route('admin.order-receipt.pdf', $order->id) }}"
                                     target="_blank" class="btn btn-outline-danger mt-3">
@@ -169,38 +176,38 @@
 
                         </div>
                         <div class="my-account__address-item">
-                            <div class="my-account__address-item__detail col-md-6">
-                                <div class="d-flex align-items-center gap-2 mb-5">
-                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Name:</p>
-                                    <p class="body-text mb-2">
-                                        {{ $order->user->name ?? '--' }}</p>
-                                </div>
-                                @if ($order->user->role === 'student')
-                                    <div class="d-flex align-items-center gap-2 mb-5">
-                                        <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Year
-                                            Level:</p>
-                                        <p class="body-text mb-2">
-                                            {{ $order->user->year_level ?? '--' }}</p>
+                            <div class="my-account__address-item__detail">
+                                {{-- User Details --}}
+                                <h5 class="mb-4">User Details</h5>
+                                <div class="row g-3">
+                                    <div class="col-12 d-flex">
+                                        <p class="fw-bold me-2">Name:</p>
+                                        <p class="flex-grow-1 mb-0">{{ $order->user->name ?? '--' }}</p>
                                     </div>
-                                    <div class="d-flex align-items-center gap-2 mb-5">
-                                        <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">
-                                            Department:
-                                        <p class="body-text mb-2">
-                                            {{ $order->user->department ?? '--' }}</p>
+
+                                    @if ($order->user->role === 'student')
+                                        <div class="col-12 d-flex">
+                                            <p class="fw-bold me-2">Year Level:</p>
+                                            <p class="flex-grow-1 mb-0">{{ $order->user->year_level ?? '--' }}</p>
+                                        </div>
+                                        <div class="col-12 d-flex">
+                                            <p class="fw-bold me-2">College:</p>
+                                            <p class="flex-grow-1 mb-0">{{ $order->user->college->name ?? '--' }}</p>
+                                        </div>
+                                        <div class="col-12 d-flex">
+                                            <p class="fw-bold me-2">Course:</p>
+                                            <p class="flex-grow-1 mb-0">{{ $order->user->course->name ?? '--' }}</p>
+                                        </div>
+                                    @endif
+
+                                    <div class="col-12 d-flex">
+                                        <p class="fw-bold me-2">Mobile:</p>
+                                        <p class="flex-grow-1 mb-0">{{ $order->user->phone_number ?? '--' }}</p>
                                     </div>
-                                    <div class="d-flex align-items-center gap-2 mb-5">
-                                        <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Course:
-                                        <p class="body-text mb-2">
-                                            {{ $order->user->course ?? '--' }}</p>
-                                    </div>
-                                @endif
-                                <div class="d-flex align-items-center gap-2 mb-5">
-                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Mobile:
-                                    <p class="body-text mb-2">
-                                        {{ $order->user->phone_number ?? '--' }}</p>
                                 </div>
                             </div>
                         </div>
+
 
                         <h5 class="text-capitalize mt-5">Reservation Details</h5>
                         <div class="my-account__address-item">
@@ -249,7 +256,7 @@
                                             @if ($order->canceled_date)
                                                 <p class="text-muted d-block">
                                                     <i class="fas fa-calendar-times me-1"></i>
-                                                    {{ \Carbon\Carbon::parse($order->canceled_date)->format('F d, Y h:i A') }}
+                                                    {{ $order->canceled_date->timezone(config('app.timezone'))->format('F d, Y h:i A') }}
                                                 </p>
                                             @endif
                                         </div>
@@ -262,12 +269,11 @@
                             @php
                                 $isDisabled = in_array($order->status, ['canceled', 'pickedup']);
                             @endphp
-
                             @if (!$isDisabled)
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <button type="button" class="tf-button tf-button-danger w208"
-                                            data-bs-toggle="modal" data-bs-target="#cancelReasonModal">
+                                        <button type="button" class="tf-button tf-button-danger" data-bs-toggle="modal"
+                                            data-bs-target="#cancelReasonModal">
                                             Cancel Order
                                         </button>
                                     </div>
@@ -279,6 +285,7 @@
                                 </div>
                             @endif
                         </div>
+
                     </div>
                 </div>
 
@@ -330,7 +337,7 @@
 
                                 <div class="divider my-3"></div>
                                 <div class="d-flex align-items-end gap-2">
-                                    <button type="submit" class="tf-button tf-button-success w208">
+                                    <button type="submit" class="tf-button tf-button-success">
                                         Complete Payment
                                     </button>
                                 </div>
