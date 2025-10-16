@@ -119,6 +119,8 @@
                     <span>Available Date Range</span>
                 </div>
                 <div class="section-content">
+                     <input type="hidden" name="date_from" value="{{ $datedPriceWithQuantity->date_from ?? $datedPrice->date_from }}">
+                    <input type="hidden" name="date_to" value="{{ $datedPriceWithQuantity->date_to ?? $datedPrice->date_to }}">
                     <div class="date-range-display">
                         <div class="date-item">
                             <strong>From:</strong> {{ \Carbon\Carbon::parse($datedPriceWithQuantity->date_from ?? $datedPrice->date_from)->format('F d, Y') }}
@@ -244,16 +246,31 @@
         </div>
     @endif
 
+      @include('components.facility_individual_addons')
+      
     <div id="total-price" class="total-price-section">
+        <input type="hidden" id="total_price_input" name="total_price" value="0">
         <strong class="total-price-label">Total Price:  </strong>
         <span id="computed-total" class="total-price-value">₱ 0.00</span>
     </div>
 </div>
 
+<script>
+    window.availabilities = @json($facility->availabilities ?? []);
+    window.facilityAttributes = @json($facility->facilityAttributes ?? []);
+    window.isBasedOnDays = @json($isBasedOnDays);
+    window.userType = "{{ auth()->check() ? auth()->user()->utype ?? 'USR' : 'USR' }}";
+    window.datedPriceScenario = @json($datedPriceWithQuantity || $datedPrice ? true : false);
+</script>
 
+
+<script src="{{ asset('js/facilities_individual/calendar.js') }}"></script>
+<script src="{{ asset('js/facilities_individual/clientType.js') }}"></script>
+<script src="{{ asset('js/facilities_individual/priceComputation.js') }}"></script>
+<script src="{{ asset('js/facilities_individual/validation.js') }}"></script>
 
 {{-- All of java --}}
-<script>
+{{-- <script>
     document.addEventListener('DOMContentLoaded', function() {
         var dateFromInput = document.getElementById('date_from');
         var dateToInput = document.getElementById('date_to');
@@ -683,10 +700,10 @@
             updateTotalPrice();
         });
     }
-</script>
+</script> --}}
 
 {{-- Script for validation --}}
-<script>
+{{-- <script>
     document.addEventListener('DOMContentLoaded', function() {
         const reserveBtn = document.getElementById('reserve-btn');
         const noRoomsAlert = document.querySelector('.alert.alert-warning');
@@ -709,12 +726,12 @@
 
         const today = new Date();
         const minSelectableDate = new Date();
-        minSelectableDate.setDate(today.getDate() + 3);
+        minSelectableDate.setDate(today.getDate() + 7);
     
         let maxSelectableDate = null;
         if (userType === 'USR') {
-            maxSelectableDate = new Date();
-            maxSelectableDate.setMonth(today.getMonth() + 1); 
+            maxSelectableDate = new Date(); 
+            maxSelectableDate.setMonth(today.getMonth() + 3); 
         }     
         const datedPriceScenario = @json($datedPriceWithQuantity || $datedPrice ? true : false);
         
@@ -779,4 +796,4 @@
             }
         }
     });
-</script>
+</script> --}}

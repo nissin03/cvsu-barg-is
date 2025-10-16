@@ -76,6 +76,12 @@
         .stock-status-item input {
             flex: 1;
         }
+
+        .tf-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
     </style>
 
     <div class="main-content-inner">
@@ -113,7 +119,7 @@
                     <fieldset class="name">
                         <div class="body-title mb-10">Product Name <span class="tf-color-1">*</span></div>
                         <input class="mb-10" type="text" placeholder="Enter product name" name="name" tabindex="0"
-                            value="{{ old('name') }}" aria-required="true" required="">
+                            value="{{ old('name') }}" aria-required="true" required="" id="product-name">
                     </fieldset>
                     @error('name')
                         <span class="alert alert-danger text-center">{{ $message }} </span>
@@ -123,13 +129,17 @@
                         <fieldset class="category">
                             <div class="body-title mb-10">Category <span class="tf-color-1">*</span></div>
                             <div class="select">
-                                <select class="" name="category_id" required>
+                                <select class="" name="category_id" required id="category-select">
                                     <option value="">Choose category</option>
                                     @foreach ($categories as $category)
-                                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                        <option value="{{ $category->id }}"
+                                            {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                            {{ $category->name }}</option>
                                         @if ($category->children)
                                             @foreach ($category->children as $child)
-                                                <option value="{{ $child->id }}">&nbsp; &nbsp; &rarrhk;
+                                                <option value="{{ $child->id }}"
+                                                    {{ old('category_id') == $child->id ? 'selected' : '' }}>&nbsp; &nbsp;
+                                                    &rarrhk;
                                                     {{ $child->name }}</option>
                                             @endforeach
                                         @endif
@@ -146,7 +156,7 @@
                         <fieldset class="sex">
                             <div class="body-title mb-10">Sex Category <span class="tf-color-1">*</span></div>
                             <div class="select">
-                                <select class="" name="sex" required>
+                                <select class="" name="sex" required id="sex-select">
                                     <option value="">Choose Sex category</option>
                                     <option value="male" {{ old('sex') === 'male' ? 'selected' : '' }}>Male</option>
                                     <option value="female" {{ old('sex') === 'female' ? 'selected' : '' }}>Female</option>
@@ -162,7 +172,7 @@
                     <fieldset class="shortdescription">
                         <div class="body-title mb-10">Short Description <span class="tf-color-1">*</span></div>
                         <textarea class="mb-10 ht-150" name="short_description" placeholder="Short Description" tabindex="0"
-                            aria-required="true" required="">{{ old('short_description') }}</textarea>
+                            aria-required="true" required="" id="short-description">{{ old('short_description') }}</textarea>
                     </fieldset>
                     @error('short_description')
                         <span class="alert alert-danger text-center">{{ $message }} </span>
@@ -170,8 +180,8 @@
 
                     <fieldset class="description">
                         <div class="body-title mb-10">Description <span class="tf-color-1">*</span></div>
-                        <textarea class="mb-10" name="description" placeholder="Description" tabindex="0" aria-required="true"
-                            required="">{{ old('description') }}</textarea>
+                        <textarea class="mb-10" name="description" placeholder="Description" tabindex="0" aria-required="true" required=""
+                            id="description">{{ old('description') }}</textarea>
                     </fieldset>
                     @error('description')
                         <span class="alert alert-danger text-center">{{ $message }} </span>
@@ -182,7 +192,7 @@
                     <fieldset>
                         <div class="body-title">Upload Main Image <span class="tf-color-1">*</span></div>
                         <div class="upload-image flex-grow">
-                            <div class="item" id="imgpreview" style="display:none">
+                            <div class="item" id="imgpreview" style="{{ old('image') ? '' : 'display:none' }}">
                                 <img src="../../../localhost_8000/images/upload/upload-1.png" id="preview-img"
                                     class="effect8" alt="">
                                 <button type="button" class="remove-upload"
@@ -255,18 +265,20 @@
                     <div class="main-fields">
                         <div class="cols gap22">
                             <fieldset class="name">
-                                <div class="body-title mb-10">Price <span class="tf-color-1">*</span></div>
+                                <div class="body-title mb-10">Price <span class="tf-color-1 price-required">*</span></div>
                                 <input class="mb-10" type="text" placeholder="Enter price" name="price"
-                                    tabindex="0" value="{{ old('price') }}" aria-required="true">
+                                    tabindex="0" value="{{ old('price') }}" aria-required="true" id="product-price">
                             </fieldset>
                             @error('price')
                                 <span class="alert alert-danger text-center">{{ $message }} </span>
                             @enderror
 
                             <fieldset class="name">
-                                <div class="body-title mb-10">Quantity <span class="tf-color-1">*</span></div>
+                                <div class="body-title mb-10">Quantity <span class="tf-color-1 quantity-required">*</span>
+                                </div>
                                 <input class="mb-10" type="text" placeholder="Enter quantity" name="quantity"
-                                    tabindex="0" value="{{ old('quantity') }}" aria-required="true">
+                                    tabindex="0" value="{{ old('quantity') }}" aria-required="true"
+                                    id="product-quantity">
                             </fieldset>
                             @error('quantity')
                                 <span class="alert alert-danger text-center">{{ $message }} </span>
@@ -280,8 +292,8 @@
                             <div class="body-title mb-10">Featured</div>
                             <div class="select mb-10">
                                 <select class="" name="featured">
-                                    <option value="0">No</option>
-                                    <option value="1">Yes</option>
+                                    <option value="0" {{ old('featured') == '0' ? 'selected' : '' }}>No</option>
+                                    <option value="1" {{ old('featured') == '1' ? 'selected' : '' }}>Yes</option>
                                 </select>
                             </div>
                         </fieldset>
@@ -293,7 +305,7 @@
 
                     <!-- Submit Button -->
                     <div class="cols gap10">
-                        <button class="tf-button w-full" type="submit">Add Product</button>
+                        <button class="tf-button w-full" type="submit" id="submit-btn" disabled>Add Product</button>
                     </div>
                 </div>
 
@@ -330,6 +342,8 @@
 
 @push('scripts')
     <script>
+        let hasVariants = false;
+
         const forms = document.querySelectorAll('form');
         forms.forEach(form => {
             form.addEventListener('submit', function(e) {
@@ -346,7 +360,63 @@
                 }
             });
         });
+
+        // Function to validate required fields and enable/disable submit button
+        function validateForm() {
+            const productName = document.getElementById('product-name').value.trim();
+            const category = document.getElementById('category-select').value;
+            const sex = document.getElementById('sex-select').value;
+            const mainImage = document.getElementById('myFile').files.length > 0;
+            const reorderQuantity = document.getElementById('reorder_quantity').value;
+            const outofstockQuantity = document.getElementById('outofstock_quantity').value;
+
+            let isValid = productName && category && sex && mainImage && reorderQuantity && outofstockQuantity;
+
+            // If no variants, check price and quantity
+            if (!hasVariants) {
+                const price = document.getElementById('product-price').value.trim();
+                const quantity = document.getElementById('product-quantity').value.trim();
+                isValid = isValid && price && quantity;
+            } else {
+                // If has variants, check all variant fields
+                const variants = document.querySelectorAll('.variant-fields');
+                let allVariantsValid = variants.length > 0;
+
+                variants.forEach(variant => {
+                    const variantName = variant.querySelector('input[name="variant_name[]"]').value.trim();
+                    const variantPrice = variant.querySelector('input[name="variant_price[]"]').value.trim();
+                    const variantQuantity = variant.querySelector('input[name="variant_quantity[]"]').value.trim();
+
+                    if (!variantName || !variantPrice || !variantQuantity) {
+                        allVariantsValid = false;
+                    }
+                });
+
+                isValid = isValid && allVariantsValid;
+            }
+
+            document.getElementById('submit-btn').disabled = !isValid;
+        }
+
+        // Function to update required indicators based on variant status
+        function updateRequiredIndicators() {
+            const priceRequired = document.querySelector('.price-required');
+            const quantityRequired = document.querySelector('.quantity-required');
+
+            if (hasVariants) {
+                priceRequired.style.display = 'none';
+                quantityRequired.style.display = 'none';
+            } else {
+                priceRequired.style.display = 'inline';
+                quantityRequired.style.display = 'inline';
+            }
+        }
+
         $(function() {
+            // Add event listeners to all form fields for validation
+            $('#product-name, #category-select, #sex-select, #reorder_quantity, #outofstock_quantity, #product-price, #product-quantity')
+                .on('input change', validateForm);
+
             $("#myFile").on("change", function(e) {
                 const [file] = this.files;
                 if (file) {
@@ -354,6 +424,7 @@
                     $("#imgpreview").show();
                     $("#imgpreview .remove-upload").show();
                 }
+                validateForm();
             });
 
             $("#gFile").on("change", function(e) {
@@ -400,6 +471,9 @@
             $("input[name='name']").on("input", function() {
                 $("input[name='slug']").val(StringToSlug($(this).val()));
             });
+
+            // Initial validation
+            validateForm();
         });
 
         function removeUpload(previewId, inputId) {
@@ -409,6 +483,7 @@
             $('#' + previewId + ' button').off();
             $('#' + previewId + ' button').css('display', 'none');
             $('#' + inputId).val('');
+            validateForm();
         }
 
         function removeGalleryImage(button) {
@@ -461,23 +536,38 @@
                                 tabindex="0" aria-required="true" required>
                         </fieldset>
                         <fieldset class="name">
-                            <div class="body-title mb-10 my-4">Variant Quantity:</div>
+                            <div class="body-title mb-10 my-4">Variant Quantity <span class="tf-color-1">*</span></div>
                             <input type="number" name="variant_quantity[]" placeholder="Variant Quantity" required>
                         </fieldset>
                     </div>
                 `;
-                variantsContainer.appendChild(variantDiv);
+
+                // Insert at the beginning (top) of the container
+                variantsContainer.insertBefore(variantDiv, variantsContainer.firstChild);
 
                 const removeBtn = variantDiv.querySelector('.remove-variant-btn');
                 removeBtn.addEventListener('click', () => {
                     variantsContainer.removeChild(variantDiv);
                     updateMainFieldsVisibility();
                     showContainer();
-                    updateVariantNumbers();
+                    // Don't call updateVariantNumbers here to preserve numbering
+                    validateForm();
                 });
 
+                // Add event listeners to variant fields for validation
+                const variantInputs = variantDiv.querySelectorAll(
+                    'input[name="variant_name[]"], input[name="variant_price[]"], input[name="variant_quantity[]"]'
+                    );
+                variantInputs.forEach(input => {
+                    input.addEventListener('input', validateForm);
+                });
+
+                hasVariants = true;
                 updateMainFieldsVisibility();
+                updateRequiredIndicators();
                 showContainer();
+                // Don't call updateVariantNumbers here to preserve numbering
+                validateForm();
             }
 
             function updateVariantNumbers() {
@@ -496,6 +586,8 @@
                     boxFields.style.display = 'block';
                 } else {
                     boxFields.style.display = 'none';
+                    hasVariants = false;
+                    updateRequiredIndicators();
                 }
             }
 

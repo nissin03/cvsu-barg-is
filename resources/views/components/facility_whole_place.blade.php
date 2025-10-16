@@ -1,8 +1,8 @@
-
 <link href="{{ asset('css/facility/whole_place.css') }}" rel="stylesheet"> 
 
 <div class="facility-booking-container mb-4">
-  <input type="hidden" name="facility_attribute_id" value="{{ $wholeAttr?->id ?? '' }}">
+  <input type="hidden" name="facility_attribute_id" value="{{ $wholeAttr?->id ?? '' }}" 
+         data-has-day-based-pricing="{{ $facility->prices->contains('is_based_on_days', true) ? 'true' : 'false' }}">
     @if ($facility->prices->isNotEmpty())
         @foreach ($facility->prices as $price)
         @endforeach
@@ -23,6 +23,9 @@
     
     @php
         $hasDayBasedPricing = $facility->prices->contains('is_based_on_days', true);
+        $userRole = auth()->user()->role ?? 'student';
+        $userType = auth()->user()->utype ?? 'USR';
+        $tomorrowFormatted = \Carbon\Carbon::tomorrow()->format('Y-m-d');
     @endphp
     
     @if ($hasDayBasedPricing)
@@ -90,7 +93,13 @@
                         <div class="container-fluid">
                             <div class="row">
                                 <div class="col-md-8">
-                                    <div id="calendar" style="max-width: 100%; margin: 0 auto;"></div>
+                                    <div id="calendar" 
+                                         data-user-type="{{ $userType }}" 
+                                         data-user-role="{{ $userRole }}"
+                                         data-availabilities="{{ json_encode($facility->availabilities ?? []) }}"
+                                         data-facility-capacity="{{ $wholeAttr->whole_capacity ?? 0 }}"
+                                         data-tomorrow-formatted="{{ $tomorrowFormatted }}"
+                                         style="max-width: 100%; margin: 0 auto;"></div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="selected-dates-card p-3">
@@ -127,11 +136,16 @@
             <div id="time-slot-container" class="time-slot-grid">
                 <div class="time-input-group">
                     <label for="time_start" class="time-label">Start Time</label>
-                    <input type="time" id="time_start" name="time_start" class="time-input">
+                    <select id="time_start" name="time_start" class="form-select time-select"
+                            data-user-type="{{ $userType }}" 
+                            data-user-role="{{ $userRole }}">
+                    
+                    </select>
                 </div>
                 <div class="time-input-group">
-                    <label for="time_end" class="time-label">End Time <small>(Max 8 hours)</small></label>
-                    <input type="time" id="time_end" name="time_end" class="time-input" readonly>
+                    <label for="time_end" class="time-label">End Time</label>
+                    <select id="time_end" name="time_end" class="form-select time-select" disabled>
+                    </select>
                 </div>
             </div>
         </div>
@@ -143,7 +157,7 @@
             <span><strong>Client Type:</strong></span>
         </div>
         <div class="section-content">
-            <select id="client_type" class="client-type-select">
+            <select id="client_type" name="client_type" class="client-type-select">
                 <option value="" disabled selected>Select a client type</option>
                 @foreach ($facility->prices as $price)
                     <option value="{{ $price->value }}" data-name="{{ $price->name }}">
@@ -153,21 +167,513 @@
             </select>
         </div>
     </div>
+
+     @include('components.facility_whole_addons')
     
     <div id="total-price" class="total-price-section">
         <strong class="total-price-label">Total Price: </strong>
         <span class="total-price-value">₱ 0.00</span>
     </div>
 
-    <input type="hidden" name="total_price" id="total_price_input" value="0">
+    <input type="hidden" name="total_price" id="total_price_input" value="0">  
 </div>
 
+<!-- Include JavaScript files -->
+<script src="{{ asset('js/facilities_whole_building/priceComputation.js') }}"></script>
+<script src="{{ asset('js/facilities_whole_building/validation.js') }}"></script>
+<script src="{{ asset('js/facilities_whole_building/clientType.js') }}"></script>
+<script src="{{ asset('js/facilities_whole_building/timeSelection.js') }}"></script>
+<script src="{{ asset('js/facilities_whole_building/calendar.js') }}"></script>
+
+{{-- @if ($facility->facility_type === 'whole_place')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var dateFromInput = document.getElementById('date_from');
+            var dateToInput = document.getElementById('date_to');
+            var timeStartSelect = document.getElementById('time_start');
+            var timeEndSelect = document.getElementById('time_end');
+            var clientTypeDropdown = document.getElementById('client_type');
+            var totalPriceElement = document.getElementById('total-price').querySelector('span');
+            
+            var hasDayBasedPricing = @json($facility->prices->contains('is_based_on_days', true));
+            var userRole = @json($userRole);
+            var userType = @json($userType);
+            
+            var availabilities = @json($facility->availabilities ?? []);
+            var facilityCapacity = @json($wholeAttr->whole_capacity ?? 0);
+
+            var today = new Date();
+            var tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 7);
+            var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
+
+            function getTimeOptionsForRole() {
+                let options = '';
+                
+                if (userType === 'ADM') {
+                    for(let hour = 7; hour <= 21; hour++) {
+                        let displayHour = hour > 12 ? hour - 12 : hour;
+                        if (hour === 12) displayHour = 12;
+                        if (hour === 0) displayHour = 12;
+                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                        const value = String(hour).padStart(2, '0') + ':00';
+                        const display = displayHour + ':00 ' + ampm;
+                        options += `<option value="${value}">${display}</option>`;
+                    }
+                } else {
+                    switch(userRole) {
+                        case 'student':
+                            for(let hour = 7; hour <= 15; hour++) {
+                                let displayHour = hour > 12 ? hour - 12 : hour;
+                                if (hour === 12) displayHour = 12;
+                                const ampm = hour >= 12 ? 'PM' : 'AM';
+                                const value = String(hour).padStart(2, '0') + ':00';
+                                const display = displayHour + ':00 ' + ampm;
+                                options += `<option value="${value}">${display}</option>`;
+                            }
+                            break;
+                        case 'employee':
+                            for(let hour = 7; hour <= 17; hour++) {
+                                let displayHour = hour > 12 ? hour - 12 : hour;
+                                if (hour === 12) displayHour = 12;
+                                const ampm = hour >= 12 ? 'PM' : 'AM';
+                                const value = String(hour).padStart(2, '0') + ':00';
+                                const display = displayHour + ':00 ' + ampm;
+                                options += `<option value="${value}">${display}</option>`;
+                            }
+                            break;
+                        case 'non-employee':
+                            for(let hour = 7; hour <= 21; hour++) {
+                                let displayHour = hour > 12 ? hour - 12 : hour;
+                                if (hour === 12) displayHour = 12;
+                                if (hour === 0) displayHour = 12;
+                                const ampm = hour >= 12 ? 'PM' : 'AM';
+                                const value = String(hour).padStart(2, '0') + ':00';
+                                const display = displayHour + ':00 ' + ampm;
+                                options += `<option value="${value}">${display}</option>`;
+                            }
+                            break;
+                        default:
+                            for(let hour = 7; hour <= 15; hour++) {
+                                let displayHour = hour > 12 ? hour - 12 : hour;
+                                if (hour === 12) displayHour = 12;
+                                const ampm = hour >= 12 ? 'PM' : 'AM';
+                                const value = String(hour).padStart(2, '0') + ':00';
+                                const display = displayHour + ':00 ' + ampm;
+                                options += `<option value="${value}">${display}</option>`;
+                            }
+                    }
+                }
+                
+                return options;
+            }
+
+            timeStartSelect.innerHTML = getTimeOptionsForRole();
+
+            function getMaxDate() {
+                if (userType === 'ADM') return null;
+                var maxDate = new Date();
+                maxDate.setMonth(maxDate.getMonth() + 3);
+                return maxDate.toISOString().split('T')[0];
+            }
+
+            function isDateFullyBooked(dateStr) {
+                if (!availabilities || availabilities.length === 0) return false;
+                
+                const checkDate = new Date(dateStr);
+                let totalBookedCapacity = 0;
+                let hasMatchingAvailability = false;
+                
+                availabilities.forEach(function(availability) {
+                    const availFromDate = new Date(availability.date_from);
+                    const availToDate = new Date(availability.date_to);
+                    
+                    if (checkDate >= availFromDate && checkDate <= availToDate) {
+                        hasMatchingAvailability = true;
+                        
+                        if (availability.remaining_capacity <= 0) {
+                            totalBookedCapacity = facilityCapacity;
+                            return;
+                        }
+                        
+                        const bookedCapacity = facilityCapacity - availability.remaining_capacity;
+                        totalBookedCapacity += bookedCapacity;
+                    }
+                });
+                
+                return hasMatchingAvailability && (totalBookedCapacity >= facilityCapacity);
+            }
+
+            function getReservedDates() {
+                if (!availabilities || availabilities.length === 0) return [];
+                
+                const reservedDates = [];
+                
+                availabilities.forEach(function(availability) {
+                    if (availability.remaining_capacity <= 0) {
+                        const startDate = new Date(availability.date_from);
+                        const endDate = new Date(availability.date_to);
+                        
+                        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                            const dateStr = d.toISOString().split('T')[0];
+                            if (!reservedDates.includes(dateStr)) {
+                                reservedDates.push(dateStr);
+                            }
+                        }
+                    }
+                });
+                
+                return reservedDates;
+            }
+
+            function formatTimeTo12Hour(time) {
+                var hour = parseInt(time.split(':')[0]);
+                var minutes = time.split(':')[1];
+                var ampm = hour >= 12 ? 'PM' : 'AM';
+                var displayHour = hour % 12;
+                if (displayHour === 0) displayHour = 12;
+                return displayHour + ':' + minutes + ' ' + ampm;
+            }
+
+            function updateEndTimeOptions() {
+                var startTime = timeStartSelect.value;
+                if (!startTime) return;
+                
+                timeEndSelect.innerHTML = '';
+                
+                var startHour = parseInt(startTime.split(':')[0]);
+                var maxHour;
+                
+                if (userType === 'ADM') {
+                    maxHour = 22;
+                } else {
+                    switch(userRole) {
+                        case 'student':
+                            maxHour = 16;
+                            break;
+                        case 'employee':
+                            maxHour = 18;
+                            break;
+                        case 'non-employee':
+                            maxHour = 22;
+                            break;
+                        default:
+                            maxHour = 16;
+                    }
+                }
+                
+                maxHour = Math.min(startHour + 8, maxHour);
+                
+                for (var hour = startHour + 1; hour <= maxHour; hour++) {
+                    var option = document.createElement('option');
+                    var value = (hour === 24 ? '00' : String(hour).padStart(2, '0')) + ':00';
+                    var displayHour = hour > 12 ? hour - 12 : hour;
+                    if (hour === 12) displayHour = 12;
+                    if (hour === 0) displayHour = 12;
+                    var ampm = hour >= 12 ? 'PM' : 'AM';
+                    option.value = value;
+                    option.textContent = displayHour + ':00 ' + ampm;
+                    timeEndSelect.appendChild(option);
+                }
+                
+                timeEndSelect.disabled = false;
+            }
+
+            if (!hasDayBasedPricing) {
+                const calendarEl = document.getElementById('calendar');
+                if (calendarEl) {
+                    let selectedDates = [];
+                    let startDate = null;
+                    let endDate = null;
+                    
+                    const calendarOptions = {
+                        initialView: 'dayGridMonth',
+                        headerToolbar: {
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth'
+                        },
+                        selectable: true,
+                        selectMirror: true,
+                        dayMaxEvents: false,
+                        weekends: true,
+                        validRange: { start: tomorrowFormatted },
+                        
+                        dateClick: function(info) {
+                            const clickedDate = info.dateStr;
+                            const dateEl = info.dayEl;
+                            const dayOfWeek = new Date(clickedDate).getDay();
+                            
+                            if (userType !== 'ADM' && userRole !== 'non-employee') {
+                                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Not Available',
+                                        text: 'Your role can only book facilities from Monday to Friday.'
+                                    });
+                                    return;
+                                }
+                            }
+                            
+                            if (isDateFullyBooked(clickedDate)) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Unavailable',
+                                    text: 'This date is fully reserved and unavailable for booking.'
+                                });
+                                return;
+                            }
+                            
+                            if (typeof calendar.clickCount === 'undefined') {
+                                calendar.clickCount = 0;
+                            }
+                            calendar.clickCount++;
+                            
+                            if (calendar.clickCount % 2 === 1) {
+                                startDate = clickedDate;
+                                selectedDates = [clickedDate];
+                                endDate = null;
+                            } else {
+                                if (startDate) {
+                                    const start = new Date(startDate);
+                                    const end = new Date(clickedDate);
+                                    
+                                    if (end >= start) {
+                                        const dateRange = getDatesInRange(startDate, clickedDate);
+                                        
+                                        if (userType !== 'ADM' && userRole !== 'non-employee') {
+                                            const hasWeekendDate = dateRange.some(date => {
+                                                const day = new Date(date).getDay();
+                                                return day === 0 || day === 6;
+                                            });
+                                            
+                                            if (hasWeekendDate) {
+                                                Swal.fire({
+                                                    icon: 'error',
+                                                    title: 'Not Available',
+                                                    text: 'Your role can only book facilities from Monday to Friday.'
+                                                });
+                                                calendar.clickCount--;
+                                                return;
+                                            }
+                                        }
+                                        
+                                        const hasReservedDate = dateRange.some(date => isDateFullyBooked(date));
+                                        
+                                        if (hasReservedDate) {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Unavailable',
+                                                text: 'One or more dates in your selected range are reserved.'
+                                            });
+                                            calendar.clickCount--;
+                                            return;
+                                        }
+                                        
+                                        endDate = clickedDate;
+                                        selectedDates = dateRange;
+                                    } else {
+                                        startDate = clickedDate;
+                                        selectedDates = [clickedDate];
+                                        endDate = null;
+                                        calendar.clickCount = 1;
+                                    }
+                                } else {
+                                    startDate = clickedDate;
+                                    selectedDates = [clickedDate];
+                                    endDate = null;
+                                    calendar.clickCount = 1;
+                                }
+                            }
+                            
+                            updateInputs();
+                            updateDateDisplay();
+                            updateTotalPrice();
+                            highlightDates();
+                        },
+                        
+                        dayCellClassNames: function(info) {
+                            let classes = [];
+                            const dayOfWeek = info.date.getDay();
+                            
+                            if (userType !== 'ADM' && userRole !== 'non-employee' && (dayOfWeek === 0 || dayOfWeek === 6)) {
+                                classes.push('disabled-date');
+                            }
+                            
+                            if (isDateFullyBooked(info.dateStr)) {
+                                classes.push('fully-booked-date');
+                            }
+                            
+                            if (selectedDates.includes(info.dateStr) && !isDateFullyBooked(info.dateStr)) {
+                                if (info.dateStr === startDate) {
+                                    classes.push('selected-start-date');
+                                } else if (info.dateStr === endDate) {
+                                    classes.push('selected-end-date');
+                                } else {
+                                    classes.push('selected-range-date');
+                                }
+                            }
+                            
+                            return classes;
+                        },
+                        
+                        events: function(fetchInfo, successCallback, failureCallback) {
+                            const reservedDates = getReservedDates();
+                            const events = reservedDates.map(date => ({
+                                id: `reserved-${date}`,
+                                title: 'booked',
+                                start: date,
+                                allDay: true,
+                                backgroundColor: 'transparent',
+                                borderColor: '#bd2130',
+                                textColor: 'white',
+                                classNames: ['fully-booked-event'],
+                                display: 'block'
+                            }));
+                            
+                            successCallback(events);
+                        }
+                    };
+
+                    if (userType === 'USR') {
+                        calendarOptions.validRange.end = getMaxDate();
+                    }
+
+                    const calendar = new FullCalendar.Calendar(calendarEl, calendarOptions);
+                    calendar.render();
+                    
+                    function getDatesInRange(start, end) {
+                        const dates = [];
+                        const startDate = new Date(start);
+                        const endDate = new Date(end);
+                        
+                        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                            dates.push(d.toISOString().split('T')[0]);
+                        }
+                        
+                        return dates;
+                    }
+                    
+                    function updateDateDisplay() {
+                        const startDisplay = document.getElementById('start-date-display');
+                        const endDisplay = document.getElementById('end-date-display');
+                        const modalStart = document.getElementById('modal-start-date');
+                        const modalEnd = document.getElementById('modal-end-date');
+                        
+                        if (startDate) {
+                            const formattedStart = new Date(startDate).toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            });
+                            startDisplay.textContent = formattedStart;
+                            modalStart.textContent = formattedStart;
+                        } else {
+                            startDisplay.textContent = 'Click on calendar to select';
+                            modalStart.textContent = 'Not selected';
+                        }
+                        
+                        if (endDate) {
+                            const formattedEnd = new Date(endDate).toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            });
+                            endDisplay.textContent = formattedEnd;
+                            modalEnd.textContent = formattedEnd;
+                        } else {
+                            endDisplay.textContent = 'Click on calendar to select';
+                            modalEnd.textContent = 'Not selected';
+                        }
+                    }
+                    
+                    function updateInputs() {
+                        dateFromInput.value = startDate || '';
+                        dateToInput.value = endDate || '';
+                    }
+                    
+                    function highlightDates() {
+                        calendar.render();
+                    }
+
+                    document.getElementById('calendarModal').addEventListener('shown.bs.modal', function () {
+                        calendar.updateSize();
+                    });
+                }
+            }
+
+            function updateTotalPrice() {
+                var ctVal = clientTypeDropdown.value;
+                var total = 0;
+                
+                if (hasDayBasedPricing) {
+                    if (ctVal) {
+                        total = parseFloat(ctVal);
+                        totalPriceElement.textContent = '₱' + total.toLocaleString('en-PH', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                    } else {
+                        totalPriceElement.textContent = '₱0.00';
+                    }
+                } else {
+                    var f = dateFromInput.value;
+                    var t = dateToInput.value;
+
+                    if (ctVal && f && t) {
+                        var fromDate = new Date(f),
+                            toDate = new Date(t),
+                            diffMs = toDate - fromDate,
+                            daysDiff = Math.floor(diffMs / (1000*60*60*24)) + 1;
+                        
+                        if (daysDiff > 0) {
+                            total = daysDiff * parseFloat(ctVal);
+                            totalPriceElement.textContent = '₱' + total.toLocaleString('en-PH', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        } else {
+                            totalPriceElement.textContent = '₱0.00';
+                        }
+                    } else {
+                        totalPriceElement.textContent = '₱0.00';
+                    }
+                }
+                
+                document.getElementById('total_price_input').value = total.toFixed(2);
+            }
+
+            timeStartSelect.addEventListener('change', function() {
+                updateEndTimeOptions();
+                updateTotalPrice();
+            });
+            
+            timeEndSelect.addEventListener('change', updateTotalPrice);
+            clientTypeDropdown.addEventListener('change', updateTotalPrice);
+            
+            if (!hasDayBasedPricing) {
+                dateFromInput.addEventListener('change', updateTotalPrice);
+                dateToInput.addEventListener('change', updateTotalPrice);
+            }
+            
+            updateEndTimeOptions();
+        });
+
+        document.getElementById('client_type').addEventListener('change', function() {
+            var selectedPrice = this.value;  
+            document.getElementById('selected_price').value = selectedPrice;  
+            updateTotalPrice();  
+        });
+    </script>
+@endif --}}
 
 
-{{--  --}}
+
 
 {{-- Validation --}}
-<script>
+{{-- <script>
 document.addEventListener('DOMContentLoaded', function() {
     const reserveBtn = document.getElementById('reserve-btn');
     const clientTypeDropdown = document.getElementById('client_type');
@@ -219,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
     validateReserveButton();
     setTimeout(validateReserveButton, 1000);
 });
-</script>
+</script> --}}
 
 
 

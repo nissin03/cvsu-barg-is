@@ -1,5 +1,26 @@
 @php
-$totalSales = $chartData['reserved_sales_total'] + $chartData['pickedup_sales_total'] + $chartData['canceled_sales_total'];
+    $startDate = $startDate ?? null;
+    $endDate = $endDate ?? null;
+    $selectedMonth = $selectedMonth ?? ($availableMonths->first() ?? null);
+    $selectedYear = $selectedYear ?? date('Y');
+    $selectedWeekId = $selectedWeekId ?? 1;
+    
+    if(isset($chartData) && $chartData !== null) {
+        $totalSales = $chartData['reserved_sales_total'] + $chartData['pickedup_sales_total'] + $chartData['canceled_sales_total'];
+    } else {
+        $totalSales = 0;
+        $chartData = [
+            'reserved_sales_total' => 0,
+            'pickedup_sales_total' => 0,
+            'canceled_sales_total' => 0,
+            'dates' => [],
+            'total_sales' => [],
+            'reserved_sales' => [],
+            'pickedup_sales' => [],
+            'canceled_sales' => [],
+            'total_orders' => 0
+        ];
+    }
 @endphp
 
 @extends('layouts.admin')
@@ -124,97 +145,53 @@ $totalSales = $chartData['reserved_sales_total'] + $chartData['pickedup_sales_to
     </div>
     @endif
 
-    @isset($chartData)
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom py-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <h5 class="mb-0 text-dark fw-medium">Sales Report</h5>
-                            <small class="text-muted">{{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}</small>
-                        </div>
-                        <div class="col-md-6 text-end">
-                            <form action="{{ route('admin.download-input-sales') }}" method="POST" id="download-form" style="display: none;">
-                                @csrf
-                                <input type="hidden" name="start_date" value="{{ old('start_date', isset($startDate) ? $startDate->toDateString() : '') }}">
-                                <input type="hidden" name="end_date" value="{{ old('end_date', isset($endDate) ? $endDate->toDateString() : '') }}">
-                                <input type="hidden" name="chart_image" id="chart_image">
-                                <input type="hidden" name="total_sales" value="{{ $totalSales }}">
-                                <input type="hidden" name="reserved_sales" value="{{ $chartData['reserved_sales_total'] }}">
-                                <input type="hidden" name="pickedup_sales" value="{{ $chartData['pickedup_sales_total'] }}">
-                                <input type="hidden" name="canceled_sales" value="{{ $chartData['canceled_sales_total'] }}">
-                            </form>
-                        </div>
+@isset($chartData)
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom py-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0 text-dark fw-medium">Sales Report</h5>
+                        <small class="text-muted">
+                            @if($startDate && $endDate)
+                                {{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}
+                            @else
+                                No date range selected
+                            @endif
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <form action="{{ route('admin.download-input-sales') }}" method="POST" id="download-form" style="display: none;">
+                            @csrf
+                            <input type="hidden" name="start_date" value="{{ $startDate ? $startDate->toDateString() : '' }}">
+                            <input type="hidden" name="end_date" value="{{ $endDate ? $endDate->toDateString() : '' }}">
+                            <input type="hidden" name="chart_image" id="chart_image">
+                            <input type="hidden" name="total_sales" value="{{ $totalSales }}">
+                            <input type="hidden" name="reserved_sales" value="{{ $chartData['reserved_sales_total'] }}">
+                            <input type="hidden" name="pickedup_sales" value="{{ $chartData['pickedup_sales_total'] }}">
+                            <input type="hidden" name="canceled_sales" value="{{ $chartData['canceled_sales_total'] }}">
+                        </form>
                     </div>
                 </div>
+            </div>
 
-                <div id="sales-chart" style="min-height: 400px;"></div>
-                <div class="card-body p-4">
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="card bg-light border-0 h-100">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div>
-                                            <span class="text-tiny">Total</span>
-                                            <h4 class="mb-0">₱{{ number_format($totalSales, 2) }}</h4>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-light border-0 h-100">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div>
-                                            <span class="text-tiny">Reserved</span>
-                                            <h4 class="mb-0">₱{{ number_format($chartData['reserved_sales_total'], 2) }}</h4>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-light border-0 h-100">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div>
-                                            <span class="text-tiny">Picked Up</span>
-                                            <h4 class="mb-0">₱{{ number_format($chartData['pickedup_sales_total'], 2) }}</h4>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-light border-0 h-100">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div>
-                                            <span class="text-tiny">Canceled</span>
-                                            <h4 class="mb-0">₱{{ number_format($chartData['canceled_sales_total'], 2) }}</h4>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            @if($startDate && $endDate)
+            <div id="sales-chart" style="min-height: 400px;"></div>
+            <div class="card-body p-4">
+                <!-- Your existing card body content -->
             </div>
+            @else
+            <div class="card-body p-5 text-center">
+                <i class="bi bi-calendar-x fs-1 text-muted"></i>
+                <h5 class="mt-3 text-muted">No date range selected</h5>
+                <p class="text-muted">Please select a start and end date to view sales data.</p>
+            </div>
+            @endif
         </div>
     </div>
-    @else
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="alert alert-info d-flex align-items-center">
-                <i class="bi bi-info-circle-fill me-2"></i>
-                <div>No sales data available for the selected date range.</div>
-            </div>
-        </div>
-    </div>
-    @endisset
+</div>
+@endisset
 </div>
 @endsection
 
@@ -363,7 +340,22 @@ $totalSales = $chartData['reserved_sales_total'] + $chartData['pickedup_sales_to
     function resetDateFilter() {
         document.getElementById('start_date').value = '';
         document.getElementById('end_date').value = '';
+        
+        const startDateInput = document.getElementById('start_date');
+        const originalRequired = startDateInput.hasAttribute('required');
+        
+        if (originalRequired) {
+            startDateInput.removeAttribute('required');
+        }
+        
         document.getElementById('sales-form').submit();
+        
+
+        if (originalRequired) {
+            setTimeout(() => {
+                startDateInput.setAttribute('required', 'required');
+            }, 100);
+        }
     }
 
     

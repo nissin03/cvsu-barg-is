@@ -27,16 +27,28 @@
         </div>
         <div class="card-body p-4">
             <form method="GET" action="{{ route('admin.facility-statement') }}">
-                <div class="row g-3  align-items-end">
-                    <div class="col-lg-3 col-md-6">
+                <div class="row g-3 align-items-end">
+                   
+                    <div class="col-lg-2 col-md-6">
                         <label for="date_from" class="form-label text-gray-700 fw-medium mb-2">From Date</label>
                         <input type="date" class="form-control form-control-lg border-gray-300" id="date_from" name="date_from" value="{{ request('date_from') }}" style="border-radius: 8px;">
                     </div>
-                    <div class="col-lg-3 col-md-6">
+                    <div class="col-lg-2 col-md-6">
                         <label for="date_to" class="form-label text-gray-700 fw-medium mb-2">To Date</label>
                         <input type="date" class="form-control form-control-lg border-gray-300" id="date_to" name="date_to" value="{{ request('date_to') }}" style="border-radius: 8px;">
                     </div>
-                    <div class="col-lg-3 col-md-6">
+                     <div class="col-lg-2 col-md-6">
+                        <label for="facility_id" class="form-label text-gray-700 fw-medium mb-2">Facility</label>
+                        <select class="form-select form-select-lg border-gray-300" id="facility_id" name="facility_id" style="border-radius: 8px;">
+                            <option value="">All Facilities</option>
+                            @foreach($facilities as $facility)
+                                <option value="{{ $facility->id }}" {{ request('facility_id') == $facility->id ? 'selected' : '' }}>
+                                    {{ $facility->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
                         <div class="d-flex flex-column h-100 justify-content-end">
                             <label for="status" class="form-label text-gray-700 fw-medium mb-2">Status</label>
                             <select class="form-select form-select-lg border-gray-300" id="status" name="status" style="border-radius: 8px;">
@@ -49,7 +61,7 @@
                         </div>
                     </div>
                                     
-                    <div class="col-lg-3 col-md-6 d-flex align-items-end gap-2">
+                    <div class="col-lg-4 col-md-6 d-flex align-items-end gap-2">
                         <button type="submit" class="btn btn-dark btn-lg flex-fill" style="border-radius: 8px;">
                             <i class="fas fa-filter me-1"></i>Filter
                         </button>
@@ -86,6 +98,7 @@
                         <tr>
                             <th class="border-0 fw-semibold text-gray-700 py-3 px-4">User</th>
                             <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Facility</th>
+                            <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Reservation Dates</th>
                             <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">Status</th>
                             <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Total Amount</th>
                             <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Actions</th>
@@ -106,6 +119,16 @@
                             </td>
                             <td class="py-4 px-4">
                                 <div class="fw-medium text-gray-800">{{ $payment->availability->facility->name }}</div>
+                            </td>
+                            <td class="py-4 px-4">
+                                @if($payment->date_from && $payment->date_to)
+                                    <div class="fw-medium text-gray-700">
+                                        {{ \Carbon\Carbon::parse($payment->date_from)->format('M d, Y') }} - 
+                                        {{ \Carbon\Carbon::parse($payment->date_to)->format('M d, Y') }}
+                                    </div>
+                                @else
+                                    <div class="text-muted small">No dates specified</div>
+                                @endif
                             </td>
                             <td class="py-4 px-4 text-center">
                                 @php
@@ -142,7 +165,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center py-5">
+                            <td colspan="6" class="text-center py-5">
                                 <div class="d-flex flex-column align-items-center">
                                     <div class="bg-gray-100 rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
                                         <i class="fas fa-file-alt text-gray-400" style="font-size: 1.5rem;"></i>
@@ -160,6 +183,7 @@
     </div>
 </div>
 
+<!-- Modal -->
 <div class="modal fade" id="paymentDetailsModal" tabindex="-1" aria-labelledby="paymentDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg-responsive">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
@@ -176,6 +200,7 @@
                 </div>
             </div>
             <div class="modal-body p-4">
+                <!-- User Information Table -->
                 <div class="card border-0 bg-gray-50 mb-4">
                     <div class="card-body p-4">
                         <div class="d-flex align-items-center mb-3">
@@ -184,23 +209,28 @@
                             </div>
                             <h5 class="mb-0 fw-semibold text-gray-800">User Information</h5>
                         </div>
-                        <div class="row g-4">
-                            <div class="col-md-4">
-                                <label class="small text-muted fw-medium mb-1">Full Name</label>
-                                <p class="mb-0 fw-bold text-gray-800 fs-3" id="modalUserName"></p>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="small text-muted fw-medium mb-1">Email Address</label>
-                                <p class="mb-0 fw-bold text-gray-700 fs-3" id="modalUserEmail"></p>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="small text-muted fw-medium mb-1">Gender</label>
-                                <p class="mb-0 fw-bold text-gray-700 fs-3" id="modalUserSex"></p>
-                            </div>
+                        <div class="table-responsive">
+                            <table class="table table-borderless mb-0 modal-detail-table">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-medium text-muted py-2" style="width: 30%;">Full Name:</td>
+                                        <td class="fw-bold text-gray-800 py-2" id="modalUserName"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium text-muted py-2">Email Address:</td>
+                                        <td class="fw-bold text-gray-700 py-2" id="modalUserEmail"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium text-muted py-2">Gender:</td>
+                                        <td class="fw-bold text-gray-700 py-2" id="modalUserSex"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
+                <!-- Facility Details Table -->
                 <div class="card border-0 bg-gray-50 mb-4">
                     <div class="card-body p-4">
                         <div class="d-flex align-items-center mb-3">
@@ -209,34 +239,35 @@
                             </div>
                             <h5 class="mb-0 fw-semibold text-gray-800">Facility Details</h5>
                         </div>
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <label class="small text-muted fw-medium mb-1">Facility Name</label>
-                                <p class="mb-3 fw-bold text-gray-800 fs-3" id="modalFacilityName"></p>
-                                
-                                <div id="roomDetails">
-                                    <label class="small text-muted fw-medium mb-1">Room Name</label>
-                                    <p class="mb-3 text-gray-700 fs-4" id="modalRoomName"></p>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div id="capacityDetails">
-                                    <label class="small text-muted fw-medium mb-1">Capacity</label>
-                                    <p class="mb-3 text-gray-700 fs-4" id="modalCapacity"></p>
-                                </div>
-                                
-                                <div>
-                                    <label class="small text-muted fw-medium mb-1">Reservation Period</label>
-                                    <p class="mb-0 fw-bold text-gray-700 fs-3">
-                                        <span id="modalDateFrom"></span> to <span id="modalDateTo"></span>
-                                    </p>
-                                </div>
-                            </div>
+                        <div class="table-responsive">
+                            <table class="table table-borderless mb-0 modal-detail-table">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-medium text-muted py-2" style="width: 30%;">Facility Name:</td>
+                                        <td class="fw-bold text-gray-800 py-2" id="modalFacilityName"></td>
+                                    </tr>
+                                    <tr id="roomDetailsRow">
+                                        <td class="fw-medium text-muted py-2">Room Name:</td>
+                                        <td class="text-gray-700 py-2" id="modalRoomName"></td>
+                                    </tr>
+                                    <tr id="capacityDetailsRow">
+                                        <td class="fw-medium text-muted py-2">Capacity:</td>
+                                        <td class="text-gray-700 py-2" id="modalCapacity"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium text-muted py-2">Reservation Period:</td>
+                                        <td class="fw-bold text-gray-700 py-2">
+                                            <span id="modalDateFrom"></span> to <span id="modalDateTo"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-               <div class="card border-0 bg-gray-50">
+                <!-- Pricing Information Table -->
+                <div class="card border-0 bg-gray-50">
                     <div class="card-body p-4">
                         <div class="d-flex align-items-center mb-3">
                             <div class="bg-success bg-opacity-10 rounded-circle p-2 me-2">
@@ -244,13 +275,17 @@
                             </div>
                             <h6 class="mb-0 fw-semibold text-gray-800">Pricing Information</h6>
                         </div>
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <label class="small text-muted fw-medium mb-1">Total Amount</label>
-                                <div class="d-flex align-items-center">
-                                    <h3 class="mb-0 fw-bold text-success">₱<span id="modalTotalPrice"></span></h3>
-                                </div>
-                            </div>
+                        <div class="table-responsive">
+                            <table class="table table-borderless mb-0 modal-detail-table">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-medium text-muted py-2" style="width: 30%;">Total Amount:</td>
+                                        <td class="py-2">
+                                            <h4 class="mb-0 fw-bold text-success">₱<span id="modalTotalPrice"></span></h4>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -280,16 +315,18 @@ $(document).ready(function() {
         $('#modalDateFrom').text($button.data('date-from') || '');
         $('#modalDateTo').text($button.data('date-to') || '');
 
+        // Show/hide room details row
         if ($button.data('room-name')) {
-            $('#roomDetails').show();
+            $('#roomDetailsRow').show();
         } else {
-            $('#roomDetails').hide();
+            $('#roomDetailsRow').hide();
         }
 
+        // Show/hide capacity details row
         if ($button.data('capacity')) {
-            $('#capacityDetails').show();
+            $('#capacityDetailsRow').show();
         } else {
-            $('#capacityDetails').hide();
+            $('#capacityDetailsRow').hide();
         }
 
         $('#paymentDetailsModal').modal('show');
@@ -553,6 +590,72 @@ $(document).ready(function() {
         display: none !important;
     }
 }
+
+.modal-detail-table {
+    font-size: 0.95rem;
+}
+
+.modal-detail-table td {
+    border: none !important;
+    padding: 0.75rem 0.5rem !important;
+    vertical-align: middle;
+}
+
+.modal-detail-table tr {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.modal-detail-table tr:last-child {
+    border-bottom: none;
+}
+
+.modal-detail-table td:first-child {
+    padding-left: 0 !important;
+}
+
+.modal-detail-table td:last-child {
+    padding-right: 0 !important;
+}
+
+/* Responsive adjustments for modal tables */
+@media (max-width: 768px) {
+    .modal-detail-table {
+        font-size: 0.875rem;
+    }
+    
+    .modal-detail-table td {
+        padding: 0.5rem 0.25rem !important;
+    }
+    
+    .modal-detail-table td:first-child {
+        width: 35% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-detail-table td {
+        display: block;
+        width: 100% !important;
+        padding: 0.25rem 0 !important;
+    }
+    
+    .modal-detail-table td:first-child {
+        font-weight: 600 !important;
+        margin-bottom: 0.25rem;
+        padding-bottom: 0 !important;
+    }
+    
+    .modal-detail-table td:last-child {
+        padding-top: 0 !important;
+        margin-bottom: 1rem;
+    }
+    
+    .modal-detail-table tr {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+}
+
 </style>
 @endpush
-

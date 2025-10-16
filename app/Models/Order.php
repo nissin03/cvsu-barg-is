@@ -8,8 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     use HasFactory;
-    protected $fillable = ['user_id', 'total', 'reservation_date', 'time_slot', 'status', 'picked_up_date', 'canceled_date'];
+    protected $fillable = ['user_id', 'total', 'reservation_date', 'time_slot', 'status', 'picked_up_date', 'canceled_date',  'updated_by', 'canceled_reason'];
 
+    protected $casts = [
+        'canceled_date' => 'datetime',
+        'picked_up_date' => 'datetime',
+    ];
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
     public function user()
     {
         return $this->belongsTo(User::class);

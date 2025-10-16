@@ -1,172 +1,139 @@
 @extends('layouts.app')
 
 @section('content')
-    <style>
-        .table> :not(caption)>tr>th {
-            padding: 0.625rem 1.5rem .625rem !important;
-            background-color: #b3b892 !important;
-        }
-
-        .table>tr>td {
-            padding: 0.625rem 1.5rem .625rem !important;
-        }
-
-        .table-bordered> :not(caption)>tr>th,
-        .table-bordered> :not(caption)>tr>td {
-            border-width: 1px 1px;
-            border-color: #6a6e51;
-        }
-
-        .table> :not(caption)>tr>td {
-            padding: .8rem 1rem !important;
-        }
-
-        .bg-success {
-            background-color: #40c710 !important;
-        }
-
-        .bg-danger {
-            background-color: #f44032 !important;
-        }
-
-        .bg-warning {
-            background-color: #f5d700 !important;
-        }
-
-        .accordion-item {
-            background-color: #fff;
-            border-radius: 5px;
-        }
-
-        .accordion-button {
-            background-color: #f8f9fa;
-        }
-
-        .accordion-body {
-            padding: 1rem;
-        }
-
-        .order-items .order-item {
-            padding: 0.5rem 0;
-        }
-
-        .order-items .order-item .text-muted {
-            font-size: 0.9rem;
-        }
-
-        .btn-outline-primary {
-            font-size: 0.875rem;
-        }
-    </style>
-
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
 
-    <main class="container" style="padding-top: 1em;">
-        <div class="mb-4 pb-4"></div>
+    <main class="container py-4">
+        <section class="my-account">
+            <div class="mb-4">
+                <h2 class="h4 fw-bold text-dark mb-1">My Orders</h2>
+                <p class="text-muted small">Track your active reservations</p>
+            </div>
 
-        <section class="my-account container">
-            <h2 class="page-title">Orders</h2>
-
-            <div class="row">
-                <div class="col-lg-2">
+            <div class="row g-4">
+                <div class="col-lg-3">
                     @include('user.account__nav')
                 </div>
-
-                <div class="col-lg-10">
-                    <div class="accordion mt-5" id="orderAccordion">
-                        @foreach ($orders as $order)
-                            <div class="accordion-item mb-3 shadow-sm border rounded">
-                                <h2 class="accordion-header" id="headingOrder{{ $order->id }}">
-                                    <button class="accordion-button d-flex justify-content-between align-items-center"
-                                        type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseOrder{{ $order->id }}" aria-expanded="true"
-                                        aria-controls="collapseOrder{{ $order->id }}">
-                                        <span>
-                                            <strong>Order #{{ $order->id }}</strong>
-                                            <small class="text-muted">Placed on
-                                                {{ $order->created_at->format('M d, Y') }}</small>
-                                        </span>
-                                        <span>
-                                            @if ($order->status == 'pickedup')
-                                                <span class="badge bg-success">Picked Up</span>
-                                            @elseif($order->status == 'canceled')
-                                                <span class="badge bg-danger">Canceled</span>
-                                            @else
-                                                <span class="badge bg-warning">Ordered</span>
-                                            @endif
-                                        </span>
-                                    </button>
-                                </h2>
-                                <div id="collapseOrder{{ $order->id }}"
-                                    class="accordion-collapse collapse @if ($loop->first) show @endif"
-                                    aria-labelledby="headingOrder{{ $order->id }}" data-bs-parent="#orderAccordion">
-                                    <div class="accordion-body">
-                                        <!-- Order Summary Section -->
-                                        <div class="d-flex justify-content-between mb-3">
-                                            <div>
-                                                <p><strong>Name: </strong>{{ $order->name }}</p>
-                                                <p><strong>Phone: </strong>{{ $order->phone_number }}</p>
-                                            </div>
-                                            <div>
-                                                <p><strong>Order Total: </strong>₱{{ number_format($order->total, 2) }}</p>
-                                                <p><strong>Items: </strong>{{ $order->orderItems->count() }}</p>
-                                            </div>
-                                        </div>
-
-                                        <!-- Collapsible Order Items Details -->
-                                        <div class="order-items">
-                                            @foreach ($order->orderItems as $item)
-                                                <div class="order-item d-flex justify-content-between py-2 border-bottom">
-                                                    <div>
-                                                        <strong>{{ $item->product->name }}</strong>
-                                                        <p class="text-muted">Qty: {{ $item->quantity }}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p class="text-muted">₱{{ number_format($item->price, 2) }}</p>
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        </div>
-
-                                        <!-- Order Footer Details -->
-                                        <div class="mt-3 d-flex justify-content-between align-items-center">
-                                            <p class="text-muted"><strong>Reservation Date:</strong>
-                                                {{ $order->reservation_date }}</p>
-                                            <a href="{{ route('user.order.details', ['order_id' => $order->id]) }}"
-                                                class="btn btn-outline-primary">View Details</a>
-                                        </div>
+                <div class="col-lg-9">
+                    @forelse ($orders as $order)
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-white border-bottom-0">
+                                <div class="d-flex justify-content-end align-items-center w-100">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-warning text-dark">Reserved</span>
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
-                    </div>
-                    <div class="divider"></div>
 
-                    <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-                        {{ $orders->links('pagination::bootstrap-5') }}
-                    </div>
+
+                            <div class="card-body">
+                                <div class="row g-4 mb-4">
+                                    <!-- Customer Info -->
+                                    <div class="col-md-6">
+                                        <h6 class="fw-semibold text-muted mb-3">Customer</h6>
+                                        <p class="mb-1"><span class="fw-medium">{{ $order->user->name }}</span></p>
+                                        <p class="text-muted small mb-0">📞 {{ $order->user->phone_number }}</p>
+                                    </div>
+
+                                    <!-- Order Summary -->
+                                    <div class="col-md-6">
+                                        <h6 class="fw-semibold text-muted mb-3">Summary</h6>
+                                        <p class="mb-1">
+                                            <span class="text-muted small">Total:</span>
+                                            <span class="fw-bold text-primary">₱{{ number_format($order->total, 2) }}</span>
+                                        </p>
+                                        <p class="text-muted small mb-0">
+                                            {{ $order->orderItems->count() }} item(s)
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Order Items Accordion -->
+                                <div class="accordion mb-4" id="orderAccordion{{ $order->id }}">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="heading{{ $order->id }}">
+                                            <button class="accordion-button collapsed fw-medium" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#collapse{{ $order->id }}">
+                                                View Items ({{ $order->orderItems->count() }})
+                                            </button>
+                                        </h2>
+                                        <div id="collapse{{ $order->id }}" class="accordion-collapse collapse"
+                                            data-bs-parent="#orderAccordion{{ $order->id }}">
+                                            <div class="accordion-body p-0">
+                                                @foreach ($order->orderItems as $item)
+                                                    <div
+                                                        class="d-flex justify-content-between align-items-start p-3 @if (!$loop->last) border-bottom @endif">
+                                                        <div class="d-flex">
+                                                            <img src="{{ asset('uploads/products/thumbnails/' . $item->product->image) }}"
+                                                                alt="{{ $item->product->name }}"
+                                                                class="rounded border me-3"
+                                                                style="width: 50px; height: 50px; object-fit: cover;">
+                                                            <div>
+                                                                <h6 class="fw-medium mb-1">{{ $item->product->name }}</h6>
+                                                                <small class="text-muted d-block">Qty:
+                                                                    {{ $item->quantity }}</small>
+                                                                @if ($item->options)
+                                                                    @php $options = json_decode($item->options, true); @endphp
+                                                                    @foreach ($options['variant_attributes'] ?? [] as $attr => $val)
+                                                                        <small
+                                                                            class="text-muted d-block">{{ $attr }}:
+                                                                            {{ $val }}</small>
+                                                                    @endforeach
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <span
+                                                                class="fw-bold">₱{{ number_format($item->price * $item->quantity, 2) }}</span>
+                                                            <small
+                                                                class="d-block text-muted">₱{{ number_format($item->price, 2) }}
+                                                                each</small>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        Reservation:
+                                        <span class="{{ $order->reservation_date ? 'text-success' : 'text-muted' }}">
+                                            {{ $order->reservation_date ? \Carbon\Carbon::parse($order->reservation_date)->format('F d, Y') : 'Not scheduled' }}
+                                        </span>
+                                    </small>
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ route('user.order.details', $order->id) }}"
+                                            class="btn btn-outline-primary btn">
+                                            <i class="bi bi-eye me-1"></i> Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <!-- Empty State -->
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center py-5">
+                                <i class="bi bi-bag display-1 text-muted mb-3"></i>
+                                <h5 class="fw-bold text-dark">No Orders Yet</h5>
+                                <p class="text-muted">You haven’t placed any reservations yet.</p>
+                                <a href="{{ route('shop.index') }}" class="btn btn-primary">
+                                    <i class="bi bi-shop me-2"></i> Browse Products
+                                </a>
+                            </div>
+                        </div>
+                    @endforelse
+
+                    @if ($orders->hasPages())
+                        <div class="d-flex justify-content-center mt-4">
+                            {{ $orders->links('pagination::bootstrap-5') }}
+                        </div>
+                    @endif
                 </div>
             </div>
         </section>
     </main>
 @endsection
-
-@push('styles')
-    <style>
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .table th,
-        .table td {
-            padding: 20px;
-            text-align: left;
-        }
-
-        .table td {
-            white-space: nowrap;
-        }
-    </style>
-@endpush

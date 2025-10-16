@@ -51,9 +51,13 @@ class NewContactMessage extends Notification
     {
         return [
             'contact_id' => $this->contact->id,
-            'name' => $this->contact->name,
+            'title' => 'New Contact Message',
+            'body' => "New message from {$this->contact->name}: " . \Str::limit($this->contact->message, 50),
+            'url' => route('admin.contacts'),
+            'icon' => 'fas fa-envelope',
+            'name' => $this->contact->name, // Keep for backward compatibility
             'email' => $this->contact->email,
-            'message' => $this->contact->message,
+            'message' => $this->contact->message, // Keep for backward compatibility
             'time' => $this->contact->created_at->diffForHumans()
         ];
     }

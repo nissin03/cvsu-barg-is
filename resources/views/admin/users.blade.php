@@ -1,5 +1,242 @@
 @extends('layouts.admin')
+
 @section('content')
+    <style>
+        /* Enhanced Table Styles */
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: #fff;
+            margin-bottom: 0;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #dee2e6;
+            white-space: nowrap;
+        }
+
+        .table td {
+            padding: 15px;
+            vertical-align: middle;
+            border-bottom: 1px solid #dee2e6;
+            transition: background-color 0.2s;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Enhanced Badge Styles */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            color: #fff;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .table td {
+                min-width: 120px;
+            }
+
+            .table th,
+            .table td {
+                padding: 12px 8px;
+            }
+
+            .status-badge {
+                padding: 4px 8px;
+            }
+        }
+
+        /* Loading State */
+        .table-loading {
+            position: relative;
+            min-height: 200px;
+        }
+
+        .table-loading::after {
+            content: "Loading...";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1rem;
+            color: #666;
+        }
+
+        /* Empty State */
+        .table-empty {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .action-button {
+            padding: 6px;
+            border-radius: 4px;
+            background: none;
+            border: 1px solid #dee2e6;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-button:hover {
+            background: #f8f9fa;
+            border-color: #adb5bd;
+        }
+
+        .filter-input[type="text"] {
+            font-size: 1.1rem !important;
+            padding: 0.75rem 1rem !important;
+            border-radius: 0.5rem;
+            border: 2px solid #e9ecef;
+            transition: all 0.2s ease;
+            min-height: 3rem;
+        }
+
+        .filter-input[type="text"]:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+
+        /* Enhanced filter tags */
+        .filter-tag-enhanced {
+            background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+            color: white;
+            padding: 0.7rem 1.3rem;
+            border-radius: 2rem;
+            font-size: 1rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            min-height: 2.5rem;
+        }
+
+        .filter-tag-enhanced:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .filter-tag-enhanced .btn-close {
+            background-color: #fff;
+            color: #dc3545;
+            border-radius: 50%;
+            width: 1.6rem;
+            height: 1.6rem;
+            padding: 0;
+            opacity: 0.8;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .filter-tag-enhanced .btn-close:hover {
+            background-color: #fff;
+            color: #b02a37;
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* Loading Indicator */
+        .loading-indicator {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: 9999;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            min-width: 150px;
+            background: #fff;
+            transition: border-color 0.2s;
+        }
+
+        .filter-select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+        }
+
+        .filter-select:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .filter-input[type="text"] {
+                font-size: 1rem !important;
+                padding: 0.6rem 0.8rem !important;
+            }
+
+            .filter-tag-enhanced {
+                font-size: 0.9rem;
+                padding: 0.5rem 1rem;
+            }
+
+            .active-filters-row .fs-5 {
+                font-size: 1rem !important;
+            }
+        }
+    </style>
+
+    <!-- Loading Indicator -->
+    <div id="loading-indicator" class="loading-indicator">
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+
     <div class="main-content-inner">
         <div class="main-content-wrap">
             <div class="flex items-center flex-wrap justify-between gap20 mb-27">
@@ -20,57 +257,170 @@
             </div>
 
             <div class="wg-box">
-                <div class="flex items-center justify-between gap10 flex-wrap mb-4">
-                    <div class="wg-filter flex-grow">
-                        <form class="form-search" id="search-form">
-                            <fieldset class="name">
-                                <input type="text" id="user-search" placeholder="Search by name..." name="name"
-                                    value="{{ request('name') }}" tabindex="2">
-                            </fieldset>
-                            <div class="button-submit">
-                                <button type="submit"><i class="icon-search"></i></button>
+                <div class="d-flex flex-column gap-3 mb-4">
+                    {{-- First row: Search + Add buttons --}}
+                    <div class="d-flex align-items-center justify-content-between gap-3">
+                        <div class="wg-filter flex-grow">
+                            <form class="form-search" onsubmit="return false;">
+                                <fieldset class="name">
+                                    <input type="text" id="user-search"
+                                        placeholder="Search by name, email, college, or course..." name="search"
+                                        aria-required="true" value="{{ request('search') }}">
+                                </fieldset>
+                                <div class="button-submit">
+                                    <button type="button" id="searchButton" style="display:none;">
+                                        <i class="icon-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div>
+                            <a class="tf-button w-auto" href="{{ route('admin.users.add') }}">
+                                <i class="icon-plus"></i>Add User
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <div class="filter-toggle-section d-flex align-items-center gap-3">
+                            <span class="badge bg-primary fs-6 py-2 px-3" id="activeFiltersCount" style="display: none;">0
+                                filters</span>
+
+                            <button class="btn btn-outline-primary btn-lg position-relative" id="filterToggle"
+                                type="button">
+                                <i class="icon-filter me-1"></i>
+                                Filters
+                                <span
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                    id="filterBadge" style="display: none;">0</span>
+                            </button>
+
+                            <button class="btn btn-outline-secondary" id="clearAllFilters" style="display: none;">
+                                <i class="icon-x-circle me-1"></i> Clear All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="collapse mb-4" id="filterContainer">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6 col-lg-3">
+                                    <div class="filter-group">
+                                        <label class="text-muted small mb-2 d-block">Year Level</label>
+                                        <select name="year_level" id="year_level" class="filter-select form-select">
+                                            <option value="">All Year Levels</option>
+                                            <option value="1st Year"
+                                                {{ request('year_level') == '1st Year' ? 'selected' : '' }}>1st Year
+                                            </option>
+                                            <option value="2nd Year"
+                                                {{ request('year_level') == '2nd Year' ? 'selected' : '' }}>2nd Year
+                                            </option>
+                                            <option value="3rd Year"
+                                                {{ request('year_level') == '3rd Year' ? 'selected' : '' }}>3rd Year
+                                            </option>
+                                            <option value="4th Year"
+                                                {{ request('year_level') == '4th Year' ? 'selected' : '' }}>4th Year
+                                            </option>
+                                            <option value="5th Year"
+                                                {{ request('year_level') == '5th Year' ? 'selected' : '' }}>5th Year
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 col-lg-3">
+                                    <div class="filter-group">
+                                        <label class="text-muted small mb-2 d-block">College</label>
+                                        <select name="college_id" id="college_id" class="filter-select form-select">
+                                            <option value="">All Colleges</option>
+                                            @if (isset($colleges))
+                                                @foreach ($colleges as $college)
+                                                    <option value="{{ $college->id }}"
+                                                        {{ request('college_id') == $college->id ? 'selected' : '' }}>
+                                                        {{ $college->code }} - {{ $college->name }}
+                                                    </option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 col-lg-3">
+                                    <div class="filter-group">
+                                        <label class="text-muted small mb-2 d-block">Course</label>
+                                        <select name="course_id" id="course_id" class="filter-select form-select">
+                                            <option value="">All Courses</option>
+                                            @if (isset($courses))
+                                                @foreach ($courses as $course)
+                                                    <option value="{{ $course->id }}"
+                                                        {{ request('course_id') == $course->id ? 'selected' : '' }}>
+                                                        {{ $course->code }} - {{ $course->name }}
+                                                    </option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 col-lg-3">
+                                    <div class="filter-group">
+                                        <label class="text-muted small mb-2 d-block">Email Filter</label>
+                                        <select name="email_filter" id="email_filter" class="filter-select form-select">
+                                            <option value="">All Emails</option>
+                                            <option value="gmail.com"
+                                                {{ request('email_filter') == 'gmail.com' ? 'selected' : '' }}>Gmail
+                                                (@gmail.com)</option>
+                                            <option value="cvsu.edu.ph"
+                                                {{ request('email_filter') == 'cvsu.edu.ph' ? 'selected' : '' }}>CVSU
+                                                (@cvsu.edu.ph)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 col-lg-3 mb-5">
+                                    <div class="filter-group">
+                                        <label class="text-muted small mb-2 d-block">Sort By</label>
+                                        <select name="sort_by" id="sort_by" class="filter-select form-select">
+                                            <option value="newest"
+                                                {{ request('sort_by', 'newest') == 'newest' ? 'selected' : '' }}>
+                                                Newest First</option>
+                                            <option value="oldest" {{ request('sort_by') == 'oldest' ? 'selected' : '' }}>
+                                                Oldest First</option>
+                                            <option value="name_asc"
+                                                {{ request('sort_by') == 'name_asc' ? 'selected' : '' }}>
+                                                Name: A to Z</option>
+                                            <option value="name_desc"
+                                                {{ request('sort_by') == 'name_desc' ? 'selected' : '' }}>
+                                                Name: Z to A</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
-                        </form>
+
+                            <div class="d-flex align-items-center mt-4">
+                                <button class="btn btn-primary btn-lg me-4" id="applyFilters">
+                                    <i class="icon-filter me-1"></i> Apply Filters
+                                </button>
+                                <button class="btn btn-outline-secondary btn-lg" id="resetFilters">
+                                    <i class="icon-refresh-cw me-1"></i> Reset
+                                </button>
+                            </div>
+                        </div>
                     </div>
+                </div>
 
-                    <div class="filter-dropdowns flex items-center gap10 flex-wrap">
-                        <!-- Year Level Dropdown -->
-                        <select name="year_level" id="year_level" class="w-auto">
-                            <option value="">All Year Levels</option>
-                            <option value="1st Year" {{ request('year_level') == '1st Year' ? 'selected' : '' }}>1st Year
-                            </option>
-                            <option value="2nd Year" {{ request('year_level') == '2nd Year' ? 'selected' : '' }}>2nd Year
-                            </option>
-                            <option value="3rd Year" {{ request('year_level') == '3rd Year' ? 'selected' : '' }}>3rd Year
-                            </option>
-                            <option value="4th Year" {{ request('year_level') == '4th Year' ? 'selected' : '' }}>4th Year
-                            </option>
-                        </select>
-
-                        <!-- Colleges Dropdown -->
-                        <select name="department" id="department" class="w-auto">
-                            <option value="">All Colleges</option>
-                            <option value="CEIT" {{ request('department') == 'CEIT' ? 'selected' : '' }}>CEIT</option>
-                            <option value="GSOLC" {{ request('department') == 'GSOLC' ? 'selected' : '' }}>GSOLC</option>
-                            <option value="CAFENR" {{ request('department') == 'CAFENR' ? 'selected' : '' }}>CAFENR</option>
-                            <option value="CAS" {{ request('department') == 'CAS' ? 'selected' : '' }}>CAS</option>
-                            <option value="CCJ" {{ request('department') == 'CCJ' ? 'selected' : '' }}>CCJ</option>
-                            <option value="CEMDS" {{ request('department') == 'CEMDS' ? 'selected' : '' }}>CEMDS</option>
-                            <option value="CED" {{ request('department') == 'CED' ? 'selected' : '' }}>CED</option>
-                            <option value="CON" {{ request('department') == 'CON' ? 'selected' : '' }}>CON</option>
-                            <option value="CVMBS" {{ request('department') == 'CVMBS' ? 'selected' : '' }}>CVMBS</option>
-                        </select>
-
-                        <!-- Clear Filters Button -->
-                        <button type="button" id="clear-filters" class="tf-button style-1 w-auto">
-                            <i class="icon-refresh"></i>Clear
-                        </button>
-                    </div>
-
-                    <div>
-                        <a class="tf-button w-auto" href="{{ route('admin.users.add') }}">
-                            <i class="icon-plus"></i>Add new
-                        </a>
+                <div class="active-filters-row mb-4" id="activeFiltersRow" style="display: none;">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body py-2">
+                            <div class="d-flex align-items-center gap-3 flex-wrap">
+                                <span class="text-muted fs-6 fw-medium">Active filters:</span>
+                                <div class="filter-tags d-flex gap-2 flex-wrap" id="filterTags"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -78,352 +428,378 @@
                     <div class="alert alert-success mb-4">{{ Session::get('status') }}</div>
                 @endif
 
-                <!-- Loading indicator -->
-                <div id="loading-indicator" class="text-center py-4" style="display: none;">
-                    <i class="icon-loading"></i> Loading...
-                </div>
-
-                <!-- Responsive table wrapper -->
-                <div class="table-responsive">
-                    <div class="overflow-auto">
-                        <table class="table table-striped table-bordered" id="users-table">
-                            <thead>
+                <div class="wg-table table-all-user table-responsive">
+                    <div>
+                        <table class="table table-striped table-bordered">
+                            <thead class="table-light">
                                 <tr>
-                                    <th class="text-center" style="min-width: 150px;">Name</th>
-                                    <th class="text-center" style="min-width: 200px;">Email</th>
-                                    <th class="text-center" style="min-width: 120px;">Phone</th>
-                                    <th class="text-center" style="min-width: 100px;">Year Level</th>
-                                    <th class="text-center" style="min-width: 100px;">College</th>
-                                    <th class="text-center" style="min-width: 120px;">Program</th>
-                                    <th class="text-center" style="min-width: 80px;">Actions</th>
+                                    <th class="text-center align-middle" scope="col" style="width: 20%">Name</th>
+                                    <th class="text-center align-middle" scope="col" style="width: 25%">Email</th>
+                                    <th class="text-center align-middle" scope="col" style="width: 15%">Phone</th>
+                                    <th class="text-center align-middle" scope="col" style="width: 10%">Year Level
+                                    </th>
+                                    <th class="text-center align-middle" scope="col" style="width: 10%">College Code
+                                    </th>
+                                    <th class="text-center align-middle" scope="col" style="width: 10%">Course Code
+                                    </th>
+                                    {{-- <th class="text-center align-middle" scope="col" style="width: 10%">Actions</th> --}}
                                 </tr>
                             </thead>
-                            <tbody id="users-tbody">
-                                @forelse ($users as $user)
-                                    <tr>
-                                        <td class="text-center">
-                                            <div class="text-truncate" style="max-width: 150px;"
-                                                title="{{ $user->name }}">
-                                                {{ $user->name }}
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="text-truncate" style="max-width: 200px;"
-                                                title="{{ $user->email }}">
-                                                {{ $user->email }}
-                                            </div>
-                                        </td>
-                                        <td class="text-center">{{ $user->phone_number ?? 'Not Provided' }}</td>
-                                        <td class="text-center">{{ $user->year_level ?? 'Not Provided' }}</td>
-                                        <td class="text-center">{{ $user->department ?? 'Not Provided' }}</td>
-                                        <td class="text-center">
-                                            <div class="text-truncate" style="max-width: 120px;"
-                                                title="{{ $user->course ?? 'Not Provided' }}">
-                                                {{ $user->course ?? 'Not Provided' }}
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="list-icon-function justify-center">
-                                                <a href="{{ route('admin.users.edit', $user->id) }}"
-                                                    class=""title="Edit User">
-                                                    <div class="item edit">
-                                                        <i class="icon-edit-3"></i>
-                                                    </div>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="8" class="text-center py-4">No users found.</td>
-                                    </tr>
-                                @endforelse
+
+                            <tbody id="js-users-partial-target">
+                                @include('partials._users-table', ['users' => $users])
                             </tbody>
                         </table>
                     </div>
                 </div>
-
                 <div class="divider"></div>
-                <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination" id="pagination-wrapper">
-                    {{ $users->appends(request()->query())->links('pagination::bootstrap-5') }}
+                <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination"
+                    id="js-users-partial-target-pagination">
+                    @include('partials._users-pagination', ['users' => $users])
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Mobile responsive styles -->
-    <style>
-        @media (max-width: 768px) {
-            .filter-dropdowns {
-                flex-direction: column;
-                width: 100%;
-                gap: 10px;
-            }
+    @include('components.admin_college')
+    @include('components.admin_course')
 
-            .filter-dropdowns select,
-            .filter-dropdowns button {
-                width: 100%;
-            }
-
-            .flex.items-center.justify-between.gap10.flex-wrap.mb-4 {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .wg-filter {
-                margin-bottom: 15px;
-            }
-
-            .table-responsive {
-                font-size: 0.875rem;
-            }
-
-            .table th,
-            .table td {
-                padding: 0.5rem 0.25rem;
-                white-space: nowrap;
-            }
-
-            .text-truncate {
-                max-width: 100px !important;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .text-truncate {
-                max-width: 80px !important;
-            }
-
-            .table {
-                font-size: 0.75rem;
-            }
-
-            .btn-sm {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.75rem;
-            }
-        }
-
-        /* Ensure table doesn't break layout */
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .table {
-            min-width: 800px;
-            margin-bottom: 0;
-        }
-
-        /* Loading state */
-        .table-loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-    </style>
+    <form id="filterForm" method="GET" style="display: none;">
+        <input type="hidden" name="search" id="hidden_search">
+        <input type="hidden" name="year_level" id="hidden_year_level">
+        <input type="hidden" name="college_id" id="hidden_college_id">
+        <input type="hidden" name="course_id" id="hidden_course_id">
+        <input type="hidden" name="email_filter" id="hidden_email_filter">
+        <input type="hidden" name="sort_by" id="hidden_sort_by">
+    </form>
 @endsection
 
 @push('scripts')
     <script>
-        $(function() {
-            let searchTimeout;
-            let isLoading = false;
+        $(document).ready(function() {
+            let lastScrollPosition = 0;
+            let searchTimeout = null;
+            const tooltip = $('<div class="custom-tooltip"></div>').appendTo('body');
 
-            // Initialize
-            updateButtonStates();
+            $('#filterToggle').on('click', function() {
+                const container = $('#filterContainer');
+                const icon = $(this).find('i');
 
-            // Handle search input with debouncing
-            $('#user-search').on('input', function() {
-                clearTimeout(searchTimeout);
-                const query = $(this).val().trim();
-
-                updateButtonStates();
-
-                if (query.length >= 2) {
-                    searchTimeout = setTimeout(() => {
-                        performFilter(true);
-                    }, 500);
-                } else if (query.length === 0) {
-                    performFilter(true);
-                }
-            });
-
-            // Handle search form submit
-            $('#search-form').on('submit', function(e) {
-                e.preventDefault();
-                performFilter(true);
-            });
-
-            // Handle filter dropdowns
-            $('#year_level, #department').on('change', function() {
-                performFilter(true);
-            });
-
-            // Handle clear filters
-            $('#clear-filters').on('click', function() {
-                clearAllFilters();
-            });
-
-            // Handle pagination clicks
-            $(document).on('click', '.pagination a', function(e) {
-                e.preventDefault();
-                const url = $(this).attr('href');
-                if (url && !isLoading) {
-                    performFilter(false, url);
-                }
-            });
-
-            function updateButtonStates() {
-                const query = $('#user-search').val().trim();
-                const $submitBtn = $('#search-form button[type="submit"]');
-
-                if (query.length > 0) {
-                    $submitBtn.prop('disabled', false);
+                if (container.hasClass('show')) {
+                    container.removeClass('show').slideUp(300, function() {
+                        $(this).removeClass('show');
+                    });
+                    icon.removeClass('icon-x-circle').addClass('icon-filter');
                 } else {
-                    $submitBtn.prop('disabled', true);
+                    container.addClass('show').hide().slideDown(300);
+                    icon.removeClass('icon-filter').addClass('icon-x-circle');
                 }
+            });
+
+            function initRowClicks() {
+                $('.user-row').off('click').on('click', function() {
+                    window.location = $(this).data('href');
+                });
             }
 
-            function performFilter(resetPage = false, customUrl = null) {
-                if (isLoading) return;
+            $('#user-search').on('input', function() {
+                clearTimeout(searchTimeout);
+                const searchValue = $(this).val();
 
-                const query = $('#user-search').val().trim();
-                const yearLevel = $('#year_level').val();
-                const department = $('#department').val();
+                searchTimeout = setTimeout(function() {
+                    performFilter();
+                }, 500);
+            });
 
-                // Prepare data
-                const data = {};
-                if (query) data.name = query;
-                if (yearLevel) data.year_level = yearLevel;
-                if (department) data.department = department;
+            $('#searchButton').on('click', function() {
+                performFilter();
+            });
 
-                // Determine URL
-                let url = customUrl || "{{ route('admin.users') }}";
+            // Update course dropdown based on selected college
+            $('#college_id').on('change', function() {
+                const collegeId = $(this).val();
+                const courseSelect = $('#course_id');
 
-                // Add page=1 if resetting page and not using custom URL
-                if (resetPage && !customUrl) {
-                    data.page = 1;
+                courseSelect.html('<option value="">All Courses</option>');
+
+                if (collegeId) {
+                    $.get(`/admin/courses-by-college/${collegeId}`, function(courses) {
+                        courses.forEach(function(course) {
+                            courseSelect.append(
+                                $('<option></option>').val(course.id).text(course.code +
+                                    ' - ' + course.name)
+                            );
+                        });
+                    });
                 }
+
+                performFilter();
+            });
+
+            // Enhanced filter performance function
+            function performFilter() {
+                lastScrollPosition = $(window).scrollTop();
+
+                // Get filter values
+                const search = $('#user-search').val();
+                const yearLevel = $('#year_level').val();
+                const collegeId = $('#college_id').val();
+                const courseId = $('#course_id').val();
+                const emailFilter = $('#email_filter').val();
+                const sortBy = $('#sort_by').val();
 
                 // Show loading state
                 showLoadingState(true);
 
+                let url = '{{ route('admin.users') }}';
+                let params = [];
+
+                if (search) {
+                    params.push('search=' + encodeURIComponent(search));
+                }
+                if (yearLevel) {
+                    params.push('year_level=' + encodeURIComponent(yearLevel));
+                }
+                if (collegeId) {
+                    params.push('college_id=' + encodeURIComponent(collegeId));
+                }
+                if (courseId) {
+                    params.push('course_id=' + encodeURIComponent(courseId));
+                }
+                if (emailFilter) {
+                    params.push('email_filter=' + encodeURIComponent(emailFilter));
+                }
+                if (sortBy && sortBy !== 'newest') {
+                    params.push('sort_by=' + encodeURIComponent(sortBy));
+                }
+
+                if (params.length > 0) {
+                    url += '?' + params.join('&');
+                }
+
                 $.ajax({
                     url: url,
-                    type: "GET",
-                    data: data,
+                    type: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     },
                     success: function(response) {
-                        updateTable(response.users, response.links);
-                        updateURL(data);
-                    },
-                    error: function(xhr) {
-                        console.error('Filter error:', xhr);
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire('Error', 'An error occurred while filtering users.', 'error');
-                        } else {
-                            alert('An error occurred while filtering users.');
-                        }
-                    },
-                    complete: function() {
+                        $('#js-users-partial-target').html(response.users);
+                        $('#js-users-partial-target-pagination').html(response.pagination);
                         showLoadingState(false);
+                        window.history.pushState({}, '', url);
+                        initPaginationEvents();
+                        initRowClicks();
+                        updateActiveFiltersDisplay();
+                        $(window).scrollTop(lastScrollPosition);
+
+                        // Show success feedback
+                        showNotification(`Found ${response.count} user(s)`, 'info', 2000);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error:', error);
+                        showLoadingState(false);
+                        showNotification(
+                            'An error occurred while filtering users. Please try again.',
+                            'error');
                     }
                 });
             }
 
-            function updateTable(users, paginationLinks) {
-                const $tbody = $('#users-tbody');
-                $tbody.empty();
-
-                if (users && users.length > 0) {
-                    $.each(users, function(index, user) {
-                        const editUrl = `/admin/users/${user.id}/edit`;
-                        const row = `
-                            <tr>
-                                <td class="text-center">
-                                    <div class="text-truncate" style="max-width: 150px;" title="${user.name || ''}">
-                                        ${user.name || 'N/A'}
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <div class="text-truncate" style="max-width: 200px;" title="${user.email || ''}">
-                                        ${user.email || 'N/A'}
-                                    </div>
-                                </td>
-                                <td class="text-center">${user.phone_number || 'Not Provided'}</td>
-                                <td class="text-center">${user.year_level || 'Not Provided'}</td>
-                                <td class="text-center">${user.department || 'Not Provided'}</td>
-                                <td class="text-center">
-                                    <div class="text-truncate" style="max-width: 120px;" title="${user.course || 'Not Provided'}">
-                                        ${user.course || 'Not Provided'}
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <div class="list-icon-function justify-center">
-                                        <a href="${editUrl}" class="btn btn-outline-primary btn-sm" title="Edit User">
-                                            <div class="item edit">
-                                                <i class="icon-edit-3"></i>
-                                            </div>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        `;
-                        $tbody.append(row);
-                    });
+            // Show/hide loading state
+            function showLoadingState(isLoading) {
+                if (isLoading) {
+                    $('#loading-indicator').show();
+                    $('.filter-select, .filter-input, #user-search').prop('disabled', true);
+                    $('#applyFilters').prop('disabled', true).html(
+                        '<span class="spinner-border spinner-border-sm me-1"></span>Loading...');
                 } else {
-                    $tbody.append(`
-                        <tr>
-                            <td colspan="8" class="text-center py-4">No users found matching your criteria.</td>
-                        </tr>
-                    `);
-                }
-
-                if (paginationLinks) {
-                    $('#pagination-wrapper').html(paginationLinks);
+                    $('#loading-indicator').hide();
+                    $('.filter-select, .filter-input, #user-search').prop('disabled', false);
+                    $('#applyFilters').prop('disabled', false).html(
+                        '<i class="icon-filter me-1"></i> Apply Filters');
                 }
             }
 
-            function clearAllFilters() {
+            function initPaginationEvents() {
+                $('.pagination a').off('click').on('click', function(e) {
+                    e.preventDefault();
+                    lastScrollPosition = $(window).scrollTop();
+
+                    const url = $(this).attr('href');
+                    showLoadingState(true);
+
+                    $.ajax({
+                        url: url,
+                        type: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        success: function(response) {
+                            $('#js-users-partial-target').html(response.users);
+                            $('#js-users-partial-target-pagination').html(response.pagination);
+                            showLoadingState(false);
+                            window.history.pushState({}, '', url);
+                            initPaginationEvents();
+                            $(window).scrollTop(lastScrollPosition);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                            showLoadingState(false);
+                            showNotification(
+                                'An error occurred while loading page. Please try again.',
+                                'error');
+                        }
+                    });
+                });
+            }
+
+            function updateActiveFiltersDisplay() {
+                let count = 0;
+                const filterTags = $('#filterTags');
+                const activeFiltersRow = $('#activeFiltersRow');
+                const activeFiltersCount = $('#activeFiltersCount');
+                const clearAllButton = $('#clearAllFilters');
+                const filterBadge = $('#filterBadge');
+
+                filterTags.empty();
+                const urlParams = new URLSearchParams(window.location.search);
+
+                if (urlParams.get('search')) {
+                    count++;
+                    addFilterTag(`Search: "${urlParams.get('search')}"`, 'search');
+                }
+                if (urlParams.get('year_level')) {
+                    count++;
+                    const yearLevelText = $('#year_level option:selected').text();
+                    addFilterTag(`Year Level: ${yearLevelText}`, 'year_level');
+                }
+                if (urlParams.get('college_id')) {
+                    count++;
+                    const collegeText = $('#college_id option:selected').text();
+                    addFilterTag(`College: ${collegeText}`, 'college_id');
+                }
+                if (urlParams.get('course_id')) {
+                    count++;
+                    const courseText = $('#course_id option:selected').text();
+                    addFilterTag(`Course: ${courseText}`, 'course_id');
+                }
+                if (urlParams.get('email_filter')) {
+                    count++;
+                    const emailText = $('#email_filter option:selected').text();
+                    addFilterTag(`Email: ${emailText}`, 'email_filter');
+                }
+                if (urlParams.get('sort_by') && urlParams.get('sort_by') !== 'newest') {
+                    count++;
+                    const sortText = $('#sort_by option:selected').text();
+                    addFilterTag(`Sort: ${sortText}`, 'sort_by');
+                }
+
+                if (count > 0) {
+                    activeFiltersCount.show().text(`${count} filter${count > 1 ? 's' : ''}`);
+                    clearAllButton.show();
+                    activeFiltersRow.show();
+                    filterBadge.show().text(count);
+                } else {
+                    activeFiltersCount.hide();
+                    clearAllButton.hide();
+                    activeFiltersRow.hide();
+                    filterBadge.hide();
+                }
+            }
+
+            function addFilterTag(text, filterName) {
+                const tag = $(`
+                    <span class="filter-tag-enhanced">
+                        ${text}
+                        <button type="button" class="btn-close icon-x text-danger" data-filter="${filterName}" title="Remove filter"></button>
+                    </span>
+                `);
+
+                tag.find('.btn-close').on('click', function() {
+                    const filterToRemove = $(this).data('filter');
+
+                    if (filterToRemove === 'search') {
+                        $('#user-search').val('');
+                    } else {
+                        $(`#${filterToRemove}`).val('');
+                    }
+
+                    performFilter();
+                });
+
+                $('#filterTags').append(tag);
+            }
+
+            $('#applyFilters').on('click', function() {
+                performFilter();
+            });
+
+            $('#year_level, #college_id, #course_id, #email_filter, #sort_by').on('change', function() {
+                performFilter();
+            });
+
+            $('#clearAllFilters, #resetFilters').on('click', function() {
                 $('#user-search').val('');
                 $('#year_level').val('');
-                $('#department').val('');
-                updateButtonStates();
-                performFilter(true);
+                $('#college_id').val('');
+                $('#course_id').val('');
+                $('#email_filter').val('');
+                $('#sort_by').val('newest');
+
+                performFilter();
+            });
+
+            function showNotification(message, type = 'info', duration = 4000) {
+                const alertClass = type === 'success' ? 'alert-success' :
+                    type === 'error' ? 'alert-danger' :
+                    type === 'warning' ? 'alert-warning' : 'alert-info';
+
+                const notification = $(`
+                    <div class="alert ${alertClass} alert-dismissible fade show position-fixed"
+                         style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `);
+
+                $('body').append(notification);
+
+                setTimeout(function() {
+                    notification.fadeOut(function() {
+                        $(this).remove();
+                    });
+                }, duration);
             }
 
-            function showLoadingState(loading) {
-                isLoading = loading;
-                const $table = $('#users-table');
-                const $loading = $('#loading-indicator');
-
-                if (loading) {
-                    $table.addClass('table-loading');
-                    $loading.show();
-                } else {
-                    $table.removeClass('table-loading');
-                    $loading.hide();
+            // Keyboard shortcuts
+            $(document).on('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.keyCode === 13) {
+                    e.preventDefault();
+                    performFilter();
                 }
-            }
+                if (e.keyCode === 27) {
+                    $('#clearAllFilters').click();
+                }
+                if ((e.ctrlKey || e.metaKey) && e.keyCode === 70) {
+                    e.preventDefault();
+                    $('#filterToggle').click();
+                    setTimeout(() => $('#user-search').focus(), 100);
+                }
+            });
 
-            function updateURL(params) {
-                const url = new URL(window.location);
+            // Initialize
+            initPaginationEvents();
+            updateActiveFiltersDisplay();
+            initRowClicks();
 
-                url.searchParams.delete('name');
-                url.searchParams.delete('year_level');
-                url.searchParams.delete('department');
-                url.searchParams.delete('page');
-
-                Object.keys(params).forEach(key => {
-                    if (params[key]) {
-                        url.searchParams.set(key, params[key]);
-                    }
-                });
-
-
-                window.history.replaceState({}, '', url);
+            // Welcome tip
+            if (window.location.search === '') {
+                setTimeout(function() {
+                    showNotification(
+                        '💡 Tip: Use Ctrl+F to open filters, Ctrl+Enter to apply, or Esc to clear all',
+                        'info', 6000);
+                }, 1000);
             }
         });
     </script>

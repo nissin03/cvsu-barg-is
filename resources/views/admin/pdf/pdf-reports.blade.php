@@ -92,6 +92,17 @@
             font-size: 12px;
             margin: 0;
         }
+            .prepared-by {
+      margin-top: 40px;
+      text-align: right;
+      width: 100%;
+    }
+    .signature-line {
+      border-top: 1px solid #000;
+      width: 250px;
+      /* margin-top: 40px; */
+      margin-left: auto;
+    }
     </style>
 </head>
 <body>
@@ -122,7 +133,7 @@
  
 
 
-    <h2 style="text-align: center;">Sales Report of Business and Resource Generation</h2>
+    <h2 style="text-align: center;">SALES REPORT OF BUSINESS AFFAIRS AND MARKETING OFFICE</h2>
     <p style="text-align: center; font-size: 14px;">
         Downloaded on: {{ \Carbon\Carbon::now()->setTimezone('Asia/Manila')->format('F j, Y, g:i a') }}
     </p>
@@ -201,5 +212,14 @@
             <td>&#8369;{{ number_format($total_canceled_amount_d, 2) }}</td>
         </tr>
     </table>
+
+    <div class="prepared-by">
+    <div>Prepared by:</div>
+    <div class="signature-line"></div>
+    <div>{{ Auth::user()->name }}</div>
+    <div>{{ Auth::user()->role ? ucfirst(Auth::user()->role) : 'Administrator' }}</div>
+    <div>Business Affairs and Marketing Office</div>
+    <div>Cavite State University</div>
+</div>
 </body>
 </html>

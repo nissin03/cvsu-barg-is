@@ -2,16 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Models\User;
-use App\Models\Reservation;
 use App\Models\Event;
 use App\Models\Order;
+use App\Models\Course;
+use App\Models\College;
 use App\Models\OrderItem;
+use App\Models\Reservation;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use App\Helpers\ProfileHelper;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+
 use Surfsidemedia\Shoppingcart\Facades\Cart;
 use Illuminate\Validation\ValidationException;
 
@@ -39,9 +44,26 @@ class UserController extends Controller
     }
 
 
+    public function canceled_order()
+    {
+        $canceledOrders = Auth::user()->orders()
+            ->where('status', 'canceled')
+            ->whereHas('transaction', function ($query) {
+                $query->where('status', 'unpaid');
+            })
+            ->latest()
+            ->paginate(10);
+
+        return view('user.canceled_order', compact('canceledOrders'));
+    }
+
     public function order_details($order_id)
     {
-        $order = Order::where('user_id', Auth::user()->id)->where('id', $order_id)->first();
+        // $order = Order::where('user_id', Auth::user()->id)->where('id', $order_id)->first();
+        $order = Order::where('user_id', Auth::user()->id)
+            ->where('id', $order_id)
+            ->with(['user.college', 'user.course'])
+            ->first();
         if ($order) {
             $orderItems = OrderItem::where('order_id', $order->id)->orderBy('id')->paginate(12);
             $transaction = Transaction::where('order_id', $order->id)->first();
@@ -57,7 +79,7 @@ class UserController extends Controller
 
         $thirtyDaysAgo = Carbon::now()->subDays(30);
         $orders = Order::where('user_id', $userId)
-            ->whereIn('status', ['accepted', 'canceled', 'pickedup'])
+            ->whereIn('status', ['canceled', 'pickedup'])
             ->where('created_at', '>=', $thirtyDaysAgo)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -67,7 +89,7 @@ class UserController extends Controller
 
     public function show_profile()
     {
-        $user = Auth::user();
+        $user = Auth::user()->load('college', 'course');
         return view('user.profile', compact('user'));
     }
 
@@ -77,7 +99,11 @@ class UserController extends Controller
         if (!$user) {
             return redirect()->route('user.profile')->with('error', 'User not found.');
         }
-        return view('user.profile-edit', compact('user'));
+
+        $colleges = College::all();
+        $courses = Course::all();
+
+        return view('user.profile-edit', compact('user', 'colleges', 'courses')); // Add courses here
     }
 
     public function profile_update(Request $request)
@@ -95,11 +121,9 @@ class UserController extends Controller
         }
 
         if ($role === 'student') {
-            $validationRules['department'] = 'required|string';
             $validationRules['year_level'] = 'required|string|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
-            $validationRules['course'] = 'required|string';
-        } elseif ($role === 'professor') {
-            $validationRules['department'] = 'required|string';
+            $validationRules['college_id'] = 'required|exists:colleges,id';
+            $validationRules['course_id'] = 'required|exists:courses,id';
         }
 
         $validatedData = $request->validate($validationRules);
@@ -114,16 +138,12 @@ class UserController extends Controller
 
         if ($role === 'student') {
             $user->year_level = $validatedData['year_level'];
-            $user->department = $validatedData['department'];
-            $user->course = $validatedData['course'];
-        } elseif ($role === 'professor') {
-            $user->year_level = null;
-            $user->department = $validatedData['department'];
-            $user->course = null;
+            $user->college_id = $validatedData['college_id'];
+            $user->course_id = $validatedData['course_id'];
         } else {
             $user->year_level = null;
-            $user->department = null;
-            $user->course = null;
+            $user->college_id = null;
+            $user->course_id = null;
         }
 
         $user->save();
@@ -153,43 +173,135 @@ class UserController extends Controller
 
     public function profile_image_update(Request $request)
     {
-        $request->validate([
-            'profile_image' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
-        ]);
+        try {
+            $request->validate([
+                'profile_image' => 'required|image|mimes:png,jpg,jpeg|max:2048',
+            ]);
 
-        $user = Auth::user();
+            $user = Auth::user();
 
-        if ($request->hasFile('profile_image')) {
-            $imagePath = $request->file('profile_image')->store('profile_images', 'public');
+            if ($request->hasFile('profile_image')) {
+                if ($user->profile_image && Storage::disk('public')->exists($user->profile_image)) {
+                    Storage::disk('public')->delete($user->profile_image);
+                }
 
-            if ($user->profile_image) {
+                $imagePath = $request->file('profile_image')->store('profile_images', 'public');
 
-                Storage::disk('public')->delete($user->profile_image);
+                $user->profile_image = $imagePath;
+                $user->save();
+
+                return redirect()->route('user.profile')
+                    ->with('success', 'Profile image updated successfully.');
             }
 
-            $user->profile_image = $imagePath;
-            $user->save();
-
-            return redirect()->route('user.profile')->with('success', 'Profile image updated successfully.');
+            return redirect()->route('user.profile')
+                ->with('error', 'Please select a valid image file.');
+        } catch (ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->validator)
+                ->withInput()
+                ->with('error', 'Validation failed. Please check your input.');
+        } catch (Exception $e) {
+            return redirect()->back()
+                ->with('error', 'An error occurred while updating your profile image. Please try again.');
         }
-
-        return redirect()->route('user.profile')->with('error', 'No image uploaded.');
     }
-
 
     public function profile_image_delete()
     {
+        try {
+            $user = Auth::user();
+
+            if ($user->profile_image && Storage::disk('public')->exists($user->profile_image)) {
+                Storage::disk('public')->delete($user->profile_image);
+
+                $user->profile_image = null;
+                $user->save();
+
+                return redirect()->route('user.profile')
+                    ->with('success', 'Profile image deleted successfully.');
+            }
+
+            return redirect()->route('user.profile')
+                ->with('error', 'No profile image found to delete.');
+        } catch (Exception $e) {
+            return redirect()->route('user.profile')
+                ->with('error', 'An error occurred while deleting your profile image. Please try again.');
+        }
+    }
+
+    public function getCollegeCourses(College $college)
+    {
+        $courses = $college->courses->map(function ($course) {
+            return [
+                'id' => $course->id,
+                'name' => $course->name
+            ];
+        });
+
+        return response()->json($courses);
+    }
+    public function rebook_canceled_order($orderId)
+    {
         $user = Auth::user();
+        if ($user->utype === 'USR' && ProfileHelper::isProfileIncomplete($user)) {
+            return redirect()->route('user.profile', ['swal' => 1])->with([
+                'message' => 'Please complete your profile to proceed with the checkout.'
+            ]);
+        }
+        $order = Order::where('id', $orderId)
+            ->where('user_id', $user->id)
+            ->where('status', 'canceled')
+            ->whereHas('transaction', function ($query) {
+                $query->where('status', 'unpaid');
+            })
+            ->with(['orderItems.product', 'transaction'])
+            ->first();
 
-        if ($user->profile_image) {
-            Storage::disk('public')->delete($user->profile_image);
-
-            $user->profile_image = null;
-            $user->save();
-
-            return redirect()->route('user.profile')->with('success', 'Profile image deleted successfully.');
+        if (!$order) {
+            return redirect()->route('user.canceled-orders')
+                ->with('error', 'Order not found or not available for re-booking.');
         }
 
-        return redirect()->route('user.profile')->with('error', 'No profile image to delete.');
+        $orderAge = $order->created_at->diffInHours(now());
+        if ($orderAge > 24) {
+            return redirect()->route('user.canceled-orders')
+                ->with('error', 'This order cannot be re-booked as it was placed more than 24 hours ago.');
+        }
+
+        try {
+            Cart::instance('cart')->destroy();
+            foreach ($order->orderItems as $orderItem) {
+                $product = $orderItem->product;
+
+                if (!$product || $product->quantity < $orderItem->quantity || $product->stock_status === 'outofstock') {
+                    continue;
+                }
+
+                if ($product->sex !== 'all' && $product->sex !== $user->sex) {
+                    continue;
+                }
+
+
+
+                Cart::instance('cart')->add([
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'qty' => $orderItem->quantity,
+                    'price' => $product->price,
+                    'options' => [
+                        'product_id' => $product->id,
+                        'is_variant' => false,
+                        'variant_attributes' => null
+                    ]
+                ])->associate('App\Models\Product');
+            }
+
+            return redirect()->route('cart.checkout')
+                ->with('success', 'Items from your canceled order have been added to cart. Please select a new pickup time slot.');
+        } catch (\Exception $e) {
+            return redirect()->route('user.canceled-orders')
+                ->with('error', 'Failed to re-book order. Please try again.');
+        }
     }
 }

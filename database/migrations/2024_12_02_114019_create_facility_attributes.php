@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('room_name')->nullable();
             $table->unsignedInteger('capacity')->nullable();
             $table->unsignedInteger('whole_capacity')->nullable();
-            $table->enum('sex_restriction', ['male', 'female'])->nullable();
+            $table->enum('sex_restriction', ['male', 'female','all'])->nullable();
             $table->timestamps();
         });
     }

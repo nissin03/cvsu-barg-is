@@ -19,6 +19,11 @@ return new class extends Migration
             $table->string('time_slot')->nullable();
             $table->date('picked_up_date')->nullable();
             $table->date('canceled_date')->nullable();
+            $table->foreignId('updated_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+            $table->string('canceled_reason')->nullable();
             $table->enum('status', ['reserved', 'pickedup', 'canceled'])->default('reserved');
             $table->timestamps();
         });

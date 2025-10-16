@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Database\Seeders\AddonSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -17,6 +18,8 @@ class DatabaseSeeder extends Seeder
             MonthSeeder::class,
             WeekSeeder::class,
             DailySeeder::class,
+            CollegesSeeder::class,
+            CoursesSeeder::class,
             UserSeeder::class,
             ContactSeeder::class,
             CategorySeeder::class,
@@ -24,10 +27,16 @@ class DatabaseSeeder extends Seeder
             // OrderSeeder::class,
             SlidesSeeder::class,
             // FacilityAndRelationsSeeder::class,
-            // FacilitySeeder::class,
+            FacilitySeeder::class,
             // FacilityReportSeeder::class,
-            OrderSeeder::class,
+            // OrderSeeder::class,
             ReservationSeeder::class,
+            // AddonSeeder::class,
+            AddonsFacilitySeeder::class,
+            AddonReservationSeeder::class,
+            AddonPaymentSeeder::class,
+            AddonTransactionSeeder::class,
+       
 
 
         ]);

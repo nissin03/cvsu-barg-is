@@ -41,9 +41,9 @@
                                     <button type="submit" class="btn btn-dark btn-lg flex-fill" style="min-width: 120px;">
                                         <i class="fas fa-filter me-1"></i>Filter
                                     </button>
-                                    <button type="button" class="btn btn-outline-secondary btn-lg" onclick="resetDateFilter()" style="min-width: 120px;">
+                                    {{-- <button type="button" class="btn btn-outline-secondary btn-lg" onclick="resetDateFilter()" style="min-width: 120px;">
                                         <i class="bi bi-x-circle me-1"></i>Clear
-                                    </button>
+                                    </button> --}}
                                 </div>
                             </div>
                         </div>

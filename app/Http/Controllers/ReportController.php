@@ -106,7 +106,6 @@ class ReportController extends Controller
 
         $pageTitle = 'Reports';
         
-        // Make sure all variables are properly defined
         $selectedYear = $dateParams['selectedYear'];
         $selectedMonthId = $dateParams['selectedMonth'];
         $selectedWeekId = $dateParams['selectedWeek'];
@@ -155,8 +154,6 @@ class ReportController extends Controller
     public function generateUser(Request $request)
     {
         $dateParams = $this->getDateParameters($request);
-        
-
         $periods = $this->getAvailablePeriods();
         $availableMonths = $periods['availableMonths'];
         $availableWeeks = $periods['availableWeeks'];
@@ -205,8 +202,20 @@ class ReportController extends Controller
             ->whereMonth('created_at', $dateParams['currentMonth'])
             ->count();
         $activeUsers = User::where('isDefault', false)->count();
+       
+        $currentMonthUsers = User::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+        $lastMonthUsers = User::whereMonth('created_at', now()->subMonth()->month)
+            ->whereYear('created_at', now()->subMonth()->year)
+            ->count();
+
+        $declineRate = $lastMonthUsers > 0 ? (($currentMonthUsers - $lastMonthUsers) / $lastMonthUsers) * 100 : 0;
+
+
 
         $growthRate = ($totalUsers > 0) ? (($newUsersThisMonth / $totalUsers) * 100) : 0;
+       
 
         $recentUsers = User::orderBy('created_at', 'DESC')->take(5)->get();
 
@@ -647,7 +656,7 @@ class ReportController extends Controller
     public function generateInputSales(Request $request)
     {
         $request->validate([
-            'start_date' => 'required|date',
+            'start_date' => 'nullable|date|required_with:end_date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'month' => 'nullable|integer|between:1,12',
             'year' => 'nullable|integer|min:2010|max:' . date('Y'),
@@ -661,8 +670,29 @@ class ReportController extends Controller
         $availableWeeks = $periods['availableWeeks'];
         $yearRange = $periods['yearRange'];
         
+        $selectedYear = $dateParams['selectedYear'];
+        $selectedMonth = $availableMonths->firstWhere('id', $dateParams['selectedMonth']) ?: $availableMonths->first();
+        $selectedWeekId = $dateParams['selectedWeek'];
+        
+        if (!$request->filled('start_date') && !$request->filled('end_date')) {
+            return view('admin.reports.product-input-sales', compact(
+                'availableMonths',
+                'availableWeeks',
+                'yearRange',
+                'selectedMonth',
+                'selectedYear',
+                'selectedWeekId'
+            ))->with([
+                'chartData' => null,
+                'startDate' => null,
+                'endDate' => null
+            ]);
+        }
+        
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
-        $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
+        $endDate = $request->filled('end_date') 
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
+            : $startDate->copy()->endOfDay();
         
         $salesData = Order::select(
             DB::raw('DATE(created_at) as date'),
@@ -699,13 +729,6 @@ class ReportController extends Controller
             'canceled_sales_total' => $canceledSalesTotal,
         ];
         
-        $selectedYear = $dateParams['selectedYear'];
-        $selectedMonth = $periods['availableMonths']->firstWhere('id', $dateParams['selectedMonth']) ?: $periods['availableMonths']->first();
-        $selectedWeekId = $dateParams['selectedWeek'];
-        $availableMonths = $periods['availableMonths'];
-        $availableWeeks = $periods['availableWeeks'];
-        $yearRange = $periods['yearRange'];
-        
         return view('admin.reports.product-input-sales', compact(
             'chartData', 
             'startDate', 
@@ -721,14 +744,34 @@ class ReportController extends Controller
 
     public function generateInputUsers(Request $request)
     {
+        // Check if the request is to clear the filter
+        if (!$request->has('start_date') || empty($request->input('start_date'))) {
+            // Return view without chart data when no dates are selected
+            $dateParams = $this->getDateParameters($request);
+            $periods = $this->getAvailablePeriods();
+            
+            return view('admin.reports.product-input-user', [
+                'availableMonths' => $periods['availableMonths'],
+                'availableWeeks' => $periods['availableWeeks'],
+                'yearRange' => $periods['yearRange'],
+                'selectedMonth' => $dateParams['selectedMonth'],
+                'selectedYear' => $dateParams['selectedYear'],
+                'selectedWeekId' => $request->input('week', 1),
+            ]);
+        }
+        
+        // Original validation and processing
         $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
         
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
-        $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
+        $endDate = $request->has('end_date') && !empty($request->input('end_date')) 
+            ? Carbon::parse($request->input('end_date'))->endOfDay() 
+            : $startDate->copy()->endOfDay();
 
+        // Rest of your original method code here...
         $currentMonthStart = Carbon::now()->startOfMonth();
         $currentMonthEnd = Carbon::now()->endOfMonth();
 
@@ -869,13 +912,16 @@ class ReportController extends Controller
                 $q->where('facility_id', $request->facility_id);
             });
         }
-
         if ($request->has('date_from') && $request->date_from) {
-            $query->whereDate('created_at', '>=', $request->date_from);
+            $query->whereHas('availability', function($q) use ($request) {
+                $q->whereDate('date_from', '>=', $request->date_from);
+            });
         }
 
         if ($request->has('date_to') && $request->date_to) {
-            $query->whereDate('created_at', '<=', $request->date_to);
+            $query->whereHas('availability', function($q) use ($request) {
+                $q->whereDate('date_to', '<=', $request->date_to);
+            });
         }
 
         if ($request->has('status') && $request->status) {
@@ -896,9 +942,15 @@ class ReportController extends Controller
             return $payment;
         });
 
+        $facilities = \App\Models\Facility::where('archived', false)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return view('admin.reports.facility_statement', [
             'payments' => $payments,
+            'facilities' => $facilities,
             'filters' => $request->all()
         ]);
     }
+    
 }

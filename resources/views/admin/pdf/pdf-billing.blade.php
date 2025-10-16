@@ -98,6 +98,17 @@
     th {
       background-color: #f4f4f4;
     }
+        .prepared-by {
+      margin-top: 40px;
+      text-align: right;
+      width: 100%;
+    }
+    .signature-line {
+      border-top: 1px solid #000;
+      width: 250px;
+      /* margin-top: 40px; */
+      margin-left: auto;
+    }
   </style>
 </head>
 <body>
@@ -128,7 +139,7 @@
   <!-- End Header Section -->
 
   <div class="office-name">
-    PRODUCTION AND RESOURCE GENERATION OFFICE
+    BUSINESS AFFAIRS AND MARKETING OFFICE
   </div>
 
   <h3>Billing Statements</h3>
@@ -164,5 +175,15 @@
       @endforeach
     </tbody>
   </table>
+
+
+  <div class="prepared-by">
+  <div>Prepared by:</div>
+  <div class="signature-line"></div>
+  <div>{{ Auth::user()->name }}</div>
+  <div>{{ Auth::user()->role ? ucfirst(Auth::user()->role) : 'Administrator' }}</div>
+  <div>BUSINESS AFFAIRS AND MARKETING OFFICE</div>
+  <div>Cavite State University</div>
+</div>
 </body>
 </html>

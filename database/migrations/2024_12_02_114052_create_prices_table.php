@@ -20,6 +20,8 @@ return new class extends Migration
            
             $table->boolean('is_based_on_days')->default(false);
             $table->boolean('is_there_a_quantity')->default(false);
+            $table->boolean('discount_price')->default(false);
+            $table->string('requirements')->nullable();
             $table->date('date_from')->nullable();
             $table->date('date_to')->nullable();
             $table->timestamps();

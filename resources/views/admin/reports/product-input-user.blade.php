@@ -20,71 +20,6 @@
         </div>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted text-uppercase mb-2 small">Total Users</h6>
-                            <h4 class="mb-0">{{ number_format($totalUsers ?? 0) }}</h4>
-                        </div>
-                        <div class="text-primary">
-                            <i class="fas fa-users fs-3"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted text-uppercase mb-2 small">New This Month</h6>
-                            <h4 class="mb-0">{{ number_format($newUsersThisMonth ?? 0) }}</h4>
-                        </div>
-                        <div class="text-success">
-                            <i class="fas fa-user-plus fs-3"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted text-uppercase mb-2 small">Active Users</h6>
-                            <h4 class="mb-0">{{ number_format($activeUsers ?? 0) }}</h4>
-                        </div>
-                        <div class="text-info">
-                            <i class="fas fa-user-check fs-3"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted text-uppercase mb-2 small">Growth Rate</h6>
-                            <h4 class="mb-0">{{ number_format($growthRate ?? 0, 1) }}%</h4>
-                        </div>
-                        <div class="text-warning">
-                            <i class="fas fa-chart-line fs-3"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Date Range Filter Card -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white border-bottom py-4">
             <div class="row align-items-center">
@@ -113,15 +48,9 @@
                             <button type="button" class="btn btn-outline-secondary btn-lg" onclick="resetDateFilter()">
                                 <i class="fas fa-times-circle me-1"></i>Clear
                             </button>
-                            <form action="{{ route('admin.download-input-users') }}" method="POST" id="download-form">
-                                @csrf
-                                <input type="hidden" name="start_date" value="{{ old('start_date', isset($startDate) ? $startDate->toDateString() : '') }}">
-                                <input type="hidden" name="end_date" value="{{ old('end_date', isset($endDate) ? $endDate->toDateString() : '') }}">
-                                <input type="hidden" name="chart_image" id="chart_image">
-                                <button type="submit" class="btn btn-danger btn-lg">
-                                    <i class="fas fa-file-pdf me-1"></i>PDF
-                                </button>
-                            </form>
+                            <button type="button" class="btn btn-danger btn-lg" onclick="downloadPDF()">
+                                <i class="fas fa-file-pdf me-1"></i>PDF
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -129,7 +58,7 @@
         </div>
     </div>
 
-        <div class="row mb-4">
+    <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-bottom py-4">
@@ -167,17 +96,21 @@
                                         <i class="fas fa-filter me-1"></i>Filter
                                     </button>
                                 </form>
-
-                              
                             </div>
                         </div>
                     </div>
                 </div>
-             
             </div>
         </div>
     </div>
-    
+
+    <form action="{{ route('admin.download-input-users') }}" method="POST" id="download-form" style="display: none;">
+        @csrf
+        <input type="hidden" name="start_date" id="download_start_date" value="{{ old('start_date', isset($startDate) ? $startDate->toDateString() : '') }}">
+        <input type="hidden" name="end_date" id="download_end_date" value="{{ old('end_date', isset($endDate) ? $endDate->toDateString() : '') }}">
+        <input type="hidden" name="chart_image" id="chart_image">
+    </form>
+
     @if ($errors->any())
     <div class="alert alert-danger alert-dismissible fade show mt-4" role="alert">
         <div class="d-flex">
@@ -192,7 +125,7 @@
     </div>
     @endif
 
-    @isset($chartData)
+    @if(isset($chartData) && !empty($chartData['dates']))
     <div class="row mt-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
@@ -213,26 +146,45 @@
         </div>
     </div>
     @else
-    <div class="alert alert-info mt-4">
-        <div class="d-flex">
-            <i class="fas fa-info-circle me-2 mt-1"></i>
-            <div>No user data available for the selected date range.</div>
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5 text-center">
+                    <i class="fas fa-calendar-x fs-1 text-muted"></i>
+                    <h5 class="mt-3 text-muted">No date range selected</h5>
+                    <p class="text-muted">Please select a start and end date to view user input data.</p>
+                </div>
+            </div>
         </div>
     </div>
-    @endisset
+    @endif
 </div>
 @endsection
 
 @push('scripts')
-@if(isset($chartData))
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    function resetDateFilter() {
-        document.getElementById('start_date').value = '';
-        document.getElementById('end_date').value = '';
-        document.getElementById('user-form').submit();
-    }
+function resetDateFilter() {
+    document.getElementById('start_date').value = '';
+    document.getElementById('end_date').value = '';
+    document.getElementById('user-form').submit();
+}
 
+function downloadPDF() {
+    document.getElementById('download_start_date').value = document.getElementById('start_date').value;
+    document.getElementById('download_end_date').value = document.getElementById('end_date').value;
+    
+    if (typeof chart !== 'undefined') {
+        chart.dataURI().then(({ imgURI }) => {
+            document.getElementById('chart_image').value = imgURI;
+            document.getElementById('download-form').submit();
+        });
+    } else {
+        document.getElementById('download-form').submit();
+    }
+}
+
+@if(isset($chartData) && !empty($chartData['dates']))
+document.addEventListener('DOMContentLoaded', function() {
     var options = {
         chart: {
             type: 'area',
@@ -294,18 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
             {
                 name: 'Total Users',
                 data: @json($chartData['total_users']),
-               
             },
-            // {
-            //     name: 'Students',
-            //     data: @json($chartData['total_students']),
-            //     type: 'area'
-            // },
-            // {
-            //     name: 'Employees',
-            //     data: @json($chartData['total_employees']),
-            //     type: 'area'
-            // }
         ],
         xaxis: {
             categories: @json($chartData['dates']),
@@ -325,7 +266,6 @@ document.addEventListener('DOMContentLoaded', function() {
             title: {
                 text: 'Date Range',
                 offsetY: 80,
-                
                 style: {
                     fontSize: '14px',
                     fontWeight: 600,
@@ -441,14 +381,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var chart = new ApexCharts(document.querySelector("#user-chart"), options);
     chart.render();
 
-    document.getElementById('download-form').addEventListener('submit', function (event) {
-        event.preventDefault();
-        chart.dataURI().then(({ imgURI }) => {
-            document.getElementById('chart_image').value = imgURI;
-            this.submit();
-        });
-    });
-
     window.addEventListener('resize', function() {
         chart.updateOptions({
             chart: {
@@ -457,6 +389,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-</script>
 @endif
+</script>
 @endpush

@@ -63,5 +63,13 @@ class Facility extends Model
 
     //     return $price ? $price->value : 0;
     // }
+    // public function addons()
+    // {
+    //     return $this->morphToMany(Addon::class, 'addonable');
+    // }
 
+    public function addons()
+    {
+        return $this->hasMany(Addon::class);
+    }
 }

@@ -7,6 +7,10 @@
 
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @auth
+        <meta name="user-id" content="{{ Auth::user()->id }}">
+        <meta name="user-role" content="{{ Auth::user()->utype }}">
+    @endauth
 
     {{-- <title>{{ config('app.name', 'Information System') }}</title> --}}
     <title>{{ isset($pageTitle) ? $pageTitle : config('app.name', 'Information System') }}</title>
@@ -30,6 +34,7 @@
     {{-- <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script> --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
     @vite('resources/js/app.js')
 
     <style>
@@ -250,8 +255,8 @@
 
                 <div class="section-menu-left">
                     <div class="box-logo">
-                        <a href="{{ route('admin.index') }}" class="" style="width: 50px;">
-                            <img src="{{ asset('../images/logo.png') }}" alt="site icon">
+                        <a href="{{ route('admin.index') }}" class="" style="width: 80px;">
+                            <img src="{{ asset('../images/logo/BaRG-logo.png') }}" alt="site icon">
                         </a>
                         <div class="button-show-hide">
                             <i class="icon-menu-left"></i>
@@ -281,13 +286,13 @@
                                         </li>
                                     </ul>
 
-                                   
+
                                 </li>
                             </ul>
                         </div>
 
 
-                        
+
                         <div class="center-item">
                             <ul class="menu-list">
 
@@ -309,6 +314,17 @@
                                                     <div class="text">Facilities</div>
                                                 </a>
                                             </li>
+                                            <li class="divider mb-10"></li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.addons') }}">
+                                                    <div class="text">Manage Add-ons</div>
+                                                </a>
+                                            </li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.addons.create') }}">
+                                                    <div class="text">Create Add-ons</div>
+                                                </a>
+                                            </li>
                                         </ul>
                                     </li>
                                     <li class="menu-item">
@@ -319,7 +335,7 @@
                                     </li>
 
 
-                                  
+
 
                                     <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
@@ -420,10 +436,58 @@
                                     </li>
 
                                     <li class="menu-item">
+                                        {{-- <a href="javascript:void(0);" class="menu-item-button"> --}}
                                         <a href="{{ route('admin.users') }}">
-                                            <div class="icon"><i class="icon-user"></i></div>
+                                            <div class="icon"><i class="icon-users"></i></div>
+
                                             <div class="text">Users</div>
                                         </a>
+                                    </li>
+
+                                    <li class="menu-item has-children">
+                                        <a href="javascript:void(0);" class="menu-item-button">
+                                            {{-- <a href="{{ route('admin.users') }}"> --}}
+                                            <div class="icon"><i class="icon-settings"></i></div>
+                                            <div class="text">College</div>
+                                        </a>
+                                        <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.colleges.index') }}">
+                                                    <div class="text">Colleges</div>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                        <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.colleges.create') }}">
+                                                    <div class="text">Add Colleges</div>
+                                                </a>
+                                            </li>
+                                        </ul>
+
+                                    </li>
+
+                                    <li class="menu-item has-children">
+                                        <a href="javascript:void(0);" class="menu-item-button">
+                                            {{-- <a href="{{ route('admin.users') }}"> --}}
+                                            <div class="icon"><i class="icon-book-open"></i></div>
+                                            <div class="text">Course</div>
+                                        </a>
+                                        <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.courses.index') }}">
+                                                    <div class="text">Courses</div>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                        <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.courses.create') }}">
+                                                    <div class="text">Add Courses</div>
+                                                </a>
+                                            </li>
+                                        </ul>
+
                                     </li>
                                 @endif
 
@@ -434,7 +498,7 @@
                                             <div class="icon"><i class="icon-bar-chart-2"></i></div>
                                             <div class="text">Products Reports</div>
                                         </a>
-                                         <ul class="sub-menu">
+                                        <ul class="sub-menu">
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.reports') }}">
                                                     <div class="text">Sales</div>
@@ -493,7 +557,7 @@
 
 
 
-                                           
+
                                         </ul>
 
                                     </li>
@@ -570,14 +634,16 @@
                                                         <div class="notification-item"
                                                             data-notification-id="{{ $notification->id }}">
                                                             <div class="badge-icon h5">
-                                                                <i class="fas fa-envelope text-dark"></i>
+                                                                <i
+                                                                    class="{{ $notification->data['icon'] ?? 'fas fa-envelope' }} text-dark"></i>
                                                             </div>
                                                             <div class="notification-content">
                                                                 <p class="notification-text fw-bold">
-                                                                    {{ $notification->data['name'] }}</p>
+                                                                    {{ $notification->data['title'] ?? ($notification->data['name'] ?? 'Notification') }}
+                                                                </p>
                                                                 <p class="notification-subtext">
                                                                 <div class="unread-indicator"></div>
-                                                                {{ Str::limit($notification->data['message'], 30) }}
+                                                                {{ Str::limit($notification->data['body'] ?? ($notification->data['message'] ?? 'No message'), 30) }}
                                                                 </p>
                                                             </div>
                                                             <div class="remove-notification"
@@ -687,7 +753,6 @@
     <script src="{{ asset('assets/js/jquery.min.js') }}"></script>
     <script src="{{ asset('assets/js/bootstrap.min.js') }}"></script>
     <script src="{{ asset('assets/js/bootstrap-select.min.js') }}"></script>
-    {{-- <script src="{{ asset('assets/js/apexcharts/apexcharts.js') }}"></script> --}}
     <script src="{{ asset('assets/js/main.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>

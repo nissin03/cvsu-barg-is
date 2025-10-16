@@ -146,7 +146,7 @@
                             <div class="card border-0 shadow-sm rounded-3 h-100">
                                 <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0 fw-semibold text-gray-700">
-                                        <i class="fas fa-building me-2 text-success"></i>Reservations by Department
+                                        <i class="fas fa-building me-2 text-success"></i>Reservations by Colege
                                     </h5>
                                     <button class="btn btn-sm btn-outline-primary fullscreen-btn" data-target="departmentChart">
                                         <i class="fas fa-expand"></i>
@@ -163,7 +163,7 @@
                             <div class="card border-0 shadow-sm rounded-3 h-100">
                                 <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0 fw-semibold text-gray-700">
-                                        <i class="fas fa-graduation-cap me-2 text-purple"></i>Reservations by College
+                                        <i class="fas fa-graduation-cap me-2 text-purple"></i>Reservations by Courses
                                     </h5>
                                     <button class="btn btn-sm btn-outline-primary fullscreen-btn" data-target="collegeChart">
                                         <i class="fas fa-expand"></i>
@@ -840,7 +840,7 @@
             },
             departmentChart: {
                 options: getDepartmentChartOptions(),
-                type: 'pie'
+                type: 'bar'
             },
             collegeChart: {
                 options: getCollegeChartOptions(),
@@ -919,8 +919,22 @@
                         zoomout: false,
                         pan: false,
                         reset: false
+                    },
+                    export: {
+                        csv: {
+                            filename: 'gender_reservation', 
+                        },
+                        svg: {
+                            filename: 'gender_reservation', 
+                        },
+                        png: {
+                            filename: 'gender_reservation',
+                        }
                     }
+                    
+                  
                 }
+                
             },
             title: {
                 text: 'Gender Reservation',
@@ -968,9 +982,12 @@
     
     function getDepartmentChartOptions() {
         return {
-            series: @json($department['series']),
+            series: [{
+                name: 'Reservations',
+                data: @json($department['series'])
+            }],
             chart: {
-                type: 'pie',
+                type: 'bar',
                 height: 350,
                 animations: {
                     enabled: true,
@@ -998,19 +1015,19 @@
                     },
                     export: {
                         csv: {
-                            filename: 'department_reservation', 
+                            filename: 'College_reservation', 
                         },
                         svg: {
-                            filename: 'department_reservation', 
+                            filename: 'College_reservation', 
                         },
                         png: {
-                            filename: 'department_reservation',
+                            filename: 'College_reservation',
                         }
                     }
-            }
-        },
+                }
+            },
             title: {
-                text: 'Department Reservation',
+                text: 'College Reservation',
                 align: 'center',
                 style: { 
                     fontSize: '18px', 
@@ -1019,34 +1036,86 @@
                 },
                 margin: 20
             },
-            labels: @json($department['labels']),
-            colors: ['#10B981', '#F59E0B', '#3B82F6', '#EC4899', '#8B5CF6', '#EF4444', '#06B6D4'],
-            legend: {
-                position: 'bottom',
-                fontSize: '14px',
-                fontFamily: 'Arial, sans-serif'
-            },
             plotOptions: {
-                pie: {
-                    donut: {
-                        size: '0%'
+                bar: {
+                    borderRadius: 4,
+                    horizontal: true,
+                    distributed: true,
+                    dataLabels: {
+                        position: 'center',
                     }
                 }
             },
+            colors: ['#10B981', '#F59E0B', '#3B82F6', '#EC4899', '#8B5CF6', '#EF4444', '#06B6D4', '#84CC16', '#F97316'],
             dataLabels: {
                 enabled: true,
-                formatter: function (val, opts) {
-                    return opts.w.config.series[opts.seriesIndex] + " (" + val.toFixed(1) + "%)"
+                formatter: function (val) {
+                    return val
+                },
+                style: {
+                    colors: ['#fff'],
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                }
+            },
+            xaxis: {
+                categories: @json($department['labels']),
+                title: {
+                    text: 'Number of Reservations',
+                    style: {
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: '#374151'
+                    }
+                }
+            },
+            yaxis: {
+                title: {
+                    // text: 'Departments',
+                    style: {
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: '#374151'
+                    }
+                }
+            },
+            legend: {
+                show: false
+            },
+            grid: {
+                show: true,
+                borderColor: '#e5e7eb',
+                strokeDashArray: 0,
+                position: 'back',
+                xaxis: {
+                    lines: {
+                        show: true
+                    }
+                },
+                yaxis: {
+                    lines: {
+                        show: false
+                    }
+                }
+            },
+            tooltip: {
+                theme: 'dark',
+                y: {
+                    formatter: function (val) {
+                        return val + " reservations"
+                    }
                 }
             },
             responsive: [{
                 breakpoint: 480,
                 options: {
                     chart: {
-                        width: 200
+                        height: 300
                     },
-                    legend: {
-                        position: 'bottom'
+                    plotOptions: {
+                        bar: {
+                            horizontal: true
+                        }
                     }
                 }
             }]
@@ -1085,11 +1154,22 @@
                         zoomout: false,
                         pan: false,
                         reset: false
+                    },
+                    export: {
+                        csv: {
+                            filename: 'Courses_reservation', 
+                        },
+                        svg: {
+                            filename: 'Courses_reservation', 
+                        },
+                        png: {
+                            filename: 'Courses_reservation',
+                        }
                     }
                 }
             },
             title: {
-                text: 'College Reservation',
+                text: 'Courses Reservation',
                 align: 'center',
                 style: { 
                     fontSize: '18px', 
@@ -1213,6 +1293,17 @@
                         zoomout: false,
                         pan: false,
                         reset: false
+                    },
+                    export: {
+                        csv: {
+                            filename: 'role_reservation', 
+                        },
+                        svg: {
+                            filename: 'role_reservation', 
+                        },
+                        png: {
+                            filename: 'role_reservation',
+                        }
                     }
                 }
             },

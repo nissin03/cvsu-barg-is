@@ -40,4 +40,8 @@ class FacilityAttribute extends Model
     {
         return $this->hasMany(TransactionReservation::class);
     }
+    // public function addons()
+    // {
+    //     return $this->morphToMany(Addon::class, 'addonable');
+    // }
 }
