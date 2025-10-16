@@ -270,9 +270,10 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/addons/archive', [\App\Http\Controllers\AddonsController::class, 'archive'])->name('admin.addons.archive');
         Route::patch('/addons/{id}/restore', [\App\Http\Controllers\AddonsController::class, 'restore'])->name('admin.addons.restore');
         Route::delete('/addons/{id}/force-delete', [\App\Http\Controllers\AddonsController::class, 'forceDelete'])->name('admin.addons.force-delete');
-      
 
-
+        //Validation for duplicate names in Addons
+        Route::get('/addons/get-names', [\App\Http\Controllers\AddonsController::class, 'getAddonNames'])->name('admin.addons.getNames');
+        
         Route::get('/search', [AdminController::class, 'searchproduct'])->name('admin.searchproduct');
 
         Route::get('/index-weekly', [AdminController::class, 'indexWeekly'])->name('admin.index-weekly');

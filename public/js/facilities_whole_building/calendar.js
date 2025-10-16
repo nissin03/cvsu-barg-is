@@ -203,7 +203,7 @@ function getCalendarEvents(availabilities) {
     const reservedDates = getReservedDates(availabilities);
     const events = reservedDates.map(date => ({
         id: `reserved-${date}`,
-        title: 'Fully Booked',
+        title: 'Booked',
         start: date,
         allDay: true,
         backgroundColor: '#dc3545',

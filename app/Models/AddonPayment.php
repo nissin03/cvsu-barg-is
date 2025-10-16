@@ -8,13 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 class AddonPayment extends Model
 {
     use HasFactory;
-
+    protected $table = 'addon_payments';
     protected $fillable = 
     [
         'addon_id',
         'addon_reservation_id',
         'total',
         'status',
+        'downpayment_amount,'
     ];
 
     public function addon()
@@ -27,8 +28,8 @@ class AddonPayment extends Model
         return $this->belongsTo(AddonReservation::class);
     }
 
-    public function transactionReservations()
+     public function addonTransaction()
     {
-        return $this->hasMany(TransactionReservation::class);
+        return $this->hasMany(addonTransaction::class);
     }
 }

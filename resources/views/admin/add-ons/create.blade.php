@@ -152,6 +152,7 @@
     .save-btn:disabled {
         opacity: 0.7;
         cursor: not-allowed;
+        background: #94a3b8;
     }
     
     .conditional-field {
@@ -163,9 +164,16 @@
         animation: fadeIn 0.3s ease;
     }
     
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+    .field-input:invalid,
+    .field-select:invalid,
+    .field-textarea:invalid {
+        border-color: #dc2626;
+    }
+    
+    .field-input:valid,
+    .field-select:valid,
+    .field-textarea:valid {
+        border-color: #16a34a;
     }
 </style>
 
@@ -195,7 +203,8 @@
                 </li>
             </ul>
         </div>
-  <div class="addon-form-container">
+        
+        <div class="addon-form-container">
             <form id="addonForm" action="{{ route('admin.addons.store') }}" method="POST">
                 @csrf
                 
@@ -209,6 +218,7 @@
                         type="text" 
                         placeholder="Enter addon name" 
                         name="name" 
+                        id="name"
                         value="{{ old('name') }}" 
                         required
                     >
@@ -223,6 +233,7 @@
                         class="field-textarea" 
                         placeholder="Enter addon description" 
                         name="description"
+                        id="description"
                     >{{ old('description') }}</textarea>
                     @error('description')
                         <span class="error-message">{{ $message }}</span>
@@ -241,6 +252,7 @@
                             <option value="flat_rate" {{ old('price_type') == 'flat_rate' ? 'selected' : '' }}>Flat Rate</option>
                             <option value="per_night" {{ old('price_type') == 'per_night' ? 'selected' : '' }}>Per Night / Per Day</option>
                             <option value="per_item" {{ old('price_type') == 'per_item' ? 'selected' : '' }}>Per Item</option>
+                            <option value="per_hour" {{ old('price_type') == 'per_hour' ? 'selected' : '' }}>Per Hour</option>
                         </select>
                         @error('price_type')
                             <span class="error-message">{{ $message }}</span>
@@ -259,6 +271,7 @@
                             min="0" 
                             placeholder="0.00" 
                             name="base_price" 
+                            id="base_price"
                             value="{{ old('base_price') }}" 
                             required
                         >
@@ -266,6 +279,22 @@
                             <span class="error-message">{{ $message }}</span>
                         @enderror
                     </div>
+                </div>
+
+                <!-- Billing Cycle Field -->
+                <div class="field-group">
+                    <label class="field-label">
+                        Billing Cycle
+                        <span class="required-asterisk">*</span>
+                    </label>
+                    <select class="field-select" name="billing_cycle" id="billingCycle" required>
+                        <option value="">Select Billing Cycle</option>
+                        <option value="per_day" {{ old('billing_cycle', 'per_day') == 'per_day' ? 'selected' : '' }}>Per Day</option>
+                        <option value="per_contract" {{ old('billing_cycle') == 'per_contract' ? 'selected' : '' }}>Per Contract</option>
+                    </select>
+                    @error('billing_cycle')
+                        <span class="error-message">{{ $message }}</span>
+                    @enderror
                 </div>
                 
                 <div class="field-group">
@@ -286,7 +315,6 @@
                 <!-- Conditional Fields -->
                 <div id="conditionalFields">
                     <!-- Per Unit Fields -->
-                   
                     <div id="perUnitFields" class="conditional-field">
                         <div class="checkbox-group">
                             <input 
@@ -313,6 +341,7 @@
                                 min="1" 
                                 placeholder="Enter capacity" 
                                 name="capacity" 
+                                id="capacity"
                                 value="{{ old('capacity', 1) }}"
                                 required
                             >
@@ -368,6 +397,24 @@
                                 Currently available
                             </label>
                         </div>
+
+                        <div class="field-group" id="quantityNightField">
+                            <label class="field-label">
+                                Quantity <span style="color:#64748b; font-weight:400;">(optional)</span>
+                            </label>
+                            <input 
+                                class="field-input" 
+                                type="number" 
+                                min="1" 
+                                placeholder="Enter quantity (optional)" 
+                                name="quantity" 
+                                id="quantity_night"
+                                value="{{ old('quantity') }}"
+                            >
+                            @error('quantity')
+                                <span class="error-message">{{ $message }}</span>
+                            @enderror
+                        </div>
                     </div>
                     
                     <!-- Per Item Fields -->
@@ -411,6 +458,7 @@
                                 min="1" 
                                 placeholder="Enter quantity" 
                                 name="quantity" 
+                                id="quantity_item"
                                 value="{{ old('quantity', 1) }}"
                                 required
                             >
@@ -419,13 +467,37 @@
                             @enderror
                         </div>
                     </div>
+
+                    <!-- Per Hour Fields (Staff Only) -->
+                    <div id="perHourFields" class="conditional-field">
+                        <div class="checkbox-group">
+                            <input 
+                                class="checkbox-input" 
+                                type="checkbox" 
+                                id="is_available_hour" 
+                                name="is_available" 
+                                value="1" 
+                                {{ old('is_available', true) ? 'checked' : '' }}
+                            >
+                            <label class="checkbox-label" for="is_available_hour">
+                                Currently available
+                            </label>
+                        </div>
+                        
+                        <!-- Note for per_hour price type -->
+                        <div class="field-group" style="background: #f0f9ff; padding: 16px; border-radius: 8px; border-left: 4px solid #0ea5e9;">
+                            <p style="color: #0369a1; font-size: 14px; margin: 0;">
+                                <strong>Note:</strong> Per hour addons are only visible to staff members.
+                            </p>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="form-actions">
                     <a href="{{ route('admin.addons') }}" class="cancel-btn">
                         Cancel
                     </a>
-                    <button type="submit" class="tf-button w-auto">
+                    <button type="submit" class="save-btn" id="createAddonBtn" disabled>
                         Create Addon
                     </button>
                 </div>
@@ -439,66 +511,122 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const priceTypeSelect = document.getElementById('priceType');
+    const showField = document.getElementById('showField');
+    const billingCycleField = document.getElementById('billingCycle');
     const perUnitFields = document.getElementById('perUnitFields');
     const flatRateFields = document.getElementById('flatRateFields');
     const perNightFields = document.getElementById('perNightFields');
     const perItemFields = document.getElementById('perItemFields');
+    const perHourFields = document.getElementById('perHourFields');
+    const quantityNightFieldInput = document.getElementById('quantity_night');
+    const createAddonBtn = document.getElementById('createAddonBtn');
 
-    function toggleConditionalFields() {
-        // Hide all conditional sections first
+    const commonRequiredFields = ['name', 'base_price', 'price_type', 'billing_cycle', 'show'];
+
+    const priceTypeRequirements = {
+        'per_unit': ['capacity'],
+        'per_item': ['quantity_item'],
+        'per_night': [],
+        'flat_rate': [],
+        'per_hour': []
+    };
+
+    function hideAllConditional() {
         perUnitFields.classList.remove('visible');
         flatRateFields.classList.remove('visible');
         perNightFields.classList.remove('visible');
         perItemFields.classList.remove('visible');
-
-        switch(priceTypeSelect.value) {
-            case 'per_unit':
-                perUnitFields.classList.add('visible');
-                break;
-            case 'flat_rate':
-                flatRateFields.classList.add('visible');
-                break;
-            case 'per_night':
-                perNightFields.classList.add('visible');
-                break;
-            case 'per_item':
-                perItemFields.classList.add('visible');
-                break;
-        }
+        perHourFields.classList.remove('visible');
     }
 
-    // Initial toggle on page load
-    toggleConditionalFields();
+    function toggleConditionalFields() {
+        hideAllConditional();
+        showField.disabled = false;
+        billingCycleField.disabled = false;
 
-    // Event listeners
+        if (priceTypeSelect.value === 'per_hour') {
+            showField.value = 'staff';
+            showField.disabled = true;
+            perHourFields.classList.add('visible');
+        } else {
+            switch (priceTypeSelect.value) {
+                case 'per_unit':
+                    perUnitFields.classList.add('visible');
+                    break;
+                case 'flat_rate':
+                    flatRateFields.classList.add('visible');
+                    break;
+                case 'per_night':
+                    perNightFields.classList.add('visible');
+                    if (quantityNightFieldInput) quantityNightFieldInput.required = false;
+                    break;
+                case 'per_item':
+                    perItemFields.classList.add('visible');
+                    break;
+            }
+        }
+
+        updateCreateButtonState();
+    }
+
+    function updateCreateButtonState() {
+        const currentPriceType = priceTypeSelect.value;
+        if (!currentPriceType) {
+            createAddonBtn.disabled = true;
+            return;
+        }
+
+        const requiredFields = [...commonRequiredFields, ...priceTypeRequirements[currentPriceType]];
+        let allFieldsValid = true;
+
+        requiredFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field && !field.disabled) {
+                if (!field.value || String(field.value).trim() === '') {
+                    allFieldsValid = false;
+                }
+            }
+        });
+
+        createAddonBtn.disabled = !allFieldsValid;
+    }
+
+    function setupFieldListeners() {
+        const allFields = document.querySelectorAll('#addonForm input, #addonForm select, #addonForm textarea');
+        allFields.forEach(field => {
+            field.addEventListener('input', updateCreateButtonState);
+            field.addEventListener('change', updateCreateButtonState);
+        });
+    }
+
+    toggleConditionalFields();
+    setupFieldListeners();
+
     priceTypeSelect.addEventListener('change', toggleConditionalFields);
 
-    // Form validation
     document.getElementById('addonForm').addEventListener('submit', function(e) {
+        const currentPriceType = priceTypeSelect.value;
+        const requiredFields = [...commonRequiredFields, ...priceTypeRequirements[currentPriceType]];
         let isValid = true;
-        const requiredFields = this.querySelectorAll('[required]');
 
-        requiredFields.forEach(field => {
-            // Skip validation for capacity field if price_type is per_unit
-            if (field.name === 'capacity' && priceTypeSelect.value === 'per_unit') {
-                return;
-            }
-            
-            if (!field.value.trim()) {
-                isValid = false;
-                field.style.borderColor = '#dc2626';
-
-                if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('error-message')) {
-                    const errorMsg = document.createElement('span');
-                    errorMsg.className = 'error-message';
-                    errorMsg.textContent = 'This field is required';
-                    field.parentNode.appendChild(errorMsg);
-                }
-            } else {
-                field.style.borderColor = '#cbd5e1';
-
-                if (field.nextElementSibling && field.nextElementSibling.classList.contains('error-message')) {
-                    field.nextElementSibling.remove();
+        requiredFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field && !field.disabled) {
+                const hasValue = field.value && String(field.value).trim() !== '';
+                if (!hasValue) {
+                    isValid = false;
+                    field.style.borderColor = '#dc2626';
+                    if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('error-message')) {
+                        const errorMsg = document.createElement('span');
+                        errorMsg.className = 'error-message';
+                        errorMsg.textContent = 'This field is required';
+                        field.parentNode.appendChild(errorMsg);
+                    }
+                } else {
+                    field.style.borderColor = '#cbd5e1';
+                    if (field.nextElementSibling && field.nextElementSibling.classList.contains('error-message')) {
+                        field.nextElementSibling.remove();
+                    }
                 }
             }
         });
@@ -506,9 +634,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!isValid) {
             e.preventDefault();
             const firstError = this.querySelector('.error-message');
-            if (firstError) {
-                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+            if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     });
 });

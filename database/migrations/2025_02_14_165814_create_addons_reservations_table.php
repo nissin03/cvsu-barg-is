@@ -14,13 +14,14 @@ return new class extends Migration
         Schema::create('addons_reservations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('addon_id')->constrained('addons')->onDelete('cascade');
-            $table->foreignId('availability_id')->nullable()->constrained('availabilities')->onDelete('cascade');
+        
+            $table->date('date_from')->nullable();
+            $table->date('date_to')->nullable();
+            $table->unsignedSmallInteger('quantity')->nullable();
             $table->unsignedSmallInteger('remaining_quantity')->nullable();
             $table->unsignedSmallInteger('remaining_capacity')->nullable();
             $table->unsignedSmallInteger('nights')->nullable();
-           
-           
-
+            $table->unsignedSmallInteger('days')->nullable();
             $table->timestamps();
         });
     }

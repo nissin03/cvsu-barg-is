@@ -7,6 +7,16 @@
                $addon->show === 'both';
     });
 
+       // Add filtering for refundable addons
+    $refundableAddons = $facility->addons->filter(function($addon) use ($facility) {
+        return $addon->facility_id === $facility->id &&
+               ($addon->facility_attribute_id === null || $addon->facility_attribute_id == $facility->facility_attributes->pluck('id')->first()) &&
+               $addon->is_available == true &&
+               $addon->is_refundable == true &&
+               $addon->price_type === 'flat_rate' &&
+               $addon->show === 'both';
+    });
+
     $perUnitAddons = $filteredAddons->filter(function($addon) {
         return $addon->price_type === 'per_unit';
     });
@@ -23,6 +33,8 @@
         return $addon->price_type === 'flat_rate' || (!in_array($addon->price_type, ['per_unit', 'per_night', 'per_item']));
     });
 @endphp
+
+
 
 <style>
     #addonsModal .addon-card {
@@ -673,6 +685,15 @@
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Save Changes</button>
             </div>
         </div>
+        
+        @if($refundableAddons->count() > 0)
+    @foreach($refundableAddons as $refundableAddon)
+        <input type="hidden" name="refundable_addon_ids[]" value="{{ $refundableAddon->id }}">
+        <input type="hidden" name="refundable_addon_names[{{ $refundableAddon->id }}]" value="{{ $refundableAddon->name }}">
+        <input type="hidden" name="refundable_addon_prices[{{ $refundableAddon->id }}]" value="{{ $refundableAddon->base_price }}">
+    @endforeach
+@endif
+
     </div>
 </div>
 @endif

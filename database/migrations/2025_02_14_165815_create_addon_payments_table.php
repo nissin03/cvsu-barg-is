@@ -16,7 +16,8 @@ return new class extends Migration
             $table->foreignId('addon_id')->constrained('addons')->onDelete('cascade');
             $table->foreignId('addon_reservation_id')->constrained('addons_reservations')->onDelete('cascade');
             $table->decimal('total', 8,2);
-            $table->enum('status', ['unpaid', 'paid','not applicable','forfeit', 'refunded'])->default('not applicable');
+            $table->enum('status', ['unpaid', 'downpayment', 'paid', 'forfeit', 'refunded'])->default('unpaid');
+            $table->decimal('downpayment_amount', 8, 2)->nullable();
             $table->timestamps();
         });
     }

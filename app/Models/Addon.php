@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use App\Models\User;
@@ -10,26 +9,28 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 // use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Addon extends Model
-{
-    use HasFactory, SoftDeletes;
-    
-    protected $fillable = 
-    [
-        'user_id',
-        'facility_id',
-        'facility_attribute_id',
-        'name',
-        'price_type',
-        'description',
-         'base_price',
-        'is_refundable',
-        'is_available',
-        'capacity',
-        'quantity',
-        'is_based_on_quantity',
-        'show'
-    ];
+    class Addon extends Model
+    {
+        use HasFactory, SoftDeletes;
+        
+        protected $table = 'addons';
+        protected $fillable = 
+        [
+            'user_id',
+            'facility_id',
+            'facility_attribute_id',
+            'name',
+            'price_type',
+            'description',
+            'base_price',
+            'is_refundable',
+            'is_available',
+            'capacity',
+            'quantity',
+            'is_based_on_quantity',
+            'billing_cycle',
+            'show'
+        ];
 
     public function facility()
     {
@@ -41,8 +42,8 @@ class Addon extends Model
         return $this->belongsTo(User::class);
     }
 
-        public function facilityAttributes()
-      {
+    public function facilityAttributes()
+    {
         return $this->belongsTo(FacilityAttribute::class);
     }
 
@@ -56,19 +57,9 @@ class Addon extends Model
         return $this->hasMany(AddonPayment::class);
     }
 
-    public function transactionReservations()
+     public function addonTransaction()
     {
-        return $this->hasMany(TransactionReservation::class);
+        return $this->hasMany(addonTransaction::class);
     }
 
-    
-
-
-
-
-
 }
-
-
-
-

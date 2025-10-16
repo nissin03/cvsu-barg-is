@@ -32,8 +32,10 @@ class DatabaseSeeder extends Seeder
             // OrderSeeder::class,
             ReservationSeeder::class,
             // AddonSeeder::class,
-            // AddonsFacilitySeeder::class,
-
+            AddonsFacilitySeeder::class,
+            AddonReservationSeeder::class,
+            AddonPaymentSeeder::class,
+            AddonTransactionSeeder::class,
        
 
 

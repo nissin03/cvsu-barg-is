@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Addon;
 use App\Models\Facility;
 use Illuminate\Http\Request;
+use App\Models\AddonReservation;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -32,13 +33,20 @@ class AddonsController extends Controller
         return view('admin.add-ons.create', compact('facilities'));
     }
 
+    public function getAddonNames()
+    {
+        $names = Addon::pluck('name')->toArray();
+        return response()->json(['names' => $names]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'price_type' => 'required|in:per_unit,flat_rate,per_night,per_item',
+            'price_type' => 'required|in:per_unit,flat_rate,per_night,per_item,per_hour',
             'description' => 'nullable|string',
             'base_price' => 'required|numeric|min:0',
+            'billing_cycle' => 'required|in:per_day,per_contract',
             'show' => 'required|in:both,staff',
             'is_available' => 'sometimes|boolean',
             'is_refundable' => 'sometimes|boolean',
@@ -46,6 +54,11 @@ class AddonsController extends Controller
             'capacity' => 'nullable|integer|min:1',
             'quantity' => 'nullable|integer|min:1',
         ]);
+
+        // Force per_hour addons to be staff-only
+        if ($validated['price_type'] === 'per_hour') {
+            $validated['show'] = 'staff';
+        }
 
         switch ($validated['price_type']) {
             case 'per_unit':
@@ -65,11 +78,15 @@ class AddonsController extends Controller
                 break;
                 
             case 'per_night':
-                $validated['is_based_on_quantity'] = false;
                 $validated['is_refundable'] = false;
                 $validated['capacity'] = null;
-                $validated['quantity'] = null;
                 $validated['is_available'] = $request->has('is_available');
+                $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
+                if ($request->has('is_based_on_quantity')) {
+                    $validated['quantity'] = $request->input('quantity', 1);
+                } else {
+                    $validated['quantity'] = null;
+                }
                 break;
                 
             case 'per_item':
@@ -77,8 +94,15 @@ class AddonsController extends Controller
                 $validated['capacity'] = null;
                 $validated['is_available'] = $request->has('is_available');
                 $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
-                // Fix: Ensure quantity is properly handled for per_item
                 $validated['quantity'] = $request->input('quantity', 1);
+                break;
+                
+            case 'per_hour':
+                $validated['is_based_on_quantity'] = false;
+                $validated['is_refundable'] = false;
+                $validated['capacity'] = null;
+                $validated['quantity'] = null;
+                $validated['is_available'] = $request->has('is_available');
                 break;
         }
 
@@ -103,9 +127,10 @@ class AddonsController extends Controller
         
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'price_type' => 'required|in:per_unit,flat_rate,per_night,per_item',
+            'price_type' => 'required|in:per_unit,flat_rate,per_night,per_item,per_hour',
             'description' => 'nullable|string',
             'base_price' => 'required|numeric|min:0',
+            'billing_cycle' => 'required|in:per_day,per_contract',
             'show' => 'required|in:both,staff',
             'is_available' => 'sometimes|boolean',
             'is_refundable' => 'sometimes|boolean',
@@ -113,6 +138,16 @@ class AddonsController extends Controller
             'capacity' => 'nullable|integer|min:1',
             'quantity' => 'nullable|integer|min:1',
         ]);
+
+        // Force per_hour addons to be staff-only
+        if ($validated['price_type'] === 'per_hour') {
+            $validated['show'] = 'staff';
+        }
+
+        // Force per_item addons to use per_contract billing cycle
+        if ($validated['price_type'] === 'per_item') {
+            $validated['billing_cycle'] = 'per_contract';
+        }
 
         switch ($validated['price_type']) {
             case 'per_unit':
@@ -144,8 +179,15 @@ class AddonsController extends Controller
                 $validated['capacity'] = null;
                 $validated['is_available'] = $request->has('is_available');
                 $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
-                // Fix: Ensure quantity is properly handled for per_item
                 $validated['quantity'] = $request->input('quantity', 1);
+                break;
+                
+            case 'per_hour':
+                $validated['is_based_on_quantity'] = false;
+                $validated['is_refundable'] = false;
+                $validated['capacity'] = null;
+                $validated['quantity'] = null;
+                $validated['is_available'] = $request->has('is_available');
                 break;
         }
 
@@ -196,4 +238,5 @@ class AddonsController extends Controller
         return redirect()->route('admin.addons.archive')
             ->with('success', 'Addon permanently deleted.');
     }
+
 }
