@@ -89,7 +89,7 @@ class UserFacilityController extends Controller
 
     public function reserve(Request $request)
     {
-        // dd($request->all());
+        dd($request->all());
         $request->validate([
             'facility_id' => 'required|exists:facilities,id',
             'total_price' => 'required|numeric|min:0',
