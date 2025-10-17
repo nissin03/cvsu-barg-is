@@ -168,7 +168,7 @@
         </div>
     </div>
 
-     @include('components.facility_whole_addons')
+     @include('components.facility_individual_addons')
     
     <div id="total-price" class="total-price-section">
         <strong class="total-price-label">Total Price: </strong>

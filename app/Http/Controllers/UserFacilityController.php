@@ -100,219 +100,252 @@ class UserFacilityController extends Controller
         $facility = Facility::with(['facilityAttributes', 'prices'])->find($request->facility_id);
         $userSex = Auth::user()->sex;
 
-if ($facility->facility_type === 'individual') {
-        $availableRoom = $facility->facilityAttributes->first(function ($attribute) {
-            return $attribute->capacity > 0;
-        });
+        if ($facility->facility_type === 'individual') {
+            $availableRoom = $facility->facilityAttributes->first(function ($attribute) {
+                return $attribute->capacity > 0;
+            });
 
-        $initialPrice   = 0;
-        $addonsTotal    = 0;
-        $refundableTotal = 0;
+            $initialPrice   = 0;
+            $addonsTotal    = 0;
+            $refundableTotal = 0;
 
-        if ($request->has('internal_quantity')) {
-            foreach ($request->internal_quantity as $priceId => $quantity) {
-                $price = $facility->prices()->find($priceId);
-                if ($price && $quantity > 0) {
-                    $initialPrice += $price->value * $quantity;
-                }
-            }
-        }
-
-        if ($request->selected_price) {
-            $selectedPrice = floatval($request->selected_price);
-            $price = $facility->prices()->find($request->price_id);
-
-            if ($price && $price->is_based_on_days) {
-                if ($request->date_from && $request->date_to) {
-                    $initialPrice += $selectedPrice; 
-                }
-            } else {
-                $startDate = Carbon::parse($request->date_from);
-                $endDate   = Carbon::parse($request->date_to);
-                $days      = $startDate->diffInDays($endDate) + 1;
-                $initialPrice += $selectedPrice * $days; 
-            } 
-        }
-
-        // ✨ New: centralize addon totals
-        [$addonsTotal, $refundableTotal] = $this->addon_reserve($request, $facility);
-
-        $subtotal   = $initialPrice + $addonsTotal;
-        $totalPrice = $subtotal + $refundableTotal;
-
-        $reservationData = [
-            'facility_id' => $facility->id,
-            'facility_name' => $facility->name,
-            'facility_slug' => $facility->slug,
-            'facility_attributes_name' => $availableRoom->room_name ?? null,
-            'facility_attribute_id' => $request->facility_attribute_id ?? null,
-            'initial_price' => $initialPrice,
-            'addon_total' => $addonsTotal,
-            'refundable_total' => $refundableTotal,
-            'subtotal' => $subtotal,
-            'total_price' => $totalPrice,
-            'facility_type' => $facility->facility_type,
-            'date_from' => $request->date_from ?? null,
-            'date_to' => $request->date_to ?? null,
-            'room_name' => $request->room_name ?? null,
-            'room_capacity' => $request->room_capacity ?? null,
-            'selected_price' => $request->selected_price ?? null,
-            'price_id' => $request->price_id ?? null,
-            'internal_quantity' => $request->internal_quantity ?? [],
-            'price_values' => $request->price_values ?? [],
-            'price_names' => $request->price_names ?? [],
-            'addon_values' => $request->addon_values ?? [],
-            'addon_names' => $request->addon_names ?? [],
-            'addon_types' => $request->addon_types ?? [],
-            'addon_quantity' => $request->addon_quantity ?? [],
-            'addon_nights' => $request->addon_nights ?? [],
-            'addon_date_from' => $request->addon_date_from ?? [], 
-            'addon_date_to' => $request->addon_date_to ?? [],
-            'addon_is_quantity_based' => $request->addon_is_quantity_based ?? [],
-            'addon_billing_cycle' => $request->addon_billing_cycle ?? [],
-            'addon_checkbox' => $request->addon_checkbox ?? [],
-            'refundable_addon_prices' => $request->refundable_addon_prices ?? [],
-            'refundable_addon_names' => $request->refundable_addon_names ?? [],
-        ];
-
-        Session::put('reservation_data', $reservationData);
-        } elseif ($facility->facility_type === 'whole_place') {
-            $selectedDateFrom = $request->date_from;
-            $selectedDateTo = $request->date_to;
-            $clientTypePrice = $request->client_type;
-            $timeStart = $request->time_start;
-            $timeEnd = $request->time_end;
-            
-            $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
-            
-            $hasDayBasedPricing = $facility->prices->contains('is_based_on_days', true);
-            
-            $dateFrom = \Carbon\Carbon::parse($selectedDateFrom);
-            $dateTo = \Carbon\Carbon::parse($selectedDateTo);
-            $numberOfDays = $dateFrom->diffInDays($dateTo) + 1; 
-            $basePrice = floatval($clientTypePrice);
-
-            if ($hasDayBasedPricing) {
-                $totalPrice = $basePrice;
-            } else {
-                $totalPrice = $basePrice * $numberOfDays;
-            }
-                    
-            $addonsTotal = 0;
-            $addonsData = [];
-            
-            if ($request->has('addon_values')) {
-                foreach ($request->addon_values as $addonId => $baseAddonPrice) {
-                    $addonType = $request->addon_types[$addonId] ?? null;
-                    $addonName = $request->addon_names[$addonId] ?? '';
-                    $isQuantityBased = $request->addon_is_quantity_based[$addonId] ?? 0;
-                    $addonNights = $request->addon_nights[$addonId] ?? 1;
-                    $addonQuantity = $request->addon_quantity[$addonId] ?? 0;
-                    $addonCheckbox = $request->addon_checkbox[$addonId] ?? 0;
-                    
-                    $addonPrice = 0;
-                    $isSelected = false;
-                    
-                    if ($addonType === 'per_item') {
-                        if ($isQuantityBased == 1 && $addonQuantity > 0) {
-                            $addonPrice = floatval($addonQuantity) * floatval($baseAddonPrice) * floatval($addonNights);
-                            $isSelected = true;
-                        } elseif ($isQuantityBased == 0 && $addonCheckbox == 1) {
-                            $addonPrice = floatval($addonNights) * floatval($baseAddonPrice);
-                            $isSelected = true;
-                        }
-                    } elseif ($addonType === 'flat_rate') {
-                        if ($isQuantityBased == 1 && $addonQuantity > 0) {
-                            $addonPrice = floatval($baseAddonPrice) * floatval($addonNights);
-                            $isSelected = true;
-                        } elseif ($isQuantityBased == 0 && $addonCheckbox == 1) {
-                            $addonPrice = floatval($baseAddonPrice) * floatval($addonNights);
-                            $isSelected = true;
-                        }
-                    } elseif ($addonType === 'per_unit') {
-                        if ($isQuantityBased == 1 && $addonQuantity > 0) {
-                            $addonPrice = floatval($baseAddonPrice) * floatval($addonNights);
-                            $isSelected = true;
-                        } elseif ($isQuantityBased == 0 && $addonCheckbox == 1) {
-                            $addonPrice = floatval($baseAddonPrice) * floatval($addonNights);
-                            $isSelected = true;
-                        }
-                    } elseif ($addonType === 'per_night') {
-                        if ($isQuantityBased == 1 && $addonQuantity > 0) {
-                            $addonPrice = floatval($baseAddonPrice) * floatval($addonNights);
-                            $isSelected = true;
-                        } elseif ($isQuantityBased == 0 && $addonCheckbox == 1) {
-                            $addonPrice = floatval($baseAddonPrice) * floatval($addonNights);
-                            $isSelected = true;
-                        }
-                    }
-                    
-                    if ($isSelected) {
-                        $addonsTotal += $addonPrice;
-                        
-                        $addonsData[] = [
-                            'addon_id' => $addonId,
-                            'addon_name' => $addonName,
-                            'addon_type' => $addonType,
-                            'base_price' => $baseAddonPrice,
-                            'quantity' => $addonQuantity,
-                            'nights' => $addonNights,
-                            'is_quantity_based' => $isQuantityBased,
-                            'calculated_price' => $addonPrice,
-                            'is_refundable' => false
-                        ];
+            if ($request->has('internal_quantity')) {
+                foreach ($request->internal_quantity as $priceId => $quantity) {
+                    $price = $facility->prices()->find($priceId);
+                    if ($price && $quantity > 0) {
+                        $initialPrice += $price->value * $quantity;
                     }
                 }
             }
-            
-            $refundableAddonsData = [];
-            $refundableAddonsTotal = 0;
-            
-            if ($request->has('refundable_addon_ids')) {
-                foreach ($request->refundable_addon_ids as $refundableAddonId) {
-                    $refundableAddonName = $request->refundable_addon_names[$refundableAddonId] ?? '';
-                    $refundableAddonPrice = floatval($request->refundable_addon_prices[$refundableAddonId] ?? 0);
-                    
-                    $refundableAddonsTotal += $refundableAddonPrice;
-                    
-                    $refundableAddonsData[] = [
-                        'addon_id' => $refundableAddonId,
-                        'addon_name' => $refundableAddonName,
-                        'addon_type' => 'flat_rate',
-                        'base_price' => $refundableAddonPrice,
-                        'calculated_price' => $refundableAddonPrice,
-                        'is_refundable' => true
-                    ];
-                }
+
+            if ($request->selected_price) {
+                $selectedPrice = floatval($request->selected_price);
+                $price = $facility->prices()->find($request->price_id);
+
+                if ($price && $price->is_based_on_days) {
+                    if ($request->date_from && $request->date_to) {
+                        $initialPrice += $selectedPrice; 
+                    }
+                } else {
+                    $startDate = Carbon::parse($request->date_from);
+                    $endDate   = Carbon::parse($request->date_to);
+                    $days      = $startDate->diffInDays($endDate) + 1;
+                    $initialPrice += $selectedPrice * $days; 
+                } 
             }
-            
-            $baseTotal = $totalPrice + $addonsTotal;
-            $finalTotal = $baseTotal + $refundableAddonsTotal;
-            
+            [$addonsTotal, $refundableTotal] = $this->addon_reserve($request, $facility);
+
+            $subtotal   = $initialPrice + $addonsTotal;
+            $totalPrice = $subtotal + $refundableTotal;
+
             $reservationData = [
                 'facility_id' => $facility->id,
                 'facility_name' => $facility->name,
                 'facility_slug' => $facility->slug,
-                'base_total' => $baseTotal,
-                'refundable_total' => $refundableAddonsTotal,
-                'total_price' => $finalTotal,
+                'facility_attributes_name' => $availableRoom->room_name ?? null,
+                'facility_attribute_id' => $request->facility_attribute_id ?? null,
+                'initial_price' => $initialPrice,
+                'addon_total' => $addonsTotal,
+                'refundable_total' => $refundableTotal,
+                'subtotal' => $subtotal,
+                'total_price' => $totalPrice,
                 'facility_type' => $facility->facility_type,
-                'facility_attribute_id' => $wholeAttr ? $wholeAttr->id : null,
-                'date_from' => $selectedDateFrom,
-                'date_to' => $selectedDateTo,
-                'time_start' => $timeStart,
-                'time_end' => $timeEnd,
-                'price' => $clientTypePrice,
-                'number_of_days' => $numberOfDays,
-                'is_based_on_days' => $hasDayBasedPricing, 
-                'base_price_total' => $totalPrice,
-                'addons' => $addonsData,
-                'addons_total' => $addonsTotal,
-                'refundable_addons' => $refundableAddonsData,
-                'refundable_addons_total' => $refundableAddonsTotal
+                'date_from' => $request->date_from ?? null,
+                'date_to' => $request->date_to ?? null,
+                'room_name' => $request->room_name ?? null,
+                'room_capacity' => $request->room_capacity ?? null,
+                'selected_price' => $request->selected_price ?? null,
+                'price_id' => $request->price_id ?? null,
+                'internal_quantity' => $request->internal_quantity ?? [],
+                'price_values' => $request->price_values ?? [],
+                'price_names' => $request->price_names ?? [],
+                'addon_values' => $request->addon_values ?? [],
+                'addon_names' => $request->addon_names ?? [],
+                'addon_types' => $request->addon_types ?? [],
+                'addon_quantity' => $request->addon_quantity ?? [],
+                'addon_nights' => $request->addon_nights ?? [],
+                'addon_date_from' => $request->addon_date_from ?? [], 
+                'addon_date_to' => $request->addon_date_to ?? [],
+                'addon_is_quantity_based' => $request->addon_is_quantity_based ?? [],
+                'addon_billing_cycle' => $request->addon_billing_cycle ?? [],
+                'addon_checkbox' => $request->addon_checkbox ?? [],
+                'refundable_addon_prices' => $request->refundable_addon_prices ?? [],
+                'refundable_addon_names' => $request->refundable_addon_names ?? [],
             ];
 
             Session::put('reservation_data', $reservationData);
+        }elseif ($facility->facility_type === 'whole_place') {
+    $selectedDateFrom = $request->date_from;
+    $selectedDateTo   = $request->date_to;
+    $clientTypePrice  = (float) $request->client_type;
+    $timeStart        = $request->time_start;
+    $timeEnd          = $request->time_end;
+
+    $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int) $a->whole_capacity > 0);
+
+    $hasDayBasedPricing = $facility->prices->contains('is_based_on_days', true);
+    $dateFrom = \Carbon\Carbon::parse($selectedDateFrom);
+    $dateTo   = \Carbon\Carbon::parse($selectedDateTo);
+    $numberOfDays = $dateFrom->diffInDays($dateTo) + 1;
+
+    // Base price logic (unchanged)
+    if ($hasDayBasedPricing) {
+        $initialPrice = $clientTypePrice;
+    } else {
+        $initialPrice = $clientTypePrice * $numberOfDays;
+    }
+
+    $addonsTotal = 0.0;
+    $addonsData  = [];
+
+    if ($request->has('addon_values')) {
+        foreach ($request->addon_values as $addonId => $baseAddonPriceRaw) {
+            $addonId          = (string) $addonId;
+            $baseAddonPrice   = (float) $baseAddonPriceRaw;
+            $addonType        = $request->addon_types[$addonId] ?? null;            // per_item | flat_rate | per_unit | per_night | per_hour
+            $addonName        = $request->addon_names[$addonId] ?? '';
+            $isQuantityBased  = (int) ($request->addon_is_quantity_based[$addonId] ?? 0);
+            $billingCycle     = $request->addon_billing_cycle[$addonId] ?? 'per_day'; // per_day | per_contract
+            $addonNights      = (int) ($request->addon_nights[$addonId] ?? 0);
+            $addonQuantity    = (int) ($request->addon_quantity[$addonId] ?? 0);
+            $addonCheckbox    = (int) ($request->addon_checkbox[$addonId] ?? 0);
+
+            $how_many_days   = max(0, $addonNights);
+            $how_many_nights = max(0, $addonNights);
+
+            // Only proceed if selected (checkbox) OR a positive quantity is provided for quantity-based add-ons
+            $isSelected = ($isQuantityBased === 1) ? ($addonQuantity > 0) : ($addonCheckbox === 1);
+            if (!$isSelected) {
+                continue;
+            }
+
+            $addonPrice = 0.0;
+
+            switch ($addonType) {
+                case 'per_item':
+                    if ($isQuantityBased === 1) {
+                        if ($billingCycle === 'per_day') {
+                            $addonPrice = $addonQuantity * $baseAddonPrice * $how_many_days;
+                        } else { // per_contract
+                            $addonPrice = $addonQuantity * $baseAddonPrice * 1;
+                        }
+                    } else {
+                        if ($billingCycle === 'per_day') {
+                            $addonPrice = $baseAddonPrice * $how_many_days;
+                        } else { // per_contract
+                            $addonPrice = $baseAddonPrice * 1;
+                        }
+                    }
+                    break;
+
+                case 'flat_rate':
+                    if ($billingCycle === 'per_day') {
+                        $addonPrice = $how_many_days * $baseAddonPrice;
+                    } else { // per_contract
+                        $addonPrice = $baseAddonPrice * 1;
+                    }
+                    break;
+
+                case 'per_unit':
+                    if ($billingCycle === 'per_day') {
+                        $addonPrice = $how_many_days * $baseAddonPrice;
+                    } else { // per_contract
+                        $addonPrice = $baseAddonPrice * 1;
+                    }
+                    break;
+
+                case 'per_night':
+                    if ($billingCycle === 'per_day') {
+                        if ($isQuantityBased === 1) {
+                            $addonPrice = $baseAddonPrice * $how_many_nights * $addonQuantity;
+                        } else {
+                            $addonPrice = $baseAddonPrice * $how_many_nights;
+                        }
+                    } else { // per_contract
+                        if ($isQuantityBased === 1) {
+                            $addonPrice = $baseAddonPrice * $addonQuantity;
+                        } else {
+                            $addonPrice = $baseAddonPrice * 1;
+                        }
+                    }
+                    break;
+
+                // Unsupported/unused types from schema (e.g., per_hour) do not charge
+                default:
+                    $addonPrice = 0.0;
+                    break;
+            }
+
+            $addonsTotal += $addonPrice;
+
+            $addonsData[] = [
+                'addon_id'            => $addonId,
+                'addon_name'          => $addonName,
+                'addon_type'          => $addonType,
+                'base_price'          => $baseAddonPrice,
+                'quantity'            => $addonQuantity,
+                'nights'              => $how_many_days,     // same value used for day/night counts
+                'is_quantity_based'   => $isQuantityBased,
+                'billing_cycle'       => $billingCycle,
+                'calculated_price'    => $addonPrice,
+                'is_refundable'       => false,
+            ];
+        }
+    }
+
+    // Refundable addons (from hidden inputs)
+    $refundableAddonsData  = [];
+    $refundableAddonsTotal = 0.0;
+
+    if ($request->has('refundable_addon_ids')) {
+        foreach ($request->refundable_addon_ids as $refundableAddonId) {
+            $refundableAddonName  = $request->refundable_addon_names[$refundableAddonId] ?? '';
+            $refundableAddonPrice = (float) ($request->refundable_addon_prices[$refundableAddonId] ?? 0);
+
+            $refundableAddonsTotal += $refundableAddonPrice;
+
+            $refundableAddonsData[] = [
+                'addon_id'         => (string) $refundableAddonId,
+                'addon_name'       => $refundableAddonName,
+                'addon_type'       => 'flat_rate',
+                'base_price'       => $refundableAddonPrice,
+                'billing_cycle'    => 'per_contract',
+                'calculated_price' => $refundableAddonPrice,
+                'is_refundable'    => true,
+            ];
+        }
+    }
+
+    $subtotal   = $initialPrice + $addonsTotal;
+    $totalPrice = $subtotal + $refundableAddonsTotal;
+
+    $reservationData = [
+        'facility_id'             => $facility->id,
+        'facility_name'           => $facility->name,
+        'facility_slug'           => $facility->slug,
+        'subtotal'                => $subtotal,
+        'refundable_total'        => $refundableAddonsTotal,
+        'total_price'             => $totalPrice,
+        'facility_type'           => $facility->facility_type,
+        'facility_attribute_id'   => $wholeAttr ? $wholeAttr->id : null,
+        'date_from'               => $selectedDateFrom,
+        'date_to'                 => $selectedDateTo,
+        'time_start'              => $timeStart,
+        'time_end'                => $timeEnd,
+        'price'                   => $clientTypePrice,
+        'number_of_days'          => $numberOfDays,
+        'is_based_on_days'        => $hasDayBasedPricing,
+        'initial_price'           => $initialPrice,
+        'addons'                  => $addonsData,
+        'addons_total'            => $addonsTotal,
+        'refundable_addons'       => $refundableAddonsData,
+        'refundable_addons_total' => $refundableAddonsTotal,
+    ];
+
+    Session::put('reservation_data', $reservationData);
+            
+  
+
             
   
 
@@ -518,116 +551,116 @@ if ($facility->facility_type === 'individual') {
 
     private function addon_reserve(Request $request, Facility $facility): array
     {
-    $addonsTotal = 0.0;
-    $refundableTotal = 0.0;
+        $addonsTotal = 0.0;
+        $refundableTotal = 0.0;
 
-    if ($request->has('addon_values')) {
-        foreach ($request->addon_values as $addonId => $basePrice) {
-            $addon = Addon::find($addonId);
-            if (!$addon) continue;
+        if ($request->has('addon_values')) {
+            foreach ($request->addon_values as $addonId => $basePrice) {
+                $addon = Addon::find($addonId);
+                if (!$addon) continue;
 
-            $priceType       = $request->addon_types[$addonId] ?? null;
-            $isQuantityBased = $request->addon_is_quantity_based[$addonId] ?? false;
-            $billingCycle    = $request->addon_billing_cycle[$addonId] ?? 'per_contract';
-            $addonQuantity   = $request->addon_quantity[$addonId] ?? 0;
-            $addonCheckbox   = $request->addon_checkbox[$addonId] ?? false;
+                $priceType       = $request->addon_types[$addonId] ?? null;
+                $isQuantityBased = $request->addon_is_quantity_based[$addonId] ?? false;
+                $billingCycle    = $request->addon_billing_cycle[$addonId] ?? 'per_contract';
+                $addonQuantity   = $request->addon_quantity[$addonId] ?? 0;
+                $addonCheckbox   = $request->addon_checkbox[$addonId] ?? false;
 
-            // Skip per_contract addons that aren't actually selected
-            if ($billingCycle === 'per_contract') {
-                if ($isQuantityBased && $addonQuantity <= 0) {
-                    continue; // quantity-based addons with qty 0
+                // Skip per_contract addons that aren't actually selected
+                if ($billingCycle === 'per_contract') {
+                    if ($isQuantityBased && $addonQuantity <= 0) {
+                        continue; // quantity-based addons with qty 0
+                    }
+                    if (!$isQuantityBased && empty($addonCheckbox)) {
+                        continue; // checkbox-based addons not checked
+                    }
                 }
-                if (!$isQuantityBased && empty($addonCheckbox)) {
-                    continue; // checkbox-based addons not checked
-                }
-            }
 
-            switch ($priceType) {
-                case 'per_item':
-                    if ($isQuantityBased) {
-                        $quantity = $request->addon_quantity[$addonId] ?? 0;
-                        if ($billingCycle === 'per_day') {
-                            $nights = $request->addon_nights[$addonId] ?? 1;
-                            $addonsTotal += $quantity * $basePrice * $nights;
+                switch ($priceType) {
+                    case 'per_item':
+                        if ($isQuantityBased) {
+                            $quantity = $request->addon_quantity[$addonId] ?? 0;
+                            if ($billingCycle === 'per_day') {
+                                $nights = $request->addon_nights[$addonId] ?? 1;
+                                $addonsTotal += $quantity * $basePrice * $nights;
+                            } else {
+                                $addonsTotal += $quantity * $basePrice * 1;
+                            }
                         } else {
-                            $addonsTotal += $quantity * $basePrice * 1;
+                            if ($billingCycle === 'per_day') {
+                                $nights = $request->addon_nights[$addonId] ?? 1;
+                                $addonsTotal += $basePrice * $nights;
+                            } else {
+                                $addonsTotal += $basePrice * 1;
+                            }
                         }
-                    } else {
+                        break;
+
+                    case 'flat_rate':
                         if ($billingCycle === 'per_day') {
                             $nights = $request->addon_nights[$addonId] ?? 1;
-                            $addonsTotal += $basePrice * $nights;
+                            $addonsTotal += $nights * $basePrice;
                         } else {
                             $addonsTotal += $basePrice * 1;
                         }
-                    }
-                    break;
+                        break;
 
-                case 'flat_rate':
-                    if ($billingCycle === 'per_day') {
-                        $nights = $request->addon_nights[$addonId] ?? 1;
-                        $addonsTotal += $nights * $basePrice;
-                    } else {
-                        $addonsTotal += $basePrice * 1;
-                    }
-                    break;
-
-                case 'per_unit':
-                    if ($billingCycle === 'per_day') {
-                        $nights = $request->addon_nights[$addonId] ?? 1;
-                        $addonsTotal += $nights * $basePrice;
-                    } else {
-                        $addonsTotal += $basePrice * 1;
-                    }
-                    break;
-
-                case 'per_night':
-                    $nights   = $request->addon_nights[$addonId] ?? 1;
-                    $quantity = $addonQuantity;
-
-                    if ($billingCycle === 'per_day') {
-                        if ($isQuantityBased) {
-                            $addonsTotal += $basePrice * $nights * $quantity;
-                        } else {
-                            $addonsTotal += $basePrice * $nights;
-                        }
-                    } else {
-                        if ($isQuantityBased) {
-                            $addonsTotal += $basePrice * $quantity;
+                    case 'per_unit':
+                        if ($billingCycle === 'per_day') {
+                            $nights = $request->addon_nights[$addonId] ?? 1;
+                            $addonsTotal += $nights * $basePrice;
                         } else {
                             $addonsTotal += $basePrice * 1;
                         }
-                    }
-                    break;
+                        break;
 
-                default:
-                    $addonsTotal += $basePrice * 1;
-                    break;
+                    case 'per_night':
+                        $nights   = $request->addon_nights[$addonId] ?? 1;
+                        $quantity = $addonQuantity;
+
+                        if ($billingCycle === 'per_day') {
+                            if ($isQuantityBased) {
+                                $addonsTotal += $basePrice * $nights * $quantity;
+                            } else {
+                                $addonsTotal += $basePrice * $nights;
+                            }
+                        } else {
+                            if ($isQuantityBased) {
+                                $addonsTotal += $basePrice * $quantity;
+                            } else {
+                                $addonsTotal += $basePrice * 1;
+                            }
+                        }
+                        break;
+
+                    default:
+                        $addonsTotal += $basePrice * 1;
+                        break;
+                }
             }
         }
-    }
 
-    if ($request->has('refundable_addon_prices')) {
-        foreach ($request->refundable_addon_prices as $addonId => $price) {
-            $refundableTotal += floatval($price);
+        if ($request->has('refundable_addon_prices')) {
+            foreach ($request->refundable_addon_prices as $addonId => $price) {
+                $refundableTotal += floatval($price);
+            }
         }
-    }
 
-    return [$addonsTotal, $refundableTotal];
+        return [$addonsTotal, $refundableTotal];
     }
 
     public function checkout(Request $request)
     {
-        $user = Auth::user();
-        $reservationData = session('reservation_data');
+        // $user = Auth::user();
+        // $reservationData = session('reservation_data');
 
-        if (!$reservationData || !isset($reservationData['facility_slug'])) {
-            return redirect()->route('user.facilities.index')->with('error', 'Invalid reservation data.');
-        }
+        // if (!$reservationData || !isset($reservationData['facility_slug'])) {
+        //     return redirect()->route('user.facilities.index')->with('error', 'Invalid reservation data.');
+        // }
 
-        $facility = Facility::with(['facilityAttributes', 'prices'])->where('slug', $reservationData['facility_slug'])->first();
-        if (!$facility) {
-            return redirect()->route('user.facilities.index')->with('error', 'No facility found.');
-        }
+        // $facility = Facility::with(['facilityAttributes', 'prices'])->where('slug', $reservationData['facility_slug'])->first();
+        // if (!$facility) {
+        //     return redirect()->route('user.facilities.index')->with('error', 'No facility found.');
+        // }
 
         $facilityAttribute = null;
         $roomName = null;
