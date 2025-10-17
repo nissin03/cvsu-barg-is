@@ -650,17 +650,17 @@ class UserFacilityController extends Controller
 
     public function checkout(Request $request)
     {
-        // $user = Auth::user();
-        // $reservationData = session('reservation_data');
+        $user = Auth::user();
+        $reservationData = session('reservation_data');
 
-        // if (!$reservationData || !isset($reservationData['facility_slug'])) {
-        //     return redirect()->route('user.facilities.index')->with('error', 'Invalid reservation data.');
-        // }
+        if (!$reservationData || !isset($reservationData['facility_slug'])) {
+            return redirect()->route('user.facilities.index')->with('error', 'Invalid reservation data.');
+        }
 
-        // $facility = Facility::with(['facilityAttributes', 'prices'])->where('slug', $reservationData['facility_slug'])->first();
-        // if (!$facility) {
-        //     return redirect()->route('user.facilities.index')->with('error', 'No facility found.');
-        // }
+        $facility = Facility::with(['facilityAttributes', 'prices'])->where('slug', $reservationData['facility_slug'])->first();
+        if (!$facility) {
+            return redirect()->route('user.facilities.index')->with('error', 'No facility found.');
+        }
 
         $facilityAttribute = null;
         $roomName = null;
