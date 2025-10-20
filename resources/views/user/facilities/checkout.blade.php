@@ -653,27 +653,33 @@
 
                                 
                                   @elseif ($facility->facility_type === 'whole_place')
-    @php
-        $dateFrom = \Carbon\Carbon::parse($reservationData['date_from'] ?? now());
-        $dateTo   = \Carbon\Carbon::parse($reservationData['date_to'] ?? now());
-        $timeStartRaw = $reservationData['time_start'] ?? null;
-        $timeEndRaw   = $reservationData['time_end']   ?? null;
-        $timeStart = $timeStartRaw ? \Carbon\Carbon::parse($timeStartRaw) : null;
-        $timeEnd   = $timeEndRaw ? \Carbon\Carbon::parse($timeEndRaw) : null;
+   @php
+    $dateFrom = \Carbon\Carbon::parse($reservationData['date_from'] ?? now());
+    $dateTo   = \Carbon\Carbon::parse($reservationData['date_to'] ?? now());
+    $timeStartRaw = $reservationData['time_start'] ?? null;
+    $timeEndRaw   = $reservationData['time_end']   ?? null;
+    $timeStart = $timeStartRaw ? \Carbon\Carbon::parse($timeStartRaw) : null;
+    $timeEnd   = $timeEndRaw ? \Carbon\Carbon::parse($timeEndRaw) : null;
 
-        $addons                 = $reservationData['addons'] ?? [];
-        $addonsTotal            = (float)($reservationData['addons_total'] ?? 0);
-        $refundableAddons       = $reservationData['refundable_addons'] ?? [];
-        $refundableAddonsTotal  = (float)($reservationData['refundable_addons_total'] ?? 0);
+    $addons                 = $reservationData['addons'] ?? [];
+    $addonsTotal            = (float)($reservationData['addons_total'] ?? 0);
+    $refundableAddons       = $reservationData['refundable_addons'] ?? [];
+    $refundableAddonsTotal  = (float)($reservationData['refundable_addons_total'] ?? 0);
 
-        $numberOfDays  = (int)($reservationData['number_of_days'] ?? 1);
-        $isBasedOnDays = (bool)($reservationData['is_based_on_days'] ?? false);
-        $basePricePerDay = (float)($reservationData['price'] ?? 0);
+    $numberOfDays  = (int)($reservationData['number_of_days'] ?? 1);
+    $isBasedOnDays = (bool)($reservationData['is_based_on_days'] ?? false);
+    $basePricePerDay = (float)($reservationData['price'] ?? 0);
 
-        $initialPrice = (float)($reservationData['initial_price'] ?? 0);  // facility price total (flat or per-day × days)
-        $subtotal     = (float)($reservationData['subtotal'] ?? ($initialPrice + $addonsTotal));
-        $totalPrice   = (float)($reservationData['total_price'] ?? ($subtotal + $refundableAddonsTotal));
-    @endphp
+    $initialPrice = (float)($reservationData['initial_price'] ?? 0);  // facility price total (flat or per-day × days)
+    $subtotal     = (float)($reservationData['subtotal'] ?? ($initialPrice + $addonsTotal));
+    $totalPrice   = (float)($reservationData['total_price'] ?? ($subtotal + $refundableAddonsTotal));
+
+
+@endphp
+
+
+
+
 
     <tr>
         <th>Date From</th>
@@ -709,34 +715,104 @@
             {{-- @endif --}}
         </td>
     </tr>
-
-    @if(!empty($addons))
+@if(!empty($addons) && count($addons) > 0)
+    @php
+        $filteredAddons = [];
+        $filteredAddonTotal = 0;
+        
+        foreach($addons as $addon) {
+            $addonId = $addon['addon_id'] ?? '';
+            $addonName = $addon['addon_name'] ?? '';
+            $addonPrice = $addon['base_price'] ?? 0;
+            $addonType = $addon['addon_type'] ?? '';
+            $addonQuantity = $addon['quantity'] ?? 0;
+            $addonNights = $addon['nights'] ?? 1;
+            $isQuantityBased = $addon['is_quantity_based'] ?? false;
+            $addonDateFrom = $addon['date_from'] ?? null;
+            $addonDateTo = $addon['date_to'] ?? null;
+            $billingCycle = $addon['billing_cycle'] ?? 'per_contract';
+            $calculatedPrice = $addon['calculated_price'] ?? 0;
+            
+            // Check if addon should be displayed
+            $shouldDisplay = true;
+            
+            // For per_contract billing, only show if actually selected/used
+            if ($billingCycle === 'per_contract') {
+                if ($isQuantityBased) {
+                    $shouldDisplay = $addonQuantity > 0;
+                } else {
+                    $shouldDisplay = $calculatedPrice > 0;
+                }
+            }
+            
+            if ($calculatedPrice > 0 && $shouldDisplay) {
+                $filteredAddons[$addonId] = [
+                    'name' => $addonName,
+                    'total' => $calculatedPrice,
+                    'quantity' => $addonQuantity,
+                    'nights' => $addonNights,
+                    'type' => $addonType,
+                    'billing_cycle' => $billingCycle,
+                    'date_from' => $addonDateFrom,
+                    'date_to' => $addonDateTo,
+                    'is_quantity_based' => $isQuantityBased
+                ];
+                $filteredAddonTotal += $calculatedPrice;
+            }
+        }
+    @endphp
+    
+    @if(count($filteredAddons) > 0)
         <tr>
             <th colspan="2" class="bg-light"><strong>Add-Ons</strong></th>
-        </tr>
-        @foreach($addons as $addon)
+        </tr>   
+        @foreach($filteredAddons as $addonId => $addon)
             <tr>
-                <th>{{ $addon['addon_name'] ?? 'Addon' }}</th>
-                <td>
-                    @php
-                        $isQty = (int)($addon['is_quantity_based'] ?? 0) === 1;
-                        $qty   = (int)($addon['quantity'] ?? 0);
-                        $n     = (int)($addon['nights'] ?? 0);
-                    @endphp
-                    @if($isQty && $qty > 0)
-                        Quantity: {{ $qty }},
+                <th>
+                    {{ $addon['name'] }}
+                    @if($addon['quantity'] > 0 && $addon['is_quantity_based'])
+                        (x{{ $addon['quantity'] }})
                     @endif
-                    {{-- Duration: {{ $n }} --}}
-                    ₱{{ number_format((float)($addon['calculated_price'] ?? 0), 2) }}
-                </td>
+                    @if($addon['nights'] > 1 && in_array($addon['type'], ['per_night', 'flat_rate', 'per_unit']) && $addon['billing_cycle'] === 'per_day')
+                        ({{ $addon['nights'] }} days)
+                    @endif
+                    @if($addon['billing_cycle'] === 'per_contract')
+                        {{-- <small class="text-muted">(one-time)</small> --}}
+                    @endif
+                </th>
+                <td>₱{{ number_format($addon['total'], 2) }}</td>
             </tr>
+            @if($addon['date_from'] && $addon['date_to'] && $addon['billing_cycle'] === 'per_day')
+                <tr>
+                    <th style="padding-left: 30px; font-weight: normal;">
+                        <small>Date Range: {{ \Carbon\Carbon::parse($addon['date_from'])->format('M d, Y') }} - {{ \Carbon\Carbon::parse($addon['date_to'])->format('M d, Y') }}</small>
+                    </th>
+                    <td></td>
+                </tr>
+            @elseif($addon['date_from'] && $addon['billing_cycle'] === 'per_day')
+                <tr>
+                    <th style="padding-left: 30px; font-weight: normal;">
+                        <small>Start Date: {{ \Carbon\Carbon::parse($addon['date_from'])->format('M d, Y') }}</small>
+                    </th>
+                    <td></td>
+                </tr>
+            @elseif($addon['date_to'] && $addon['billing_cycle'] === 'per_day')
+                <tr>
+                    <th style="padding-left: 30px; font-weight: normal;">
+                        <small>End Date: {{ \Carbon\Carbon::parse($addon['date_to'])->format('M d, Y') }}</small>
+                    </th>
+                    <td></td>
+                </tr>
+            @endif
         @endforeach
-
-        <tr>
-            <th><strong>Add-ons Total<strong></th>
-            <td><strong>₱{{ number_format($addonsTotal, 2) }}<strong></td>
-        </tr>
+        @if($filteredAddonTotal > 0)
+            <tr class="table-active">
+                <th><strong>Add-ons Total</strong></th>
+                <td><strong>₱{{ number_format($filteredAddonTotal, 2) }}</strong></td>
+            </tr>
+        @endif
     @endif
+@endif
 
     <tr class="table-active">
         <th><strong>Subtotal</strong></th>
@@ -914,19 +990,24 @@
         <input type="hidden" name="refundable_total" value="{{ $reservationData['refundable_total'] ?? ($reservationData['refundable_addons_total'] ?? 0) }}">
         <input type="hidden" name="total_price" value="{{ $reservationData['total_price'] ?? 0 }}">
 
-        @if(!empty($reservationData['addons']))
-            @foreach($reservationData['addons'] as $index => $addon)
-                <input type="hidden" name="addons[{{ $index }}][addon_id]" value="{{ $addon['addon_id'] }}">
-                <input type="hidden" name="addons[{{ $index }}][addon_name]" value="{{ $addon['addon_name'] }}">
-                <input type="hidden" name="addons[{{ $index }}][addon_type]" value="{{ $addon['addon_type'] }}">
-                <input type="hidden" name="addons[{{ $index }}][billing_cycle]" value="{{ $addon['billing_cycle'] ?? 'per_day' }}">
-                <input type="hidden" name="addons[{{ $index }}][base_price]" value="{{ $addon['base_price'] }}">
-                <input type="hidden" name="addons[{{ $index }}][quantity]" value="{{ $addon['quantity'] }}">
-                <input type="hidden" name="addons[{{ $index }}][nights]" value="{{ $addon['nights'] }}">
-                <input type="hidden" name="addons[{{ $index }}][is_quantity_based]" value="{{ $addon['is_quantity_based'] }}">
-                <input type="hidden" name="addons[{{ $index }}][calculated_price]" value="{{ $addon['calculated_price'] }}">
-            @endforeach
-        @endif
+       @if(!empty($reservationData['addons']))
+    @foreach($reservationData['addons'] as $index => $addon)
+        <input type="hidden" name="addons[{{ $index }}][addon_id]" value="{{ $addon['addon_id'] }}">
+        <input type="hidden" name="addons[{{ $index }}][addon_name]" value="{{ $addon['addon_name'] }}">
+        <input type="hidden" name="addons[{{ $index }}][addon_type]" value="{{ $addon['addon_type'] }}">
+        <input type="hidden" name="addons[{{ $index }}][billing_cycle]" value="{{ $addon['billing_cycle'] ?? 'per_day' }}">
+        <input type="hidden" name="addons[{{ $index }}][base_price]" value="{{ $addon['base_price'] }}">
+        <input type="hidden" name="addons[{{ $index }}][quantity]" value="{{ $addon['quantity'] }}">
+        <input type="hidden" name="addons[{{ $index }}][nights]" value="{{ $addon['nights'] }}">
+        <input type="hidden" name="addons[{{ $index }}][is_quantity_based]" value="{{ $addon['is_quantity_based'] }}">
+        <input type="hidden" name="addons[{{ $index }}][calculated_price]" value="{{ $addon['calculated_price'] }}">
+        
+        <!-- Add these lines for date fields -->
+        <input type="hidden" name="addons[{{ $index }}][date_from]" value="{{ $addon['date_from'] ?? '' }}">
+        <input type="hidden" name="addons[{{ $index }}][date_to]" value="{{ $addon['date_to'] ?? '' }}">
+        <input type="hidden" name="addons[{{ $index }}][selected_dates]" value="{{ json_encode($addon['selected_dates'] ?? []) }}">
+    @endforeach
+@endif
 
         @if(!empty($reservationData['refundable_addons']))
             @foreach($reservationData['refundable_addons'] as $index => $ref)
