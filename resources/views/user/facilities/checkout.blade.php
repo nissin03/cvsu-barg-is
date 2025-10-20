@@ -652,112 +652,197 @@
 
 
                                 
-                                    @elseif ($facility->facility_type === 'whole_place')
-                                @php
-                                    $dateFrom = \Carbon\Carbon::parse($reservationData['date_from'] ?? 'N/A');
-                                    $dateTo = \Carbon\Carbon::parse($reservationData['date_to'] ?? 'N/A');
-                                    $timeStartRaw = $reservationData['time_start'] ?? null;
-                                    $timeEndRaw   = $reservationData['time_end']   ?? null;
-                                    $timeStart = $timeStartRaw ? \Carbon\Carbon::parse($timeStartRaw) : null;
-                                    $timeEnd = $timeEndRaw ? \Carbon\Carbon::parse($timeEndRaw) : null;
-                                    $addons = $reservationData['addons'] ?? [];
-                                    $addonsTotal = $reservationData['addons_total'] ?? 0;
-                                    $refundableAddons = $reservationData['refundable_addons'] ?? [];
-                                    $refundableAddonsTotal = $reservationData['refundable_addons_total'] ?? 0;
-                                    $baseTotal = $reservationData['base_total'] ?? 0;
-                                    $totalPrice = $reservationData['total_price'] ?? 0;
-                                @endphp
+                                  @elseif ($facility->facility_type === 'whole_place')
+   @php
+    $dateFrom = \Carbon\Carbon::parse($reservationData['date_from'] ?? now());
+    $dateTo   = \Carbon\Carbon::parse($reservationData['date_to'] ?? now());
+    $timeStartRaw = $reservationData['time_start'] ?? null;
+    $timeEndRaw   = $reservationData['time_end']   ?? null;
+    $timeStart = $timeStartRaw ? \Carbon\Carbon::parse($timeStartRaw) : null;
+    $timeEnd   = $timeEndRaw ? \Carbon\Carbon::parse($timeEndRaw) : null;
 
-                                <tr>
-                                    <th>Date From</th>
-                                    <td>{{ $dateFrom->format('F d, Y') }}</td>
-                                </tr>
+    $addons                 = $reservationData['addons'] ?? [];
+    $addonsTotal            = (float)($reservationData['addons_total'] ?? 0);
+    $refundableAddons       = $reservationData['refundable_addons'] ?? [];
+    $refundableAddonsTotal  = (float)($reservationData['refundable_addons_total'] ?? 0);
 
-                                <tr>
-                                    <th>Date To</th>
-                                    <td>{{ $dateTo->format('F d, Y') }}</td>
-                                </tr>
+    $numberOfDays  = (int)($reservationData['number_of_days'] ?? 1);
+    $isBasedOnDays = (bool)($reservationData['is_based_on_days'] ?? false);
+    $basePricePerDay = (float)($reservationData['price'] ?? 0);
 
-                                @if($timeStart && $timeEnd)
-                                <tr>
-                                    <th>Start Time to End Time</th>
-                                    <td>
-                                        @if($timeStart->eq($timeEnd))
-                                            {{ $timeStart->format('h:i A') }}
-                                        @else
-                                            {{ $timeStart->format('h:i A') }} to {{ $timeEnd->format('h:i A') }}
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endif
-                                
-                            @php
-                                $numberOfDays = $reservationData['number_of_days'] ?? 1;
-                                $isBasedOnDays = $reservationData['is_based_on_days'] ?? false;
-                                $basePricePerDay = $reservationData['price'] ?? 0;
-                                $basePriceTotal = $reservationData['base_price_total'] ?? 0;
-                            @endphp
+    $initialPrice = (float)($reservationData['initial_price'] ?? 0);  // facility price total (flat or per-day × days)
+    $subtotal     = (float)($reservationData['subtotal'] ?? ($initialPrice + $addonsTotal));
+    $totalPrice   = (float)($reservationData['total_price'] ?? ($subtotal + $refundableAddonsTotal));
 
-                            <tr>
-                                <th>Facility Price</th>
-                                <td>
-                                    @if($isBasedOnDays)
-                                        ₱{{ number_format($basePricePerDay, 2) }} (Flat Rate)
-                                    @else
-                                        ₱{{ number_format($basePricePerDay, 2) }} × {{ $numberOfDays }} {{ Str::plural('day', $numberOfDays) }}
-                                        = ₱{{ number_format($basePriceTotal, 2) }}
-                                    @endif
-                                </td>
-                            </tr>
-                                @if(!empty($addons))
-                                    <tr>
-                                        <th colspan="2" class="bg-light"><strong>Add-Ons Section</strong></th>
-                                    </tr>
-                                    @foreach($addons as $addon)
-                                    <tr>
-                                        <th>{{ $addon['addon_name'] }}</th>
-                                        <td>
-                                            @if($addon['is_quantity_based'] && $addon['quantity'] > 0)
-                                                Quantity: {{ $addon['quantity'] }},
-                                            @endif
-                                            Days: {{ $addon['nights'] }}
-                                            = ₱{{ number_format($addon['calculated_price'], 2) }}
-                                        </td>
-                                    </tr>
-                                    @endforeach
 
-                                    <tr>
-                                        <th>Add-ons Total</th>
-                                        <td>₱{{ number_format($addonsTotal, 2) }}</td>
-                                    </tr>
-                                @endif
+@endphp
 
-                                <tr class="table-active">
-                                    <th><strong>Subtotal (Non-Refundable)</strong></th>
-                                    <td><strong>₱{{ number_format($baseTotal, 2) }}</strong></td>
-                                </tr>   
 
-                                @if(!empty($refundableAddons))
-                                    <tr>
-                                        <th colspan="2" class="bg-light"><strong>Refundable Add-Ons Section</strong></th>
-                                    </tr>
-                                    @foreach($refundableAddons as $refundableAddon)
-                                    <tr>
-                                        <th>{{ $refundableAddon['addon_name'] }} <span class="badge bg-success">Refundable</span></th>
-                                        <td>₱{{ number_format($refundableAddon['calculated_price'], 2) }}</td>
-                                    </tr>
-                                    @endforeach
 
-                                    <tr>
-                                        <th>Refundable Add-ons Total</th>
-                                        <td>₱{{ number_format($refundableAddonsTotal, 2) }}</td>
-                                    </tr>
-                                @endif
 
-                                {{-- <tr class="table-primary">
-                                    <th><strong>Grand Total</strong></th>
-                                    <td><strong>₱{{ number_format($totalPrice, 2) }}</strong></td>
-                                </tr> --}}
+
+    <tr>
+        <th>Date From</th>
+        <td>{{ $dateFrom->format('F d, Y') }}</td>
+    </tr>
+
+    <tr>
+        <th>Date To</th>
+        <td>{{ $dateTo->format('F d, Y') }}</td>
+    </tr>
+
+    @if($timeStart && $timeEnd)
+        <tr>
+            <th>Start Time to End Time</th>
+            <td>
+                @if($timeStart->eq($timeEnd))
+                    {{ $timeStart->format('h:i A') }}
+                @else
+                    {{ $timeStart->format('h:i A') }} to {{ $timeEnd->format('h:i A') }}
+                @endif
+            </td>
+        </tr>
+    @endif
+
+    <tr>
+        <th>Initial Price</th>
+        <td>
+            {{-- @if($isBasedOnDays)
+                ₱{{ number_format($basePricePerDay, 2) }} (Flat Rate)
+            @else
+                ₱{{ number_format($basePricePerDay, 2) }} × {{ $numberOfDays }} {{ \Illuminate\Support\Str::plural('day', $numberOfDays) }} --}}
+                ₱{{ number_format($initialPrice, 2) }}
+            {{-- @endif --}}
+        </td>
+    </tr>
+@if(!empty($addons) && count($addons) > 0)
+    @php
+        $filteredAddons = [];
+        $filteredAddonTotal = 0;
+        
+        foreach($addons as $addon) {
+            $addonId = $addon['addon_id'] ?? '';
+            $addonName = $addon['addon_name'] ?? '';
+            $addonPrice = $addon['base_price'] ?? 0;
+            $addonType = $addon['addon_type'] ?? '';
+            $addonQuantity = $addon['quantity'] ?? 0;
+            $addonNights = $addon['nights'] ?? 1;
+            $isQuantityBased = $addon['is_quantity_based'] ?? false;
+            $addonDateFrom = $addon['date_from'] ?? null;
+            $addonDateTo = $addon['date_to'] ?? null;
+            $billingCycle = $addon['billing_cycle'] ?? 'per_contract';
+            $calculatedPrice = $addon['calculated_price'] ?? 0;
+            
+            // Check if addon should be displayed
+            $shouldDisplay = true;
+            
+            // For per_contract billing, only show if actually selected/used
+            if ($billingCycle === 'per_contract') {
+                if ($isQuantityBased) {
+                    $shouldDisplay = $addonQuantity > 0;
+                } else {
+                    $shouldDisplay = $calculatedPrice > 0;
+                }
+            }
+            
+            if ($calculatedPrice > 0 && $shouldDisplay) {
+                $filteredAddons[$addonId] = [
+                    'name' => $addonName,
+                    'total' => $calculatedPrice,
+                    'quantity' => $addonQuantity,
+                    'nights' => $addonNights,
+                    'type' => $addonType,
+                    'billing_cycle' => $billingCycle,
+                    'date_from' => $addonDateFrom,
+                    'date_to' => $addonDateTo,
+                    'is_quantity_based' => $isQuantityBased
+                ];
+                $filteredAddonTotal += $calculatedPrice;
+            }
+        }
+    @endphp
+    
+    @if(count($filteredAddons) > 0)
+        <tr>
+            <th colspan="2" class="bg-light"><strong>Add-Ons</strong></th>
+        </tr>   
+        @foreach($filteredAddons as $addonId => $addon)
+            <tr>
+                <th>
+                    {{ $addon['name'] }}
+                    @if($addon['quantity'] > 0 && $addon['is_quantity_based'])
+                        (x{{ $addon['quantity'] }})
+                    @endif
+                    @if($addon['nights'] > 1 && in_array($addon['type'], ['per_night', 'flat_rate', 'per_unit']) && $addon['billing_cycle'] === 'per_day')
+                        ({{ $addon['nights'] }} days)
+                    @endif
+                    @if($addon['billing_cycle'] === 'per_contract')
+                        {{-- <small class="text-muted">(one-time)</small> --}}
+                    @endif
+                </th>
+                <td>₱{{ number_format($addon['total'], 2) }}</td>
+            </tr>
+            @if($addon['date_from'] && $addon['date_to'] && $addon['billing_cycle'] === 'per_day')
+                <tr>
+                    <th style="padding-left: 30px; font-weight: normal;">
+                        <small>Date Range: {{ \Carbon\Carbon::parse($addon['date_from'])->format('M d, Y') }} - {{ \Carbon\Carbon::parse($addon['date_to'])->format('M d, Y') }}</small>
+                    </th>
+                    <td></td>
+                </tr>
+            @elseif($addon['date_from'] && $addon['billing_cycle'] === 'per_day')
+                <tr>
+                    <th style="padding-left: 30px; font-weight: normal;">
+                        <small>Start Date: {{ \Carbon\Carbon::parse($addon['date_from'])->format('M d, Y') }}</small>
+                    </th>
+                    <td></td>
+                </tr>
+            @elseif($addon['date_to'] && $addon['billing_cycle'] === 'per_day')
+                <tr>
+                    <th style="padding-left: 30px; font-weight: normal;">
+                        <small>End Date: {{ \Carbon\Carbon::parse($addon['date_to'])->format('M d, Y') }}</small>
+                    </th>
+                    <td></td>
+                </tr>
+            @endif
+        @endforeach
+        @if($filteredAddonTotal > 0)
+            <tr class="table-active">
+                <th><strong>Add-ons Total</strong></th>
+                <td><strong>₱{{ number_format($filteredAddonTotal, 2) }}</strong></td>
+            </tr>
+        @endif
+    @endif
+@endif
+
+    <tr class="table-active">
+        <th><strong>Subtotal</strong></th>
+        <td><strong>₱{{ number_format($subtotal, 2) }}</strong></td>
+    </tr>
+
+    @if(!empty($refundableAddons))
+        <tr>
+            <th colspan="2" class="bg-light"><strong>Refundable Add-Ons</strong></th>
+        </tr>
+        @foreach($refundableAddons as $refundableAddon)
+            <tr>
+                <th>
+                    {{ $refundableAddon['addon_name'] ?? 'Refundable Addon' }}
+                    {{-- <span class="badge bg-success">Refundable</span> --}}
+                </th>
+                <td>₱{{ number_format((float)($refundableAddon['calculated_price'] ?? 0), 2) }}</td>
+            </tr>
+        @endforeach
+        <tr>
+            <th><strong>Refundable Add-ons Total<strong></th>
+            <td><strong>₱{{ number_format($refundableAddonsTotal, 2) }}<strong></td>
+        </tr>
+    @endif
+
+    {{-- <tr class="table-primary">
+        <th><strong>Grand Total</strong></th>
+        <td><strong>₱{{ number_format($totalPrice, 2) }}</strong></td>
+    </tr> --}}
+
 
 
                                 @elseif($facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty()) 
@@ -887,70 +972,55 @@
                             <input type="hidden" name="date_to" value="{{ $reservationData['date_to'] }}">
                         @elseif($facility->facility_type === 'whole_place')
 
-                            <div>
-                                <input type="hidden" id="date_from" name="date_from" value="{{ old('date_from', $reservationData['date_from'] ?? '') }}">
-                                <input type="hidden" id="date_to" name="date_to" value="{{ old('date_to', $reservationData['date_to'] ?? '') }}">
-                                <input type="hidden" name="time_start" value="{{ $reservationData['time_start'] ?? '' }}">
-                                <input type="hidden" name="time_end" value="{{ $reservationData['time_end'] ?? '' }}">
-                                <input type="hidden" name="client_type_price" value="{{ $reservationData['price'] ?? '' }}">
-                                <input type="hidden" name="number_of_days" value="{{ $reservationData['number_of_days'] ?? 1 }}">
-                                <input type="hidden" name="is_based_on_days" value="{{ $reservationData['is_based_on_days'] ?? 0 }}">
-                                <input type="hidden" name="base_price_total" value="{{ $reservationData['base_price_total'] ?? 0 }}">
-                                <input type="hidden" name="base_total" value="{{ $reservationData['base_total'] ?? 0 }}">
-                                <input type="hidden" name="refundable_total" value="{{ $reservationData['refundable_total'] ?? 0 }}">
-                                <input type="hidden" name="total_price" value="{{ $reservationData['total_price'] ?? 0 }}">
-                                
+              <div>
+        <input type="hidden" id="date_from" name="date_from" value="{{ old('date_from', $reservationData['date_from'] ?? '') }}">
+        <input type="hidden" id="date_to" name="date_to" value="{{ old('date_to', $reservationData['date_to'] ?? '') }}">
+        <input type="hidden" name="time_start" value="{{ $reservationData['time_start'] ?? '' }}">
+        <input type="hidden" name="time_end" value="{{ $reservationData['time_end'] ?? '' }}">
 
-                                
+        <input type="hidden" name="price" value="{{ $reservationData['price'] ?? 0 }}">
+        <input type="hidden" name="number_of_days" value="{{ $reservationData['number_of_days'] ?? 1 }}">
+        <input type="hidden" name="is_based_on_days" value="{{ !empty($reservationData['is_based_on_days']) ? 1 : 0 }}">
+        <input type="hidden" name="initial_price" value="{{ $reservationData['initial_price'] ?? 0 }}">
 
-                                @if(!empty($reservationData['addons']))
+        <input type="hidden" name="addons_total" value="{{ $reservationData['addons_total'] ?? 0 }}">
+        <input type="hidden" name="refundable_addons_total" value="{{ $reservationData['refundable_addons_total'] ?? 0 }}">
 
-                                    @foreach($reservationData['addons'] as $index => $addon)
+        <input type="hidden" name="subtotal" value="{{ $reservationData['subtotal'] ?? 0 }}">
+        <input type="hidden" name="refundable_total" value="{{ $reservationData['refundable_total'] ?? ($reservationData['refundable_addons_total'] ?? 0) }}">
+        <input type="hidden" name="total_price" value="{{ $reservationData['total_price'] ?? 0 }}">
 
-                                        <input type="hidden" name="addons[{{ $index }}][addon_id]" value="{{ $addon['addon_id'] }}">
+       @if(!empty($reservationData['addons']))
+    @foreach($reservationData['addons'] as $index => $addon)
+        <input type="hidden" name="addons[{{ $index }}][addon_id]" value="{{ $addon['addon_id'] }}">
+        <input type="hidden" name="addons[{{ $index }}][addon_name]" value="{{ $addon['addon_name'] }}">
+        <input type="hidden" name="addons[{{ $index }}][addon_type]" value="{{ $addon['addon_type'] }}">
+        <input type="hidden" name="addons[{{ $index }}][billing_cycle]" value="{{ $addon['billing_cycle'] ?? 'per_day' }}">
+        <input type="hidden" name="addons[{{ $index }}][base_price]" value="{{ $addon['base_price'] }}">
+        <input type="hidden" name="addons[{{ $index }}][quantity]" value="{{ $addon['quantity'] }}">
+        <input type="hidden" name="addons[{{ $index }}][nights]" value="{{ $addon['nights'] }}">
+        <input type="hidden" name="addons[{{ $index }}][is_quantity_based]" value="{{ $addon['is_quantity_based'] }}">
+        <input type="hidden" name="addons[{{ $index }}][calculated_price]" value="{{ $addon['calculated_price'] }}">
+        
+        <!-- Add these lines for date fields -->
+        <input type="hidden" name="addons[{{ $index }}][date_from]" value="{{ $addon['date_from'] ?? '' }}">
+        <input type="hidden" name="addons[{{ $index }}][date_to]" value="{{ $addon['date_to'] ?? '' }}">
+        <input type="hidden" name="addons[{{ $index }}][selected_dates]" value="{{ json_encode($addon['selected_dates'] ?? []) }}">
+    @endforeach
+@endif
 
-                                        <input type="hidden" name="addons[{{ $index }}][addon_name]" value="{{ $addon['addon_name'] }}">
-
-                                        <input type="hidden" name="addons[{{ $index }}][addon_type]" value="{{ $addon['addon_type'] }}">
-
-                                        <input type="hidden" name="addons[{{ $index }}][base_price]" value="{{ $addon['base_price'] }}">
-
-                                        <input type="hidden" name="addons[{{ $index }}][quantity]" value="{{ $addon['quantity'] }}">
-
-                                        <input type="hidden" name="addons[{{ $index }}][nights]" value="{{ $addon['nights'] }}">
-
-                                        <input type="hidden" name="addons[{{ $index }}][is_quantity_based]" value="{{ $addon['is_quantity_based'] }}">
-
-                                        <input type="hidden" name="addons[{{ $index }}][calculated_price]" value="{{ $addon['calculated_price'] }}">
-
-                                    @endforeach
-
-                                    <input type="hidden" name="addons_total" value="{{ $reservationData['addons_total'] ?? 0 }}">
-
-                                @endif
-
-                                
-
-                                @if(!empty($reservationData['refundable_addons']))
-
-                                    @foreach($reservationData['refundable_addons'] as $index => $refundableAddon)
-
-                                        <input type="hidden" name="refundable_addons[{{ $index }}][addon_id]" value="{{ $refundableAddon['addon_id'] }}">
-
-                                        <input type="hidden" name="refundable_addons[{{ $index }}][addon_name]" value="{{ $refundableAddon['addon_name'] }}">
-
-                                        <input type="hidden" name="refundable_addons[{{ $index }}][addon_type]" value="{{ $refundableAddon['addon_type'] }}">
-
-                                        <input type="hidden" name="refundable_addons[{{ $index }}][base_price]" value="{{ $refundableAddon['base_price'] }}">
-
-                                        <input type="hidden" name="refundable_addons[{{ $index }}][calculated_price]" value="{{ $refundableAddon['calculated_price'] }}">
-
-                                        <input type="hidden" name="refundable_addons[{{ $index }}][is_refundable]" value="1">
-                                    @endforeach
-                                    <input type="hidden" name="refundable_addons_total" value="{{ $reservationData['refundable_addons_total'] ?? 0 }}">
-                                @endif
-                            </div>
-
+        @if(!empty($reservationData['refundable_addons']))
+            @foreach($reservationData['refundable_addons'] as $index => $ref)
+                <input type="hidden" name="refundable_addons[{{ $index }}][addon_id]" value="{{ $ref['addon_id'] }}">
+                <input type="hidden" name="refundable_addons[{{ $index }}][addon_name]" value="{{ $ref['addon_name'] }}">
+                <input type="hidden" name="refundable_addons[{{ $index }}][addon_type]" value="{{ $ref['addon_type'] }}">
+                <input type="hidden" name="refundable_addons[{{ $index }}][base_price]" value="{{ $ref['base_price'] }}">
+                <input type="hidden" name="refundable_addons[{{ $index }}][billing_cycle]" value="{{ $ref['billing_cycle'] ?? 'per_contract' }}">
+                <input type="hidden" name="refundable_addons[{{ $index }}][calculated_price]" value="{{ $ref['calculated_price'] }}">
+                <input type="hidden" name="refundable_addons[{{ $index }}][is_refundable]" value="1">
+            @endforeach
+        @endif
+    </div>
                         @elseif($facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty()) 
                             <div>
                                 <input type="hidden" name="facility_id" value="{{ $reservationData['facility_id'] }}">
