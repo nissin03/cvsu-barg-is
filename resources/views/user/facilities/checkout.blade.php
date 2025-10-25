@@ -842,62 +842,143 @@
         <th><strong>Grand Total</strong></th>
         <td><strong>₱{{ number_format($totalPrice, 2) }}</strong></td>
     </tr> --}}
+@elseif($facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty())
+@php
+    $dateFrom = $reservationData['date_from'] ?? null;
+    $dateTo   = $reservationData['date_to'] ?? null;
+    $initialPrice = (float)($reservationData['initial_price'] ?? 0);
+    $addonsTotal = (float)($reservationData['addons_total'] ?? 0);
+    $refTotal = (float)($reservationData['refundable_total'] ?? 0);
+    $subtotal = (float)($reservationData['subtotal'] ?? 0);
+    $grandTotal = (float)($reservationData['total_price'] ?? 0);
+
+    $sharedAddons = $reservationData['shared_addons'] ?? [];
+    $wholeAddons = $reservationData['whole_addons'] ?? [];
+    $currentAddons = $reservationData['booking_type'] === 'shared' ? $sharedAddons : $wholeAddons;
+
+    $normalizedAddons = [];
+    if (!empty($currentAddons['addon_names'])) {
+        foreach ($currentAddons['addon_names'] as $addonId => $name) {
+            $quantity = (int)($currentAddons['addon_quantity'][$addonId] ?? 0);
+            $checked = isset($currentAddons['addon_checkbox'][$addonId]);
+            $basePrice = (float)($currentAddons['addon_values'][$addonId] ?? 0);
+            $type = $currentAddons['addon_types'][$addonId] ?? '';
+            $billing = $currentAddons['addon_billing_cycle'][$addonId] ?? '';
+            $nights = (int)($currentAddons['addon_nights'][$addonId] ?? 0);
+            $isQtyBased = (bool)($currentAddons['addon_is_quantity_based'][$addonId] ?? false);
+            
+            if ($quantity > 0 || $checked) {
+                $normalizedAddons[] = [
+                    'name' => $name,
+                    'quantity' => $quantity,
+                    'base_price' => $basePrice,
+                    'type' => $type,
+                    'billing' => $billing,
+                    'nights' => $nights,
+                    'is_quantity_based' => $isQtyBased
+                ];
+            }
+        }
+    }
+
+    $normalizedRefundables = [];
+    if (!empty($currentAddons['refundable_addon_names'])) {
+        foreach ($currentAddons['refundable_addon_names'] as $addonId => $name) {
+            $price = (float)($currentAddons['refundable_addon_prices'][$addonId] ?? 0);
+            if ($price > 0) {
+                $normalizedRefundables[] = [
+                    'name' => $name,
+                    'total' => $price
+                ];
+            }
+        }
+    }
+@endphp
+
+<tr>
+    <th>Booking Type</th>
+    <td>{{ ucfirst($reservationData['booking_type']) }}</td>
+</tr>
+<tr>
+    <th>Room Name</th>
+    <td>{{ $reservationData['room_name'] ?? 'N/A' }}</td>
+</tr>
+<tr>
+    <th>Room Capacity</th>
+    <td>{{ $reservationData['room_capacity'] ?? 'N/A' }}</td>
+</tr>
+<tr>
+    <th>Date From</th>
+    <td>{{ $dateFrom ? Carbon\Carbon::parse($dateFrom)->format('F d, Y') : 'N/A' }}</td>
+</tr>
+<tr>
+    <th>Date To</th>
+    <td>{{ $dateTo ? Carbon\Carbon::parse($dateTo)->format('F d, Y') : 'N/A' }}</td>
+</tr>
+
+<tr>
+    <th>Initial Price</th>
+    <td>₱{{ number_format($initialPrice, 2) }}</td>
+</tr>
+
+@if(count($normalizedAddons) > 0)
+    <tr>
+        <th colspan="2" class="bg-light"><strong>Add-Ons</strong></th>
+    </tr>
+    @foreach($normalizedAddons as $addon)
+        <tr>
+            <th>
+                {{ $addon['name'] }}
+                @if($addon['is_quantity_based'] && $addon['quantity'] > 0)
+                    (x{{ $addon['quantity'] }})
+                @endif
+                @if($addon['billing'] === 'per_day' && $addon['nights'] > 1)
+                    ({{ $addon['nights'] }} days)
+                @endif
+            </th>
+            <td>
+                @if($addon['is_quantity_based'] && $addon['quantity'] > 0)
+                    ₱{{ number_format($addon['base_price'] * $addon['quantity'] * ($addon['billing'] === 'per_day' ? $addon['nights'] : 1), 2) }}
+                @else
+                    ₱{{ number_format($addon['base_price'] * ($addon['billing'] === 'per_day' ? $addon['nights'] : 1), 2) }}
+                @endif
+            </td>
+        </tr>
+    @endforeach
+    <tr class="table-active">
+        <th><strong>Add-ons Total</strong></th>
+        <td><strong>₱{{ number_format($addonsTotal, 2) }}</strong></td>
+    </tr>
+@endif
+
+<tr class="table-active">
+    <th><strong>Subtotal</strong></th>
+    <td><strong>₱{{ number_format($subtotal, 2) }}</strong></td>
+</tr>
+
+@if(count($normalizedRefundables) > 0)
+    <tr>
+        <th colspan="2" class="bg-light"><strong>Refundable Add-Ons</strong></th>
+    </tr>
+    @foreach($normalizedRefundables as $ref)
+        <tr>
+            <th>{{ $ref['name'] }}</th>
+            <td>₱{{ number_format($ref['total'], 2) }}</td>
+        </tr>
+    @endforeach
+    <tr>
+        <th><strong>Refundable Add-ons Total</strong></th>
+        <td><strong>₱{{ number_format($refTotal, 2) }}</strong></td>
+    </tr>
+@endif
+
+{{-- <tr class="total-row">
+    <td colspan="2">
+        <strong>Total Price: ₱{{ number_format($grandTotal, 2) }}</strong>
+    </td>
+</tr> --}}
 
 
-
-                                @elseif($facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty()) 
-
-                                    <tr>
-                                        <th>Booking Type</th>
-                                        <td>{{ ucfirst($reservationData['booking_type']) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Room Name</th> 
-                                        <td>{{ $reservationData['room_name'] ?? 'N/A' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Room Capacity</th>
-                                        <td>{{ $reservationData['room_capacity'] ?? 'N/A' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Date From</th>
-                                        <td>{{ $date_from ? Carbon\Carbon::parse($date_from)->format('F d, Y') : 'N/A' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Date To</th>
-                                        <td>{{ $date_to ? Carbon\Carbon::parse($date_to)->format('F d, Y') : 'N/A' }}</td>
-                                    </tr>
-                                    
-                                    @if($reservationData['booking_type'] === 'shared' && !empty($quantityDetails))
-                                        @foreach($quantityDetails as $detail)
-                                            <tr>
-                                                <th>{{ $detail['name'] }}</th>
-                                                <td>{{ $detail['quantity'] }} × ₱{{ number_format($detail['price'], 2) }} = ₱{{ number_format($detail['total'], 2) }}</td>
-                                            </tr>
-                                        @endforeach
-                                    @endif
-                                    
-                                    @if(isset($selectedPriceDetails))
-                                        <tr>
-                                            <th>{{ $selectedPriceDetails['name'] }}</th>
-                                            <td>
-                                                @if($selectedPriceDetails['days'] > 1)
-                                                    {{ $selectedPriceDetails['days'] }} days × ₱{{ number_format($selectedPriceDetails['price'], 2) }} = ₱{{ number_format($selectedPriceDetails['total'], 2) }}
-                                                @else
-                                                    ₱{{ number_format($selectedPriceDetails['total'], 2) }}
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endif
-                                    
-                                    {{-- @if($reservationData['booking_type'] === 'whole')
-                                        @if(isset($reservationData['time_start']) && isset($reservationData['time_end']))
-                                            <tr>
-                                                <th>Time</th>
-                                                <td>{{ $reservationData['time_start'] }} - {{ $reservationData['time_end'] }}</td>
-                                            </tr>
-                                        @endif
-                                    @endif --}}
 
                                 @elseif ($facility->facility_type === 'both' && $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty())
                                     @php
@@ -1021,72 +1102,94 @@
             @endforeach
         @endif
     </div>
-                        @elseif($facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty()) 
-                            <div>
-                                <input type="hidden" name="facility_id" value="{{ $reservationData['facility_id'] }}">
-                                <input type="hidden" name="booking_type" value="{{ $reservationData['booking_type'] }}">
-                                
-                                @if(isset($reservationData['facility_attribute_id']))
-                                    <input type="hidden" name="facility_attribute_id" value="{{ $reservationData['facility_attribute_id'] }}">
-                                @endif
-                                
-                                <input type="hidden" name="date_from" value="{{ $reservationData['date_from'] }}">
-                                <input type="hidden" name="date_to" value="{{ $reservationData['date_to'] }}">
-                                <input type="hidden" name="total_price" value="{{ $reservationData['total_price'] }}">
-                                
-                                @if($reservationData['booking_type'] === 'shared')
-                                    @if(isset($reservationData['internal_quantity']) && is_array($reservationData['internal_quantity']))
-                                        @foreach($reservationData['internal_quantity'] as $priceId => $quantity)
-                                            <input type="hidden" name="internal_quantity[{{ $priceId }}]" value="{{ $quantity }}">
-                                        @endforeach
-                                    @endif
-                                    
-                                    @if(isset($reservationData['price_values']) && is_array($reservationData['price_values']))
-                                        @foreach($reservationData['price_values'] as $priceId => $value)
-                                            <input type="hidden" name="price_values[{{ $priceId }}]" value="{{ $value }}">
-                                        @endforeach
-                                    @endif
-                                    
-                                    @if(isset($reservationData['price_names']) && is_array($reservationData['price_names']))
-                                        @foreach($reservationData['price_names'] as $priceId => $name)
-                                            <input type="hidden" name="price_names[{{ $priceId }}]" value="{{ $name }}">
-                                        @endforeach
-                                    @endif
-                                    
-                                    @if(isset($reservationData['price_id']))
-                                        <input type="hidden" name="price_id" value="{{ $reservationData['price_id'] }}">
-                                    @endif
-                                    
-                                    @if(isset($reservationData['selected_price']))
-                                        <input type="hidden" name="selected_price" value="{{ $reservationData['selected_price'] }}">
-                                    @endif
-                                @endif
-                                
-                                @if($reservationData['booking_type'] === 'whole')
-                                    @if(isset($reservationData['selected_room_id']))
-                                        <input type="hidden" name="selected_room_id" value="{{ $reservationData['selected_room_id'] }}">
-                                    @endif
-                                    
-                                    @if(isset($reservationData['whole_price_id']))
-                                        <input type="hidden" name="whole_price_id" value="{{ $reservationData['whole_price_id'] }}">
-                                    @endif
-                                    
-                                    @if(isset($reservationData['selected_whole_price']))
-                                        <input type="hidden" name="selected_whole_price" value="{{ $reservationData['selected_whole_price'] }}">
-                                    @endif
-                                    
-                                    @if(isset($reservationData['time_start']))
-                                        <input type="hidden" name="time_start" value="{{ $reservationData['time_start'] }}">
-                                    @endif
-                                    
-                                    @if(isset($reservationData['time_end']))
-                                        <input type="hidden" name="time_end" value="{{ $reservationData['time_end'] }}">
-                                    @endif
-                                @endif
-                                
-                                <input type="hidden" name="room_name" value="{{ $reservationData['room_name'] }}">
-                                <input type="hidden" name="room_capacity" value="{{ $reservationData['room_capacity'] }}">
-                            </div>
+
+    @elseif($facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty())
+<div>
+    <input type="hidden" name="facility_id" value="{{ $reservationData['facility_id'] }}">
+    <input type="hidden" name="booking_type" value="{{ $reservationData['booking_type'] }}">
+
+    @if(isset($reservationData['facility_attribute_id']))
+        <input type="hidden" name="facility_attribute_id" value="{{ $reservationData['facility_attribute_id'] }}">
+    @endif
+
+    <input type="hidden" name="date_from" value="{{ $reservationData['date_from'] }}">
+    <input type="hidden" name="date_to" value="{{ $reservationData['date_to'] }}">
+    <input type="hidden" name="total_price" value="{{ $reservationData['total_price'] }}">
+
+    @if($reservationData['booking_type'] === 'shared')
+        @if(isset($reservationData['internal_quantity']) && is_array($reservationData['internal_quantity']))
+            @foreach($reservationData['internal_quantity'] as $priceId => $quantity)
+                <input type="hidden" name="internal_quantity[{{ $priceId }}]" value="{{ $quantity }}">
+            @endforeach
+        @endif
+
+        @if(isset($reservationData['price_values']) && is_array($reservationData['price_values']))
+            @foreach($reservationData['price_values'] as $priceId => $value)
+                <input type="hidden" name="price_values[{{ $priceId }}]" value="{{ $value }}">
+            @endforeach
+        @endif
+
+        @if(isset($reservationData['price_names']) && is_array($reservationData['price_names']))
+            @foreach($reservationData['price_names'] as $priceId => $name)
+                <input type="hidden" name="price_names[{{ $priceId }}]" value="{{ $name }}">
+            @endforeach
+        @endif
+
+        @if(isset($reservationData['price_id']))
+            <input type="hidden" name="price_id" value="{{ $reservationData['price_id'] }}">
+        @endif
+
+        @if(isset($reservationData['selected_price']))
+            <input type="hidden" name="selected_price" value="{{ $reservationData['selected_price'] }}">
+        @endif
+
+        @if(isset($reservationData['shared_addons']) && is_array($reservationData['shared_addons']))
+            @foreach($reservationData['shared_addons'] as $key => $values)
+                @if(is_array($values))
+                    @foreach($values as $subKey => $value)
+                        <input type="hidden" name="shared_addons[{{ $key }}][{{ $subKey }}]" value="{{ $value }}">
+                    @endforeach
+                @endif
+            @endforeach
+        @endif
+    @endif
+
+    @if($reservationData['booking_type'] === 'whole')
+        @if(isset($reservationData['selected_room_id']))
+            <input type="hidden" name="selected_room_id" value="{{ $reservationData['selected_room_id'] }}">
+        @endif
+
+        @if(isset($reservationData['whole_price_id']))
+            <input type="hidden" name="whole_price_id" value="{{ $reservationData['whole_price_id'] }}">
+        @endif
+
+        @if(isset($reservationData['selected_whole_price']))
+            <input type="hidden" name="selected_whole_price" value="{{ $reservationData['selected_whole_price'] }}">
+        @endif
+
+        @if(isset($reservationData['whole_addons']) && is_array($reservationData['whole_addons']))
+            @foreach($reservationData['whole_addons'] as $key => $values)
+                @if(is_array($values))
+                    @foreach($values as $subKey => $value)
+                        <input type="hidden" name="whole_addons[{{ $key }}][{{ $subKey }}]" value="{{ $value }}">
+                    @endforeach
+                @endif
+            @endforeach
+        @endif
+    @endif
+
+    <input type="hidden" name="room_name" value="{{ $reservationData['room_name'] }}">
+    <input type="hidden" name="room_capacity" value="{{ $reservationData['room_capacity'] }}">
+    <input type="hidden" name="initial_price" value="{{ $reservationData['initial_price'] }}">
+    <input type="hidden" name="addons_total" value="{{ $reservationData['addons_total'] }}">
+    <input type="hidden" name="refundable_total" value="{{ $reservationData['refundable_total'] }}">
+    <input type="hidden" name="subtotal" value="{{ $reservationData['subtotal'] }}">
+</div>
+
+
+
+
+
                         @elseif ($facility->facility_type === 'both' && $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty())
                             <input type="hidden" name="facility_id" value="{{ $facility->id }}">
                             <input type="hidden" name="facility_type" value="{{ $facility->facility_type }}">
