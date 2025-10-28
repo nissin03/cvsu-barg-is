@@ -30,13 +30,14 @@ class DatabaseSeeder extends Seeder
             FacilitySeeder::class,
             // FacilityReportSeeder::class,
             // OrderSeeder::class,
-            ReservationSeeder::class,
-            // AddonSeeder::class,
-            AddonsFacilitySeeder::class,
-            AddonReservationSeeder::class,
-            AddonPaymentSeeder::class,
-            AddonTransactionSeeder::class,
-       
+            // ReservationSeeder::class,
+
+            AddonSeeder::class,
+            // AddonsFacilitySeeder::class,
+            // AddonReservationSeeder::class,
+            // AddonPaymentSeeder::class,
+            // AddonTransactionSeeder::class,
+
 
 
         ]);

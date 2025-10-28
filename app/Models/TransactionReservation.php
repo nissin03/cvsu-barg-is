@@ -14,7 +14,7 @@ class TransactionReservation extends Model
         'facility_attribute_id',
         'payment_id',
         'price_id',
-       
+
         'quantity',
         'user_id',
         'status',
@@ -51,6 +51,6 @@ class TransactionReservation extends Model
 
     public function addonTransaction()
     {
-        return $this->hasMany(addonTransaction::class);
+        return $this->hasMany(AddonTransaction::class, 'transaction_reservation_id');
     }
 }
