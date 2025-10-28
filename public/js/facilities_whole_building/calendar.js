@@ -1,4 +1,3 @@
-// js/facilities_whole_building/calendar.js
 document.addEventListener('DOMContentLoaded', function() {
     const hasDayBasedPricing = document.querySelector('[data-has-day-based-pricing]')?.dataset.hasDayBasedPricing === 'true';
     
@@ -18,9 +17,31 @@ function initializeCalendar() {
     const userRole = calendarEl.dataset.userRole;
     const availabilities = JSON.parse(calendarEl.dataset.availabilities || '[]');
     const facilityCapacity = parseInt(calendarEl.dataset.facilityCapacity || '0');
-    const tomorrowFormatted = calendarEl.dataset.tomorrowFormatted;
     
-    // Initialize global calendar variables
+    const today = new Date();
+    const tomorrow = new Date(today);
+    
+    if (userType === 'ADM') {
+        tomorrow.setDate(tomorrow.getDate() + 1);
+    } else {
+        tomorrow.setDate(tomorrow.getDate() + 7);
+    }
+    
+    const tomorrowFormatted = tomorrow.toISOString().split('T')[0];
+    
+    let maxDate = null;
+    let maxDateFormatted = null;
+    
+    if (userType === 'USR') {
+        maxDate = new Date(today);
+        maxDate.setMonth(maxDate.getMonth() + 3);
+        maxDateFormatted = maxDate.toISOString().split('T')[0];
+    } else if (userType === 'ADM') {
+        maxDate = new Date(today);
+        maxDate.setFullYear(maxDate.getFullYear() + 1);
+        maxDateFormatted = maxDate.toISOString().split('T')[0];
+    }
+    
     window.calendarSelectedDates = [];
     window.calendarStartDate = null;
     window.calendarEndDate = null;
@@ -35,7 +56,6 @@ function initializeCalendar() {
         selectable: true,
         selectMirror: true,
         dayMaxEvents: false,
-        weekends: true,
         validRange: { start: tomorrowFormatted },
         
         dateClick: function(info) {
@@ -52,20 +72,22 @@ function initializeCalendar() {
         }
     };
 
-    if (userType === 'USR') {
-        calendarOptions.validRange.end = getMaxDate(userType);
+    if (userType === 'USR' && (userRole === 'student' || userRole === 'employee')) {
+        calendarOptions.weekends = false;
+    } else {
+        calendarOptions.weekends = true;
+    }
+
+    if (maxDateFormatted) {
+        calendarOptions.validRange.end = maxDateFormatted;
     }
 
     const calendar = new FullCalendar.Calendar(calendarEl, calendarOptions);
     calendar.render();
     
-    // Store calendar instance globally for access from other functions
     window.facilityCalendar = calendar;
-    
-    // Initialize click count
     window.facilityCalendar.clickCount = 0;
     
-    // Modal event listeners
     document.getElementById('calendarModal')?.addEventListener('shown.bs.modal', function () {
         calendar.updateSize();
     });
@@ -93,7 +115,7 @@ function handleDateClick(info, userType, userRole, availabilities, facilityCapac
             Swal.fire({
                 icon: 'error',
                 title: 'Not Available',
-                text: 'Your role can only book facilities from Monday to Friday.'
+                text: 'Weekend bookings are not currently available. Please select a date between Monday and Friday'
             });
             return;
         }
@@ -132,7 +154,7 @@ function handleDateClick(info, userType, userRole, availabilities, facilityCapac
                         Swal.fire({
                             icon: 'error',
                             title: 'Not Available',
-                            text: 'Your role can only book facilities from Monday to Friday.'
+                            text: 'Weekend bookings are not currently available. Please select a date between Monday and Friday'
                         });
                         window.facilityCalendar.clickCount--;
                         return;
@@ -274,14 +296,6 @@ function getReservedDates(availabilities) {
     });
     
     return reservedDates;
-}
-
-function getMaxDate(userType) {
-    if (userType === 'ADM') return null;
-    
-    const maxDate = new Date();
-    maxDate.setMonth(maxDate.getMonth() + 3);
-    return maxDate.toISOString().split('T')[0];
 }
 
 function updateCalendarInputs() {

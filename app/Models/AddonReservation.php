@@ -9,9 +9,9 @@ class AddonReservation extends Model
 {
     use HasFactory;
 
-    protected $table ='addons_reservations';
+    protected $table = 'addons_reservations';
 
-    protected $fillable = 
+    protected $fillable =
     [
         'addon_id',
         'remaining_quantity',
@@ -30,11 +30,11 @@ class AddonReservation extends Model
 
     public function payments()
     {
-        return $this->hasOne(AddonPayment::class);
+        return $this->hasMany(AddonPayment::class);
     }
 
     public function addonTransaction()
     {
-        return $this->hasMany(addonTransaction::class);
+        return $this->hasMany(AddonTransaction::class, 'addon_reservation_id');
     }
 }

@@ -1,36 +1,36 @@
 @extends('layouts.app')
 @section('content')
 
-@php
-    $user = auth()->user();
-    $currentRoute = request()->route()->getName();
+    @php
+        $user = auth()->user();
+        $currentRoute = request()->route()->getName();
 
-    $homeRoute = match ($user->utype ?? 'guest') {
-        'USR' => route('user.index'),
-        'DIR' => route('director.index'),
-        'ADM' => route('admin.index'),
-        default => route('home.index'),
-    };
+        $homeRoute = match ($user->utype ?? 'guest') {
+            'USR' => route('user.index'),
+            'DIR' => route('director.index'),
+            'ADM' => route('admin.index'),
+            default => route('home.index'),
+        };
 
-    $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
+        $breadcrumbs = [['url' => $homeRoute, 'label' => 'Home']];
 
-    $routesWithBreadcrumbs = [
-        'facilities.index' => ['Rentals'],
-        'facilities.details' => ['Rentals', 'Rental Details'],
-        'about.index' => ['About Us'],
-        'contact.index' => ['Contact Us'],
-    ];
+        $routesWithBreadcrumbs = [
+            'facilities.index' => ['Rentals'],
+            'facilities.details' => ['Rentals', 'Rental Details'],
+            'about.index' => ['About Us'],
+            'contact.index' => ['Contact Us'],
+        ];
 
-    if (isset($routesWithBreadcrumbs[$currentRoute])) {
-        foreach ($routesWithBreadcrumbs[$currentRoute] as $label) {
-            $breadcrumbs[] = ['url' => null, 'label' => $label];
+        if (isset($routesWithBreadcrumbs[$currentRoute])) {
+            foreach ($routesWithBreadcrumbs[$currentRoute] as $label) {
+                $breadcrumbs[] = ['url' => null, 'label' => $label];
+            }
+        } else {
+            $breadcrumbs[] = ['url' => null, 'label' => 'Facility Details'];
         }
-    } else {
-        $breadcrumbs[] = ['url' => null, 'label' => 'Facility Details'];
-    }
-@endphp
+    @endphp
 
-<link href="{{ asset('css/facility/details.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/facility/details.css') }}" rel="stylesheet">
 
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
@@ -65,13 +65,10 @@
                                     <div class="swiper-wrapper">
                                         <div class="swiper-slide">
                                             <img loading="lazy" class="h-auto main-img image-clickable"
-                                                src="{{ asset('storage/' . $facility->image) }}"
-                                                alt="{{ $facility->name }}"
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#imageModal"
+                                                src="{{ asset('storage/' . $facility->image) }}" alt="{{ $facility->name }}"
+                                                data-bs-toggle="modal" data-bs-target="#imageModal"
                                                 data-image-src="{{ asset('storage/' . $facility->image) }}"
-                                                data-image-alt="{{ $facility->name }}"
-                                                style="cursor: pointer;">
+                                                data-image-alt="{{ $facility->name }}" style="cursor: pointer;">
                                             <a data-fancybox="gallery" href="{{ asset('storage/' . $facility->image) }}"
                                                 data-bs-toggle="tooltip" data-bs-placement="left"
                                                 title="{{ $facility->name }}" style="display: none;"></a>
@@ -81,12 +78,10 @@
                                             <div class="swiper-slide">
                                                 <img loading="lazy" class="h-auto main-img image-clickable"
                                                     src="{{ asset('storage/' . trim($gimg)) }}"
-                                                    alt="{{ $facility->name }}"
-                                                    data-bs-toggle="modal" 
+                                                    alt="{{ $facility->name }}" data-bs-toggle="modal"
                                                     data-bs-target="#imageModal"
                                                     data-image-src="{{ asset('storage/' . trim($gimg)) }}"
-                                                    data-image-alt="{{ $facility->name }}"
-                                                    style="cursor: pointer;">
+                                                    data-image-alt="{{ $facility->name }}" style="cursor: pointer;">
                                                 <a data-fancybox="gallery" href="{{ asset('storage/' . trim($gimg)) }}"
                                                     data-bs-toggle="tooltip" data-bs-placement="left"
                                                     title="{{ $facility->name }}" style="display: none;"></a>
@@ -102,41 +97,43 @@
                     </div>
 
                     @php
-                        $refundableAddons = $facility->addons->filter(function($addon) {
-                            return $addon->price_type === 'flat_rate' && 
-                                   $addon->is_refundable == 1 && 
-                                   $addon->show === 'both' && 
-                                   $addon->is_available == 1;
+                        $refundableAddons = $facility->addons->filter(function ($addon) {
+                            return $addon->price_type === 'flat_rate' &&
+                                $addon->is_refundable == 1 &&
+                                $addon->show === 'both' &&
+                                $addon->is_available == 1;
                         });
                     @endphp
 
-                    @if($refundableAddons && $refundableAddons->count() > 0)
+                    @if ($refundableAddons && $refundableAddons->count() > 0)
                         <div class="addons-section mt-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4 class="addons-title mb-0 fw-semibold" style="font-size: 1.4rem;">
                                     <i class="fas fa-plus-circle me-2" style="color: #1864ab; font-size: 1.2rem;"></i>
                                     Refundable Fee
                                 </h4>
-                                <span class="badge rounded-pill px-3 py-1" style="background-color: #0aa130; font-size: 0.9rem;">
+                                <span class="badge rounded-pill px-3 py-1"
+                                    style="background-color: #0aa130; font-size: 0.9rem;">
                                     {{ $refundableAddons->count() }} available
                                 </span>
                             </div>
 
                             <div class="addons-list">
-                                @foreach($refundableAddons as $addon)
+                                @foreach ($refundableAddons as $addon)
                                     <div class="addon-item border rounded-3 p-3 mb-3 bg-white shadow-sm">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div class="addon-info flex-grow-1">
-                                                <h6 class="addon-name mb-1 fw-bold" style="font-size: 1.1rem;">{{ $addon->name }}</h6>
-                                                <div class="addon-price text-success mb-2" style="font-size: 1.3rem; font-weight: 600;">
+                                                <h6 class="addon-name mb-1 fw-bold" style="font-size: 1.1rem;">
+                                                    {{ $addon->name }}</h6>
+                                                <div class="addon-price text-success mb-2"
+                                                    style="font-size: 1.3rem; font-weight: 600;">
                                                     ₱{{ number_format($addon->base_price, 2) }}
                                                 </div>
                                                 <button class="btn btn-sm"
-                                                        style="background-color: #3b82f6; color: white; border-color: #3b82f6; font-size: 0.9rem; padding: 6px 12px;"
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#addonDescModal" 
-                                                        data-addon-name="{{ $addon->name }}" 
-                                                        data-addon-description="{{ $addon->description }}">
+                                                    style="background-color: #3b82f6; color: white; border-color: #3b82f6; font-size: 0.9rem; padding: 6px 12px;"
+                                                    data-bs-toggle="modal" data-bs-target="#addonDescModal"
+                                                    data-addon-name="{{ $addon->name }}"
+                                                    data-addon-description="{{ $addon->description }}">
                                                     <i class="fas fa-info-circle me-1"></i>View Description
                                                 </button>
                                             </div>
@@ -164,32 +161,33 @@
                         <input type="hidden" name="facility_type" value="{{ $facility->facility_type }}">
                         <input type="hidden" name="selected_price" id="selected_price">
 
-                        @if($facility->facility_type === 'individual')
+                        @if ($facility->facility_type === 'individual')
                             <input type="hidden" name="facility_attribute_id" value="{{ $availableRoom->id ?? '' }}">
                         @elseif($facility->facility_type == 'whole_place')
                             <input type="hidden" name="facility_attribute_id" value="{{ $wholeAttr?->id ?? '' }}">
                         @endif
 
-                    @if ($facility->facility_type == 'whole_place')
+                        @if ($facility->facility_type == 'whole_place')
                             @include('components.facility_whole_place')
-                    @endif
+                        @endif
 
-                    @if ($facility->facility_type === 'individual')
-                        @include('components.facility_individual')
-                    @endif
+                        @if ($facility->facility_type === 'individual')
+                            @include('components.facility_individual')
+                        @endif
 
-                   @if (
-                        $facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty())
-                        @include('components.facility_both_rooms')
-                    @endif
+                        @if (
+                            $facility->facility_type === 'both' &&
+                                $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty())
+                            @include('components.facility_both_rooms')
+                        @endif
 
-                    @if (
-                        $facility->facility_type === 'both' && $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty()
-                    )
-                        @include('components.facility_both_building')
-                    @endif
+                        @if (
+                            $facility->facility_type === 'both' &&
+                                $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty())
+                            @include('components.facility_both_building')
+                        @endif
 
-                         <button type="submit" class="btn btn-shop btn-addtocart" id="reserve-btn"
+                        <button type="submit" class="btn btn-shop btn-addtocart" id="reserve-btn"
                             style="padding: 15px 30px; font-size: 18px">
                             Reserve
                         </button>
@@ -198,26 +196,26 @@
             </div>
         </section>
 
-       <div class="rental-single__details-tab mt-5">
+        <div class="rental-single__details-tab mt-5">
             <ul class="nav nav-tabs nav-justified border-0 mb-4" id="myTab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link text-dark fw-medium px-4 py-3 rounded-top active" 
-                    id="tab-description-tab" data-bs-toggle="tab" href="#tab-description" 
-                    role="tab" aria-controls="tab-description" aria-selected="true">
-                    <i class="fas fa-align-left me-2"></i>Description
+                    <a class="nav-link text-dark fw-medium px-4 py-3 rounded-top active" id="tab-description-tab"
+                        data-bs-toggle="tab" href="#tab-description" role="tab" aria-controls="tab-description"
+                        aria-selected="true">
+                        <i class="fas fa-align-left me-2"></i>Description
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link text-dark fw-medium px-4 py-3 rounded-top" 
-                    id="tab-rules-tab" data-bs-toggle="tab" href="#tab-rules" 
-                    role="tab" aria-controls="tab-rules" aria-selected="false">
-                    <i class="fas fa-clipboard-check me-2"></i>Rules & Regulations
+                    <a class="nav-link text-dark fw-medium px-4 py-3 rounded-top" id="tab-rules-tab" data-bs-toggle="tab"
+                        href="#tab-rules" role="tab" aria-controls="tab-rules" aria-selected="false">
+                        <i class="fas fa-clipboard-check me-2"></i>Rules & Regulations
                     </a>
                 </li>
             </ul>
 
             <div class="tab-content bg-white rounded-3 shadow-sm p-4">
-                <div class="tab-pane fade show active" id="tab-description" role="tabpanel" aria-labelledby="tab-description-tab">
+                <div class="tab-pane fade show active" id="tab-description" role="tabpanel"
+                    aria-labelledby="tab-description-tab">
                     <div class="rental-single__description text-gray-700 lh-lg">
                         {{ $facility->description }}
                     </div>
@@ -225,8 +223,10 @@
 
                 <div class="tab-pane fade" id="tab-rules" role="tabpanel" aria-labelledby="tab-rules-tab">
                     <div class="rental-single__rules mb-4">
-                        <div class="rules-header cursor-pointer" data-bs-toggle="collapse" data-bs-target="#rules-content" aria-expanded="false">
-                            <div class="d-flex justify-content-between align-items-center p-4 bg-light rounded-3 shadow-sm">
+                        <div class="rules-header cursor-pointer" data-bs-toggle="collapse"
+                            data-bs-target="#rules-content" aria-expanded="false">
+                            <div
+                                class="d-flex justify-content-between align-items-center p-4 bg-light rounded-3 shadow-sm">
                                 <h5 class="mb-0 d-flex align-items-center text-primary">
                                     <i class="fas fa-file-alt fs-5 me-3"></i>
                                     Rules and Regulations
@@ -242,22 +242,67 @@
                             <div class="rules-container bg-white p-0 mt-3">
                                 <div class="rules-content">
                                     @php
-                                        $rules = array_filter(explode("\n", $facility->rules_and_regulations));
+                                        // Split the rules into sections based on numbered rules
+                                        $rulesSections = preg_split('/(?=\d+\.)/', $facility->rules_and_regulations);
+                                        $rulesSections = array_filter(array_map('trim', $rulesSections));
                                     @endphp
 
                                     <div class="rules-sections">
-                                        @foreach ($rules as $index => $rule)
-                                            @if (trim($rule) !== '')
-                                                <div class="rule-item d-flex align-items-start p-3 mb-2 rounded-3 hover-bg-light">
-                                                    <div class="rule-number me-3 pt-1">
-                                                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" 
-                                                            style="width: 26px; height: 26px;">
-                                                            {{ $index + 1 }}
-                                                        </span>
+                                        @foreach ($rulesSections as $section)
+                                            @if (trim($section) !== '')
+                                                @php
+                                                    // Extract the rule number and content
+                                                    $lines = explode("\n", $section);
+                                                    $firstLine = trim($lines[0]);
+                                                    $remainingLines = array_slice($lines, 1);
+
+                                                    // Check if the line starts with a number followed by a dot
+                                                    $hasNumber = preg_match('/^\d+\./', $firstLine);
+                                                    $displayText = $hasNumber
+                                                        ? substr($firstLine, strpos($firstLine, '.') + 1)
+                                                        : $firstLine;
+                                                @endphp
+
+                                                <div class="rule-section mb-4">
+                                                    <div
+                                                        class="rule-main d-flex align-items-start p-3 mb-2 rounded-3 bg-light">
+                                                        <div class="rule-number me-3 pt-1">
+                                                            @if ($hasNumber)
+                                                                <span
+                                                                    class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center"
+                                                                    style="width: 26px; height: 26px;">
+                                                                    {{ substr($firstLine, 0, strpos($firstLine, '.')) }}
+                                                                </span>
+                                                            @else
+                                                                <span
+                                                                    class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center"
+                                                                    style="width: 26px; height: 26px; visibility: hidden;">
+                                                                    &nbsp;
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                        <div class="rule-text text-gray-700 lh-base fw-medium">
+                                                            {{ $displayText }}
+                                                        </div>
                                                     </div>
-                                                    <div class="rule-text text-gray-700 lh-base">
-                                                        {!! trim($rule) !!}
-                                                    </div>
+
+                                                    @if (!empty($remainingLines))
+                                                        <div class="sub-rules ms-5">
+                                                            @foreach ($remainingLines as $subRule)
+                                                                @if (trim($subRule) !== '')
+                                                                    <div
+                                                                        class="sub-rule-item d-flex align-items-start p-2 ps-4 mb-1">
+                                                                        <div class="sub-rule-marker me-3 pt-1">
+                                                                            <span class="text-muted">•</span>
+                                                                        </div>
+                                                                        <div class="sub-rule-text text-gray-600 lh-base">
+                                                                            {{ trim($subRule) }}
+                                                                        </div>
+                                                                    </div>
+                                                                @endif
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             @endif
                                         @endforeach
@@ -266,7 +311,8 @@
                                     <div class="rules-footer mt-4 pt-3 border-top text-center">
                                         <div class="d-inline-flex align-items-center bg-light px-3 py-2 rounded-pill">
                                             <i class="fas fa-info-circle text-primary me-2"></i>
-                                            <small class="text-muted">Please read all rules carefully before making a reservation</small>
+                                            <small class="text-muted">Please read all rules carefully before making a
+                                                reservation</small>
                                         </div>
                                     </div>
                                 </div>
@@ -286,16 +332,22 @@
                         <i class="fas fa-image me-2"></i>
                         <span id="imageModalTitle">{{ $facility->name }}</span>
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body d-flex align-items-center justify-content-center p-0">
                     <div class="position-relative w-100 h-100 d-flex align-items-center justify-content-center">
-                        <img id="modalImage" src="" alt="" class="img-fluid" style="max-height: 90vh; max-width: 100%; object-fit: contain;">
-                        
-                        <button type="button" id="modalPrevBtn" class="btn btn-light position-absolute start-0 top-50 translate-middle-y ms-3 rounded-circle" style="width: 50px; height: 50px; opacity: 0.8;">
+                        <img id="modalImage" src="" alt="" class="img-fluid"
+                            style="max-height: 90vh; max-width: 100%; object-fit: contain;">
+
+                        <button type="button" id="modalPrevBtn"
+                            class="btn btn-light position-absolute start-0 top-50 translate-middle-y ms-3 rounded-circle"
+                            style="width: 50px; height: 50px; opacity: 0.8;">
                             <i class="fas fa-chevron-left"></i>
                         </button>
-                        <button type="button" id="modalNextBtn" class="btn btn-light position-absolute end-0 top-50 translate-middle-y me-3 rounded-circle" style="width: 50px; height: 50px; opacity: 0.8;">
+                        <button type="button" id="modalNextBtn"
+                            class="btn btn-light position-absolute end-0 top-50 translate-middle-y me-3 rounded-circle"
+                            style="width: 50px; height: 50px; opacity: 0.8;">
                             <i class="fas fa-chevron-right"></i>
                         </button>
                     </div>
@@ -309,7 +361,8 @@
         </div>
     </div>
 
-    <div class="modal fade" id="addonDescModal" tabindex="-1" aria-labelledby="addonDescModalLabel" aria-hidden="true">
+    <div class="modal fade" id="addonDescModal" tabindex="-1" aria-labelledby="addonDescModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header text-white" style="background-color: #1864ab;">
@@ -317,7 +370,8 @@
                         <i class="fas fa-info-circle me-2"></i>
                         <span id="addonModalName">Add-on Details</span>
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="addon-description-content">
@@ -325,7 +379,9 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="background-color: #f8f9fa;">
-                    <button type="button" class="btn" style="background-color: #3b82f6; color: white; border-color: #3b82f6;" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn"
+                        style="background-color: #3b82f6; color: white; border-color: #3b82f6;"
+                        data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -340,12 +396,12 @@
         // image modal and swipers
         document.addEventListener('DOMContentLoaded', function() {
             const addonDescModal = document.getElementById('addonDescModal');
-            
+
             addonDescModal.addEventListener('show.bs.modal', function(event) {
                 const button = event.relatedTarget;
                 const addonName = button.getAttribute('data-addon-name');
                 const addonDescription = button.getAttribute('data-addon-description');
-                
+
                 document.getElementById('addonModalName').textContent = addonName;
                 document.getElementById('addonModalDescription').textContent = addonDescription;
             });
@@ -356,57 +412,57 @@
             const imageCounter = document.getElementById('imageCounter');
             const modalPrevBtn = document.getElementById('modalPrevBtn');
             const modalNextBtn = document.getElementById('modalNextBtn');
-            
+
             let allImages = [];
             let currentImageIndex = 0;
-            
+
             const mainImage = "{{ asset('storage/' . $facility->image) }}";
             allImages.push({
                 src: mainImage,
                 alt: "{{ $facility->name }}"
             });
-            
+
             @foreach (explode(',', $facility->images) as $gimg)
                 allImages.push({
                     src: "{{ asset('storage/' . trim($gimg)) }}",
                     alt: "{{ $facility->name }}"
                 });
             @endforeach
-            
+
             function updateModalImage(index) {
                 if (allImages[index]) {
                     modalImage.src = allImages[index].src;
                     modalImage.alt = allImages[index].alt;
                     imageCounter.textContent = `${index + 1} of ${allImages.length}`;
                     currentImageIndex = index;
-                    
+
                     modalPrevBtn.style.display = allImages.length > 1 ? 'block' : 'none';
                     modalNextBtn.style.display = allImages.length > 1 ? 'block' : 'none';
                 }
             }
-            
+
             function showPrevImage() {
                 const newIndex = currentImageIndex > 0 ? currentImageIndex - 1 : allImages.length - 1;
                 updateModalImage(newIndex);
             }
-            
+
             function showNextImage() {
                 const newIndex = currentImageIndex < allImages.length - 1 ? currentImageIndex + 1 : 0;
                 updateModalImage(newIndex);
             }
-            
+
             imageModal.addEventListener('show.bs.modal', function(event) {
                 const trigger = event.relatedTarget;
                 const imageSrc = trigger.getAttribute('data-image-src');
                 const imageAlt = trigger.getAttribute('data-image-alt');
-                
+
                 const clickedIndex = allImages.findIndex(img => img.src === imageSrc);
                 updateModalImage(clickedIndex >= 0 ? clickedIndex : 0);
             });
-            
+
             modalPrevBtn.addEventListener('click', showPrevImage);
             modalNextBtn.addEventListener('click', showNextImage);
-            
+
             imageModal.addEventListener('keydown', function(event) {
                 if (event.key === 'ArrowLeft') {
                     event.preventDefault();
@@ -417,7 +473,7 @@
                 }
             });
 
-   
+
             const mainSwiper = new Swiper('.main-swiper', {
                 navigation: {
                     nextEl: '.swiper-button-next',
@@ -447,6 +503,7 @@
                         .remove('active'));
                     this.classList.add('active');
                 });
+
                 function validateForm() {
                     const checkbox = document.getElementById('agreeToRules');
                     if (!checkbox.checked) {
@@ -462,7 +519,7 @@
 
 
 
-{{-- @if ($facility->facility_type === 'both' && $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty())
+    {{-- @if ($facility->facility_type === 'both' && $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty())
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var dateFromInput = document.getElementById('date_from');
@@ -1160,8 +1217,10 @@
 @endif --}}
 
 
-@if ( $facility->facility_type === 'both' && $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty())
-{{-- <script>
+    @if (
+        $facility->facility_type === 'both' &&
+            $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty())
+        {{-- <script>
     document.addEventListener('DOMContentLoaded', function() {
         var dateFromInput = document.getElementById('date_from');
         var dateToInput = document.getElementById('date_to');
@@ -1786,8 +1845,8 @@
     });
 </script> --}}
 
-{{-- Validation --}}
-{{-- <script>
+        {{-- Validation --}}
+        {{-- <script>
 document.addEventListener('DOMContentLoaded', function() {
     const reserveBtn = document.getElementById('reserve-btn');
     reserveBtn.disabled = true;
@@ -1969,6 +2028,5 @@ document.addEventListener('DOMContentLoaded', function() {
     checkFormValidity();
 });
 </script> --}}
-@endif
-
+    @endif
 @endpush

@@ -32,16 +32,16 @@ class ReportController extends Controller
 
         $dateParams = $this->getDateParameters($request);
         $periods = $this->getAvailablePeriods();
-        
+
         $selectedMonth = $periods['availableMonths']->firstWhere('id', $dateParams['selectedMonth']) ?: $periods['availableMonths']->first();
         list($startOfMonth, $endOfMonth) = $this->getMonthRange($dateParams['selectedYear'], $dateParams['selectedMonth']);
-        
+
         $weekRanges = $this->getWeekRanges($startOfMonth, $endOfMonth);
         list($startOfSelectedWeek, $endOfSelectedWeek) = $this->getSelectedWeekRange($weekRanges, $dateParams['selectedWeek']);
-        
+
         $orders = Order::orderBy('created_at', 'DESC')->take(10)->get();
 
-        $dashboardDatas = Cache::remember("dashboard-data-{$dateParams['selectedYear']}-{$dateParams['selectedMonth']}", now()->addHours(1), function() use ($startOfMonth, $endOfMonth) {
+        $dashboardDatas = Cache::remember("dashboard-data-{$dateParams['selectedYear']}-{$dateParams['selectedMonth']}", now()->addHours(1), function () use ($startOfMonth, $endOfMonth) {
             return DB::select("SELECT
                 SUM(total) AS TotalAmount,
                 SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
@@ -105,14 +105,14 @@ class ReportController extends Controller
         $TotalCanceledAmountD = $sortedDailyDatas->sum('TotalCanceledAmount');
 
         $pageTitle = 'Reports';
-        
+
         $selectedYear = $dateParams['selectedYear'];
         $selectedMonthId = $dateParams['selectedMonth'];
         $selectedWeekId = $dateParams['selectedWeek'];
         $availableMonths = $periods['availableMonths'];
         $availableWeeks = $periods['availableWeeks'];
         $yearRange = $periods['yearRange'];
-        
+
         return view('admin.reports.product-reports', compact(
             'orders',
             'dashboardDatas',
@@ -202,7 +202,7 @@ class ReportController extends Controller
             ->whereMonth('created_at', $dateParams['currentMonth'])
             ->count();
         $activeUsers = User::where('isDefault', false)->count();
-       
+
         $currentMonthUsers = User::whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
@@ -215,7 +215,7 @@ class ReportController extends Controller
 
 
         $growthRate = ($totalUsers > 0) ? (($newUsersThisMonth / $totalUsers) * 100) : 0;
-       
+
 
         $recentUsers = User::orderBy('created_at', 'DESC')->take(5)->get();
 
@@ -244,7 +244,7 @@ class ReportController extends Controller
             ->whereMonth('created_at', $dateParams['selectedMonth'])
             ->groupBy('week_number')
             ->get();
-        
+
         foreach ($userCounts as $count) {
             $weekIndex = $count->week_number;
             if (isset($weeklyData[$weekIndex])) {
@@ -318,10 +318,10 @@ class ReportController extends Controller
     private function getAvailablePeriods()
     {
         return [
-            'availableMonths' => Cache::remember('available-months', now()->addDay(), function() {
+            'availableMonths' => Cache::remember('available-months', now()->addDay(), function () {
                 return MonthName::orderBy('id')->get();
             }),
-            'availableWeeks' => Cache::remember('available-weeks', now()->addDay(), function() {
+            'availableWeeks' => Cache::remember('available-weeks', now()->addDay(), function () {
                 return DB::table('week_names')->orderBy('week_number')->get();
             }),
             'yearRange' => range(Carbon::now()->year, Carbon::now()->year - 10)
@@ -359,7 +359,7 @@ class ReportController extends Controller
 
     private function getDailyData($startDate, $endDate)
     {
-        $dailyDatasRaw = Cache::remember("daily-data-{$startDate->format('Y-m-d')}-{$endDate->format('Y-m-d')}", now()->addHours(1), function() use ($startDate, $endDate) {
+        $dailyDatasRaw = Cache::remember("daily-data-{$startDate->format('Y-m-d')}-{$endDate->format('Y-m-d')}", now()->addHours(1), function () use ($startDate, $endDate) {
             return DB::select(
                 "SELECT DAYOFWEEK(created_at) AS DayNo,
                     DAYNAME(created_at) AS DayName,
@@ -377,7 +377,7 @@ class ReportController extends Controller
 
         $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
         $dailyDataMap = collect($dailyDatasRaw)->keyBy('DayName');
-        
+
         return collect($daysOfWeek)->map(function ($day) use ($dailyDataMap) {
             return $dailyDataMap->get($day, (object)[
                 'DayNo' => null,
@@ -392,7 +392,7 @@ class ReportController extends Controller
 
     private function getMonthlyData($year)
     {
-        return Cache::remember("monthly-data-{$year}", now()->addHours(1), function() use ($year) {
+        return Cache::remember("monthly-data-{$year}", now()->addHours(1), function () use ($year) {
             return DB::select("SELECT M.id AS MonthNo, M.name AS MonthName,
                 IFNULL(D.TotalAmount, 0) AS TotalAmount,
                 IFNULL(D.TotalReservedAmount, 0) AS TotalReservedAmount,
@@ -416,7 +416,7 @@ class ReportController extends Controller
 
     private function getWeeklyData($startDate, $endDate)
     {
-        return Cache::remember("weekly-data-{$startDate->format('Y-m-d')}-{$endDate->format('Y-m-d')}", now()->addHours(1), function() use ($startDate, $endDate) {
+        return Cache::remember("weekly-data-{$startDate->format('Y-m-d')}-{$endDate->format('Y-m-d')}", now()->addHours(1), function () use ($startDate, $endDate) {
             $result = DB::select(
                 "SELECT
                 SUM(total) AS TotalAmount,
@@ -662,18 +662,18 @@ class ReportController extends Controller
             'year' => 'nullable|integer|min:2010|max:' . date('Y'),
             'week' => 'nullable|integer|between:1,6'
         ]);
-        
+
         $dateParams = $this->getDateParameters($request);
         $periods = $this->getAvailablePeriods();
 
         $availableMonths = $periods['availableMonths'];
         $availableWeeks = $periods['availableWeeks'];
         $yearRange = $periods['yearRange'];
-        
+
         $selectedYear = $dateParams['selectedYear'];
         $selectedMonth = $availableMonths->firstWhere('id', $dateParams['selectedMonth']) ?: $availableMonths->first();
         $selectedWeekId = $dateParams['selectedWeek'];
-        
+
         if (!$request->filled('start_date') && !$request->filled('end_date')) {
             return view('admin.reports.product-input-sales', compact(
                 'availableMonths',
@@ -688,12 +688,12 @@ class ReportController extends Controller
                 'endDate' => null
             ]);
         }
-        
+
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
-        $endDate = $request->filled('end_date') 
+        $endDate = $request->filled('end_date')
             ? Carbon::parse($request->input('end_date'))->endOfDay()
             : $startDate->copy()->endOfDay();
-        
+
         $salesData = Order::select(
             DB::raw('DATE(created_at) as date'),
             DB::raw('SUM(total) as total_sales'),
@@ -701,11 +701,11 @@ class ReportController extends Controller
             DB::raw('SUM(CASE WHEN status = "pickedup" THEN total ELSE 0 END) as pickedup_sales'),
             DB::raw('SUM(CASE WHEN status = "canceled" THEN total ELSE 0 END) as canceled_sales')
         )
-        ->whereBetween('created_at', [$startDate, $endDate])
-        ->groupBy('date')
-        ->orderBy('date', 'asc')
-        ->get();
-        
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+
         $totalOrders = Order::whereBetween('created_at', [$startDate, $endDate])->count();
         $reservedSalesTotal = Order::where('status', 'reserved')
             ->whereBetween('created_at', [$startDate, $endDate])
@@ -716,7 +716,7 @@ class ReportController extends Controller
         $canceledSalesTotal = Order::where('status', 'canceled')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->sum('total');
-        
+
         $chartData = [
             'dates' => $salesData->pluck('date')->toArray(),
             'total_sales' => $salesData->pluck('total_sales')->toArray(),
@@ -728,10 +728,10 @@ class ReportController extends Controller
             'pickedup_sales_total' => $pickedUpSalesTotal,
             'canceled_sales_total' => $canceledSalesTotal,
         ];
-        
+
         return view('admin.reports.product-input-sales', compact(
-            'chartData', 
-            'startDate', 
+            'chartData',
+            'startDate',
             'endDate',
             'selectedMonth',
             'selectedYear',
@@ -749,7 +749,7 @@ class ReportController extends Controller
             // Return view without chart data when no dates are selected
             $dateParams = $this->getDateParameters($request);
             $periods = $this->getAvailablePeriods();
-            
+
             return view('admin.reports.product-input-user', [
                 'availableMonths' => $periods['availableMonths'],
                 'availableWeeks' => $periods['availableWeeks'],
@@ -759,16 +759,16 @@ class ReportController extends Controller
                 'selectedWeekId' => $request->input('week', 1),
             ]);
         }
-        
+
         // Original validation and processing
         $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
-        
+
         $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
-        $endDate = $request->has('end_date') && !empty($request->input('end_date')) 
-            ? Carbon::parse($request->input('end_date'))->endOfDay() 
+        $endDate = $request->has('end_date') && !empty($request->input('end_date'))
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
             : $startDate->copy()->endOfDay();
 
         // Rest of your original method code here...
@@ -787,10 +787,10 @@ class ReportController extends Controller
             DB::raw('COUNT(CASE WHEN role = "employee" THEN 1 END) as total_employees'),
             DB::raw('COUNT(CASE WHEN role = "non-employee" THEN 1 END) as total_non_employees')
         )
-        ->whereBetween('created_at', [$startDate, $endDate])
-        ->groupBy('date')
-        ->orderBy('date', 'asc')
-        ->get();
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
 
         $totalUsersInRange = User::whereBetween('created_at', [$startDate, $endDate])->count();
         $totalStudents = User::where('role', 'student')->whereBetween('created_at', [$startDate, $endDate])->count();
@@ -811,11 +811,11 @@ class ReportController extends Controller
 
         $dateParams = $this->getDateParameters($request);
         $periods = $this->getAvailablePeriods();
-        
+
         $availableMonths = $periods['availableMonths'];
         $availableWeeks = $periods['availableWeeks'];
         $yearRange = $periods['yearRange'];
-        
+
         $selectedMonth = $dateParams['selectedMonth'];
         $selectedYear = $dateParams['selectedYear'];
         $selectedWeekId = $request->input('week', 1);
@@ -845,7 +845,7 @@ class ReportController extends Controller
             ->whereMonth('created_at', $selectedMonth)
             ->groupBy('week_number')
             ->get();
-        
+
         foreach ($userCounts as $count) {
             $weekIndex = $count->week_number;
             if (isset($weeklyData[$weekIndex])) {
@@ -900,37 +900,30 @@ class ReportController extends Controller
     public function facilitiesStatement(Request $request)
     {
         $query = Payment::with([
-                'user', 
-                'availability.facility', 
-                'availability.facilityAttribute',
-                'transactionReservations.availability'
-            ])
-            ->orderBy('created_at', 'desc');
+            'user',
+            'availability.facility',
+            'availability.facilityAttribute',
+            'transactionReservations.availability',
+            'transactionReservations.addonTransaction.addon',
+            'transactionReservations.addonTransaction.addonReservation',
+            'transactionReservations.addonTransaction.addonPayment',
+        ])->orderBy('created_at', 'desc');
 
-        if ($request->has('facility_id') && $request->facility_id) {
-            $query->whereHas('availability', function($q) use ($request) {
-                $q->where('facility_id', $request->facility_id);
-            });
+        if ($request->filled('facility_id')) {
+            $query->whereHas('availability', fn($q) => $q->where('facility_id', $request->facility_id));
         }
-        if ($request->has('date_from') && $request->date_from) {
-            $query->whereHas('availability', function($q) use ($request) {
-                $q->whereDate('date_from', '>=', $request->date_from);
-            });
+        if ($request->filled('date_from')) {
+            $query->whereHas('availability', fn($q) => $q->whereDate('date_from', '>=', $request->date_from));
         }
-
-        if ($request->has('date_to') && $request->date_to) {
-            $query->whereHas('availability', function($q) use ($request) {
-                $q->whereDate('date_to', '<=', $request->date_to);
-            });
+        if ($request->filled('date_to')) {
+            $query->whereHas('availability', fn($q) => $q->whereDate('date_to', '<=', $request->date_to));
         }
-
-        if ($request->has('status') && $request->status) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        $payments = $query->get()->map(function($payment) {
+        $payments = $query->get()->map(function ($payment) {
             $dates = $payment->transactionReservations->pluck('availability.date_from')->filter()->unique()->sort();
-            
             if ($dates->count() > 0) {
                 $payment->date_from = $dates->first();
                 $payment->date_to = $dates->last();
@@ -938,19 +931,58 @@ class ReportController extends Controller
                 $payment->date_from = $payment->availability->date_from ?? null;
                 $payment->date_to = $payment->availability->date_to ?? null;
             }
-            
+
+            $raw = $payment->transactionReservations->flatMap(function ($tr) {
+                return $tr->addonTransaction->map(function ($at) {
+                    $ar = $at->addonReservation;
+                    $ap = $at->addonPayment;
+                    return [
+                        'addon_id'   => $at->addon_id,
+                        'name'       => optional($at->addon)->name,
+                        'price_type' => optional($at->addon)->price_type,
+                        'quantity'   => optional($ar)->quantity,
+                        'date_from'  => optional($ar)->date_from,
+                        'date_to'    => optional($ar)->date_to ?: optional($ar)->date_from,
+                        'status'     => $at->status ?? optional($ap)->status,
+                        'total'      => (float) (optional($ap)->total ?? 0),
+                    ];
+                });
+            });
+
+            $grouped = $raw
+                ->groupBy(function ($row) {
+                    return ($row['addon_id'] ?? 'x') . '|' . ($row['quantity'] ?? 0);
+                })
+                ->map(function ($items) {
+                    $first = $items->first();
+                    $start = $items->pluck('date_from')->filter()->min();
+                    $end   = $items->pluck('date_to')->filter()->max() ?? $start;
+                    $total = $items->sum('total');
+                    return [
+                        'name'       => $first['name'],
+                        'price_type' => $first['price_type'],
+                        'quantity'   => $first['quantity'],
+                        'date_from'  => $start,
+                        'date_to'    => $end,
+                        'status'     => $first['status'],
+                        'total'      => $total,
+                    ];
+                })
+                ->values();
+
+            $payment->addons_list  = $grouped;
+            $payment->addons_total = $grouped->sum('total');
+            $payment->grand_total  = (float) $payment->total_price + (float) $payment->addons_total;
+
             return $payment;
         });
 
-        $facilities = \App\Models\Facility::where('archived', false)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $facilities = \App\Models\Facility::where('archived', false)->orderBy('name')->get(['id', 'name']);
 
         return view('admin.reports.facility_statement', [
-            'payments' => $payments,
+            'payments'   => $payments,
             'facilities' => $facilities,
-            'filters' => $request->all()
+            'filters'    => $request->all()
         ]);
     }
-    
 }

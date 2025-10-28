@@ -10,16 +10,27 @@ class CalendarValidation {
         
         this.today = new Date();
         this.tomorrow = new Date(this.today);
-        this.tomorrow.setDate(this.tomorrow.getDate() + 7);
-        this.tomorrowFormatted = this.tomorrow.toISOString().split('T')[0];
         
         const userType = window.authUserType;
+        
+        if (userType === 'ADM') {
+            this.tomorrow.setDate(this.tomorrow.getDate() + 1);
+        } else {
+            this.tomorrow.setDate(this.tomorrow.getDate() + 7);
+        }
+        
+        this.tomorrowFormatted = this.tomorrow.toISOString().split('T')[0];
+        
         this.maxDate = null;
         this.maxDateFormatted = null;
         
         if (userType === 'USR') {
             this.maxDate = new Date(this.today);
             this.maxDate.setMonth(this.maxDate.getMonth() + 3);
+            this.maxDateFormatted = this.maxDate.toISOString().split('T')[0];
+        } else if (userType === 'ADM') {
+            this.maxDate = new Date(this.today);
+            this.maxDate.setFullYear(this.maxDate.getFullYear() + 1);
             this.maxDateFormatted = this.maxDate.toISOString().split('T')[0];
         }
         

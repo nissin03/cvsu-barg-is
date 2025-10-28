@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class AddonTransaction extends Model
 {
     protected $table = 'addon_transactions';
+
     protected $fillable = [
         'transaction_reservation_id',
         'addon_id',
@@ -15,25 +16,23 @@ class AddonTransaction extends Model
         'status',
     ];
 
-    public function transaction()
+    public function transactionReservation()
     {
-        return $this->belongsTo(TransactionReservation::class);
+        return $this->belongsTo(TransactionReservation::class, 'transaction_reservation_id');
     }
+
     public function addon()
     {
-        return $this->belongsTo(Addon::class);
+        return $this->belongsTo(Addon::class, 'addon_id');
     }
 
-    public function addon_reservation()
+    public function addonReservation()
     {
-        return $this->belongsTo(AddonReservation::class);
+        return $this->belongsTo(AddonReservation::class, 'addon_reservation_id');
     }
 
-    public function addon_payment()
+    public function addonPayment()
     {
-        return $this->belongsTo(AddonPayment::class);
+        return $this->belongsTo(AddonPayment::class, 'addon_payment_id');
     }
-
-
-
 }

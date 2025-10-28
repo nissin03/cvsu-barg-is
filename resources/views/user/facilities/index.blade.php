@@ -614,12 +614,16 @@
                                                                     ₱{{ number_format($price->value, 2) }}</span>
                                                             @endforeach
                                                             @if ($facility->prices->count() > 2)
-                                                                <button class="pricing-toggle" 
+                                                                <button class="pricing-toggle"
                                                                     onclick="event.stopPropagation(); togglePricing(this)"
                                                                     aria-label="Show more pricing options">
-                                                                    <span class="toggle-text">+{{ $facility->prices->count() - 2 }} more</span>
-                                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                                    <span
+                                                                        class="toggle-text">+{{ $facility->prices->count() - 2 }}
+                                                                        more</span>
+                                                                    <svg fill="none" stroke="currentColor"
+                                                                        viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                                            stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                                                     </svg>
                                                                 </button>
                                                             @endif
@@ -770,7 +774,7 @@
                 title: '{{ session('title', 'Success!') }}',
                 text: "{{ session('success') }}",
                 position: 'top-end',
-                showConfirmButton: false, 
+                showConfirmButton: false,
                 timer: 3000,
                 timerProgressBar: true,
                 background: '#f8f9fa',
@@ -799,23 +803,23 @@
             });
         @endif
 
-        @if (session('error'))
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: "{{ session('error') }}",
-                showConfirmButton: false,
-                timer: 3000,
-                toast: true,
-                position: 'top-end'
-            });
-        @endif
+        // @if (session('error'))
+        //     Swal.fire({
+        //         icon: 'error',
+        //         title: 'Oops...',
+        //         text: "{{ session('error') }}",
+        //         showConfirmButton: false,
+        //         timer: 3000,
+        //         toast: true,
+        //         position: 'top-end'
+        //     });
+        // @endif
 
-         function togglePricing(button) {
+        function togglePricing(button) {
             const hiddenPricing = button.closest('.pricing-container').querySelector('.pricing-hidden');
             const toggleText = button.querySelector('.toggle-text');
             const isExpanded = hiddenPricing.classList.contains('expanded');
-            
+
             if (isExpanded) {
                 hiddenPricing.classList.remove('expanded');
                 button.classList.remove('expanded');
@@ -849,7 +853,7 @@
                 });
             });
 
-             const pricingToggles = document.querySelectorAll('.pricing-toggle');
+            const pricingToggles = document.querySelectorAll('.pricing-toggle');
             pricingToggles.forEach(toggle => {
                 const container = toggle.closest('.pricing-container');
                 const allPriceTags = container.querySelectorAll('.price-tag');
@@ -865,7 +869,7 @@
             //         }
             //     });
             // });
-            
+
         });
     </script>
 @endpush
