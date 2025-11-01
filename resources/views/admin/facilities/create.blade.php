@@ -144,11 +144,16 @@
 
                 <div class="wg-box" id="roomBox">
                     @include('admin.facilities.partials.room-management')
+                    <div class="mt-3">
+                        <x-addons.addon-selector :addons="$addons" />
+                    </div>
                 </div>
 
                 <div class="wg-box" id="priceBox">
 
                     @include('admin.facilities.partials.pricing-management')
+                    <x-discounts.discount-selector :discounts="$discounts" />
+
 
                     <div class="cols gap10">
                         <button id="facilitySubmitBtn" class="tf-button w-full" type="submit">
@@ -156,19 +161,13 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- Modal for Adding Prices -->
                 @include('admin.facilities.partials.modals.add-price-modal')
-                {{-- @include('admin.facilities.partials.addons-selection') --}}
             </form>
-
-
-            <!-- /form-add-rental -->
         </div>
-        <!-- /main-content-wrap -->
+
     </div>
-    <!-- /main-content-wrap -->
     @include('admin.facilities.partials.modals.bulk-rooms-modal')
+    {{-- @include('admin.facilities.partials.modals.add-addon-modal') --}}
 @endsection
 
 @push('scripts')
@@ -179,6 +178,8 @@
 
     <script src="{{ asset('assets/js/hideFields.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
+    <script src="{{ asset('assets/js/discount-selector.js') }}"></script>
+    <script src="{{ asset('assets/js/addon-selector.js') }}"></script>
 
     <script>
         let rooms = [];
@@ -212,7 +213,8 @@
             setupFormValidation();
             setupRoomsManagement();
             setupPricingManagement();
-            setupAddonsManagement();
+            setupDiscountsUi();
+            setupAddonsUi();
         }
 
 
@@ -258,6 +260,8 @@
                 $('#dormitoryRooms').hide();
                 $('#selectionContent').show();
                 $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                $('#discountBox').show();
+                $('#addonBox').show();
             } else if (facilityType === 'individual') {
                 $('#selectionBothType').hide();
                 $('#roomBox').show();
@@ -265,6 +269,8 @@
                 $('#dormitoryRooms').show();
                 $('#selectionContent').hide();
                 $('#priceBox').show();
+                $('#discountBox').hide();
+                $('#addonBox').show();
                 $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
             } else if (facilityType === 'whole_place') {
                 $('#selectionBothType').hide();
@@ -274,10 +280,48 @@
                 $('#selectionContent').hide();
                 $('#priceBox').show();
                 $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                $('#addonBox').show();
+                $('#discountBox').show();
             } else {
                 $('#roomBox').hide();
                 $('#priceBox').hide();
+                $('#discountBox').hide();
+                $('#addonBox').hide();
             }
         }
+
+        // function setupDiscountsUi() {
+        //     const selectEl = document.getElementById('discountMultiSelect');
+        //     const hiddenEl = document.getElementById('selected_discounts');
+        //     const previewEl = document.getElementById('selectedDiscountsPreview');
+        //     const showBtn = document.getElementById('showSelectedDiscountsBtn');
+
+        //     if (!selectEl || !hiddenEl || !previewEl || !showBtn) {
+        //         return;
+        //     }
+
+        //     function updateHidden() {
+        //         const values = Array.from(selectEl.selectedOptions).map(o => o.value);
+        //         hiddenEl.value = values.join(',');
+        //     }
+
+        //     function renderPreview() {
+        //         const items = Array.from(selectEl.selectedOptions).map(o => o.textContent);
+        //         previewEl.innerHTML = items.length ? '<ul class="mb-0 ps-3">' + items.map(t => `<li>${t}</li>`).join('') +
+        //             '</ul>' : '<span class="text-muted">No discounts selected</span>';
+        //         previewEl.style.display = 'block';
+        //     }
+
+        //     // if (selectEl) {
+        //     //     $('#discountBox').show();
+        //     //     selectEl.addEventListener('change', updateHidden);
+        //     // }
+        //     // if (btn) {
+        //     //     btn.addEventListener('click', renderPreview);
+        //     // }
+
+        //     selectEl.addEventListener('change', updateHidden);
+        //     showBtn.addEventListener('click', renderPreview);
+        // }
     </script>
 @endpush

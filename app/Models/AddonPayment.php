@@ -15,7 +15,7 @@ class AddonPayment extends Model
         'addon_reservation_id',
         'total',
         'status',
-        'downpayment_amount,'
+        'downpayment_amount'
     ];
 
     public function addon()

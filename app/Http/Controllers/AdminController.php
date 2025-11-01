@@ -1044,6 +1044,12 @@ class AdminController extends Controller
             ->latest()
             ->first();
 
+        $order = Order::with(['orderItems.product', 'user', 'updatedBy'])->findOrFail($order_id);
+        // $transaction = Transaction::where('order_id', $order_id)->first();
+        $transaction = Transaction::where('order_id', $order_id)
+            ->latest()
+            ->first();
+
         return view('admin.order-details', compact('order',  'transaction'));
     }
 
@@ -1071,8 +1077,8 @@ class AdminController extends Controller
     {
         $request->validate([
             'order_id' => 'required|exists:orders,id',
+            'canceled_reason' => 'required_if:order_status,canceled|string|max:500',
             'order_status' => 'required|in:reserved,canceled',
-            'canceled_reason' => 'required_if:order_status,canceled|string|max:500'
         ]);
 
         $order = Order::with('orderItems')->findOrFail($request->order_id);
@@ -1152,6 +1158,7 @@ class AdminController extends Controller
         ]);
         return $pdf->download('receipt_order_' . $order->id . '.pdf');
     }
+
 
     // Sliders Page
     public function slides()
@@ -1325,6 +1332,7 @@ class AdminController extends Controller
             'time_slot' => $request->time_slot,
             'status' => $request->status
         ]);
+
 
 
         $validatedData = $request->validate([

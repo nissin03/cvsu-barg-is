@@ -35,6 +35,6 @@ class AddonReservation extends Model
 
     public function addonTransaction()
     {
-        return $this->hasMany(AddonTransaction::class, 'addon_reservation_id');
+        return $this->hasMany(AddonTransaction::class);
     }
 }

@@ -14,6 +14,7 @@ use App\Http\Controllers\AddonController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AddonsController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\SocialAuthController;
@@ -70,6 +71,9 @@ Route::get('/search', [HomeController::class, 'search'])->name('home.search');
 Route::middleware(['auth', 'verified', AuthUser::class])->group(function () {
     Route::get('/account-dashboard', [UserController::class, 'index'])->name('user.index');
     Route::get('/account-order', [UserController::class, 'orders'])->name('user.orders');
+    Route::get('/canceled-order', [UserController::class, 'canceled_order'])
+        ->name('user.canceled-orders');
+    Route::post('/canceled-order/{orderId}/rebook', [UserController::class, 'rebook_canceled_order'])->name('user.order.rebook');
     Route::get('/canceled-order', [UserController::class, 'canceled_order'])
         ->name('user.canceled-orders');
     Route::post('/canceled-order/{orderId}/rebook', [UserController::class, 'rebook_canceled_order'])->name('user.order.rebook');
@@ -180,6 +184,13 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/facility/{facilityId}/rooms', [FacilityController::class, 'getRooms'])
             ->name('facility.rooms.get');
 
+        Route::resource('discounts', DiscountController::class)
+            ->except(['show']);
+
+        Route::put('discounts/{discount}/archive', [DiscountController::class, 'archive'])->name('discounts.archive');
+        Route::get('discounts/archived', [DiscountController::class, 'archived'])->name('discounts.archived');
+        Route::put('discounts/{discount}/restore', [DiscountController::class, 'restore'])->name('discounts.restore');
+        Route::post('discounts/restore-bulk', [DiscountController::class, 'restoreBulk'])->name('discounts.restore.bulk');
 
         // Admin notification routes
         Route::prefix('notifications')->group(function () {
@@ -222,6 +233,8 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/facilities/reservations/{id}', [FacilityReservationController::class, 'show'])->name('admin.facilities.reservations.show');
         Route::patch('/facilities/reservations/{reservation}/status', [FacilityReservationController::class, 'update'])->name('admin.facilities.reservations.update');
         Route::patch('/facilities/reservations/qualification/{id}/status', [FacilityReservationController::class, 'updateQualificationApproval'])->name('admin.facilities.reservations.qualification.update');
+        Route::put('/addon-payments/{id}', [FacilityReservationController::class, 'updateAddonPayment'])
+            ->name('admin.addon-payments.update');
 
         Route::get('/slide', [AdminController::class, 'slides'])->name('admin.slides');
         Route::get('/slide/add', [AdminController::class, 'slide_add'])->name('admin.slide.add');
@@ -268,21 +281,21 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::delete('/courses/{id}/force-delete', [AdminCourseController::class, 'forceDelete'])->name('admin.courses.force-delete');
 
         // Addons
-        Route::get('addons', [\App\Http\Controllers\AddonsController::class, 'index'])->name('admin.addons');
-        Route::get('addons/create', [\App\Http\Controllers\AddonsController::class, 'create'])->name('admin.addons.create');
-        Route::post('addons', [\App\Http\Controllers\AddonsController::class, 'store'])->name('admin.addons.store');
-        Route::get('/addons/{id}/edit', [\App\Http\Controllers\AddonsController::class, 'edit'])->name('admin.addons.edit');
-        Route::put('/addons/update/{id}', [\App\Http\Controllers\AddonsController::class, 'update'])->name('admin.addons.update');
-            Route::delete('/addons/{id}', [\App\Http\Controllers\AddonsController::class, 'destroy'])->name('admin.addons.destroy');
-    
+        Route::get('addons', [AddonsController::class, 'index'])->name('admin.addons');
+        Route::get('addons/create', [AddonsController::class, 'create'])->name('admin.addons.create');
+        Route::post('addons', [AddonsController::class, 'store'])->name('admin.addons.store');
+        Route::get('/addons/{id}/edit', [AddonsController::class, 'edit'])->name('admin.addons.edit');
+        Route::put('/addons/update/{id}', [AddonsController::class, 'update'])->name('admin.addons.update');
+        Route::delete('/addons/{id}', [AddonsController::class, 'destroy'])->name('admin.addons.destroy');
+
         // Addon archive routes
-        Route::get('/addons/archive', [\App\Http\Controllers\AddonsController::class, 'archive'])->name('admin.addons.archive');
-        Route::patch('/addons/{id}/restore', [\App\Http\Controllers\AddonsController::class, 'restore'])->name('admin.addons.restore');
-        Route::delete('/addons/{id}/force-delete', [\App\Http\Controllers\AddonsController::class, 'forceDelete'])->name('admin.addons.force-delete');
+        Route::get('/addons/archive', [AddonsController::class, 'archive'])->name('admin.addons.archive');
+        Route::patch('/addons/{id}/restore', [AddonsController::class, 'restore'])->name('admin.addons.restore');
+        Route::delete('/addons/{id}/force-delete', [AddonsController::class, 'forceDelete'])->name('admin.addons.force-delete');
 
         //Validation for duplicate names in Addons
-        Route::get('/addons/get-names', [\App\Http\Controllers\AddonsController::class, 'getAddonNames'])->name('admin.addons.getNames');
-        
+        Route::get('/addons/get-names', [AddonsController::class, 'getAddonNames'])->name('admin.addons.getNames');
+
         Route::get('/search', [AdminController::class, 'searchproduct'])->name('admin.searchproduct');
 
         Route::get('/index-weekly', [AdminController::class, 'indexWeekly'])->name('admin.index-weekly');
@@ -315,6 +328,7 @@ Route::middleware(['auth', AuthAdmin::class])
             $reportController = new ReportController();
             $periods = $reportController->getAvailablePeriods();
             $dateParams = $reportController->getDateParameters(new \Illuminate\Http\Request());
+
 
             return view('admin.reports.product-input-sales', [
                 'chartData' => null,

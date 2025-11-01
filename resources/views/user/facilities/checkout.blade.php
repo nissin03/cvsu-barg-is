@@ -265,19 +265,19 @@
             .checkout-container {
                 padding: var(--space-lg) 0;
             }
-            
+
             .card-body {
                 padding: var(--space-lg);
             }
-            
+
             .info-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .section {
                 margin-bottom: var(--space-lg);
             }
-            
+
             .divider {
                 margin: var(--space-lg) 0;
             }
@@ -690,6 +690,32 @@
                                         @endif
                                     @endif
 
+                                    @if (!empty($reservationData['discount_id']))
+                                        <tr class="table-info">
+                                            <th><strong>Gross Total (Before Discount)</strong></th>
+                                            <td><strong>₱{{ number_format($reservationData['gross_total'], 2) }}</strong>
+                                            </td>
+                                        </tr>
+
+                                        {{-- Discount Information --}}
+                                        <tr class="table-success">
+                                            <th>
+                                                <strong>Discount Applied</strong>
+                                                @if ($appliedDiscount)
+                                                    <br><small class="text-muted">{{ $appliedDiscount->name }}
+                                                        ({{ rtrim(rtrim(number_format($appliedDiscount->percent, 2, '.', ''), '0'), '.') }}%)
+                                                        @if ($appliedDiscount->applies_to === 'venue_only')
+                                                            - Venue Only
+                                                        @endif
+                                                    </small>
+                                                @endif
+                                            </th>
+                                            <td class="text-success">
+                                                <strong>-₱{{ number_format($reservationData['discount_amount'], 2) }}</strong>
+                                            </td>
+                                        </tr>
+                                    @endif
+
                                     <tr class="row-total">
                                         <th class="col-label">Subtotal</th>
                                         <td class="col-amount">₱{{ number_format($subtotal, 2) }}</td>
@@ -897,6 +923,32 @@
                                         @endif
                                     @endif
 
+                                    @if (!empty($reservationData['discount_id']))
+                                        <tr class="table-info">
+                                            <th><strong>Gross Total (Before Discount)</strong></th>
+                                            <td><strong>₱{{ number_format($reservationData['gross_total'], 2) }}</strong>
+                                            </td>
+                                        </tr>
+
+                                        {{-- Discount Information --}}
+                                        <tr class="table-success">
+                                            <th>
+                                                <strong>Discount Applied</strong>
+                                                @if ($appliedDiscount)
+                                                    <br><small class="text-muted">{{ $appliedDiscount->name }}
+                                                        ({{ rtrim(rtrim(number_format($appliedDiscount->percent, 2, '.', ''), '0'), '.') }}%)
+                                                        @if ($appliedDiscount->applies_to === 'venue_only')
+                                                            - Venue Only
+                                                        @endif
+                                                    </small>
+                                                @endif
+                                            </th>
+                                            <td class="text-success">
+                                                <strong>-₱{{ number_format($reservationData['discount_amount'], 2) }}</strong>
+                                            </td>
+                                        </tr>
+                                    @endif
+
                                     <tr class="row-total">
                                         <th class="col-label">Subtotal</th>
                                         <td class="col-amount">₱{{ number_format($subtotal, 2) }}</td>
@@ -1077,6 +1129,32 @@
                                         <tr class="table-active">
                                             <th><strong>Add-ons Total</strong></th>
                                             <td><strong>₱{{ number_format($addonsTotal, 2) }}</strong></td>
+                                        </tr>
+                                    @endif
+
+                                    @if (!empty($reservationData['discount_id']))
+                                        <tr class="table-info">
+                                            <th><strong>Gross Total (Before Discount)</strong></th>
+                                            <td><strong>₱{{ number_format($reservationData['gross_total'], 2) }}</strong>
+                                            </td>
+                                        </tr>
+
+                                        {{-- Discount Information --}}
+                                        <tr class="table-success">
+                                            <th>
+                                                <strong>Discount Applied</strong>
+                                                @if ($appliedDiscount)
+                                                    <br><small class="text-muted">{{ $appliedDiscount->name }}
+                                                        ({{ rtrim(rtrim(number_format($appliedDiscount->percent, 2, '.', ''), '0'), '.') }}%)
+                                                        @if ($appliedDiscount->applies_to === 'venue_only')
+                                                            - Venue Only
+                                                        @endif
+                                                    </small>
+                                                @endif
+                                            </th>
+                                            <td class="text-success">
+                                                <strong>-₱{{ number_format($reservationData['discount_amount'], 2) }}</strong>
+                                            </td>
                                         </tr>
                                     @endif
 
@@ -1322,6 +1400,32 @@
                                         @endif
                                     @endif
 
+                                    @if (!empty($reservationData['discount_id']))
+                                        <tr class="table-info">
+                                            <th><strong>Gross Total (Before Discount)</strong></th>
+                                            <td><strong>₱{{ number_format($reservationData['gross_total'], 2) }}</strong>
+                                            </td>
+                                        </tr>
+
+                                        {{-- Discount Information --}}
+                                        <tr class="table-success">
+                                            <th>
+                                                <strong>Discount Applied</strong>
+                                                @if ($appliedDiscount)
+                                                    <br><small class="text-muted">{{ $appliedDiscount->name }}
+                                                        ({{ rtrim(rtrim(number_format($appliedDiscount->percent, 2, '.', ''), '0'), '.') }}%)
+                                                        @if ($appliedDiscount->applies_to === 'venue_only')
+                                                            - Venue Only
+                                                        @endif
+                                                    </small>
+                                                @endif
+                                            </th>
+                                            <td class="text-success">
+                                                <strong>-₱{{ number_format($reservationData['discount_amount'], 2) }}</strong>
+                                            </td>
+                                        </tr>
+                                    @endif
+
                                     <tr class="table-active">
                                         <th class="col-label"><strong>Subtotal</strong></th>
                                         <td class="col-amount"><strong>₱{{ number_format($subtotal, 2) }}</strong></td>
@@ -1371,6 +1475,17 @@
                         enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="facility_id" value="{{ $reservationData['facility_id'] }}">
+
+                        @if (!empty($reservationData['discount_id']))
+                            <input type="hidden" name="discount_id" value="{{ $reservationData['discount_id'] }}">
+                            <input type="hidden" name="discount_percent"
+                                value="{{ $reservationData['discount_percent'] }}">
+                            <input type="hidden" name="discount_amount"
+                                value="{{ $reservationData['discount_amount'] }}">
+                            <input type="hidden" name="discount_applies_to"
+                                value="{{ $reservationData['discount_applies_to'] }}">
+                            <input type="hidden" name="gross_total" value="{{ $reservationData['gross_total'] }}">
+                        @endif
 
                         @if ($facility->facility_type === 'individual')
                             <input type="hidden" name="facility_attribute_id"
@@ -1683,6 +1798,43 @@
                                     @enderror
                                 </div>
 
+                                @if (!empty($reservationData['discount_id']) && $appliedDiscount && $appliedDiscount->requires_proof)
+                                    <div class="file-upload-wrapper mt-3" id="discount-proof-wrapper">
+                                        <label for="discount_proof" class="file-upload-label">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="file-upload-icon"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                                            </svg>
+                                            <span class="file-upload-text">
+                                                <span class="file-upload-title">Upload Discount Proof/ID <span
+                                                        class="text-danger">*</span></span>
+                                                <span class="file-upload-subtitle">JPG, PNG, or PDF (Max 10MB) - Required
+                                                    for discount</span>
+                                            </span>
+                                            <input type="file" id="discount_proof" name="discount_proof"
+                                                class="file-upload-input" accept="image/*,application/pdf" required>
+                                        </label>
+                                        <div class="file-upload-preview" id="discount-proof-preview"
+                                            style="display:none;">
+                                            <span class="file-upload-name" id="discount-proof-name">No file
+                                                selected</span>
+                                            <button type="button" class="file-upload-clear" id="clear-discount-proof"
+                                                aria-label="Remove file">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                    fill="currentColor">
+                                                    <path fill-rule="evenodd"
+                                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        @error('discount_proof')
+                                            <div class="file-upload-error">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                @endif
+
 
 
                             </div>
@@ -1756,6 +1908,60 @@
                 fileName.textContent = 'No file selected';
                 filePreview.style.display = 'none';
             });
+
+
+            const discountProofInput = document.getElementById('discount_proof');
+            if (discountProofInput) {
+                const discountProofName = document.getElementById('discount-proof-name');
+                const clearDiscountProofButton = document.getElementById('clear-discount-proof');
+                const discountProofPreview = document.getElementById('discount-proof-preview');
+
+                discountProofInput.addEventListener('change', function(e) {
+                    if (e.target.files.length > 0) {
+                        const file = e.target.files[0];
+                        const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+
+                        if (!validTypes.includes(file.type)) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Invalid File Type',
+                                text: 'Please upload only JPG, PNG, or PDF files',
+                                confirmButtonColor: '#3b82f6',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                this.value = '';
+                                discountProofName.textContent = 'No file selected';
+                                discountProofPreview.style.display = 'none';
+                            });
+                            return;
+                        }
+
+                        if (file.size > 10 * 1024 * 1024) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'File too large',
+                                text: 'File size exceeds 10MB limit',
+                                confirmButtonColor: '#3b82f6',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                this.value = '';
+                                discountProofName.textContent = 'No file selected';
+                                discountProofPreview.style.display = 'none';
+                            });
+                            return;
+                        }
+
+                        discountProofName.textContent = file.name;
+                        discountProofPreview.style.display = 'flex';
+                    }
+                });
+
+                clearDiscountProofButton.addEventListener('click', function() {
+                    discountProofInput.value = '';
+                    discountProofName.textContent = 'No file selected';
+                    discountProofPreview.style.display = 'none';
+                });
+            }
 
             document.querySelector('form[name="checkout-form"]').addEventListener('submit', function(e) {
                 if (fileInput.files.length > 0) {

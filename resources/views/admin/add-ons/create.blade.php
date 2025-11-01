@@ -9,12 +9,12 @@
         border: 1px solid #e2e8f0;
         margin-bottom: 32px;
     }
-    
+
     .field-group {
         position: relative;
         margin-bottom: 24px;
     }
-    
+
     .field-label {
         color: #475569;
         font-size: 14px;
@@ -22,12 +22,12 @@
         margin-bottom: 8px;
         display: block;
     }
-    
+
     .required-asterisk {
         color: #dc2626;
         margin-left: 4px;
     }
-    
+
     .field-input,
     .field-select,
     .field-textarea {
@@ -41,12 +41,12 @@
         transition: all 0.2s ease;
         box-sizing: border-box;
     }
-    
+
     .field-input::placeholder,
     .field-textarea::placeholder {
         color: #94a3b8;
     }
-    
+
     .field-input:focus,
     .field-select:focus,
     .field-textarea:focus {
@@ -54,12 +54,12 @@
         border-color: #94a3b8;
         box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.15);
     }
-    
+
     .field-textarea {
         min-height: 120px;
         resize: vertical;
     }
-    
+
     .error-message {
         color: #dc2626;
         font-size: 12px;
@@ -70,14 +70,14 @@
         border-radius: 6px;
         border: 1px solid #fecaca;
     }
-    
+
     .checkbox-group {
         display: flex;
         align-items: center;
         gap: 12px;
         margin-bottom: 16px;
     }
-    
+
     .checkbox-input {
         width: 18px;
         height: 18px;
@@ -85,26 +85,26 @@
         border: 1px solid #cbd5e1;
         accent-color: #334155;
     }
-    
+
     .checkbox-label {
         color: #475569;
         font-size: 14px;
         font-weight: 500;
         margin: 0;
     }
-    
+
     .form-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 24px;
     }
-    
+
     @media (max-width: 768px) {
         .form-grid {
             grid-template-columns: 1fr;
         }
     }
-    
+
     .form-actions {
         display: flex;
         justify-content: flex-end;
@@ -113,7 +113,7 @@
         padding-top: 24px;
         border-top: 1px solid #e2e8f0;
     }
-    
+
     .cancel-btn {
         background: #f8fafc;
         color: #475569;
@@ -127,12 +127,12 @@
         text-decoration: none;
         display: inline-block;
     }
-    
+
     .cancel-btn:hover {
         background: #e2e8f0;
         border-color: #94a3b8;
     }
-    
+
     .save-btn {
         background: #334155;
         color: white;
@@ -144,32 +144,32 @@
         cursor: pointer;
         transition: all 0.3s ease;
     }
-    
+
     .save-btn:hover:not(:disabled) {
         background: #475569;
     }
-    
+
     .save-btn:disabled {
         opacity: 0.7;
         cursor: not-allowed;
         background: #94a3b8;
     }
-    
+
     .conditional-field {
         display: none;
     }
-    
+
     .conditional-field.visible {
         display: block;
         animation: fadeIn 0.3s ease;
     }
-    
+
     .field-input:invalid,
     .field-select:invalid,
     .field-textarea:invalid {
         border-color: #dc2626;
     }
-    
+
     .field-input:valid,
     .field-select:valid,
     .field-textarea:valid {
@@ -203,35 +203,35 @@
                 </li>
             </ul>
         </div>
-        
+
         <div class="addon-form-container">
             <form id="addonForm" action="{{ route('admin.addons.store') }}" method="POST">
                 @csrf
-                
+
                 <div class="field-group">
                     <label class="field-label">
                         Addon Name
                         <span class="required-asterisk">*</span>
                     </label>
-                    <input 
-                        class="field-input" 
-                        type="text" 
-                        placeholder="Enter addon name" 
-                        name="name" 
+                    <input
+                        class="field-input"
+                        type="text"
+                        placeholder="Enter addon name"
+                        name="name"
                         id="name"
-                        value="{{ old('name') }}" 
+                        value="{{ old('name') }}"
                         required
                     >
                     @error('name')
                         <span class="error-message">{{ $message }}</span>
                     @enderror
                 </div>
-                
+
                 <div class="field-group">
                     <label class="field-label">Description</label>
-                    <textarea 
-                        class="field-textarea" 
-                        placeholder="Enter addon description" 
+                    <textarea
+                        class="field-textarea"
+                        placeholder="Enter addon description"
                         name="description"
                         id="description"
                     >{{ old('description') }}</textarea>
@@ -239,7 +239,7 @@
                         <span class="error-message">{{ $message }}</span>
                     @enderror
                 </div>
-                
+
                 <div class="form-grid">
                     <div class="field-group">
                         <label class="field-label">
@@ -258,21 +258,21 @@
                             <span class="error-message">{{ $message }}</span>
                         @enderror
                     </div>
-                    
+
                     <div class="field-group">
                         <label class="field-label">
                             Base Price
                             <span class="required-asterisk">*</span>
                         </label>
-                        <input 
-                            class="field-input" 
-                            type="number" 
-                            step="0.01" 
-                            min="0" 
-                            placeholder="0.00" 
-                            name="base_price" 
+                        <input
+                            class="field-input"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            name="base_price"
                             id="base_price"
-                            value="{{ old('base_price') }}" 
+                            value="{{ old('base_price') }}"
                             required
                         >
                         @error('base_price')
@@ -296,7 +296,7 @@
                         <span class="error-message">{{ $message }}</span>
                     @enderror
                 </div>
-                
+
                 <div class="field-group">
                     <label class="field-label">
                         Show
@@ -311,36 +311,36 @@
                         <span class="error-message">{{ $message }}</span>
                     @enderror
                 </div>
-                
+
                 <!-- Conditional Fields -->
                 <div id="conditionalFields">
                     <!-- Per Unit Fields -->
                     <div id="perUnitFields" class="conditional-field">
                         <div class="checkbox-group">
-                            <input 
-                                class="checkbox-input" 
-                                type="checkbox" 
-                                id="is_available_unit" 
-                                name="is_available" 
-                                value="1" 
+                            <input
+                                class="checkbox-input"
+                                type="checkbox"
+                                id="is_available_unit"
+                                name="is_available"
+                                value="1"
                                 {{ old('is_available', true) ? 'checked' : '' }}
                             >
                             <label class="checkbox-label" for="is_available_unit">
                                 Currently available
                             </label>
                         </div>
-                        
+
                         <div class="field-group">
                             <label class="field-label">
                                 Capacity
                                 <span class="required-asterisk">*</span>
                             </label>
-                            <input 
-                                class="field-input" 
-                                type="number" 
-                                min="1" 
-                                placeholder="Enter capacity" 
-                                name="capacity" 
+                            <input
+                                class="field-input"
+                                type="number"
+                                min="1"
+                                placeholder="Enter capacity"
+                                name="capacity"
                                 id="capacity"
                                 value="{{ old('capacity', 1) }}"
                                 required
@@ -350,30 +350,30 @@
                             @enderror
                         </div>
                     </div>
-                                        
+
                     <!-- Flat Rate Fields -->
                     <div id="flatRateFields" class="conditional-field">
                         <div class="checkbox-group">
-                            <input 
-                                class="checkbox-input" 
-                                type="checkbox" 
-                                id="is_available_flat" 
-                                name="is_available" 
-                                value="1" 
+                            <input
+                                class="checkbox-input"
+                                type="checkbox"
+                                id="is_available_flat"
+                                name="is_available"
+                                value="1"
                                 {{ old('is_available', true) ? 'checked' : '' }}
                             >
                             <label class="checkbox-label" for="is_available_flat">
                                 Currently available
                             </label>
                         </div>
-                        
+
                         <div class="checkbox-group">
-                            <input 
-                                class="checkbox-input" 
-                                type="checkbox" 
-                                id="is_refundable_flat" 
-                                name="is_refundable" 
-                                value="1" 
+                            <input
+                                class="checkbox-input"
+                                type="checkbox"
+                                id="is_refundable_flat"
+                                name="is_refundable"
+                                value="1"
                                 {{ old('is_refundable') ? 'checked' : '' }}
                             >
                             <label class="checkbox-label" for="is_refundable_flat">
@@ -381,16 +381,16 @@
                             </label>
                         </div>
                     </div>
-                    
+
                     <!-- Per Night Fields -->
                     <div id="perNightFields" class="conditional-field">
                         <div class="checkbox-group">
-                            <input 
-                                class="checkbox-input" 
-                                type="checkbox" 
-                                id="is_available_night" 
-                                name="is_available" 
-                                value="1" 
+                            <input
+                                class="checkbox-input"
+                                type="checkbox"
+                                id="is_available_night"
+                                name="is_available"
+                                value="1"
                                 {{ old('is_available', true) ? 'checked' : '' }}
                             >
                             <label class="checkbox-label" for="is_available_night">
@@ -402,12 +402,12 @@
                             <label class="field-label">
                                 Quantity <span style="color:#64748b; font-weight:400;">(optional)</span>
                             </label>
-                            <input 
-                                class="field-input" 
-                                type="number" 
-                                min="1" 
-                                placeholder="Enter quantity (optional)" 
-                                name="quantity" 
+                            <input
+                                class="field-input"
+                                type="number"
+                                min="1"
+                                placeholder="Enter quantity (optional)"
+                                name="quantity"
                                 id="quantity_night"
                                 value="{{ old('quantity') }}"
                             >
@@ -416,48 +416,48 @@
                             @enderror
                         </div>
                     </div>
-                    
+
                     <!-- Per Item Fields -->
                     <div id="perItemFields" class="conditional-field">
                         <div class="checkbox-group">
-                            <input 
-                                class="checkbox-input" 
-                                type="checkbox" 
-                                id="is_available_item" 
-                                name="is_available" 
-                                value="1" 
+                            <input
+                                class="checkbox-input"
+                                type="checkbox"
+                                id="is_available_item"
+                                name="is_available"
+                                value="1"
                                 {{ old('is_available', true) ? 'checked' : '' }}
                             >
                             <label class="checkbox-label" for="is_available_item">
                                 Currently available
                             </label>
                         </div>
-                        
+
                         <div class="checkbox-group">
-                            <input 
-                                class="checkbox-input" 
-                                type="checkbox" 
-                                id="is_based_on_quantity_item" 
-                                name="is_based_on_quantity" 
-                                value="1" 
+                            <input
+                                class="checkbox-input"
+                                type="checkbox"
+                                id="is_based_on_quantity_item"
+                                name="is_based_on_quantity"
+                                value="1"
                                 {{ old('is_based_on_quantity', true) ? 'checked' : '' }}
                             >
                             <label class="checkbox-label" for="is_based_on_quantity_item">
                                 Based on quantity
                             </label>
                         </div>
-                        
+
                         <div class="field-group">
                             <label class="field-label">
                                 Quantity
                                 <span class="required-asterisk">*</span>
                             </label>
-                            <input 
-                                class="field-input" 
-                                type="number" 
-                                min="1" 
-                                placeholder="Enter quantity" 
-                                name="quantity" 
+                            <input
+                                class="field-input"
+                                type="number"
+                                min="1"
+                                placeholder="Enter quantity"
+                                name="quantity"
                                 id="quantity_item"
                                 value="{{ old('quantity', 1) }}"
                                 required
@@ -471,19 +471,19 @@
                     <!-- Per Hour Fields (Staff Only) -->
                     <div id="perHourFields" class="conditional-field">
                         <div class="checkbox-group">
-                            <input 
-                                class="checkbox-input" 
-                                type="checkbox" 
-                                id="is_available_hour" 
-                                name="is_available" 
-                                value="1" 
+                            <input
+                                class="checkbox-input"
+                                type="checkbox"
+                                id="is_available_hour"
+                                name="is_available"
+                                value="1"
                                 {{ old('is_available', true) ? 'checked' : '' }}
                             >
                             <label class="checkbox-label" for="is_available_hour">
                                 Currently available
                             </label>
                         </div>
-                        
+
                         <!-- Note for per_hour price type -->
                         <div class="field-group" style="background: #f0f9ff; padding: 16px; border-radius: 8px; border-left: 4px solid #0ea5e9;">
                             <p style="color: #0369a1; font-size: 14px; margin: 0;">
@@ -492,7 +492,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="form-actions">
                     <a href="{{ route('admin.addons') }}" class="cancel-btn">
                         Cancel

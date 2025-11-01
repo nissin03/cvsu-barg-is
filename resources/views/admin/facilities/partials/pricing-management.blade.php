@@ -1,3 +1,19 @@
+<style>
+    .price-checkbox-item .form-check-input {
+        width: 2rem;
+        height: 2rem;
+        border: 2px solid #dee2e6;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 0.25rem;
+    }
+
+    .price-checkbox-item .form-check-input:checked {
+        background-color: #4a90e2;
+        border-color: #4a90e2;
+    }
+</style>
+
 <div id="dormitoryFields" class="d-flex justify-content-between align-items-center border-bottom pb-3">
     <h4>Prices</h4>
     <button type="button" data-bs-toggle="modal" data-bs-target="#addPrice">
@@ -9,8 +25,8 @@
 <div class="row mt-3 p-3 rounded d-flex justify-content-between align-items-center gap-3">
     <!-- Is Based on Days -->
     <div id="isBasedOnDaysContainer" class="flex-grow-1" style="display: none">
-        <div class="d-flex align-items-center gap-2 mb-2">
-            <input type="checkbox" class="is-based-on-days" id="isBasedOnDaysGlobal">
+        <div class="d-flex align-items-center gap-2 mb-2 price-checkbox-item">
+            <input type="checkbox" class="form-check-input price-checkbox is-based-on-days" id="isBasedOnDaysGlobal">
             <label for="isBasedOnDaysGlobal" class="mb-0">Is Based on Days?</label>
         </div>
         <div id="dateFieldsContainerGlobal" class="mt-3" style="display: none;">
@@ -29,8 +45,9 @@
 
     <!-- Is There a Quantity -->
     <div id="isThereAQuantityContainer" class="flex-grow-1" style="display: none">
-        <div class="d-flex align-items-center gap-2">
-            <input type="checkbox" class="is-there-a-quantity" id="isThereAQuantityGlobal">
+        <div class="d-flex align-items-center gap-2 price-checkbox-item">
+            <input type="checkbox" class="is-there-a-quantity form-check-input price-checkbox"
+                id="isThereAQuantityGlobal">
             <label for="isThereAQuantityGlobal" class="mb-0">Is There a Quantity?</label>
         </div>
     </div>

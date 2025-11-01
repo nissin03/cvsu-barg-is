@@ -228,6 +228,8 @@
                                 <div class="d-flex align-items-center gap-2 mb-5">
                                     <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Status:
                                     </p>
+                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Status:
+                                    </p>
                                     <span
                                         class="badge status-badge
                                     {{ $order->status === 'canceled' ? 'bg-danger' : ($order->status === 'pickedup' ? 'bg-success' : 'bg-warning') }}">
@@ -284,6 +286,12 @@
                                     This order has already been {{ $order->status }}. No further actions can be performed.
                                 </div>
                             @endif
+                        @else
+                            <div class="alert alert-info fs-5">
+                                <i class="fas fa-info-circle me-2"></i>
+                                This order has already been {{ $order->status }}. No further actions can be performed.
+                            </div>
+                            @endif
                         </div>
 
                     </div>
@@ -329,50 +337,71 @@
                                         {{ $message }}
                                     </div>
                                 @enderror
+                                @if ($order->status === 'reserved')
+                                    <form method="POST" id="payment-form" class="gap-2"
+                                        action="{{ route('admin.order.complete-payment', $order->id) }}">
+                                        @csrf
+                                        <div class="mb-5">
+                                            <label for="amount_paid" class="body-text mb-2">Amount Paid</label>
+                                            <input type="text" name="amount_paid" id="amount_paid"
+                                                class="form-control" inputmode="numeric" pattern="[0-9,]*"
+                                                @error('amount_paid') is-invalid @enderror>
+                                        </div>
+                                        @error('amount_paid')
+                                            <div class="invalid-feedback">
+                                                {{ $message }}
+                                            </div>
+                                        @enderror
 
-                                <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
-                                    <span class="text-capitalize body-title">Change:</span>
-                                    <span class="text-capitalize body-title"><span id="change_display">0.00</span></span>
-                                </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
+                                            <span class="text-capitalize body-title">Change:</span>
+                                            <span class="text-capitalize body-title"><span
+                                                    id="change_display">0.00</span></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
+                                            <span class="text-capitalize body-title">Change:</span>
+                                            <span class="text-capitalize body-title"><span
+                                                    id="change_display">0.00</span></span>
+                                        </div>
 
-                                <div class="divider my-3"></div>
-                                <div class="d-flex align-items-end gap-2">
-                                    <button type="submit" class="tf-button tf-button-success">
-                                        Complete Payment
-                                    </button>
-                                </div>
-                            </form>
-                        @elseif($order->status === 'pickedup' && $transaction)
-                            <div class="alert alert-success p-4">
-                                <h5 class="mb-3 fw-bold">
-                                    <i class="fas fa-check-circle me-2"></i>
-                                    Payment Completed
-                                </h5>
-                                <div class="d-flex justify-content-between mb-3 fs-6">
-                                    <p class="fw-semibold">Amount Paid:</p>
-                                    <p class="fw-bold">₱{{ number_format($transaction->amount_paid, 2) }}</p>
-                                </div>
-                                <div class="d-flex justify-content-between mb-3 fs-6">
-                                    <p class="fw-semibold">Order Total:</p>
-                                    <p class="fw-bold">₱{{ number_format($order->total, 2) }}</p>
-                                </div>
-                                <div class="d-flex justify-content-between mb-3 fs-6">
-                                    <p class="fw-semibold">Change:</p>
-                                    <p class="fw-bold">₱{{ number_format($transaction->change, 2) }}</p>
-                                </div>
-                                @if ($order->picked_up_date)
-                                    <p class="text-muted d-block mt-2 fs-5">
-                                        Completed on:
-                                        {{ \Carbon\Carbon::parse($order->picked_up_date)->format('F d, Y h:i A') }}
-                                    </p>
+                                        <div class="divider my-3"></div>
+                                        <div class="d-flex align-items-end gap-2">
+                                            <button type="submit" class="tf-button tf-button-success">
+                                                Complete Payment
+                                            </button>
+                                        </div>
+                                    </form>
+                                @elseif($order->status === 'pickedup' && $transaction)
+                                    <div class="alert alert-success p-4">
+                                        <h5 class="mb-3 fw-bold">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            Payment Completed
+                                        </h5>
+                                        <div class="d-flex justify-content-between mb-3 fs-6">
+                                            <p class="fw-semibold">Amount Paid:</p>
+                                            <p class="fw-bold">₱{{ number_format($transaction->amount_paid, 2) }}</p>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-3 fs-6">
+                                            <p class="fw-semibold">Order Total:</p>
+                                            <p class="fw-bold">₱{{ number_format($order->total, 2) }}</p>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-3 fs-6">
+                                            <p class="fw-semibold">Change:</p>
+                                            <p class="fw-bold">₱{{ number_format($transaction->change, 2) }}</p>
+                                        </div>
+                                        @if ($order->picked_up_date)
+                                            <p class="text-muted d-block mt-2 fs-5">
+                                                Completed on:
+                                                {{ \Carbon\Carbon::parse($order->picked_up_date)->format('F d, Y h:i A') }}
+                                            </p>
+                                        @endif
+                                    </div>
+                                @else
+                                    <div class="alert alert-secondary">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Payment cannot be processed for {{ $order->status }} orders.
+                                    </div>
                                 @endif
-                            </div>
-                        @else
-                            <div class="alert alert-secondary">
-                                <i class="fas fa-info-circle me-2"></i>
-                                Payment cannot be processed for {{ $order->status }} orders.
-                            </div>
-                        @endif
 
                     </div>
                 </div>
@@ -408,6 +437,27 @@
                 }
             });
         }
+        if (amountInput) {
+            amountInput.addEventListener('input', function(e) {
+                const numericValue = parseFloat(this.value.replace(/,/g, '')) || 0;
+                if (!isNaN(numericValue)) {
+                    this.value = numericValue.toLocaleString('en-US');
+                }
+                const change = numericValue - total;
+                changeDisplay.textContent = change >= 0 ?
+                    '₱' + change.toLocaleString('en-US', {
+                        minimumFractionDigits: 2
+                    }) :
+                    '₱0.00';
+                if (numericValue >= total) {
+                    amountInput.classList.remove('is-invalid');
+                    const feedback = amountInput.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.remove();
+                    }
+                }
+            });
+        }
 
         $('#payment-form').on('submit', function(e) {
             e.preventDefault();
@@ -421,6 +471,9 @@
                     toastr.clear();
                     toastr.success(response.message, 'Success');
                     $('#pdf-download-container').show();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
                     setTimeout(() => {
                         location.reload();
                     }, 1500);
@@ -479,13 +532,58 @@
         });
 
         $('#canceled_reason').on('input', function() {
-            const maxLength = 255;
-            const currentLength = $(this).val().length;
-            const remaining = maxLength - currentLength;
+                    const maxLength = 255;
+                    const currentLength = $(this).val().length;
+                    const remaining = maxLength - currentLength;
 
-            if (remaining < 0) {
-                $(this).val($(this).val().substring(0, maxLength));
-            }
-        });
+                    if (remaining < 0) {
+                        $(this).val($(this).val().substring(0, maxLength));
+                    }
+                    // Handle cancel order form submission
+                    $('#cancel-order-form').on('submit', function(e) {
+                        e.preventDefault();
+                        const form = $(this);
+                        const formData = form.serialize();
+                        $.ajax({
+                            url: form.attr('action'),
+                            method: form.attr('method'),
+                            data: formData,
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function(response) {
+                                $('#cancelReasonModal').modal('hide');
+                                toastr.success('Order cancelled successfully', 'Success');
+                                setTimeout(() => {
+                                    location.reload();
+                                }, 1500);
+                            },
+                            error: function(xhr) {
+                                console.log('Error details:', xhr.responseText);
+                                if (xhr.status === 422) {
+                                    const errors = xhr.responseJSON.errors;
+                                    if (errors.canceled_reason) {
+                                        $('#canceled_reason').addClass('is-invalid');
+                                        $('#canceled_reason').next('.invalid-feedback').remove();
+                                        $('<div class="invalid-feedback">' + errors.canceled_reason[0] +
+                                                '</div>')
+                                            .insertAfter('#canceled_reason');
+                                    }
+                                } else {
+                                    toastr.error('Something went wrong. Please try again.', 'Error');
+                                }
+                            }
+                        });
+                    });
+
+                    $('#canceled_reason').on('input', function() {
+                        const maxLength = 255;
+                        const currentLength = $(this).val().length;
+                        const remaining = maxLength - currentLength;
+
+                        if (remaining < 0) {
+                            $(this).val($(this).val().substring(0, maxLength));
+                        }
+                    });
     </script>
 @endpush

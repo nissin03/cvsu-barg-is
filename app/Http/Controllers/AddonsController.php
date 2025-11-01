@@ -14,23 +14,26 @@ class AddonsController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Addon::with('user');
- 
-        if ($request->has('search') && !empty($request->search)) {
+        $query = Addon::with('user', 'facility');
+
+        if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('facility', function ($sub) use ($search) {
+                        $sub->where('name', 'like', "%{$search}%");
+                    });
+            });
         }
-        
         $addons = $query->latest()->paginate(10);
-        
+
         return view('admin.add-ons.index', compact('addons'));
     }
 
     public function create()
     {
-        $facilities = Facility::all();
-        return view('admin.add-ons.create', compact('facilities'));
+        return view('admin.add-ons.create');
     }
 
     public function getAddonNames()
@@ -68,7 +71,7 @@ class AddonsController extends Controller
                 $validated['capacity'] = $request->input('capacity', 1);
                 $validated['quantity'] = 1;
                 break;
-                
+
             case 'flat_rate':
                 $validated['is_based_on_quantity'] = false;
                 $validated['capacity'] = null;
@@ -76,7 +79,7 @@ class AddonsController extends Controller
                 $validated['is_available'] = $request->has('is_available');
                 $validated['is_refundable'] = $request->has('is_refundable');
                 break;
-                
+
             case 'per_night':
                 $validated['is_refundable'] = false;
                 $validated['capacity'] = null;
@@ -88,7 +91,7 @@ class AddonsController extends Controller
                     $validated['quantity'] = null;
                 }
                 break;
-                
+
             case 'per_item':
                 $validated['is_refundable'] = false;
                 $validated['capacity'] = null;
@@ -96,7 +99,7 @@ class AddonsController extends Controller
                 $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
                 $validated['quantity'] = $request->input('quantity', 1);
                 break;
-                
+
             case 'per_hour':
                 $validated['is_based_on_quantity'] = false;
                 $validated['is_refundable'] = false;
@@ -108,7 +111,15 @@ class AddonsController extends Controller
 
         $validated['user_id'] = Auth::id();
 
-        Addon::create($validated);
+        $addon = Addon::create($validated);
+
+        // if ($request->wantsJson() || $request->ajax()) {
+        //     return response()->json([
+        //         'success' => true,
+        //         'message' => 'Addon created successfully.',
+        //         'addon' => $addon
+        //     ]);
+        // }
 
         return redirect()->route('admin.addons')
             ->with('success', 'Addon created successfully.');
@@ -124,7 +135,7 @@ class AddonsController extends Controller
     public function update(Request $request, $id)
     {
         $addon = Addon::findOrFail($id);
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'price_type' => 'required|in:per_unit,flat_rate,per_night,per_item,per_hour',
@@ -157,7 +168,7 @@ class AddonsController extends Controller
                 $validated['capacity'] = $request->input('capacity', 1);
                 $validated['quantity'] = 1;
                 break;
-                
+
             case 'flat_rate':
                 $validated['is_based_on_quantity'] = false;
                 $validated['capacity'] = null;
@@ -165,7 +176,7 @@ class AddonsController extends Controller
                 $validated['is_available'] = $request->has('is_available');
                 $validated['is_refundable'] = $request->has('is_refundable');
                 break;
-                
+
             case 'per_night':
                 $validated['is_based_on_quantity'] = false;
                 $validated['is_refundable'] = false;
@@ -173,7 +184,7 @@ class AddonsController extends Controller
                 $validated['quantity'] = null;
                 $validated['is_available'] = $request->has('is_available');
                 break;
-                
+
             case 'per_item':
                 $validated['is_refundable'] = false;
                 $validated['capacity'] = null;
@@ -181,7 +192,7 @@ class AddonsController extends Controller
                 $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
                 $validated['quantity'] = $request->input('quantity', 1);
                 break;
-                
+
             case 'per_hour':
                 $validated['is_based_on_quantity'] = false;
                 $validated['is_refundable'] = false;
@@ -213,11 +224,11 @@ class AddonsController extends Controller
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
             $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                ->orWhere('description', 'like', "%{$search}%");
         }
-        
+
         $addons = $query->latest('deleted_at')->paginate(10);
-        
+
         return view('admin.add-ons.archive', compact('addons'));
     }
 
@@ -238,5 +249,4 @@ class AddonsController extends Controller
         return redirect()->route('admin.addons.archive')
             ->with('success', 'Addon permanently deleted.');
     }
-
 }

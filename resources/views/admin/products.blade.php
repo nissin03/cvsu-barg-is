@@ -293,6 +293,7 @@
 
             function initRowClicks() {
                 $('.product-row').off('click').on('click', function() {
+
                     window.location = $(this).data('href');
                 });
             }
@@ -347,6 +348,7 @@
             function initArchiveButtons() {
                 $('.archive').off('click').on('click', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     var form = $(this).closest('form');
 
                     Swal.fire({

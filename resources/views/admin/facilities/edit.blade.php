@@ -156,12 +156,13 @@
 
                 <div class="wg-box" id="roomBox">
                     @include('admin.facilities.partials.room-management')
+                    <x-addons.addon-selector :addons="$addons" :facility="$facility" />
                 </div>
 
                 <div class="wg-box" id="priceBox">
 
                     @include('admin.facilities.partials.pricing-management')
-
+                    <x-discounts.discount-selector :discounts="$discounts" :facility="$facility" />
                     <div class="cols gap10">
                         <button id="facilitySubmitBtn" class="tf-button w-full" type="submit">
                             <span class="btn-text">Edit Facility</span>
@@ -196,6 +197,8 @@
 
     <script src="{{ asset('assets/js/hideFields.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
+    <script src="{{ asset('assets/js/discount-selector.js') }}"></script>
+    <script src="{{ asset('assets/js/addon-selector.js') }}"></script>
 
     <script>
         let rooms = [];
@@ -285,6 +288,8 @@
             setupRoomsManagement();
             setupPricingManagement();
             handleInitialUIState();
+            setupDiscountsUi();
+            setupAddonsUi();
         }
 
         function loadExistingData() {
@@ -392,10 +397,8 @@
         function setupRadioButtonHandlers() {
             $('input[name="facility_selection_both"]').on('change', function() {
                 const selectedValue = $(this).val();
-                console.log("Radio button changed to:", selectedValue);
-
-                // Update hidden field if it exists (for consistency)
                 const hiddenField = $('input[name="facility_selection_both"][type="hidden"]');
+
                 if (hiddenField.length > 0) {
                     hiddenField.val(selectedValue);
                     console.log('Updated hidden field to:', selectedValue);
@@ -412,7 +415,6 @@
                 }
             });
 
-            // Handle facility type changes
             $('#rentalType').on('change', function() {
                 const facilityType = $(this).val();
                 showFacilityTypeFields(facilityType);
@@ -421,9 +423,6 @@
 
         function handleInitialUIState() {
             const facilityType = $('#rentalType').val();
-            console.log("=== Handling Initial UI State ===");
-            console.log("Facility Type:", facilityType);
-
             if (!facilityType) {
                 console.log("No facility type selected, hiding all sections");
                 resetToDefaultState();
@@ -432,6 +431,12 @@
 
             $('#roomBox').show();
             $('#priceBox').show();
+
+            if (facilityType === 'both' || facilityType === 'whole_place') {
+                $('#discountBox').show();
+            } else {
+                $('#discountBox').hide();
+            }
 
             if (facilityType === 'both') {
                 handleBothTypeInitialization();
@@ -453,14 +458,11 @@
             $('#selectionBothType').show();
 
             let hasWholeCapacity = $('#roomCapacityWhole').val() !== '';
-
-
             if (!hasWholeCapacity && window.facilityFormConfig && window.facilityFormConfig.isEditMode) {
                 // Check if any existing room data has whole_capacity
                 const existingRooms = window.facilityFormConfig.existingRooms || [];
                 hasWholeCapacity = existingRooms.some(room => room.whole_capacity && room.whole_capacity > 0);
 
-                // If we found whole_capacity in data but field is empty, populate it
                 if (hasWholeCapacity) {
                     const wholeCapacityValue = existingRooms.find(room => room.whole_capacity && room.whole_capacity > 0)
                         ?.whole_capacity;
@@ -474,8 +476,6 @@
             const isEditMode = window.facilityFormConfig && window.facilityFormConfig.isEditMode;
 
             let selectedMode = $('input[name="facility_selection_both"]:checked').val();
-
-            // Determine selection mode based on existing data
             if (!selectedMode) {
                 if (hasWholeCapacity && !hasRooms) {
                     selectedMode = 'whole';
@@ -484,34 +484,19 @@
                     selectedMode = 'room';
                     $('#hasRooms').prop('checked', true);
                 } else if (hasRooms) {
-                    // If both exist, prioritize rooms
+
                     selectedMode = 'room';
                     $('#hasRooms').prop('checked', true);
                 }
             }
-
-            console.log('Both type initialization - selectedMode:', selectedMode);
-            console.log('hasWholeCapacity:', hasWholeCapacity);
-            console.log('hasRooms:', hasRooms);
-            console.log('isEditMode:', isEditMode);
-
-            // In edit mode, disable radio buttons and ALWAYS ensure hidden field exists
             if (isEditMode && selectedMode) {
                 $('input[name="facility_selection_both"]').prop('disabled', true);
-
-                // CRITICAL FIX: Remove any existing hidden fields first
                 $('input[name="facility_selection_both"][type="hidden"]').remove();
 
-                // CRITICAL FIX: Append to the FORM, not to #selectionBothType
                 $('#facilityForm').append(
                     `<input type="hidden" name="facility_selection_both" value="${selectedMode}" id="hiddenFacilitySelection">`
                 );
 
-                console.log('✅ Created hidden field with value:', selectedMode);
-                console.log('✅ Hidden field location: inside form =', $(
-                    '#facilityForm input[name="facility_selection_both"][type="hidden"]').length > 0);
-
-                // Add notice if not exists
                 if (!$('#edit-mode-notice').length) {
                     $('#selectionBothType').append(`
                 <small class="text-muted mt-2 d-block" id="edit-mode-notice">
@@ -521,8 +506,6 @@
             `);
                 }
             }
-
-            // Show appropriate sections based on selection
             if (selectedMode === 'whole') {
                 $('#selectionContent').hide();
                 $('#hideRoomBox').show();
@@ -560,6 +543,8 @@
                 $('#roomBox').show();
                 $('#priceBox').show();
                 $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                $('#discountBox').show();
+                $('#addonBox').show();
 
                 const hasWholeCapacity = $('#roomCapacityWhole').val() !== '';
                 const hasRooms = rooms.length > 0;
@@ -569,15 +554,18 @@
                     $('#selectionContent').hide();
                     $('#hideRoomBox').show();
                     $('#dormitoryRooms').hide();
+                    $('#addonBox').show();
                 } else if (hasRooms) {
                     $('#hasRooms').prop('checked', true);
                     $('#selectionContent').hide();
                     $('#hideRoomBox').hide();
                     $('#dormitoryRooms').show();
+                    $('#addonBox').show();
                 } else {
                     $('#selectionContent').show();
                     $('#hideRoomBox').hide();
                     $('#dormitoryRooms').hide();
+                    $('#addonBox').hide();
                 }
 
             } else if (facilityType === 'individual') {
@@ -588,6 +576,8 @@
                 $('#selectionContent').hide();
                 $('#priceBox').show();
                 $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                $('#discountBox').hide();
+                $('#addonBox').show();
             } else if (facilityType === 'whole_place') {
                 $('#selectionBothType').hide();
                 $('#roomBox').show();
@@ -596,9 +586,13 @@
                 $('#selectionContent').hide();
                 $('#priceBox').show();
                 $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                $('#discountBox').show();
+                $('#addonBox').show();
             } else {
                 $('#roomBox').hide();
                 $('#priceBox').hide();
+                $('#discountBox').hide();
+                $('#addonBox').hide();
             }
 
             renderRoomList();
@@ -613,6 +607,7 @@
             $('#hideRoomBox').hide();
             $('#dormitoryRooms').hide();
             $('#isBasedOnDaysContainer, #isThereAQuantityContainer').hide();
+            $('#discountBox').hide();
         }
     </script>
 @endpush

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Models\QualificationApproval;
 use App\Models\TransactionReservation;
+use App\Models\AddonPayment;
 
 class FacilityReservationController extends Controller
 {
@@ -177,6 +178,41 @@ class FacilityReservationController extends Controller
     /**
      * Display the specified resource.
      */
+    // public function show(string $id)
+    // {
+    //     $reservation = Payment::with([
+    //         'user',
+    //         'user.college',
+    //         'user.course',
+    //         'availability.facility',
+    //         'availability.facilityAttribute',
+    //         'transactionReservations.availability',
+    //         'transactionReservations.addonTransactions.addon',
+    //         'transactionReservations.addonTransactions.addonReservation',
+    //         'updatedBy' => function ($q) {
+    //             $q->where('utype', 'ADM');
+    //         }
+    //     ])->findOrFail($id);
+
+    //     if ($reservation->availability) {
+    //         $relatedAvailabilities = Availability::whereIn(
+    //             'id',
+    //             TransactionReservation::where('payment_id', $reservation->id)
+    //                 ->pluck('availability_id')
+    //         )->orderBy('date_from')->get();
+
+    //         $reservation->grouped_availabilities = $relatedAvailabilities;
+
+    //         $qualificationApprovals = QualificationApproval::whereIn('availability_id', $relatedAvailabilities->pluck('id'))
+    //             ->with('user')
+    //             ->get();
+
+    //         $reservation->qualification_approvals = $qualificationApprovals;
+    //     }
+
+    //     return view('admin.facilities.reservations.details', compact('reservation'));
+    // }
+
     public function show(string $id)
     {
         $reservation = Payment::with([
@@ -186,6 +222,10 @@ class FacilityReservationController extends Controller
             'availability.facility',
             'availability.facilityAttribute',
             'transactionReservations.availability',
+            'transactionReservations.addonTransactions.addon',
+            'transactionReservations.addonTransactions.addonReservation',
+            'transactionReservations.addonTransactions.addonPayment.addon',
+            'transactionReservations.addonTransactions.addonPayment.reservation',
             'updatedBy' => function ($q) {
                 $q->where('utype', 'ADM');
             }
@@ -205,11 +245,194 @@ class FacilityReservationController extends Controller
                 ->get();
 
             $reservation->qualification_approvals = $qualificationApprovals;
+
+            $refundableAddonTransactions = collect();
+            $nonRefundableAddonTransactions = collect();
+            $refundableAddonPayments = collect();
+
+            foreach ($reservation->transactionReservations as $transactionReservation) {
+                foreach ($transactionReservation->addonTransactions as $addonTransaction) {
+                    if ($addonTransaction->addon && $addonTransaction->addonReservation) {
+                        if ($addonTransaction->addon->is_refundable == 1) {
+                            $refundableAddonTransactions->push($addonTransaction);
+
+                            if ($addonTransaction->addonPayment && !$refundableAddonPayments->contains('id', $addonTransaction->addonPayment->id)) {
+                                $refundableAddonPayments->push($addonTransaction->addonPayment);
+                            }
+                        } else {
+                            $nonRefundableAddonTransactions->push($addonTransaction);
+                        }
+                    }
+                }
+            }
+
+            $reservation->refundable_addon_transactions = $refundableAddonTransactions;
+            $reservation->non_refundable_addon_transactions = $nonRefundableAddonTransactions;
+            $reservation->refundable_addon_payments = $refundableAddonPayments;
         }
 
         return view('admin.facilities.reservations.details', compact('reservation'));
     }
 
+    public function updateAddonPayment(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'status' => 'required|in:unpaid,downpayment,paid,forfeit,refunded',
+                'payment_received' => 'nullable|numeric|min:0',
+            ]);
+
+            $addonPayment = AddonPayment::findOrFail($id);
+            $currentStatus = $addonPayment->status;
+
+            $allowedTransitions = [
+                'unpaid' => ['downpayment', 'paid'],
+                'downpayment' => ['downpayment', 'forfeit', 'paid'],
+                'paid' => ['refunded', 'forfeit'],
+                'forfeit' => [],
+                'refunded' => [],
+            ];
+
+            if (!in_array($request->status, $allowedTransitions[$currentStatus])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid status transition from ' . ucfirst($currentStatus) . ' to ' . ucfirst($request->status)
+                ], 422);
+            }
+
+            $currentDownpayment = $addonPayment->downpayment_amount ?? 0;
+            $remainingBalance = $addonPayment->total - $currentDownpayment;
+            $paymentReceived = $request->payment_received ?? 0;
+
+            if ($request->status === 'downpayment') {
+                if ($currentStatus === 'downpayment' && $paymentReceived <= 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Please enter a payment amount greater than 0.'
+                    ], 422);
+                }
+
+                if ($currentStatus === 'unpaid' && $paymentReceived <= 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Please enter a payment amount greater than 0.'
+                    ], 422);
+                }
+            }
+            $paymentToApply = min($paymentReceived, $remainingBalance);
+            $change = max(0, $paymentReceived - $remainingBalance);
+            $newTotalDownpayment = $currentDownpayment + $paymentToApply;
+            $newRemainingBalance = $addonPayment->total - $newTotalDownpayment;
+
+
+            if ($request->status === 'downpayment') {
+
+                if ($newTotalDownpayment >= $addonPayment->total) {
+                    $addonPayment->status = 'paid';
+                    $addonPayment->downpayment_amount = $addonPayment->total;
+                } else {
+                    $addonPayment->status = 'downpayment';
+                    $addonPayment->downpayment_amount = $newTotalDownpayment;
+                }
+            } else {
+                $addonPayment->status = $request->status;
+                if ($request->status === 'paid') {
+                    $addonPayment->downpayment_amount = $addonPayment->total;
+                }
+            }
+            $addonPayment->save();
+
+            $message = 'Addon payment updated successfully. Status: ' . ucfirst($addonPayment->status) . '.';
+
+            if ($request->status === 'downpayment' && $paymentReceived > 0) {
+                $message = 'Payment received successfully!';
+                $message .= ' Payment Received: ₱' . number_format($paymentReceived, 2) . '.';
+                $message .= ' Total Paid: ₱' . number_format($newTotalDownpayment, 2) . '.';
+                $message .= ' Remaining Balance: ₱' . number_format($newRemainingBalance, 2) . '.';
+                if ($change > 0) {
+                    $message .= ' Change to Return: ₱' . number_format($change, 2) . '.';
+                }
+                if ($addonPayment->status === 'paid') {
+                    $message .= ' Status automatically updated to PAID (full payment received).';
+                }
+            } elseif ($request->status === 'paid') {
+                $message = 'Payment marked as PAID successfully!';
+            } elseif ($request->status === 'forfeit') {
+                $message = 'Payment marked as FORFEIT. Status is now locked.';
+            } elseif ($request->status === 'refunded') {
+                $message = 'Payment REFUNDED successfully. Status is now locked.';
+            }
+            $responseData = [
+                'status' => $addonPayment->status,
+                'downpayment_amount' => $addonPayment->downpayment_amount ?? 0,
+                'remaining_balance' => $addonPayment->total - ($addonPayment->downpayment_amount ?? 0),
+                'change' => $change,
+                'total' => $addonPayment->total
+            ];
+
+            if ($request->status === 'forfeit') {
+                // Load the relationships to check if the observer has completed its work
+                $addonPayment->load(['addonTransaction.transactionReservation.payment.transactionReservations']);
+
+                $payment = $addonPayment->addonTransaction->first()?->transactionReservation?->payment;
+
+                if ($payment && $payment->status === 'canceled') {
+                    $responseData['reservation_status_changed'] = true;
+                    $responseData['new_reservation_status'] = 'canceled';
+
+                    // Get qualification IDs that were updated to canceled
+                    $availabilityIds = $payment->transactionReservations->pluck('availability_id')->unique();
+
+                    $qualificationIds = QualificationApproval::whereIn('availability_id', $availabilityIds)
+                        ->where('status', 'canceled')
+                        ->pluck('id')
+                        ->toArray();
+
+                    $responseData['qualification_ids'] = $qualificationIds;
+
+                    Log::info('Forfeit cascade completed', [
+                        'addon_payment_id' => $addonPayment->id,
+                        'payment_id' => $payment->id,
+                        'qualification_ids' => $qualificationIds
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => $responseData
+            ], 200);
+
+            // return response()->json([
+            //     'success' => true,
+            //     'message' => $message,
+            //     'data' => [
+            //         'status' => $addonPayment->status,
+            //         'downpayment_amount' => $addonPayment->downpayment_amount ?? 0,
+            //         'remaining_balance' => $addonPayment->total - ($addonPayment->downpayment_amount ?? 0),
+            //         'change' => $change,
+            //         'total' => $addonPayment->total
+            //     ]
+            // ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Addon payment not found.'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     /**
      * Update the specified resource in storage.
      */
@@ -235,7 +458,6 @@ class FacilityReservationController extends Controller
             'status' => ['required', 'in:' . implode(',', $allowedStatuses)],
         ]);
 
-        // Check qualification restrictions
         if ($reservation->qualification_approvals && $reservation->qualification_approvals->count() > 0) {
             $qualification = $reservation->qualification_approvals->first();
 
@@ -257,17 +479,14 @@ class FacilityReservationController extends Controller
                 $newStatus = $validated['status'];
                 $oldStatus = $reservation->status;
 
-                // If canceling a reservation, reset the availability
                 if ($newStatus === 'canceled' && $oldStatus !== 'canceled') {
                     $this->resetReservationAvailability($reservation);
                 }
 
-                // Update reservation status
                 $reservation->status = $newStatus;
                 $reservation->updated_by = Auth::id();
                 $reservation->save();
 
-                // Update related transaction reservations
                 if ($reservation->transactionReservations) {
                     foreach ($reservation->transactionReservations as $transaction) {
                         $transaction->status = $newStatus;
@@ -279,7 +498,8 @@ class FacilityReservationController extends Controller
             return response()->json([
                 'message' => 'Status updated successfully',
                 'new_status' => $validated['status'],
-                'available_next_statuses' => $allowedTransitions[$validated['status']] ?? []
+                'available_next_statuses' => $allowedTransitions[$validated['status']] ?? [],
+                'is_canceled_by_forfeit' => false
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to update reservation status: ' . $e->getMessage(), [
@@ -317,29 +537,13 @@ class FacilityReservationController extends Controller
                 ->unique()
                 ->toArray();
 
-            Log::info('Resetting reservation availability', [
-                'reservation_id' => $reservation->id,
-                'facility_type' => $facilityType,
-                'availability_ids' => $availabilityIds
-            ]);
-
             foreach ($availabilityIds as $availabilityId) {
                 $availability = Availability::find($availabilityId);
                 if (!$availability) continue;
 
                 $this->resetSingleAvailability($availability, $reservation, $facilityType);
             }
-
-            Log::info('Successfully reset reservation availability', [
-                'reservation_id' => $reservation->id,
-                'processed_availabilities' => count($availabilityIds)
-            ]);
         } catch (\Exception $e) {
-            Log::error('Failed to reset reservation availability', [
-                'reservation_id' => $reservation->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             throw $e;
         }
     }

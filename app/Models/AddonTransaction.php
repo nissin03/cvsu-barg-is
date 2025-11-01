@@ -16,14 +16,14 @@ class AddonTransaction extends Model
         'status',
     ];
 
-    public function transactionReservation()
-    {
-        return $this->belongsTo(TransactionReservation::class, 'transaction_reservation_id');
-    }
-
     public function addon()
     {
         return $this->belongsTo(Addon::class, 'addon_id');
+    }
+
+    public function payment()
+    {
+        return $this->belongsTo(Payment::class, 'addon_payment_id');
     }
 
     public function addonReservation()
@@ -31,6 +31,10 @@ class AddonTransaction extends Model
         return $this->belongsTo(AddonReservation::class, 'addon_reservation_id');
     }
 
+    public function transactionReservation()
+    {
+        return $this->belongsTo(TransactionReservation::class, 'transaction_reservation_id');
+    }
     public function addonPayment()
     {
         return $this->belongsTo(AddonPayment::class, 'addon_payment_id');

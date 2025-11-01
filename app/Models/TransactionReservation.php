@@ -49,7 +49,7 @@ class TransactionReservation extends Model
         return $this->belongsTo(Payment::class);
     }
 
-    public function addonTransaction()
+    public function addonTransactions()
     {
         return $this->hasMany(AddonTransaction::class, 'transaction_reservation_id');
     }

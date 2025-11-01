@@ -25,11 +25,14 @@ class FacilityAttribute extends Model
     {
         return $this->belongsTo(Facility::class);
     }
-
-
     public function prices()
     {
         return $this->hasMany(Price::class, 'facility_attribute_id');
+    }
+
+    public function addons()
+    {
+        return $this->morphMany(Addon::class, 'addonable');
     }
     public function availabilities()
     {

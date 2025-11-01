@@ -48,7 +48,7 @@ class Addon extends Model
         return $this->belongsTo(FacilityAttribute::class);
     }
 
-    public function reservation()
+    public function reservations()
     {
         return $this->hasMany(AddonReservation::class);
     }
@@ -61,5 +61,10 @@ class Addon extends Model
     public function addonTransaction()
     {
         return $this->hasMany(AddonTransaction::class);
+    }
+
+    public function addonsReservations()
+    {
+        return $this->hasMany(AddonReservation::class);
     }
 }

@@ -325,6 +325,17 @@
                                                     <div class="text">Create Add-ons</div>
                                                 </a>
                                             </li>
+                                            <li class="divider mb-10"></li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('discounts.index') }}">
+                                                    <div class="text">Manage Discounts</div>
+                                                </a>
+                                            </li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('discounts.create') }}">
+                                                    <div class="text">Create Discount</div>
+                                                </a>
+                                            </li>
                                         </ul>
                                     </li>
                                     <li class="menu-item">

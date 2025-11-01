@@ -161,6 +161,26 @@
                         <input type="hidden" name="facility_type" value="{{ $facility->facility_type }}">
                         <input type="hidden" name="selected_price" id="selected_price">
 
+                        @if (isset($discounts) && $discounts->count() > 0)
+                            <div class="mb-3">
+                                <label for="discount_id" class="form-label fw-semibold">Discount (optional)</label>
+                                <select name="discount_id" id="discount_id" class="form-select">
+                                    <option value="">-- No discount --</option>
+                                    @foreach ($discounts as $discount)
+                                        <option value="{{ $discount->id }}" data-percent="{{ $discount->percent }}"
+                                            data-applies-to="{{ $discount->applies_to }}"
+                                            data-requires-proof="{{ $discount->requires_proof ? '1' : '0' }}">
+                                            {{ $discount->name }}
+                                            ({{ rtrim(rtrim(number_format($discount->percent, 2, '.', ''), '0'), '.') }}%)
+                                            @if ($discount->applies_to === 'venue_only')
+                                                - Venue Only
+                                            @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+
                         @if ($facility->facility_type === 'individual')
                             <input type="hidden" name="facility_attribute_id" value="{{ $availableRoom->id ?? '' }}">
                         @elseif($facility->facility_type == 'whole_place')
@@ -396,7 +416,13 @@
         // image modal and swipers
         document.addEventListener('DOMContentLoaded', function() {
             const addonDescModal = document.getElementById('addonDescModal');
+            const discountSelect = document.getElementById('discount_id');
 
+            if (discountSelect) {
+                discountSelect.addEventListener('change', function() {
+                    updateTotalPrice();
+                });
+            }
             addonDescModal.addEventListener('show.bs.modal', function(event) {
                 const button = event.relatedTarget;
                 const addonName = button.getAttribute('data-addon-name');
@@ -536,17 +562,17 @@
         var tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 7);
         var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
-        
+
         var userType = @json(auth()->user()->utype);
         var maxDate = null;
         var maxDateFormatted = null;
-        
+
         if (userType === 'USR') {
             maxDate = new Date(today);
             maxDate.setMonth(maxDate.getMonth() + 3);
             maxDateFormatted = maxDate.toISOString().split('T')[0];
         }
-        
+
         if (dateFromInput) {
             dateFromInput.min = tomorrowFormatted;
             if (maxDateFormatted) dateFromInput.max = maxDateFormatted;
@@ -589,7 +615,7 @@
             const matchingAvailabilities = availabilities.filter(avail => {
                 const availFrom = avail.date_from ? new Date(avail.date_from) : null;
                 const availTo = avail.date_to ? new Date(avail.date_to) : null;
-                
+
                 if (avail.date_from && !avail.date_to && new Date(avail.date_from).toDateString() === checkDate.toDateString()) {
                     return true;
                 }
@@ -598,14 +624,14 @@
                 }
                 return false;
             });
-            
+
             return matchingAvailabilities[0];
         }
 
         function getMinCapacityForDateRange(startDate, endDate) {
             const dates = getDatesInRange(startDate, endDate);
             let minCapacity = facilityCapacity;
-            
+
             dates.forEach(dateStr => {
                 const availability = getAvailabilityForDate(dateStr);
                 if (availability) {
@@ -614,7 +640,7 @@
                     }
                 }
             });
-            
+
             return minCapacity;
         }
 
@@ -635,11 +661,11 @@
         function formatDateForDisplay(dateStr) {
             if (!dateStr) return 'Not selected';
             const date = new Date(dateStr + 'T00:00:00+08:00');
-            return date.toLocaleDateString('en-PH', { 
+            return date.toLocaleDateString('en-PH', {
                 weekday: 'long',
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
             });
         }
 
@@ -695,13 +721,13 @@
             const calendarEl = document.getElementById(isWhole ? 'whole-calendar' : 'shared-calendar');
             const modalId = isWhole ? 'wholeCalendarModal' : 'sharedCalendarModal';
             const modalEl = document.getElementById(modalId);
-            
+
             if (!modalEl || !calendarEl) return;
             if ((isWhole && wholeCalendarInitialized) || (!isWhole && sharedCalendarInitialized)) return;
-            
+
             modalEl.addEventListener('shown.bs.modal', function initCalendarOnShow() {
                 modalEl.removeEventListener('shown.bs.modal', initCalendarOnShow);
-                
+
                 if ((isWhole && wholeCalendarInitialized) || (!isWhole && sharedCalendarInitialized)) {
                     const calendar = calendarEl._fullCalendar;
                     if (calendar) {
@@ -717,12 +743,12 @@
                 const modalStartDisplay = document.getElementById(isWhole ? 'whole-modal-start-date' : 'shared-modal-start-date');
                 const modalEndDisplay = document.getElementById(isWhole ? 'whole-modal-end-date' : 'shared-modal-end-date');
                 const confirmButton = document.getElementById(isWhole ? 'whole-confirm-dates' : 'shared-confirm-dates');
-                
+
                 if (!hasDayBasedPricing && calendarEl && !calendarEl._fullCalendar) {
                     let selectedDates = [];
                     let startDate = null;
                     let endDate = null;
-                    
+
                     const calendar = new FullCalendar.Calendar(calendarEl, {
                         timeZone: 'Asia/Manila',
                         locale: 'en',
@@ -736,7 +762,7 @@
                         selectMirror: true,
                         dayMaxEvents: false,
                         weekends: true,
-                        validRange: { 
+                        validRange: {
                             start: tomorrowFormatted,
                             end: maxDateFormatted || undefined
                         },
@@ -767,7 +793,7 @@
                                 startDate = clickedDate;
                                 selectedDates = [clickedDate];
                                 endDate = null;
-                                
+
                                 if (modalStartDisplay) modalStartDisplay.textContent = formatDateForDisplay(startDate);
                                 if (modalEndDisplay) modalEndDisplay.textContent = 'Not selected';
                             } else {
@@ -800,14 +826,14 @@
                                         }
                                         endDate = clickedDate;
                                         selectedDates = dateRange;
-                                        
+
                                         if (modalEndDisplay) modalEndDisplay.textContent = formatDateForDisplay(endDate);
                                     } else {
                                         startDate = clickedDate;
                                         selectedDates = [clickedDate];
                                         endDate = null;
                                         calendar.clickCount = 1;
-                                        
+
                                         if (modalStartDisplay) modalStartDisplay.textContent = formatDateForDisplay(startDate);
                                         if (modalEndDisplay) modalEndDisplay.textContent = 'Not selected';
                                     }
@@ -816,24 +842,24 @@
                                     selectedDates = [clickedDate];
                                     endDate = null;
                                     calendar.clickCount = 1;
-                                    
+
                                     if (modalStartDisplay) modalStartDisplay.textContent = formatDateForDisplay(startDate);
                                     if (modalEndDisplay) modalEndDisplay.textContent = 'Not selected';
                                 }
                             }
                             if (dateFromInput) dateFromInput.value = startDate || '';
                             if (dateToInput) dateToInput.value = endDate || '';
-                            
+
                             if (confirmButton) {
                                 confirmButton.disabled = !(startDate && endDate);
                             }
-                            
+
                             if (isWhole) {
                                 updateWholeTotalPrice();
                             } else {
                                 updateTotalPrice();
                             }
-                            
+
                             calendar.render();
                         },
                         dayCellClassNames: function(info) {
@@ -852,10 +878,10 @@
                             const dayNumberEl = document.createElement('div');
                             dayNumberEl.className = 'fc-daygrid-day-number';
                             dayNumberEl.textContent = args.dayNumberText;
-                            
+
                             const availability = getAvailabilityForDate(dateStr);
                             const attribute = availability ? facilityAttributes.find(attr => attr.id === availability.facility_attribute_id) : null;
-                            
+
                             if (!isWhole) {
                                 if (availability) {
                                     if (availability.remaining_capacity <= 0) {
@@ -929,18 +955,18 @@
             const dateFrom = document.getElementById('date_from');
             const dateTo = document.getElementById('date_to');
             const modalCapacityElement = document.querySelector('#priceQuantityModal .capacity-value');
-            
+
             if (dateFrom && dateTo && dateFrom.value && dateTo.value && modalCapacityElement) {
                 const minCapacity = getMinCapacityForDateRange(dateFrom.value, dateTo.value);
                 modalCapacityElement.textContent = minCapacity;
-                
+
                 const quantityInputs = document.querySelectorAll('.quantity-input');
                 quantityInputs.forEach(input => {
                     input.max = minCapacity;
                 });
             } else if (modalCapacityElement) {
                 modalCapacityElement.textContent = facilityCapacity;
-                
+
                 const quantityInputs = document.querySelectorAll('.quantity-input');
                 quantityInputs.forEach(input => {
                     input.max = facilityCapacity;
@@ -951,14 +977,14 @@
         function validateQuantityInput(input) {
             const dateFrom = document.getElementById('date_from');
             const dateTo = document.getElementById('date_to');
-            
+
             let maxCapacity = facilityCapacity;
             if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
                 maxCapacity = getMinCapacityForDateRange(dateFrom.value, dateTo.value);
             }
-            
+
             const quantity = parseInt(input.value) || 0;
-            
+
             if (quantity > maxCapacity) {
                 Swal.fire({
                     icon: 'error',
@@ -971,15 +997,15 @@
                 });
                 return false;
             }
-            
+
             const quantityInputs = document.querySelectorAll('.quantity-input');
             let totalQuantity = 0;
-            
+
             quantityInputs.forEach(qInput => {
                 const qty = parseInt(qInput.value) || 0;
                 totalQuantity += qty;
             });
-            
+
             if (totalQuantity > maxCapacity) {
                 Swal.fire({
                     icon: 'error',
@@ -992,7 +1018,7 @@
                 });
                 return false;
             }
-            
+
             return true;
         }
 
@@ -1002,7 +1028,7 @@
             if (selectedBookingType && selectedBookingType.value === 'shared') {
                 const priceDropdown = document.getElementById('price_id');
                 const quantityInputs = document.querySelectorAll('.quantity-input');
-                
+
                 if (priceDropdown && priceDropdown.value) {
                     const selectedOption = priceDropdown.options[priceDropdown.selectedIndex];
                     const priceValue = parseFloat(selectedOption.dataset.value) || 0;
@@ -1012,7 +1038,7 @@
                         selectedPriceInput.value = priceValue;
                     }
                 }
-                
+
                 quantityInputs.forEach(input => {
                     const quantity = parseInt(input.value) || 0;
                     const priceId = input.name.match(/\[(\d+)\]/)[1];
@@ -1021,7 +1047,7 @@
                         total += parseFloat(priceValue.value) * quantity;
                     }
                 });
-                
+
                 const dateFrom = document.getElementById('date_from');
                 const dateTo = document.getElementById('date_to');
                 if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
@@ -1034,7 +1060,7 @@
                     }
                 }
             }
-            
+
             const computedTotal = document.getElementById('computed-total');
             const totalPriceInput = document.getElementById('total_price_input');
             if (computedTotal) {
@@ -1066,7 +1092,7 @@
                     }
                 }
             }
-            
+
             const computedTotal = document.getElementById('computed-total');
             const wholeTotalPriceInput = document.getElementById('whole_total_price_input');
             if (computedTotal) {
@@ -1080,23 +1106,23 @@
         function updateClientTypeDisplay() {
             const container = document.getElementById('selected-client-types-display');
             if (!container) return;
-            
+
             container.innerHTML = '';
-            
+
             const quantityInputs = document.querySelectorAll('.quantity-input');
             let hasSelection = false;
-            
+
             quantityInputs.forEach(input => {
                 if (input.value && parseInt(input.value) > 0) {
                     hasSelection = true;
                     const priceId = input.name.match(/\[(.*?)\]/)[1];
                     const priceNameInput = document.querySelector(`input[name="price_names[${priceId}]"]`);
                     const priceValueInput = document.querySelector(`input[name="price_values[${priceId}]"]`);
-                    
+
                     if (priceNameInput && priceValueInput) {
                         const priceName = priceNameInput.value;
                         const priceValue = parseFloat(priceValueInput.value);
-                        
+
                         const itemDiv = document.createElement('div');
                         itemDiv.className = 'client-type-item';
                         itemDiv.innerHTML = `
@@ -1104,18 +1130,18 @@
                             <span>Price: ₱${priceValue.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span><br>
                             <span>Qty: ${parseInt(input.value).toLocaleString()}</span>
                         `;
-                        
+
                         container.appendChild(itemDiv);
                     }
                 }
             });
-            
+
             if (hasSelection) {
-                container.style.display = 'flex'; 
+                container.style.display = 'flex';
             } else {
                 container.style.display = 'none';
             }
-            
+
             updateTotalPrice();
         }
 
@@ -1168,13 +1194,13 @@
             sharedConfirmBtn.addEventListener('click', function() {
                 const startDate = document.getElementById('date_from').value;
                 const endDate = document.getElementById('date_to').value;
-                
+
                 const startDisplay = document.getElementById('shared-start-date-display');
                 const endDisplay = document.getElementById('shared-end-date-display');
-                
+
                 if (startDisplay) startDisplay.textContent = formatDateForDisplay(startDate);
                 if (endDisplay) endDisplay.textContent = formatDateForDisplay(endDate);
-                
+
                 updateModalCapacityDisplay();
             });
         }
@@ -1184,10 +1210,10 @@
             wholeConfirmBtn.addEventListener('click', function() {
                 const startDate = document.getElementById('whole_date_from').value;
                 const endDate = document.getElementById('whole_date_to').value;
-                
+
                 const startDisplay = document.getElementById('whole-start-date-display');
                 const endDisplay = document.getElementById('whole-end-date-display');
-                
+
                 if (startDisplay) startDisplay.textContent = formatDateForDisplay(startDate);
                 if (endDisplay) endDisplay.textContent = formatDateForDisplay(endDate);
             });
@@ -1233,25 +1259,25 @@
         var tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 7);
         var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
-        
+
         var userType = @json(auth()->user()->utype ?? 'USR');
-        
+
         var maxDate = null;
         var maxDateFormatted = null;
-        
+
         if (userType === 'USR') {
             maxDate = new Date(tomorrow);
             maxDate.setMonth(maxDate.getMonth() + 3);
             maxDateFormatted = maxDate.toISOString().split('T')[0];
         }
-        
+
         if (dateFromInput) dateFromInput.min = tomorrowFormatted;
         if (dateToInput) dateToInput.min = tomorrowFormatted;
         if (wholeDateFromInput) wholeDateFromInput.min = tomorrowFormatted;
         if (wholeDateToInput) wholeDateToInput.min = tomorrowFormatted;
         if (sharedDateFromInput) sharedDateFromInput.min = tomorrowFormatted;
         if (sharedDateToInput) sharedDateToInput.min = tomorrowFormatted;
-        
+
         if (userType === 'USR' && maxDateFormatted) {
             if (dateFromInput) dateFromInput.max = maxDateFormatted;
             if (dateToInput) dateToInput.max = maxDateFormatted;
@@ -1271,7 +1297,7 @@
         document.getElementById('shared_selected_room')?.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             currentSelectedRoom = selectedOption.value ? facilityAttributes.find(attr => attr.id == selectedOption.value) : null;
-            
+
             if (selectedOption.value) {
                 document.getElementById('shared_selected_room_name').value = selectedOption.getAttribute('data-room-name');
                 document.getElementById('shared_selected_room_capacity').value = selectedOption.getAttribute('data-capacity');
@@ -1279,7 +1305,7 @@
                 document.getElementById('shared_selected_room_name').value = '';
                 document.getElementById('shared_selected_room_capacity').value = '';
             }
-            
+
             if (sharedCalendarInitialized) {
                 const calendarEl = document.getElementById('calendar');
                 if (calendarEl && calendarEl._fullCalendar) {
@@ -1288,14 +1314,14 @@
                     calendar.refetchEvents();
                 }
             }
-            
+
             updateTotalPrice();
         });
 
         document.getElementById('selected_room')?.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             currentSelectedWholeRoom = selectedOption.value ? facilityAttributes.find(attr => attr.id == selectedOption.value) : null;
-            
+
             if (selectedOption.value) {
                 document.getElementById('selected_room_name').value = selectedOption.getAttribute('data-room-name');
                 document.getElementById('selected_room_capacity').value = selectedOption.getAttribute('data-capacity');
@@ -1303,7 +1329,7 @@
                 document.getElementById('selected_room_name').value = '';
                 document.getElementById('selected_room_capacity').value = '';
             }
-            
+
             if (wholeCalendarInitialized) {
                 const calendarEl = document.getElementById('whole-calendar');
                 if (calendarEl && calendarEl._fullCalendar) {
@@ -1312,7 +1338,7 @@
                     calendar.refetchEvents();
                 }
             }
-            
+
             updateTotalPrice();
         });
 
@@ -1348,8 +1374,8 @@
                 const checkDate = new Date(dateStr);
                 const dateInRange = availFrom && availTo && checkDate >= availFrom && checkDate <= availTo;
                 const singleDate = avail.date_from && !avail.date_to && new Date(avail.date_from).toDateString() === checkDate.toDateString();
-                return (dateInRange || singleDate) && 
-                    avail.facility_attribute_id === currentSelectedWholeRoom.id && 
+                return (dateInRange || singleDate) &&
+                    avail.facility_attribute_id === currentSelectedWholeRoom.id &&
                     avail.remaining_capacity < currentSelectedWholeRoom.capacity;
             });
             return !!availability;
@@ -1358,11 +1384,11 @@
         function formatDate(dateStr) {
             if (!dateStr) return 'Not selected';
             const date = new Date(dateStr + 'T00:00:00+08:00');
-            return date.toLocaleDateString('en-PH', { 
+            return date.toLocaleDateString('en-PH', {
                 weekday: 'long',
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
             });
         }
 
@@ -1386,7 +1412,7 @@
             const confirmBtnId = isWhole ? 'whole-confirm-dates' : 'confirm-dates';
             const modalStartDisplay = document.getElementById(isWhole ? 'whole-modal-start-date' : 'modal-start-date');
             const modalEndDisplay = document.getElementById(isWhole ? 'whole-modal-end-date' : 'modal-end-date');
-            
+
             const modal = document.getElementById(modalId);
             if (modal) {
                 modal.addEventListener('shown.bs.modal', function() {
@@ -1398,16 +1424,16 @@
                     let selectedDates = [];
                     let startDate = dateFromInput?.value || null;
                     let endDate = dateToInput?.value || null;
-                    
+
                     if (startDate && endDate) {
                         selectedDates = getDatesInRange(startDate, endDate);
                     }
-                    
+
                     let validRange = { start: tomorrowFormatted };
                     if (userType === 'USR' && maxDateFormatted) {
                         validRange.end = maxDateFormatted;
                     }
-                    
+
                     const calendar = new FullCalendar.Calendar(calendarEl, {
                         timeZone: 'Asia/Manila',
                         locale: 'en',
@@ -1434,7 +1460,7 @@
                                 });
                                 return;
                             }
-                            
+
                             if (isWhole && !currentSelectedWholeRoom) {
                                 Swal.fire({
                                     icon: 'info',
@@ -1536,7 +1562,7 @@
                             const dayNumberEl = document.createElement('div');
                             dayNumberEl.className = 'fc-daygrid-day-number';
                             dayNumberEl.textContent = args.dayNumberText;
-                            
+
                             if (!isWhole) {
                                 if (!currentSelectedRoom) {
                                     return { domNodes: [dayNumberEl] };
@@ -1613,20 +1639,20 @@
                             successCallback(events);
                         }
                     });
-                    
+
                     calendar.render();
                     calendarEl._fullCalendar = calendar;
-                    
+
                     if (isWhole) {
                         wholeCalendarInitialized = true;
                     } else {
                         sharedCalendarInitialized = true;
                     }
-                    
+
                     if (startDate && endDate) {
                         updateModalDateDisplay(modalStartDisplay, modalEndDisplay, startDate, endDate);
                     }
-                    
+
                     document.getElementById(confirmBtnId)?.addEventListener('click', function() {
                         if (startDate && endDate) {
                             dateFromInput.value = startDate;
@@ -1727,7 +1753,7 @@
     function updateTotalPrice() {
         let totalPrice = 0;
         const bookingType = document.querySelector('input[name="booking_type"]:checked')?.value;
-        
+
         if (bookingType === 'shared') {
             document.querySelectorAll('.quantity-input').forEach(input => {
                 const quantity = parseInt(input.value) || 0;
@@ -1749,16 +1775,16 @@
                     totalPrice += itemTotal;
                 }
             });
-            
+
             const priceSelect = document.getElementById('price_id');
             if (priceSelect && priceSelect.value) {
                 const selectedOption = priceSelect.options[priceSelect.selectedIndex];
                 const selectedPrice = parseFloat(selectedOption.getAttribute('data-value')) || 0;
                 document.getElementById('selected_price_value').value = selectedPrice;
-                
+
                 const dateFrom = document.getElementById('date_from');
                 const dateTo = document.getElementById('date_to');
-                
+
                 if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
                     const startDate = new Date(dateFrom.value);
                     const endDate = new Date(dateTo.value);
@@ -1774,12 +1800,12 @@
             if (priceSelect && priceSelect.value) {
                 const selectedOption = priceSelect.options[priceSelect.selectedIndex];
                 const selectedPrice = parseFloat(selectedOption.getAttribute('data-value')) || 0;
-                
+
                 document.getElementById('selected_whole_price_value').value = selectedPrice;
-                
+
                 const dateFrom = document.getElementById('whole_date_from');
                 const dateTo = document.getElementById('whole_date_to');
-                
+
                 if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
                     const startDate = new Date(dateFrom.value);
                     const endDate = new Date(dateTo.value);
@@ -1791,10 +1817,10 @@
                 }
             }
         }
-        
+
         const formattedTotal = '₱' + totalPrice.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
         document.getElementById('computed-total').textContent = formattedTotal;
-        
+
         const totalPriceField = document.getElementById('total-price-field');
         if (totalPriceField) {
             totalPriceField.value = totalPrice.toFixed(2);
@@ -1808,10 +1834,10 @@
     function updateClientTypeDisplay() {
         const container = document.getElementById('selected-client-types');
         if (!container) return;
-        
+
         container.innerHTML = '';
         let hasSelection = false;
-        
+
         document.querySelectorAll('.quantity-input').forEach(input => {
             const quantity = parseInt(input.value) || 0;
             if (quantity > 0) {
@@ -1820,7 +1846,7 @@
                 const priceName = document.querySelector(`input[name="price_names[${priceId}]"]`).value;
                 const priceValue = parseFloat(document.querySelector(`input[name="price_values[${priceId}]"]`).value);
                 const total = (quantity * priceValue).toFixed(2);
-                
+
                 const item = document.createElement('div');
                 item.className = 'client-type-item';
                 item.innerHTML = `
@@ -1831,9 +1857,9 @@
                 container.appendChild(item);
             }
         });
-        
+
         if (hasSelection) {
-            container.style.display = 'flex'; 
+            container.style.display = 'flex';
         } else {
             container.style.display = 'none';
         }
@@ -1881,7 +1907,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const priceSelect = document.getElementById('price_id');
                 if (!priceSelect || priceSelect.value === "") isValid = false;
             }
-        } 
+        }
         else if (bookingType === 'whole') {
             const dateFrom = document.getElementById('whole_date_from')?.value;
             const dateTo = document.getElementById('whole_date_to')?.value;
@@ -1904,42 +1930,42 @@ document.addEventListener('DOMContentLoaded', function() {
         let minCapacity = Infinity;
         const availabilities = @json($facility->availabilities ?? []);
         const selectedRoomId = document.getElementById('shared_selected_room')?.value;
-        
+
         selectedDates.forEach(date => {
-            const availability = availabilities.find(avail => 
+            const availability = availabilities.find(avail =>
                 avail.facility_attribute_id == selectedRoomId &&
                 new Date(date) >= new Date(avail.date_from) &&
                 new Date(date) <= new Date(avail.date_to)
             );
-            
+
             if (availability) {
                 minCapacity = Math.min(minCapacity, availability.remaining_capacity);
             } else {
                 const roomSelect = document.getElementById('shared_selected_room');
-                const roomCapacity = roomSelect ? 
+                const roomCapacity = roomSelect ?
                     parseInt(roomSelect.options[roomSelect.selectedIndex]?.getAttribute('data-capacity')) : 0;
                 minCapacity = Math.min(minCapacity, roomCapacity);
             }
         });
-        
+
         return minCapacity === Infinity ? 0 : minCapacity;
     }
 
     function validateQuantitiesAgainstCapacity() {
         const bookingType = document.querySelector('input[name="booking_type"]:checked')?.value;
-        
+
         if (bookingType === 'shared') {
             let maxCapacity;
             const dateFrom = document.getElementById('date_from')?.value;
             const dateTo = document.getElementById('date_to')?.value;
-            
+
             if (dateFrom && dateTo) {
                 const selectedDates = getDatesInRange(dateFrom, dateTo);
                 maxCapacity = getMinRemainingCapacity(selectedDates);
             } else {
                 const roomSelect = document.getElementById('shared_selected_room');
                 const assignedRoom = document.querySelector('.capacity-card');
-                
+
                 if (roomSelect && roomSelect.value) {
                     maxCapacity = parseInt(roomSelect.options[roomSelect.selectedIndex].getAttribute('data-capacity')) || 0;
                 } else if (assignedRoom) {
@@ -1947,17 +1973,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     maxCapacity = parseInt(capacityText) || 0;
                 }
             }
-            
+
             const capacityValueElement = document.querySelector('.alert-info .capacity-value');
             if (capacityValueElement) {
                 capacityValueElement.textContent = maxCapacity;
             }
-            
+
             let totalQuantity = 0;
             document.querySelectorAll('.quantity-input').forEach(input => {
                 totalQuantity += parseInt(input.value) || 0;
             });
-            
+
             if (totalQuantity > maxCapacity) {
                 Swal.fire({
                     icon: 'error',
@@ -1965,11 +1991,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     html: `The total number of guests (${totalQuantity}) exceeds the maximum capacity of ${maxCapacity} for the selected dates.<br><br>Please adjust your selections.`,
                     confirmButtonColor: '#3085d6',
                 });
-                
+
                 document.querySelectorAll('.quantity-input').forEach(input => {
                     input.value = '';
                 });
-                
+
                 updateClientTypeDisplay();
                 updateTotalPrice();
                 return false;
@@ -1982,12 +2008,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const dates = [];
         const currentDate = new Date(startDate);
         const end = new Date(endDate);
-        
+
         while (currentDate <= end) {
             dates.push(new Date(currentDate).toISOString().split('T')[0]);
             currentDate.setDate(currentDate.getDate() + 1);
         }
-        
+
         return dates;
     }
 
@@ -1997,19 +2023,19 @@ document.addEventListener('DOMContentLoaded', function() {
             checkFormValidity();
         });
     });
-    
+
     document.getElementById('shared_selected_room')?.addEventListener('change', function() {
         validateQuantitiesAgainstCapacity();
         checkFormValidity();
     });
-    
+
     document.querySelectorAll('input[name="booking_type"]').forEach(radio => {
         radio.addEventListener('change', function() {
             validateQuantitiesAgainstCapacity();
             checkFormValidity();
         });
     });
-    
+
     document.getElementById('confirm-dates')?.addEventListener('click', function() {
         setTimeout(function() {
             validateQuantitiesAgainstCapacity();
