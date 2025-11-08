@@ -189,7 +189,6 @@
         </div>
     </div>
 
-    <!-- Updated Modal with Addons Section -->
     <div class="modal fade" id="paymentDetailsModal" tabindex="-1" aria-labelledby="paymentDetailsModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg-responsive">
@@ -208,7 +207,6 @@
                     </div>
                 </div>
                 <div class="modal-body p-4">
-                    <!-- User Information Table -->
                     <div class="card border-0 bg-gray-50 mb-4">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
@@ -238,7 +236,6 @@
                         </div>
                     </div>
 
-                    <!-- Facility Details Table -->
                     <div class="card border-0 bg-gray-50 mb-4">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
@@ -274,7 +271,6 @@
                         </div>
                     </div>
 
-                    <!-- Addons Information Table -->
                     <div class="card border-0 bg-gray-50 mb-4" id="addonsSection" style="display: none;">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
@@ -295,14 +291,12 @@
                                         </tr>
                                     </thead>
                                     <tbody id="addonsTableBody">
-                                        <!-- Addons will be dynamically inserted here -->
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Pricing Information Table -->
                     <div class="card border-0 bg-gray-50">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
@@ -343,7 +337,6 @@
                 const $button = $(this);
                 const paymentId = $button.data('payment-id');
 
-                // Set basic information
                 $('#modalUserName').text($button.data('user-name') || '');
                 $('#modalUserEmail').text($button.data('user-email') || '');
                 $('#modalUserSex').text($button.data('user-sex') || '');
@@ -354,21 +347,18 @@
                 $('#modalDateFrom').text($button.data('date-from') || '');
                 $('#modalDateTo').text($button.data('date-to') || '');
 
-                // Show/hide room details row
                 if ($button.data('room-name')) {
                     $('#roomDetailsRow').show();
                 } else {
                     $('#roomDetailsRow').hide();
                 }
 
-                // Show/hide capacity details row
                 if ($button.data('capacity')) {
                     $('#capacityDetailsRow').show();
                 } else {
                     $('#capacityDetailsRow').hide();
                 }
 
-                // Fetch addons data via AJAX
                 fetchAddonsData(paymentId);
 
                 $('#paymentDetailsModal').modal('show');
@@ -395,15 +385,12 @@
                 const $addonsTableBody = $('#addonsTableBody');
                 const $addonsSection = $('#addonsSection');
 
-                // Clear previous addons data
                 $addonsTableBody.empty();
 
                 if (addons && addons.length > 0) {
                     let hasValidAddons = false;
 
-                    // Add each addon to the table
                     addons.forEach(function(addon) {
-                        // Only show addon if it has valid data
                         if (addon.show_in_modal) {
                             const addonRow = `
                                 <tr>
@@ -423,14 +410,12 @@
                         }
                     });
 
-                    // Show the addons section only if there are valid addons to display
                     if (hasValidAddons) {
                         $addonsSection.show();
                     } else {
                         hideAddonsSection();
                     }
                 } else {
-                    // Hide the addons section if no addons
                     hideAddonsSection();
                 }
             }
@@ -455,7 +440,6 @@
 
 @push('styles')
     <style>
-        /* Your existing CSS styles remain the same */
         :root {
             --bs-gray-50: #f8fafc;
             --bs-gray-100: #f1f5f9;
@@ -775,7 +759,6 @@
             padding-right: 0 !important;
         }
 
-        /* Responsive adjustments for modal tables */
         @media (max-width: 768px) {
             .modal-detail-table {
                 font-size: 0.875rem;
