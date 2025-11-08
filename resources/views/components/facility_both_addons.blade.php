@@ -17,7 +17,6 @@
             return $facilityMatch && $addon->show === 'both';
         }
     });
-
     $refundableAddons = $facility->addons->filter(function ($addon) use ($facility, $section) {
         $facilityMatch =
             $addon->facility_id === $facility->id &&

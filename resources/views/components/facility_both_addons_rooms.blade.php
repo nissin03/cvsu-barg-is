@@ -1086,6 +1086,7 @@
                         reservationData.forEach(reservation => {
                             if (reservation.remaining_quantity === 0) {
                                 unavailableEvents.push({
+
                                     title: 'Full',
                                     start: reservation.date_from,
                                     end: reservation.date_to,
