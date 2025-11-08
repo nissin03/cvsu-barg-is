@@ -22,15 +22,18 @@
             <div class="wg-box">
                 <div class="flex items-center justify-between gap10 flex-wrap">
                     <div class="wg-filter flex-grow">
-                        <form class="form-search">
+                        <form class="form-search" method="GET" action="{{ route('admin.courses.index') }}">
                             <fieldset class="name">
-                                <input type="text" placeholder="Search courses..." class="" name="name"
-                                    tabindex="2" value="" aria-required="true" required="">
+                                <input type="text" placeholder="Search by course name, code, or college..."
+                                    class="" name="search" tabindex="2" value="{{ request('search') }}"
+                                    aria-required="true" required="">
                             </fieldset>
+                            <button type="submit" style="display: none"></button>
                         </form>
                     </div>
 
-                  <a class="tf-button w-auto" href="{{ route('admin.courses.create') }}"><i class="icon-plus"></i>Add New Course</a>
+                    <a class="tf-button w-auto" href="{{ route('admin.courses.create') }}"><i class="icon-plus"></i>Add New
+                        Course</a>
                     <a href="{{ route('admin.courses.archive') }}" class="tf-button w-auto">
                         <i class="icon-archive"></i>
                         <span class="button-text">View Archive</span>
@@ -72,10 +75,14 @@
                                                         <i class="icon-edit-3"></i>
                                                     </div>
                                                 </a>
-                                                <form id="archive-form-{{ $course->id }}" action="{{ route('admin.courses.destroy', $course->id) }}" method="POST">
+                                                <form id="archive-form-{{ $course->id }}"
+                                                    action="{{ route('admin.courses.destroy', $course->id) }}"
+                                                    method="POST">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="button" class="item text-danger archive-btn" data-id="{{ $course->id }}" style="border: none; background: none;" title="Archive Course">
+                                                    <button type="button" class="item text-danger archive-btn"
+                                                        data-id="{{ $course->id }}"
+                                                        style="border: none; background: none;" title="Archive Course">
                                                         <i class="icon-archive"></i>
                                                     </button>
                                                 </form>
@@ -88,7 +95,7 @@
                     </div>
                     <div class="divider"></div>
                     <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-                        {{ $courses->links('pagination::bootstrap-5') }}
+                        {{ $courses->appends(request()->query())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             </div>
@@ -108,20 +115,20 @@
             line-height: 1;
             vertical-align: middle;
         }
-        
+
         .badge-secondary {
             background-color: #6c757d;
         }
-        
+
         .badge-primary {
             background-color: #3498db;
         }
-        
+
         .list-icon-function {
             display: flex;
             gap: 10px;
         }
-        
+
         .list-icon-function .item {
             width: 32px;
             height: 32px;
@@ -132,22 +139,22 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .list-icon-function .edit {
             background-color: rgba(52, 152, 219, 0.1);
             color: #3498db;
         }
-        
+
         .list-icon-function .edit:hover {
             background-color: #3498db;
             color: white;
         }
-        
+
         .list-icon-function .archive-btn {
             background-color: rgba(231, 76, 60, 0.1);
             color: #e74c3c;
         }
-        
+
         .list-icon-function .archive-btn:hover {
             background-color: #e74c3c;
             color: white;
@@ -158,22 +165,33 @@
             table-layout: fixed;
             width: 100%;
         }
-        
+
         .name {
             max-width: 100%;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
         }
-        
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
-            .table th:nth-child(1) { width: 30%; }
-            .table th:nth-child(2) { width: 15%; }
-            .table th:nth-child(3) { width: 25%; }
-            .table th:nth-child(4) { width: 15%; }
+            .table th:nth-child(1) {
+                width: 30%;
+            }
+
+            .table th:nth-child(2) {
+                width: 15%;
+            }
+
+            .table th:nth-child(3) {
+                width: 25%;
+            }
+
+            .table th:nth-child(4) {
+                width: 15%;
+            }
         }
-        
+
         /* SweetAlert2 Custom Styles */
         .swal2-popup {
             width: 90vw !important;
@@ -181,7 +199,7 @@
             min-height: 350px !important;
             padding: 35px !important;
             border-radius: 16px !important;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.25) !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25) !important;
             backdrop-filter: blur(10px) !important;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.95)) !important;
         }
@@ -282,9 +300,11 @@
                 transform: scale(0.8);
                 opacity: 0.5;
             }
+
             50% {
                 transform: scale(1.05);
             }
+
             100% {
                 transform: scale(1);
                 opacity: 1;
@@ -300,30 +320,30 @@
                 padding: 25px !important;
                 min-height: 300px !important;
             }
-            
+
             .swal2-title {
                 font-size: 20px !important;
                 margin-bottom: 20px !important;
             }
-            
+
             .swal2-content {
                 font-size: 14px !important;
                 margin: 20px 0 25px 0 !important;
             }
-            
+
             .swal2-actions {
                 flex-direction: column !important;
                 width: 100% !important;
                 margin-top: 25px !important;
                 gap: 10px !important;
             }
-            
+
             .swal2-confirm,
             .swal2-cancel {
                 width: 100% !important;
                 margin: 0 !important;
             }
-            
+
             .swal2-popup::before {
                 width: 70px !important;
                 height: 70px !important;
@@ -331,7 +351,7 @@
                 font-size: 28px !important;
                 margin: 15px auto 25px auto !important;
             }
-            
+
             .swal2-popup.swal2-question::before {
                 font-size: 30px !important;
             }
@@ -347,7 +367,7 @@
                 e.preventDefault();
                 var courseId = $(this).data('id');
                 var form = $('#archive-form-' + courseId);
-                
+
                 Swal.fire({
                     title: 'Archive Course?',
                     text: "Are you sure you want to archive this course?",
@@ -365,6 +385,20 @@
                         form.submit();
                     }
                 });
+            });
+
+            // Auto-submit search with debounce
+            let searchTimeout;
+            $('input[name="search"]').on('input', function() {
+                clearTimeout(searchTimeout);
+                const form = $(this).closest('form');
+                const query = $(this).val().trim();
+
+                searchTimeout = setTimeout(() => {
+                    if (query.length >= 2 || query.length === 0) {
+                        form.submit();
+                    }
+                }, 500);
             });
         });
     </script>
