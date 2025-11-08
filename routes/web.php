@@ -313,6 +313,8 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/payment-details/{paymentId}', [ReportController::class, 'showPaymentDetails'])->name('admin.sales-report-details');
 
         Route::get('/facility-statement', [ReportController::class, 'facilitiesStatement'])->name('admin.facility-statement');
+        Route::get('/admin/facility-statement/addons', [ReportController::class, 'getAddonsData'])
+            ->name('admin.facility-statement.addons');
 
         Route::get('/report-statements/download', [PdfController::class, 'downloadBillingStatements'])->name('admin.report-statements.download');
         Route::post('/downloadPdf', [PdfController::class, 'downloadPdf'])->name('admin.downloadPdf');

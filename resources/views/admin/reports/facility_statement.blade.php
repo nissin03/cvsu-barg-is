@@ -28,6 +28,7 @@
             <div class="card-body p-4">
                 <form method="GET" action="{{ route('admin.facility-statement') }}">
                     <div class="row g-3 align-items-end">
+
                         <div class="col-lg-2 col-md-6">
                             <label for="date_from" class="form-label text-gray-700 fw-medium mb-2">From Date</label>
                             <input type="date" class="form-control form-control-lg border-gray-300" id="date_from"
@@ -68,6 +69,7 @@
                                 </select>
                             </div>
                         </div>
+
                         <div class="col-lg-4 col-md-6 d-flex align-items-end gap-2">
                             <button type="submit" class="btn btn-dark btn-lg flex-fill" style="border-radius: 8px;">
                                 <i class="fas fa-filter me-1"></i>Filter
@@ -107,7 +109,6 @@
                             <tr>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4">User</th>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Facility</th>
-                                <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Reservation Dates</th>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">Status</th>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Total Amount</th>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Actions</th>
@@ -131,16 +132,6 @@
                                         <div class="fw-medium text-gray-800">{{ $payment->availability->facility->name }}
                                         </div>
                                     </td>
-                                    <td class="py-4 px-4">
-                                        @if ($payment->date_from && $payment->date_to)
-                                            <div class="fw-medium text-gray-700">
-                                                {{ \Carbon\Carbon::parse($payment->date_from)->format('M d, Y') }} -
-                                                {{ \Carbon\Carbon::parse($payment->date_to)->format('M d, Y') }}
-                                            </div>
-                                        @else
-                                            <div class="text-muted small">No dates specified</div>
-                                        @endif
-                                    </td>
                                     <td class="py-4 px-4 text-center">
                                         @php
                                             $statusClass =
@@ -156,8 +147,8 @@
                                         </span>
                                     </td>
                                     <td class="py-4 px-4">
-                                        <div class="fw-bold text-success">
-                                            ₱{{ number_format($payment->grand_total ?? $payment->total_price, 2) }}</div>
+                                        <div class="fw-bold text-success">₱{{ number_format($payment->total_price, 2) }}
+                                        </div>
                                     </td>
                                     <td class="py-4 px-4">
                                         <button class="btn btn-outline-primary btn-sm view-details-btn fw-medium"
@@ -170,20 +161,15 @@
                                             data-capacity="{{ $payment->availability->facilityAttribute->whole_capacity ?? '' }}"
                                             data-date-from="{{ $payment->date_from ? \Carbon\Carbon::parse($payment->date_from)->format('M d, Y') : '' }}"
                                             data-date-to="{{ $payment->date_to ? \Carbon\Carbon::parse($payment->date_to)->format('M d, Y') : '' }}"
-                                            data-iso-date-from="{{ $payment->date_from ?? '' }}"
-                                            data-iso-date-to="{{ $payment->date_to ?? '' }}"
                                             data-total-price="{{ number_format($payment->total_price, 2) }}"
-                                            data-addons='@json($payment->addons_list)'
-                                            data-facility-total="{{ $payment->total_price }}"
-                                            data-addons-total="{{ $payment->addons_total }}"
-                                            data-grand-total="{{ $payment->grand_total }}" style="border-radius: 6px;">
+                                            data-payment-id="{{ $payment->id }}" style="border-radius: 6px;">
                                             <i class="fas fa-eye me-1"></i> View
                                         </button>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-5">
+                                    <td colspan="5" class="text-center py-5">
                                         <div class="d-flex flex-column align-items-center">
                                             <div class="bg-gray-100 rounded-circle d-flex align-items-center justify-content-center mb-3"
                                                 style="width: 60px; height: 60px;">
@@ -203,6 +189,7 @@
         </div>
     </div>
 
+    <!-- Updated Modal with Addons Section -->
     <div class="modal fade" id="paymentDetailsModal" tabindex="-1" aria-labelledby="paymentDetailsModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg-responsive">
@@ -221,6 +208,7 @@
                     </div>
                 </div>
                 <div class="modal-body p-4">
+                    <!-- User Information Table -->
                     <div class="card border-0 bg-gray-50 mb-4">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
@@ -250,6 +238,7 @@
                         </div>
                     </div>
 
+                    <!-- Facility Details Table -->
                     <div class="card border-0 bg-gray-50 mb-4">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
@@ -275,7 +264,9 @@
                                         </tr>
                                         <tr>
                                             <td class="fw-medium text-muted py-2">Reservation Period:</td>
-                                            <td class="fw-bold text-gray-700 py-2" id="modalDateRange"></td>
+                                            <td class="fw-bold text-gray-700 py-2">
+                                                <span id="modalDateFrom"></span> to <span id="modalDateTo"></span>
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -283,32 +274,35 @@
                         </div>
                     </div>
 
-                    <div class="card border-0 bg-gray-50 mb-4" id="addonsCard" style="display:none;">
+                    <!-- Addons Information Table -->
+                    <div class="card border-0 bg-gray-50 mb-4" id="addonsSection" style="display: none;">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
                                 <div class="bg-warning bg-opacity-10 rounded-circle p-2 me-2">
                                     <i class="fas fa-plus-circle text-warning fs-4"></i>
                                 </div>
-                                <h5 class="mb-0 fw-semibold text-gray-800">Add-ons</h5>
+                                <h5 class="mb-0 fw-semibold text-gray-800">Addons</h5>
                             </div>
                             <div class="table-responsive">
-                                <table class="table table-borderless mb-0 modal-detail-table">
-                                    <thead class="table-light">
+                                <table class="table table-borderless mb-0 modal-detail-table" id="addonsTable">
+                                    <thead>
                                         <tr>
-                                            <th class="fw-semibold text-gray-700">Add-on</th>
-                                            <th class="fw-semibold text-gray-700">Price Type</th>
-                                            <th class="fw-semibold text-gray-700">Qty</th>
-                                            <th class="fw-semibold text-gray-700">Period</th>
-                                            <th class="fw-semibold text-gray-700">Status</th>
-                                            <th class="fw-semibold text-gray-700 text-end">Amount</th>
+                                            <th class="fw-semibold text-muted py-2">Addon Name</th>
+                                            <th class="fw-semibold text-muted py-2">Quantity</th>
+                                            <th class="fw-semibold text-muted py-2">Date Range</th>
+                                            <th class="fw-semibold text-muted py-2">Amount</th>
+                                            <th class="fw-semibold text-muted py-2">Status</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="modalAddonsBody"></tbody>
+                                    <tbody id="addonsTableBody">
+                                        <!-- Addons will be dynamically inserted here -->
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Pricing Information Table -->
                     <div class="card border-0 bg-gray-50">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
@@ -321,23 +315,9 @@
                                 <table class="table table-borderless mb-0 modal-detail-table">
                                     <tbody>
                                         <tr>
-                                            <td class="fw-medium text-muted py-2" style="width: 30%;">Facility Total:</td>
+                                            <td class="fw-medium text-muted py-2" style="width: 30%;">Total Amount:</td>
                                             <td class="py-2">
-                                                <h5 class="mb-0 fw-bold text-gray-800">₱<span
-                                                        id="modalFacilityTotal"></span></h5>
-                                            </td>
-                                        </tr>
-                                        <tr id="addonsTotalRow" style="display:none;">
-                                            <td class="fw-medium text-muted py-2">Add-ons Total:</td>
-                                            <td class="py-2">
-                                                <h5 class="mb-0 fw-bold text-gray-800">₱<span
-                                                        id="modalAddonsTotal"></span></h5>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-medium text-muted py-2">Grand Total:</td>
-                                            <td class="py-2">
-                                                <h4 class="mb-0 fw-bold text-success">₱<span id="modalGrandTotal"></span>
+                                                <h4 class="mb-0 fw-bold text-success">₱<span id="modalTotalPrice"></span>
                                                 </h4>
                                             </td>
                                         </tr>
@@ -359,145 +339,123 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            function fmt(n) {
-                const x = Number(n || 0);
-                return x.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-            }
-            const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September",
-                "October", "November", "December"
-            ];
-
-            function pad(n) {
-                return String(n).padStart(2, '0');
-            }
-
-            function parseISO(s) {
-                if (!s || typeof s !== 'string') return null;
-                const p = s.split('-');
-                if (p.length < 3) return null;
-                return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
-            }
-
-            function formatRange(f, t) {
-                if (!f && !t) return '';
-                if (f && t) {
-                    if (f.getFullYear() === t.getFullYear()) {
-                        if (f.getMonth() === t.getMonth()) {
-                            return `${MONTHS[f.getMonth()]} ${pad(f.getDate())}-${pad(t.getDate())}, ${f.getFullYear()}`;
-                        } else {
-                            return `${MONTHS[f.getMonth()]} ${pad(f.getDate())}-${MONTHS[t.getMonth()]} ${pad(t.getDate())}, ${f.getFullYear()}`;
-                        }
-                    } else {
-                        return `${MONTHS[f.getMonth()]} ${pad(f.getDate())}, ${f.getFullYear()}-${MONTHS[t.getMonth()]} ${pad(t.getDate())}, ${t.getFullYear()}`;
-                    }
-                }
-                if (f) return `${MONTHS[f.getMonth()]} ${pad(f.getDate())}, ${f.getFullYear()}`;
-                return `${MONTHS[t.getMonth()]} ${pad(t.getDate())}, ${t.getFullYear()}`;
-            }
-
             $(document).on('click', '.view-details-btn', function() {
-                const $b = $(this);
-                $('#modalUserName').text($b.data('user-name') || '');
-                $('#modalUserEmail').text($b.data('user-email') || '');
-                $('#modalUserSex').text($b.data('user-sex') || '');
-                $('#modalFacilityName').text($b.data('facility-name') || '');
-                $('#modalRoomName').text($b.data('room-name') || '');
-                $('#modalCapacity').text($b.data('capacity') || '');
+                const $button = $(this);
+                const paymentId = $button.data('payment-id');
 
-                const isoFrom = $b.attr('data-iso-date-from') || '';
-                const isoTo = $b.attr('data-iso-date-to') || '';
-                const dFrom = parseISO(isoFrom);
-                const dTo = parseISO(isoTo);
-                $('#modalDateRange').text(formatRange(dFrom, dTo));
+                // Set basic information
+                $('#modalUserName').text($button.data('user-name') || '');
+                $('#modalUserEmail').text($button.data('user-email') || '');
+                $('#modalUserSex').text($button.data('user-sex') || '');
+                $('#modalFacilityName').text($button.data('facility-name') || '');
+                $('#modalRoomName').text($button.data('room-name') || '');
+                $('#modalCapacity').text($button.data('capacity') || '');
+                $('#modalTotalPrice').text($button.data('total-price') || '');
+                $('#modalDateFrom').text($button.data('date-from') || '');
+                $('#modalDateTo').text($button.data('date-to') || '');
 
-                $('#modalTotalPrice').text($b.data('total-price') || '');
-                $b.data('room-name') ? $('#roomDetailsRow').show() : $('#roomDetailsRow').hide();
-                $b.data('capacity') ? $('#capacityDetailsRow').show() : $('#capacityDetailsRow').hide();
-
-                let addons = [];
-                try {
-                    const raw = $b.attr('data-addons');
-                    addons = raw ? JSON.parse(raw) : []
-                } catch (e) {
-                    addons = [];
-                }
-                addons.sort((a, b) => {
-                    const A = Number(a.total || 0) > 0 ? 1 : 0;
-                    const B = Number(b.total || 0) > 0 ? 1 : 0;
-                    if (A !== B) return A - B;
-                    const an = (a.name || '').toLowerCase();
-                    const bn = (b.name || '').toLowerCase();
-                    return an.localeCompare(bn);
-                });
-                const $tbody = $('#modalAddonsBody').empty();
-                if (addons.length) {
-                    addons.forEach(a => {
-                        const p1 = parseISO(a.date_from);
-                        const p2 = parseISO(a.date_to);
-                        let period = '';
-                        if (p1 && p2) {
-                            if (p1.getFullYear() === p2.getFullYear() && p1.getMonth() === p2
-                                .getMonth()) {
-                                period =
-                                    `${MONTHS[p1.getMonth()]} ${pad(p1.getDate())}-${pad(p2.getDate())}, ${p1.getFullYear()}`;
-                            } else if (p1.getFullYear() === p2.getFullYear()) {
-                                period =
-                                    `${MONTHS[p1.getMonth()]} ${pad(p1.getDate())}-${MONTHS[p2.getMonth()]} ${pad(p2.getDate())}, ${p1.getFullYear()}`;
-                            } else {
-                                period =
-                                    `${MONTHS[p1.getMonth()]} ${pad(p1.getDate())}, ${p1.getFullYear()}-${MONTHS[p2.getMonth()]} ${pad(p2.getDate())}, ${p2.getFullYear()}`;
-                            }
-                        } else if (p1) {
-                            period =
-                                `${MONTHS[p1.getMonth()]} ${pad(p1.getDate())}, ${p1.getFullYear()}`;
-                        } else if (p2) {
-                            period =
-                                `${MONTHS[p2.getMonth()]} ${pad(p2.getDate())}, ${p2.getFullYear()}`;
-                        }
-                        const hasAmount = Number(a.total || 0) > 0;
-                        const amount = hasAmount ? `₱${fmt(a.total)}` : '—';
-                        const statusText = hasAmount ? (a.status || '').toUpperCase() : '';
-                        $('#modalAddonsBody').append(
-                            `<tr>
-                        <td class="text-gray-800 fw-medium">${a.name||''}</td>
-                        <td class="text-muted">${(a.price_type||'').replaceAll('_',' ')}</td>
-                        <td>${a.quantity??''}</td>
-                        <td>${period||''}</td>
-                        <td>${statusText}</td>
-                        <td class="text-end fw-semibold">${amount}</td>
-                    </tr>`
-                        );
-                    });
-                    $('#addonsCard').show();
+                // Show/hide room details row
+                if ($button.data('room-name')) {
+                    $('#roomDetailsRow').show();
                 } else {
-                    $('#addonsCard').hide();
+                    $('#roomDetailsRow').hide();
                 }
 
-                const facilityTotal = Number($b.attr('data-facility-total') || 0);
-                const addonsTotal = Number($b.attr('data-addons-total') || 0);
-                const grandTotal = Number($b.attr('data-grand-total') || facilityTotal + addonsTotal);
-                $('#modalFacilityTotal').text(fmt(facilityTotal));
-                if (addons.length && addonsTotal > 0) {
-                    $('#addonsTotalRow').show();
-                    $('#modalAddonsTotal').text(fmt(addonsTotal));
+                // Show/hide capacity details row
+                if ($button.data('capacity')) {
+                    $('#capacityDetailsRow').show();
                 } else {
-                    $('#addonsTotalRow').hide();
-                    $('#modalAddonsTotal').text('0.00');
+                    $('#capacityDetailsRow').hide();
                 }
-                $('#modalGrandTotal').text(fmt(grandTotal));
+
+                // Fetch addons data via AJAX
+                fetchAddonsData(paymentId);
 
                 $('#paymentDetailsModal').modal('show');
             });
+
+            function fetchAddonsData(paymentId) {
+                $.ajax({
+                    url: '{{ route('admin.facility-statement.addons') }}',
+                    type: 'GET',
+                    data: {
+                        payment_id: paymentId
+                    },
+                    success: function(response) {
+                        displayAddons(response.addons);
+                    },
+                    error: function(xhr) {
+                        console.error('Error fetching addons data:', xhr);
+                        hideAddonsSection();
+                    }
+                });
+            }
+
+            function displayAddons(addons) {
+                const $addonsTableBody = $('#addonsTableBody');
+                const $addonsSection = $('#addonsSection');
+
+                // Clear previous addons data
+                $addonsTableBody.empty();
+
+                if (addons && addons.length > 0) {
+                    let hasValidAddons = false;
+
+                    // Add each addon to the table
+                    addons.forEach(function(addon) {
+                        // Only show addon if it has valid data
+                        if (addon.show_in_modal) {
+                            const addonRow = `
+                                <tr>
+                                    <td class="fw-medium text-gray-800 py-2">${addon.name}</td>
+                                    <td class="text-gray-700 py-2">${addon.quantity || '-'}</td>
+                                    <td class="text-gray-700 py-2">${addon.date_range || '-'}</td>
+                                    <td class="fw-bold text-gray-800 py-2">
+                                        ${addon.total_price ? '₱' + addon.total_price : '-'}
+                                    </td>
+                                    <td class="py-2">
+                                        ${addon.show_status ? `<span class="badge ${getStatusBadgeClass(addon.payment_status)}">${addon.payment_status}</span>` : '-'}
+                                    </td>
+                                </tr>
+                            `;
+                            $addonsTableBody.append(addonRow);
+                            hasValidAddons = true;
+                        }
+                    });
+
+                    // Show the addons section only if there are valid addons to display
+                    if (hasValidAddons) {
+                        $addonsSection.show();
+                    } else {
+                        hideAddonsSection();
+                    }
+                } else {
+                    // Hide the addons section if no addons
+                    hideAddonsSection();
+                }
+            }
+
+            function hideAddonsSection() {
+                $('#addonsSection').hide();
+            }
+
+            function getStatusBadgeClass(status) {
+                const statusClasses = {
+                    'paid': 'badge-completed',
+                    'unpaid': 'badge-pending',
+                    'forfeit': 'badge-canceled',
+                    'refunded': 'badge-secondary',
+                    'downpayment': 'badge-reserved'
+                };
+                return statusClasses[status] || 'badge-secondary';
+            }
         });
     </script>
 @endpush
 
-
 @push('styles')
     <style>
+        /* Your existing CSS styles remain the same */
         :root {
             --bs-gray-50: #f8fafc;
             --bs-gray-100: #f1f5f9;
@@ -548,7 +506,7 @@
 
         .card {
             border-radius: 12px !important;
-            transition: all .2s ease-in-out;
+            transition: all 0.2s ease-in-out;
         }
 
         .card-header {
@@ -557,32 +515,32 @@
 
         .form-control,
         .form-select {
-            font-size: .95rem;
-            padding: .75rem 1rem;
-            transition: all .2s ease-in-out;
+            font-size: 0.95rem;
+            padding: 0.75rem 1rem;
+            transition: all 0.2s ease-in-out;
             border: 1px solid var(--bs-gray-300);
         }
 
         .form-control:focus,
         .form-select:focus {
             border-color: #0d6efd;
-            box-shadow: 0 0 0 .2rem rgba(13, 110, 253, .1);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
         }
 
         .form-label {
-            font-size: .875rem;
-            margin-bottom: .5rem;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
         }
 
         .btn {
-            font-size: .9rem;
-            padding: .5rem 1.25rem;
-            transition: all .2s ease-in-out;
+            font-size: 0.9rem;
+            padding: 0.5rem 1.25rem;
+            transition: all 0.2s ease-in-out;
             border-radius: 8px !important;
         }
 
         .btn-lg {
-            padding: .75rem 1.5rem;
+            padding: 0.75rem 1.5rem;
         }
 
         .table-hover tbody tr:hover {
@@ -590,10 +548,10 @@
         }
 
         .table th {
-            font-size: .875rem;
+            font-size: 0.875rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: .5px;
+            letter-spacing: 0.5px;
         }
 
         .table td {
@@ -604,11 +562,11 @@
 
         .badge {
             font-size: 1rem;
-            padding: .4em .8em;
+            padding: 0.4em 0.8em;
             border-radius: 6px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: .5px;
+            letter-spacing: 0.5px;
             display: inline-block;
             min-width: 85px;
             text-align: center;
@@ -616,31 +574,31 @@
 
         .badge-completed {
             background: linear-gradient(45deg, #10b981, #059669);
-            color: #fff;
-            box-shadow: 0 2px 4px rgba(16, 185, 129, .3);
+            color: white;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
         }
 
         .badge-canceled {
             background: linear-gradient(45deg, #ef4444, #dc2626);
-            color: #fff;
-            box-shadow: 0 2px 4px rgba(239, 68, 68, .3);
+            color: white;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
         }
 
         .badge-reserved {
             background: linear-gradient(45deg, #3b82f6, #1e40af);
-            color: #fff;
-            box-shadow: 0 2px 4px rgba(59, 130, 246, .3);
+            color: white;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
         }
 
         .badge-pending {
             background: linear-gradient(45deg, #f59e0b, #d97706);
-            color: #fff;
-            box-shadow: 0 2px 4px rgba(245, 158, 11, .3);
+            color: white;
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
         }
 
         .badge-secondary {
             background: linear-gradient(45deg, #6b7280, #4b5563);
-            color: #fff;
+            color: white;
         }
 
         .modal-lg-responsive {
@@ -665,49 +623,27 @@
         }
 
         .modal-body p {
-            margin-bottom: .5rem;
+            margin-bottom: 0.5rem;
             line-height: 1.5;
         }
 
         .bg-primary.bg-opacity-10 {
-            background-color: rgba(13, 110, 253, .1) !important;
+            background-color: rgba(13, 110, 253, 0.1) !important;
         }
 
         .bg-success.bg-opacity-10 {
-            background-color: rgba(25, 135, 84, .1) !important;
+            background-color: rgba(25, 135, 84, 0.1) !important;
         }
 
         .bg-info.bg-opacity-10 {
-            background-color: rgba(13, 202, 240, .1) !important;
+            background-color: rgba(13, 202, 240, 0.1) !important;
         }
 
-        .modal-detail-table {
-            font-size: .95rem;
+        .bg-warning.bg-opacity-10 {
+            background-color: rgba(255, 193, 7, 0.1) !important;
         }
 
-        .modal-detail-table td {
-            border: none !important;
-            padding: .75rem .5rem !important;
-            vertical-align: middle;
-        }
-
-        .modal-detail-table tr {
-            border-bottom: 1px solid rgba(0, 0, 0, .05);
-        }
-
-        .modal-detail-table tr:last-child {
-            border-bottom: none;
-        }
-
-        .modal-detail-table td:first-child {
-            padding-left: 0 !important;
-        }
-
-        .modal-detail-table td:last-child {
-            padding-right: 0 !important;
-        }
-
-        @media (max-width:1200px) {
+        @media (max-width: 1200px) {
             .modal-lg-responsive {
                 max-width: 95vw;
             }
@@ -721,7 +657,7 @@
             }
         }
 
-        @media (max-width:768px) {
+        @media (max-width: 768px) {
             .container-fluid {
                 padding-left: 1rem;
                 padding-right: 1rem;
@@ -732,17 +668,17 @@
             }
 
             .btn-lg {
-                padding: .5rem 1rem;
-                font-size: .875rem;
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
             }
 
             .table-responsive {
-                font-size: .875rem;
+                font-size: 0.875rem;
             }
 
             .modal-lg-responsive {
                 max-width: 98vw;
-                margin: .5rem;
+                margin: 0.5rem;
             }
 
             .modal-dialog-centered {
@@ -766,7 +702,7 @@
             }
 
             .modal-body p.fs-4 {
-                font-size: .9rem !important;
+                font-size: 0.9rem !important;
             }
 
             .modal-header {
@@ -780,21 +716,9 @@
             .row.g-4 {
                 gap: 1rem !important;
             }
-
-            .modal-detail-table {
-                font-size: .875rem;
-            }
-
-            .modal-detail-table td {
-                padding: .5rem .25rem !important;
-            }
-
-            .modal-detail-table td:first-child {
-                width: 35% !important;
-            }
         }
 
-        @media (max-width:480px) {
+        @media (max-width: 480px) {
 
             .modal-body .col-md-4,
             .modal-body .col-md-6 {
@@ -802,7 +726,7 @@
             }
 
             .modal-body p.fs-3 {
-                font-size: .9rem !important;
+                font-size: 0.9rem !important;
             }
 
             .modal-body h5 {
@@ -811,29 +735,6 @@
 
             .modal-title {
                 font-size: 1.1rem !important;
-            }
-
-            .modal-detail-table td {
-                display: block;
-                width: 100% !important;
-                padding: .25rem 0 !important;
-            }
-
-            .modal-detail-table td:first-child {
-                font-weight: 600 !important;
-                margin-bottom: .25rem;
-                padding-bottom: 0 !important;
-            }
-
-            .modal-detail-table td:last-child {
-                padding-top: 0 !important;
-                margin-bottom: 1rem;
-            }
-
-            .modal-detail-table tr {
-                border-bottom: 1px solid rgba(0, 0, 0, .1);
-                padding-bottom: .5rem;
-                margin-bottom: .5rem;
             }
         }
 
@@ -845,6 +746,72 @@
 
             .btn {
                 display: none !important;
+            }
+        }
+
+        .modal-detail-table {
+            font-size: 0.95rem;
+        }
+
+        .modal-detail-table td {
+            border: none !important;
+            padding: 0.75rem 0.5rem !important;
+            vertical-align: middle;
+        }
+
+        .modal-detail-table tr {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .modal-detail-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .modal-detail-table td:first-child {
+            padding-left: 0 !important;
+        }
+
+        .modal-detail-table td:last-child {
+            padding-right: 0 !important;
+        }
+
+        /* Responsive adjustments for modal tables */
+        @media (max-width: 768px) {
+            .modal-detail-table {
+                font-size: 0.875rem;
+            }
+
+            .modal-detail-table td {
+                padding: 0.5rem 0.25rem !important;
+            }
+
+            .modal-detail-table td:first-child {
+                width: 35% !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .modal-detail-table td {
+                display: block;
+                width: 100% !important;
+                padding: 0.25rem 0 !important;
+            }
+
+            .modal-detail-table td:first-child {
+                font-weight: 600 !important;
+                margin-bottom: 0.25rem;
+                padding-bottom: 0 !important;
+            }
+
+            .modal-detail-table td:last-child {
+                padding-top: 0 !important;
+                margin-bottom: 1rem;
+            }
+
+            .modal-detail-table tr {
+                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+                padding-bottom: 0.5rem;
+                margin-bottom: 0.5rem;
             }
         }
     </style>
