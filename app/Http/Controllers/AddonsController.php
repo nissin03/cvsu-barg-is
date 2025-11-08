@@ -46,22 +46,17 @@ class AddonsController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'price_type' => 'required|in:per_unit,flat_rate,per_night,per_item,per_hour',
+            'price_type' => 'required|in:per_unit,flat_rate,per_night,per_item',
             'description' => 'nullable|string',
             'base_price' => 'required|numeric|min:0',
             'billing_cycle' => 'required|in:per_day,per_contract',
-            'show' => 'required|in:both,staff',
+            'show' => 'required|in:both',
             'is_available' => 'sometimes|boolean',
             'is_refundable' => 'sometimes|boolean',
             'is_based_on_quantity' => 'sometimes|boolean',
             'capacity' => 'nullable|integer|min:1',
             'quantity' => 'nullable|integer|min:1',
         ]);
-
-        // Force per_hour addons to be staff-only
-        if ($validated['price_type'] === 'per_hour') {
-            $validated['show'] = 'staff';
-        }
 
         switch ($validated['price_type']) {
             case 'per_unit':
@@ -99,27 +94,11 @@ class AddonsController extends Controller
                 $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
                 $validated['quantity'] = $request->input('quantity', 1);
                 break;
-
-            case 'per_hour':
-                $validated['is_based_on_quantity'] = false;
-                $validated['is_refundable'] = false;
-                $validated['capacity'] = null;
-                $validated['quantity'] = null;
-                $validated['is_available'] = $request->has('is_available');
-                break;
         }
 
         $validated['user_id'] = Auth::id();
 
         $addon = Addon::create($validated);
-
-        // if ($request->wantsJson() || $request->ajax()) {
-        //     return response()->json([
-        //         'success' => true,
-        //         'message' => 'Addon created successfully.',
-        //         'addon' => $addon
-        //     ]);
-        // }
 
         return redirect()->route('admin.addons')
             ->with('success', 'Addon created successfully.');
@@ -138,11 +117,11 @@ class AddonsController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'price_type' => 'required|in:per_unit,flat_rate,per_night,per_item,per_hour',
+            'price_type' => 'required|in:per_unit,flat_rate,per_night,per_item',
             'description' => 'nullable|string',
             'base_price' => 'required|numeric|min:0',
             'billing_cycle' => 'required|in:per_day,per_contract',
-            'show' => 'required|in:both,staff',
+            'show' => 'required|in:both',
             'is_available' => 'sometimes|boolean',
             'is_refundable' => 'sometimes|boolean',
             'is_based_on_quantity' => 'sometimes|boolean',
@@ -150,12 +129,6 @@ class AddonsController extends Controller
             'quantity' => 'nullable|integer|min:1',
         ]);
 
-        // Force per_hour addons to be staff-only
-        if ($validated['price_type'] === 'per_hour') {
-            $validated['show'] = 'staff';
-        }
-
-        // Force per_item addons to use per_contract billing cycle
         if ($validated['price_type'] === 'per_item') {
             $validated['billing_cycle'] = 'per_contract';
         }
@@ -191,14 +164,6 @@ class AddonsController extends Controller
                 $validated['is_available'] = $request->has('is_available');
                 $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
                 $validated['quantity'] = $request->input('quantity', 1);
-                break;
-
-            case 'per_hour':
-                $validated['is_based_on_quantity'] = false;
-                $validated['is_refundable'] = false;
-                $validated['capacity'] = null;
-                $validated['quantity'] = null;
-                $validated['is_available'] = $request->has('is_available');
                 break;
         }
 

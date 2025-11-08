@@ -112,7 +112,7 @@
                                     <th scope="col" class="col-quantity">Quantity Based</th>
                                     <th scope="col" class="col-status">Status</th>
                                     <th scope="col" class="col-refundable">Refundable</th>
-                                    <th scope="col" class="col-show">Show</th>
+                                    {{-- <th scope="col" class="col-show">Show</th> --}}
                                     <th scope="col" class="col-action">Action</th>
                                 </tr>
                             </thead>
@@ -162,12 +162,12 @@
                                                 {{ $addon->is_refundable ? 'Yes' : 'No' }}
                                             </span>
                                         </td>
-                                        <td class="show-cell">
+                                        {{-- <td class="show-cell">
                                             <span
                                                 class="badge {{ $addon->show == 'staff' ? 'badge-purple' : 'badge-info' }}">
                                                 {{ ucfirst($addon->show) }}
                                             </span>
-                                        </td>
+                                        </td> --}}
                                         <td class="action-cell">
                                             <div class="list-icon-function">
                                                 {{-- {{ route('admin.addons.edit', $addon->id) }} --}}
