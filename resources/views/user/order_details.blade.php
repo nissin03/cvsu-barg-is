@@ -126,6 +126,12 @@
             border: 1px solid #007bff;
         }
 
+        .btn-success {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+        }
+
         .text-end {
             text-align: right;
         }
@@ -148,203 +154,167 @@
         <div class="mb-4 pb-4"></div>
 
         <section class="my-account container">
-            <main class="container" style="padding-top: 1em;">
-                <div class="mb-4 pb-4"></div>
+            <h2 class="page-title">Order Details</h2>
 
-                <section class="my-account container">
-                    <h2 class="page-title">Order Details</h2>
+            <div class="row">
+                <!-- Left Side: Account Navigation -->
+                <div class="col-lg-2">
+                    @include('user.account__nav')
+                </div>
 
-                    <div class="row">
-                        <div class="col-lg-2">
-                            @include('user.account__nav')
-                        </div>
-
-                        <div class="col-lg-10">
-                            <div class="wg-box">
-                                @if ($order->status === 'canceled' && $order->canceled_reason)
-                                    <div class="alert alert-danger mt-3" role="alert">
-                                        <h6 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Order
-                                            Canceled
-                                        </h6>
-                                        <p class="mb-1"><strong>Reason:</strong> {{ $order->canceled_reason }}</p>
-                                        @if ($order->canceled_date)
-                                            <small class="text-muted">Canceled on:
-                                                {{ \Carbon\Carbon::parse($order->canceled_date)->format('M d, Y h:i A') }}
-                                            </small>
-                                        @endif
-                                        @if ($order->updated_by)
-                                            <br>
-                                            <small class="text-muted">Updated by:
-                                                {{ $order->updatedBy->name ?? 'System' }}</small>
-                                        @endif
-                                    </div>
+                <!-- Right Side: Order Details Content -->
+                <div class="col-lg-10">
+                    <!-- Order Summary Box -->
+                    <div class="wg-box">
+                        @if ($order->status === 'canceled' && $order->canceled_reason)
+                            <div class="alert alert-danger mt-3" role="alert">
+                                <h6 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Order Canceled
+                                </h6>
+                                <p class="mb-1"><strong>Reason:</strong> {{ $order->canceled_reason }}</p>
+                                @if ($order->canceled_date)
+                                    <small class="text-muted">Canceled on:
+                                        {{ \Carbon\Carbon::parse($order->canceled_date)->format('M d, Y h:i A') }}
+                                    </small>
                                 @endif
-                                <div class="order-summary">
-                                    <!-- Left Section -->
-                                    <div class="left-section">
-                                        <div class="order-status">
-                                            <p><strong>Status:</strong>
-                                                @if ($order->status == 'pickedup')
-                                                    <span class="badge badge-success">Picked Up</span>
-                                                @elseif($order->status == 'canceled')
-                                                    <span class="badge badge-danger">Canceled</span>
-                                                @else
-                                                    <span class="badge badge-warning">Reserved</span>
-                                                @endif
-                                            </p>
-                                        </div>
-                                        <div class="order-info">
-                                            {{-- <p><strong>Order No:</strong> <span class="badge badge-warning">{{ $order->id
-                                            }}</span> </p> --}}
-                                            <p><strong>Order Date:</strong>
-                                                <span
-                                                    class="badge bg-primary">{{ $order->created_at->format('M d, Y H:i') }}</span>
-                                            </p>
+                                @if ($order->updated_by)
+                                    <br>
+                                    <small class="text-muted">Updated by:
+                                        {{ $order->updatedBy->name ?? 'System' }}</small>
+                                @endif
+                            </div>
+                        @endif
 
-                                            <p><strong>Reservation Date:</strong>
-                                                @if ($order->reservation_date)
-                                                    <span
-                                                        class="badge bg-success">{{ \Carbon\Carbon::parse($order->reservation_date)->format('M d, Y') }}</span>
-                                                @else
-                                                    <span class="badge bg-secondary">Not yet reserved</span>
-                                                @endif
-                                            </p>
-
-                                            <p><strong>Picked Up Date:</strong>
-                                                @if ($order->picked_up_date)
-                                                    <span
-                                                        class="badge bg-success">{{ \Carbon\Carbon::parse($order->picked_up_date)->format('M d, Y') }}</span>
-                                                @else
-                                                    <span class="badge bg-secondary">Not yet picked up</span>
-                                                @endif
-                                            </p>
-
-                                            <p><strong>Canceled Date:</strong>
-                                                @if ($order->canceled_date)
-                                                    <span
-                                                        class="badge bg-danger">{{ \Carbon\Carbon::parse($order->canceled_date)->format('M d, Y') }}</span>
-                                                @else
-                                                    <span class="badge bg-secondary">Not canceled</span>
-                                                @endif
-                                            </p>
-                                        </div>
-
-                                    </div>
-
-                                    <!-- Right Section -->
-                                    <div class="right-section">
-                                        <div class="order-info">
-                                            <p><strong>Name:</strong> {{ $order->user->name ?? '—' }}</p>
-                                            <p><strong>Phone:</strong> {{ $order->user->phone_number ?? '—' }}</p>
-
-                                            @if ($order->user->role === 'student')
-                                                <p><strong>Year Level:</strong> {{ $order->user->year_level ?? '—' }}</p>
-                                                <p><strong>College:</strong> {{ $order->user->college->name ?? '—' }}</p>
-                                                <p><strong>Course:</strong> {{ $order->user->course->name ?? '—' }}</p>
-                                            @endif
-                                            <p><strong>Time Slot:</strong> {{ $order->time_slot ?? '—' }}</p>
-                                        </div>
-                                    </div>
+                        <div class="order-summary">
+                            <!-- Left Section -->
+                            <div class="left-section">
+                                <div class="order-status">
+                                    <p><strong>Status:</strong>
+                                        @if ($order->status == 'pickedup')
+                                            <span class="badge badge-success">Picked Up</span>
+                                        @elseif($order->status == 'canceled')
+                                            <span class="badge badge-danger">Canceled</span>
+                                        @else
+                                            <span class="badge badge-warning">Reserved</span>
+                                        @endif
+                                    </p>
                                 </div>
+                                <div class="order-info">
+                                    <p><strong>Order Date:</strong>
+                                        <span class="badge bg-primary">{{ $order->created_at->format('M d, Y H:i') }}</span>
+                                    </p>
 
-                                <div class="text-end">
-                                    <a class="btn btn-custom btn-success" href="{{ route('user.orders') }}">Back to
-                                        Orders</a>
+                                    <p><strong>Reservation Date:</strong>
+                                        @if ($order->reservation_date)
+                                            <span
+                                                class="badge bg-success">{{ \Carbon\Carbon::parse($order->reservation_date)->format('M d, Y') }}</span>
+                                        @else
+                                            <span class="badge bg-secondary">Not yet reserved</span>
+                                        @endif
+                                    </p>
+
+                                    <p><strong>Picked Up Date:</strong>
+                                        @if ($order->picked_up_date)
+                                            <span
+                                                class="badge bg-success">{{ \Carbon\Carbon::parse($order->picked_up_date)->format('M d, Y') }}</span>
+                                        @else
+                                            <span class="badge bg-secondary">Not yet picked up</span>
+                                        @endif
+                                    </p>
+
+                                    <p><strong>Canceled Date:</strong>
+                                        @if ($order->canceled_date)
+                                            <span
+                                                class="badge bg-danger">{{ \Carbon\Carbon::parse($order->canceled_date)->format('M d, Y') }}</span>
+                                        @else
+                                            <span class="badge bg-secondary">Not canceled</span>
+                                        @endif
+                                    </p>
                                 </div>
                             </div>
-                            <div class="text-end">
-                                <a class="btn btn-custom btn-success" href="{{ route('user.orders') }}">Back to Orders</a>
+
+                            <!-- Right Section -->
+                            <div class="right-section">
+                                <div class="order-info">
+                                    <p><strong>Name:</strong> {{ $order->user->name ?? '—' }}</p>
+                                    <p><strong>Phone:</strong> {{ $order->user->phone_number ?? '—' }}</p>
+
+                                    @if ($order->user->role === 'student')
+                                        <p><strong>Year Level:</strong> {{ $order->user->year_level ?? '—' }}</p>
+                                        <p><strong>College:</strong> {{ $order->user->college->name ?? '—' }}</p>
+                                        <p><strong>Course:</strong> {{ $order->user->course->name ?? '—' }}</p>
+                                    @endif
+                                    <p><strong>Time Slot:</strong> {{ $order->time_slot ?? '—' }}</p>
+                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Ordered Items -->
-                        <div class="wg-box">
-                            <h5>Reserved Items</h5>
-                            @if ($orderItems->count() > 0)
-                                <table class="table-custom">
-                                    <thead>
+                    <!-- Reserved Items Box -->
+                    <div class="wg-box">
+                        <h5>Reserved Items</h5>
+                        @if ($orderItems->count() > 0)
+                            <table class="table-custom">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Variations</th>
+                                        <th>Unit Price</th>
+                                        <th>Quantity</th>
+                                        <th>Total</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($orderItems as $item)
                                         <tr>
-                                            <th>Product</th>
-                                            <th>Variations</th>
-                                            <th>Unit Price</th>
-                                            <th>Quantity</th>
-                                            <th>Total</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($orderItems as $item)
-                                            <tr>
-                                                <td>
-                                                    <div class="product-info">
-                                                        <img src="{{ asset('uploads/products/thumbnails/' . $item->product->image) }}"
-                                                            alt="{{ $item->product->name }}">
-                                                        <div class="product-details">
-                                                            <p class="py-2">{{ $item->product->name }}</p>
-                                                        </div>
+                                            <td>
+                                                <div class="product-info">
+                                                    <img src="{{ asset('uploads/products/thumbnails/' . $item->product->image) }}"
+                                                        alt="{{ $item->product->name }}">
+                                                    <div class="product-details">
+                                                        <p class="py-2">{{ $item->product->name }}</p>
                                                     </div>
-                                                </td>
-                                                <td>
-                                                    @if ($item->options)
-                                                        @php $options = json_decode($item->options, true); @endphp
-                                                        @if (isset($options['variant_attributes']) && !empty($options['variant_attributes']))
-                                                            @foreach ($options['variant_attributes'] as $attributeName => $value)
-                                                                <p>{{ $attributeName }}: {{ $value }}</p>
-                                                            @endforeach
-                                                        @else
-                                                            <p>No variations</p>
-                                                        @endif
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if ($item->options)
+                                                    @php $options = json_decode($item->options, true); @endphp
+                                                    @if (isset($options['variant_attributes']) && !empty($options['variant_attributes']))
+                                                        @foreach ($options['variant_attributes'] as $attributeName => $value)
+                                                            <p>{{ $attributeName }}: {{ $value }}</p>
+                                                        @endforeach
                                                     @else
                                                         <p>No variations</p>
                                                     @endif
-                                                </td>
-                                                <td>&#8369; {{ number_format($item->price, 2) }}</td>
-                                                <td>{{ $item->quantity }}</td>
-                                                <td>&#8369; {{ number_format($item->price * $item->quantity, 2) }}</td>
-                                                <td>
-                                                    <a href="{{ route('shop.product.details', ['product_slug' => $item->product->slug]) }}"
-                                                        class="btn btn-custom btn-outline-primary" target="_blank">
-                                                        View
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                                <div>
-                                    {{ $orderItems->links('pagination::bootstrap-5') }}
-                                </div>
-                            @else
-                                <div class="text-center py-5">
-                                    <h5 class="text-muted">No Items Found</h5>
-                                    <p class="text-muted">This order doesn't contain any items.</p>
-                                </div>
-                            @endif
-                        </div>
-
-                        <!-- Transactions -->
-                        <div class="wg-box">
-                            <h5>Transactions</h5>
-                            <table class="table-custom">
-                                <tr>
-                                    <th>Total</th>
-                                    <td>&#8369; {{ number_format($order->total, 2) }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Status</th>
-                                    <td>
-                                        @if ($transaction->status == 'paid')
-                                            <span class="badge badge-success">Paid</span>
-                                        @else
-                                            <span class="badge badge-danger">Unpaid</span>
-                                        @endif
-                                    </td>
-
-                                </tr>
+                                                @else
+                                                    <p>No variations</p>
+                                                @endif
+                                            </td>
+                                            <td>&#8369; {{ number_format($item->price, 2) }}</td>
+                                            <td>{{ $item->quantity }}</td>
+                                            <td>&#8369; {{ number_format($item->price * $item->quantity, 2) }}</td>
+                                            <td>
+                                                <a href="{{ route('shop.product.details', ['product_slug' => $item->product->slug]) }}"
+                                                    class="btn btn-custom btn-outline-primary" target="_blank">
+                                                    View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
                             </table>
-                        </div>
+                            <div>
+                                {{ $orderItems->links('pagination::bootstrap-5') }}
+                            </div>
+                        @else
+                            <div class="text-center py-5">
+                                <h5 class="text-muted">No Items Found</h5>
+                                <p class="text-muted">This order doesn't contain any items.</p>
+                            </div>
+                        @endif
                     </div>
-                    <!-- Transactions -->
+
+                    <!-- Transactions Box -->
                     <div class="wg-box">
                         <h5>Transactions</h5>
                         <table class="table-custom">
@@ -361,12 +331,16 @@
                                         <span class="badge badge-danger">Unpaid</span>
                                     @endif
                                 </td>
-
                             </tr>
                         </table>
                     </div>
+
+                    <!-- Back to Orders Button -->
+                    <div class="text-end">
+                        <a class="btn btn-custom btn-success" href="{{ route('user.orders') }}">Back to Orders</a>
                     </div>
-                    </div>
-                </section>
-            </main>
-        @endsection
+                </div>
+            </div>
+        </section>
+    </main>
+@endsection

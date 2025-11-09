@@ -585,28 +585,130 @@
                             <div class="wg-box">
                                 <h5>Payment Summary</h5>
                                 <table class="table-custom">
-                                    <tr>
-                                        <th>Payment Status</th>
-                                        <td>
-                                            @if ($payment->status == 'completed')
-                                                <span class="badge badge-success">Completed</span>
-                                            @elseif($payment->status == 'canceled')
-                                                <span class="badge badge-danger">Canceled</span>
-                                            @elseif($payment->status == 'reserved')
-                                                <span class="badge badge-info">Reserved</span>
-                                            @else
-                                                <span class="badge badge-warning">Pending</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>Total Amount</th>
-                                        <td>&#8369;{{ number_format($payment->total_price, 2) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Payment Date</th>
-                                        <td>{{ $payment->created_at->format('M d, Y H:i') }}</td>
-                                    </tr>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>Initial Price</strong></td>
+                                            <td style="text-align: right;">
+                                                &#8369;{{ number_format($payment->gross_total ?? $payment->total_price, 2) }}
+                                            </td>
+                                        </tr>
+
+                                        <tr style="background-color: #f5f5f5;">
+                                            <td><strong>Gross Total</strong></td>
+                                            <td style="text-align: right;">
+                                                <strong>&#8369;{{ number_format($payment->gross_total ?? $payment->total_price, 2) }}</strong>
+                                            </td>
+                                        </tr>
+
+                                        @if ($payment->discount_amount && $payment->discount_amount > 0)
+                                            <tr>
+                                                <td>
+                                                    <strong>Discount Applied</strong>
+                                                    @if ($payment->discount)
+                                                        <br><small class="text-muted">{{ $payment->discount->name }}
+                                                            ({{ $payment->discount_percent }}%)</small>
+                                                    @elseif($payment->discount_percent)
+                                                        <br><small
+                                                            class="text-muted">({{ $payment->discount_percent }}%)</small>
+                                                    @endif
+                                                </td>
+                                                <td style="text-align: right; color: #28a745; font-weight: 600;">
+                                                    -&#8369;{{ number_format($payment->discount_amount, 2) }}
+                                                </td>
+                                            </tr>
+                                        @endif
+
+                                        @if ($payment->discount_amount)
+                                            <tr style="background-color: #f5f5f5;">
+                                                <td><strong>Subtotal</strong></td>
+                                                <td style="text-align: right;">
+                                                    <strong>&#8369;{{ number_format($payment->gross_total - $payment->discount_amount, 2) }}</strong>
+                                                </td>
+                                            </tr>
+                                        @endif
+
+                                        {{-- Refundable Add-Ons Section --}}
+                                        @php
+                                            $addonTotal = 0;
+                                            if (
+                                                $payment->addonTransactions &&
+                                                $payment->addonTransactions->count() > 0
+                                            ) {
+                                                $addonTotal = $payment->addonTransactions->sum(function ($addonTrx) {
+                                                    return ($addonTrx->addon->base_price ?? 0) *
+                                                        ($addonTrx->addonReservation->quantity ?? 1);
+                                                });
+                                            }
+                                        @endphp
+
+                                        @if ($addonTotal > 0)
+                                            <tr>
+                                                <td colspan="2" style="padding-top: 20px;"><strong>Refundable
+                                                        Add-Ons</strong></td>
+                                            </tr>
+
+                                            @foreach ($payment->addonTransactions as $addonTrx)
+                                                @if ($addonTrx->addon)
+                                                    <tr>
+                                                        <td style="padding-left: 30px; text-transform: uppercase;">
+                                                            {{ $addonTrx->addon->name }}</td>
+                                                        <td style="text-align: right;">
+                                                            &#8369;{{ number_format(($addonTrx->addon->base_price ?? 0) * ($addonTrx->addonReservation->quantity ?? 1), 2) }}
+                                                        </td>
+                                                    </tr>
+                                                @endif
+                                            @endforeach
+
+                                            <tr style="background-color: #f5f5f5;">
+                                                <td><strong>Refundable Add-ons Total</strong></td>
+                                                <td style="text-align: right;">
+                                                    <strong>&#8369;{{ number_format($addonTotal, 2) }}</strong>
+                                                </td>
+                                            </tr>
+                                        @endif
+
+                                        {{-- Total Price Highlight --}}
+                                        <tr style="background-color: #e3f2fd; border-left: 4px solid #2196F3;">
+                                            <td style="font-size: 1.1rem;"><strong>Total Price</strong></td>
+                                            <td
+                                                style="text-align: right; font-weight: 700; font-size: 1.1rem; color: #2196F3;">
+                                                <strong>&#8369;{{ number_format($payment->total_price, 2) }}</strong>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><strong>Payment Status</strong></td>
+                                            <td style="text-align: right;">
+                                                @if ($payment->status == 'completed')
+                                                    <span class="badge badge-success">Completed</span>
+                                                @elseif($payment->status == 'canceled')
+                                                    <span class="badge badge-danger">Canceled</span>
+                                                @elseif($payment->status == 'reserved')
+                                                    <span class="badge badge-info">Reserved</span>
+                                                @else
+                                                    <span class="badge badge-warning">Pending</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><strong>Payment Date</strong></td>
+                                            <td style="text-align: right;">{{ $payment->created_at->format('M d, Y H:i') }}
+                                            </td>
+                                        </tr>
+
+                                        @if ($payment->discount_proof_path)
+                                            <tr>
+                                                <td><strong>Discount Proof</strong></td>
+                                                <td style="text-align: right;">
+                                                    <a href="{{ asset('storage/' . $payment->discount_proof_path) }}"
+                                                        target="_blank" class="btn btn-custom btn-outline-primary btn-sm">
+                                                        View Document
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    </tbody>
                                 </table>
                             </div>
                         </div>

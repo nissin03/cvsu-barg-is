@@ -3781,9 +3781,14 @@ class UserFacilityController extends Controller
             },
             'transactionReservations.facilityAttribute',
             'transactionReservations.price',
+            'transactionReservations.addonTransactions.addon',
+            'transactionReservations.addonTransactions.addonReservation',
+            'addonTransactions.addon',
+            'addonTransactions.addonReservation',
             'availability.facility',
             'availability.facilityAttribute',
             'paymentDetails.facility',
+            'discount',
             'user',
             'updatedBy'
         ])

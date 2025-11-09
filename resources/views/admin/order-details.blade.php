@@ -164,6 +164,7 @@
             </div>
 
             <div class="row">
+                <!-- Left column -->
                 <div class="col-md-7">
                     <div class="wg-box">
                         <div class="d-flex align-items-center justify-content-between gap10 flex-wrap">
@@ -173,8 +174,8 @@
                                     <i class="fas fa-file-pdf me-1"></i> Download PDF
                                 </a>
                             </div>
-
                         </div>
+
                         <div class="my-account__address-item">
                             <div class="my-account__address-item__detail">
                                 {{-- User Details --}}
@@ -182,52 +183,53 @@
                                 <div class="row g-3">
                                     <div class="col-12 d-flex">
                                         <p class="fw-bold me-2">Name:</p>
-                                        <p class="flex-grow-1 mb-0">{{ $order->user->name ?? '--' }}</p>
+                                        <p class="flex-grow-1 mb-0">{{ optional($order->user)->name ?? '--' }}</p>
                                     </div>
 
-                                    @if ($order->user->role === 'student')
+                                    @if (optional($order->user)->role === 'student')
                                         <div class="col-12 d-flex">
                                             <p class="fw-bold me-2">Year Level:</p>
-                                            <p class="flex-grow-1 mb-0">{{ $order->user->year_level ?? '--' }}</p>
+                                            <p class="flex-grow-1 mb-0">{{ optional($order->user)->year_level ?? '--' }}</p>
                                         </div>
                                         <div class="col-12 d-flex">
                                             <p class="fw-bold me-2">College:</p>
-                                            <p class="flex-grow-1 mb-0">{{ $order->user->college->name ?? '--' }}</p>
+                                            <p class="flex-grow-1 mb-0">
+                                                {{ optional(optional($order->user)->college)->name ?? '--' }}</p>
                                         </div>
                                         <div class="col-12 d-flex">
                                             <p class="fw-bold me-2">Course:</p>
-                                            <p class="flex-grow-1 mb-0">{{ $order->user->course->name ?? '--' }}</p>
+                                            <p class="flex-grow-1 mb-0">
+                                                {{ optional(optional($order->user)->course)->name ?? '--' }}</p>
                                         </div>
                                     @endif
 
                                     <div class="col-12 d-flex">
                                         <p class="fw-bold me-2">Mobile:</p>
-                                        <p class="flex-grow-1 mb-0">{{ $order->user->phone_number ?? '--' }}</p>
+                                        <p class="flex-grow-1 mb-0">{{ optional($order->user)->phone_number ?? '--' }}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
 
                         <h5 class="text-capitalize mt-5">Reservation Details</h5>
                         <div class="my-account__address-item">
                             <div class="my-account__address-item__detail">
                                 <div class="d-flex align-items-center gap-2 mb-5">
                                     <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">
-                                        Reservation
-                                        Date:</p>
-                                    <p class="body-text mb-2">
-                                        {{ \Carbon\Carbon::parse($order->reservation_date)->format('F d, Y') }}</p>
-                                </div>
-                                <div class="d-flex align-items-center gap-2 mb-5">
-                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Time
-                                        Slot:</p>
-                                    <p class="body-text mb-2">
-                                        {{ \Carbon\Carbon::parse($order->time_slot)->format('h:i A') }}</p>
-                                </div>
-                                <div class="d-flex align-items-center gap-2 mb-5">
-                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Status:
+                                        Reservation Date:
                                     </p>
+                                    <p class="body-text mb-2">
+                                        {{ \Carbon\Carbon::parse($order->reservation_date)->format('F d, Y') }}
+                                    </p>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mb-5">
+                                    <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Time Slot:
+                                    </p>
+                                    <p class="body-text mb-2">
+                                        {{ \Carbon\Carbon::parse($order->time_slot)->format('h:i A') }}
+                                    </p>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mb-5">
                                     <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">Status:
                                     </p>
                                     <span
@@ -236,6 +238,7 @@
                                         {{ ucfirst($order->status) }}
                                     </span>
                                 </div>
+
                                 @if ($order->updatedBy)
                                     <div class="d-flex align-items-center gap-2 mb-5">
                                         <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">
@@ -246,6 +249,7 @@
                                         </span>
                                     </div>
                                 @endif
+
                                 @if ($order->status === 'canceled' && $order->canceled_reason)
                                     <div class="d-flex align-items-start gap-2 mb-4">
                                         <p class="text-capitalize body-title mb-2" style="color: var(--Body-Text);">
@@ -264,13 +268,14 @@
                                         </div>
                                     </div>
                                 @endif
-
                             </div>
                         </div>
+
                         <div class="mt-5">
                             @php
                                 $isDisabled = in_array($order->status, ['canceled', 'pickedup']);
                             @endphp
+
                             @if (!$isDisabled)
                                 <div class="row">
                                     <div class="col-md-3">
@@ -286,20 +291,15 @@
                                     This order has already been {{ $order->status }}. No further actions can be performed.
                                 </div>
                             @endif
-                        @else
-                            <div class="alert alert-info fs-5">
-                                <i class="fas fa-info-circle me-2"></i>
-                                This order has already been {{ $order->status }}. No further actions can be performed.
-                            </div>
-                            @endif
                         </div>
-
                     </div>
                 </div>
 
+                <!-- Right column -->
                 <div class="col-md-5">
                     <div class="wg-box">
                         <h5 class="mb-2">Ordered Items</h5>
+
                         @foreach ($order->orderItems as $item)
                             <div class="d-flex align-items-center gap-3 mb-3">
                                 <img src="{{ asset('uploads/products/thumbnails/' . $item->product->image) }}"
@@ -318,90 +318,72 @@
                             </div>
                             <div class="divider my-1"></div>
                         @endforeach
+
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="text-capitalize body-title">Total</span>
                             <span class="text-capitalize body-title">&#8369;{{ number_format($order->total, 2) }}</span>
                         </div>
+
                         <div class="divider my-3"></div>
+
+                        {{-- PAYMENT PANEL --}}
                         @if ($order->status === 'reserved')
                             <form method="POST" id="payment-form" class="gap-2"
                                 action="{{ route('admin.order.complete-payment', $order->id) }}">
                                 @csrf
                                 <div class="mb-5">
                                     <label for="amount_paid" class="body-text mb-2">Amount Paid</label>
-                                    <input type="text" name="amount_paid" id="amount_paid" class="form-control"
-                                        inputmode="numeric" pattern="[0-9,]*" @error('amount_paid') is-invalid @enderror>
+                                    <input type="text" name="amount_paid" id="amount_paid"
+                                        class="form-control @error('amount_paid') is-invalid @enderror"
+                                        inputmode="numeric" pattern="[0-9,]*">
+                                    @error('amount_paid')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
-                                @error('amount_paid')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                                @if ($order->status === 'reserved')
-                                    <form method="POST" id="payment-form" class="gap-2"
-                                        action="{{ route('admin.order.complete-payment', $order->id) }}">
-                                        @csrf
-                                        <div class="mb-5">
-                                            <label for="amount_paid" class="body-text mb-2">Amount Paid</label>
-                                            <input type="text" name="amount_paid" id="amount_paid"
-                                                class="form-control" inputmode="numeric" pattern="[0-9,]*"
-                                                @error('amount_paid') is-invalid @enderror>
-                                        </div>
-                                        @error('amount_paid')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                        @enderror
 
-                                        <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
-                                            <span class="text-capitalize body-title">Change:</span>
-                                            <span class="text-capitalize body-title"><span
-                                                    id="change_display">0.00</span></span>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
-                                            <span class="text-capitalize body-title">Change:</span>
-                                            <span class="text-capitalize body-title"><span
-                                                    id="change_display">0.00</span></span>
-                                        </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
+                                    <span class="text-capitalize body-title">Change:</span>
+                                    <span class="text-capitalize body-title"><span id="change_display">0.00</span></span>
+                                </div>
 
-                                        <div class="divider my-3"></div>
-                                        <div class="d-flex align-items-end gap-2">
-                                            <button type="submit" class="tf-button tf-button-success">
-                                                Complete Payment
-                                            </button>
-                                        </div>
-                                    </form>
-                                @elseif($order->status === 'pickedup' && $transaction)
-                                    <div class="alert alert-success p-4">
-                                        <h5 class="mb-3 fw-bold">
-                                            <i class="fas fa-check-circle me-2"></i>
-                                            Payment Completed
-                                        </h5>
-                                        <div class="d-flex justify-content-between mb-3 fs-6">
-                                            <p class="fw-semibold">Amount Paid:</p>
-                                            <p class="fw-bold">₱{{ number_format($transaction->amount_paid, 2) }}</p>
-                                        </div>
-                                        <div class="d-flex justify-content-between mb-3 fs-6">
-                                            <p class="fw-semibold">Order Total:</p>
-                                            <p class="fw-bold">₱{{ number_format($order->total, 2) }}</p>
-                                        </div>
-                                        <div class="d-flex justify-content-between mb-3 fs-6">
-                                            <p class="fw-semibold">Change:</p>
-                                            <p class="fw-bold">₱{{ number_format($transaction->change, 2) }}</p>
-                                        </div>
-                                        @if ($order->picked_up_date)
-                                            <p class="text-muted d-block mt-2 fs-5">
-                                                Completed on:
-                                                {{ \Carbon\Carbon::parse($order->picked_up_date)->format('F d, Y h:i A') }}
-                                            </p>
-                                        @endif
-                                    </div>
-                                @else
-                                    <div class="alert alert-secondary">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        Payment cannot be processed for {{ $order->status }} orders.
-                                    </div>
+                                <div class="divider my-3"></div>
+                                <div class="d-flex align-items-end gap-2">
+                                    <button type="submit" class="tf-button tf-button-success">
+                                        Complete Payment
+                                    </button>
+                                </div>
+                            </form>
+                        @elseif($order->status === 'pickedup' && $transaction)
+                            <div class="alert alert-success p-4">
+                                <h5 class="mb-3 fw-bold">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Payment Completed
+                                </h5>
+                                <div class="d-flex justify-content-between mb-3 fs-6">
+                                    <p class="fw-semibold">Amount Paid:</p>
+                                    <p class="fw-bold">₱{{ number_format($transaction->amount_paid, 2) }}</p>
+                                </div>
+                                <div class="d-flex justify-content-between mb-3 fs-6">
+                                    <p class="fw-semibold">Order Total:</p>
+                                    <p class="fw-bold">₱{{ number_format($order->total, 2) }}</p>
+                                </div>
+                                <div class="d-flex justify-content-between mb-3 fs-6">
+                                    <p class="fw-semibold">Change:</p>
+                                    <p class="fw-bold">₱{{ number_format($transaction->change, 2) }}</p>
+                                </div>
+                                @if ($order->picked_up_date)
+                                    <p class="text-muted d-block mt-2 fs-5">
+                                        Completed on:
+                                        {{ \Carbon\Carbon::parse($order->picked_up_date)->format('F d, Y h:i A') }}
+                                    </p>
                                 @endif
+                            </div>
+                        @else
+                            <div class="alert alert-secondary">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Payment cannot be processed for {{ $order->status }} orders.
+                            </div>
+                        @endif
 
                     </div>
                 </div>
