@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\Payment;
 use App\Models\Facility;
+use Illuminate\Support\Str;
+use App\Models\AddonPayment;
 use App\Models\Availability;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -13,7 +15,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Models\QualificationApproval;
 use App\Models\TransactionReservation;
-use App\Models\AddonPayment;
 
 class FacilityReservationController extends Controller
 {
@@ -174,45 +175,6 @@ class FacilityReservationController extends Controller
         }
     }
 
-
-    /**
-     * Display the specified resource.
-     */
-    // public function show(string $id)
-    // {
-    //     $reservation = Payment::with([
-    //         'user',
-    //         'user.college',
-    //         'user.course',
-    //         'availability.facility',
-    //         'availability.facilityAttribute',
-    //         'transactionReservations.availability',
-    //         'transactionReservations.addonTransactions.addon',
-    //         'transactionReservations.addonTransactions.addonReservation',
-    //         'updatedBy' => function ($q) {
-    //             $q->where('utype', 'ADM');
-    //         }
-    //     ])->findOrFail($id);
-
-    //     if ($reservation->availability) {
-    //         $relatedAvailabilities = Availability::whereIn(
-    //             'id',
-    //             TransactionReservation::where('payment_id', $reservation->id)
-    //                 ->pluck('availability_id')
-    //         )->orderBy('date_from')->get();
-
-    //         $reservation->grouped_availabilities = $relatedAvailabilities;
-
-    //         $qualificationApprovals = QualificationApproval::whereIn('availability_id', $relatedAvailabilities->pluck('id'))
-    //             ->with('user')
-    //             ->get();
-
-    //         $reservation->qualification_approvals = $qualificationApprovals;
-    //     }
-
-    //     return view('admin.facilities.reservations.details', compact('reservation'));
-    // }
-
     public function show(string $id)
     {
         $reservation = Payment::with([
@@ -269,6 +231,60 @@ class FacilityReservationController extends Controller
             $reservation->refundable_addon_transactions = $refundableAddonTransactions;
             $reservation->non_refundable_addon_transactions = $nonRefundableAddonTransactions;
             $reservation->refundable_addon_payments = $refundableAddonPayments;
+
+            $allAddons = $reservation->refundable_addon_transactions
+                ->merge($reservation->non_refundable_addon_transactions);
+
+            $groupedAddons = $allAddons
+                ->groupBy(function ($tx) {
+                    $addon = $tx->addon;
+                    return ($addon?->id ?? 'na') . '|' . ($addon?->billing_cycle ?? 'na');
+                })
+                ->map(function ($group) {
+                    $firstTx   = $group->first();
+                    $addon     = $firstTx?->addon;
+                    $cycle     = $addon?->billing_cycle;
+
+                    // all reservation rows for this add-on
+                    $reservations = $group->pluck('addonReservation')->filter();
+
+                    // overall date range (NO optional())
+                    $minFrom = $reservations->min('date_from'); // string|Carbon|null
+                    $maxTo   = $reservations->max('date_to');   // string|Carbon|null
+
+                    // totals
+                    $totalQty = (int) $reservations->sum(fn($r) => (int) ($r?->quantity ?? 0));
+
+                    // days logic
+                    if ($cycle === 'per_day') {
+                        $daysCount = $reservations
+                            ->filter(fn($r) => $r && $r->date_from)
+                            ->map(fn($r) => Carbon::parse($r->date_from)->toDateString())
+                            ->unique()
+                            ->count();
+                    } else {
+                        $daysCount = (int) $reservations->sum(fn($r) => (int) ($r?->days ?? 0));
+                    }
+
+                    $minFromFmt = $minFrom ? Carbon::parse($minFrom)->format('M d, Y') : '—';
+                    $maxToFmt   = $maxTo   ? Carbon::parse($maxTo)->format('M d, Y')   : '—';
+
+                    return (object) [
+                        'addon_name'          => $addon?->name ?? '—',
+                        'billing_cycle'       => $cycle ?? '—',
+                        'billing_cycle_label' => ucfirst(Str::of($cycle ?? '—')->replace('_', ' ')),
+                        'is_contract'         => $cycle === 'per_contract',
+                        'date_from'           => $minFrom,
+                        'date_to'             => $maxTo,
+                        'date_from_fmt'       => $minFromFmt,
+                        'date_to_fmt'         => $maxToFmt,
+                        'quantity'            => $totalQty ?: null,
+                        'days'                => $daysCount ?: null,
+                    ];
+                })
+                ->values();
+
+            $reservation->grouped_addons = $groupedAddons;
         }
 
         return view('admin.facilities.reservations.details', compact('reservation'));
@@ -669,65 +685,152 @@ class FacilityReservationController extends Controller
                 return $facilityAttribute->capacity ?? 0;
         }
     }
+    // public function updateQualificationApproval(Request $request, $id)
+    // {
+    //     $qualificationApproval = QualificationApproval::findOrFail($id);
+    //     $currentStatus = $qualificationApproval->status;
+    //     $allowedStatuses = match ($currentStatus) {
+    //         'pending'   => ['approved', 'canceled'],
+    //         'approved', 'canceled' => [],
+    //         default     => [],
+    //     };
+
+    //     if (empty($allowedStatuses)) {
+    //         return response()->json([
+    //             'error' => 'Status cannot be changed from ' . $currentStatus,
+    //             'current_status' => $currentStatus,
+    //             'allowed_statuses' => $allowedStatuses,
+    //         ], 422);
+    //     }
+
+    //     $validated = $request->validate([
+    //         'status' => ['required', 'in:' . implode(',', $allowedStatuses)],
+    //     ]);
+    //     $qualificationApproval->status = $validated['status'];
+    //     $qualificationApproval->save();
+    //     $reservation = $qualificationApproval->payment;
+    //     $currentReservationStatus = $reservation ? $reservation->status : 'pending';
+
+    //     $reservationTransitions = [
+    //         'pending'   => ['reserved', 'completed', 'canceled'],
+    //         'reserved'  => ['completed', 'canceled'],
+    //         'completed' => ['canceled'],
+    //         'canceled'  => [],
+    //     ];
+
+    //     $canUpdateReservation = false;
+    //     $availableReservationStatuses = [];
+    //     switch ($validated['status']) {
+    //         case 'approved':
+    //             $canUpdateReservation = true;
+    //             $availableReservationStatuses = $reservationTransitions[$currentReservationStatus] ?? [];
+    //             break;
+    //         case 'canceled':
+    //             $canUpdateReservation = ($currentReservationStatus !== 'canceled');
+    //             $availableReservationStatuses = ($currentReservationStatus !== 'canceled') ? ['canceled'] : [];
+    //             break;
+
+    //         default:
+    //             $canUpdateReservation = false;
+    //             $availableReservationStatuses = [];
+    //     }
+
+    //     return response()->json([
+    //         'message' => 'Qualification approval status updated successfully',
+    //         'qualification_status' => $validated['status'],
+    //         'current_reservation_status' => $currentReservationStatus,
+    //         'available_reservation_statuses' => $availableReservationStatuses,
+    //         'can_update_reservation' => $canUpdateReservation,
+    //     ]);
+    // }
+
     public function updateQualificationApproval(Request $request, $id)
     {
-        $qualificationApproval = QualificationApproval::findOrFail($id);
-        $currentStatus = $qualificationApproval->status;
-        $allowedStatuses = match ($currentStatus) {
-            'pending'   => ['approved', 'canceled'],
-            'approved', 'canceled' => [],
-            default     => [],
-        };
+        try {
+            $qualificationApproval = QualificationApproval::findOrFail($id);
+            $currentStatus = $qualificationApproval->status;
 
-        if (empty($allowedStatuses)) {
+            $allowedStatuses = match ($currentStatus) {
+                'pending'   => ['approved', 'canceled'],
+                'approved', 'canceled' => [],
+                default     => [],
+            };
+
+            if (empty($allowedStatuses)) {
+                return response()->json([
+                    'error' => 'Status cannot be changed from ' . $currentStatus,
+                    'current_status' => $currentStatus,
+                    'allowed_statuses' => $allowedStatuses,
+                ], 422);
+            }
+
+            $validated = $request->validate([
+                'status' => ['required', 'in:' . implode(',', $allowedStatuses)],
+            ]);
+
+            // Update qualification status
+            $qualificationApproval->status = $validated['status'];
+            $qualificationApproval->save();
+
+            // Get the related reservation through availability
+            $availability = $qualificationApproval->availability;
+            $reservation = $availability ? $availability->payments()->first() : null;
+
+            $currentReservationStatus = $reservation ? $reservation->status : 'pending';
+
+            $reservationTransitions = [
+                'pending'   => ['reserved', 'completed', 'canceled'],
+                'reserved'  => ['completed', 'canceled'],
+                'completed' => ['canceled'],
+                'canceled'  => [],
+            ];
+
+            $canUpdateReservation = false;
+            $availableReservationStatuses = [];
+
+            switch ($validated['status']) {
+                case 'approved':
+                    $canUpdateReservation = true;
+                    $availableReservationStatuses = $reservationTransitions[$currentReservationStatus] ?? [];
+                    break;
+                case 'canceled':
+                    $canUpdateReservation = ($currentReservationStatus !== 'canceled');
+                    $availableReservationStatuses = ($currentReservationStatus !== 'canceled') ? ['canceled'] : [];
+                    break;
+                default:
+                    $canUpdateReservation = false;
+                    $availableReservationStatuses = [];
+            }
+
             return response()->json([
-                'error' => 'Status cannot be changed from ' . $currentStatus,
-                'current_status' => $currentStatus,
-                'allowed_statuses' => $allowedStatuses,
+                'success' => true,
+                'message' => 'Qualification approval status updated successfully',
+                'qualification_status' => $validated['status'],
+                'current_reservation_status' => $currentReservationStatus,
+                'available_reservation_statuses' => $availableReservationStatuses,
+                'can_update_reservation' => $canUpdateReservation,
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'error' => 'Validation failed.',
+                'errors' => $e->errors()
             ], 422);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Qualification approval not found.'
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('Failed to update qualification approval: ' . $e->getMessage(), [
+                'qualification_id' => $id,
+                'status' => $request->status ?? 'unknown'
+            ]);
+
+            return response()->json([
+                'error' => 'An error occurred while updating qualification approval.',
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        $validated = $request->validate([
-            'status' => ['required', 'in:' . implode(',', $allowedStatuses)],
-        ]);
-        $qualificationApproval->status = $validated['status'];
-        $qualificationApproval->save();
-        $reservation = $qualificationApproval->payment;
-        $currentReservationStatus = $reservation ? $reservation->status : 'pending';
-
-        $reservationTransitions = [
-            'pending'   => ['reserved', 'completed', 'canceled'],
-            'reserved'  => ['completed', 'canceled'],
-            'completed' => ['canceled'],
-            'canceled'  => [],
-        ];
-
-        $canUpdateReservation = false;
-        $availableReservationStatuses = [];
-        switch ($validated['status']) {
-            case 'approved':
-                $canUpdateReservation = true;
-                $availableReservationStatuses = $reservationTransitions[$currentReservationStatus] ?? [];
-                break;
-            case 'canceled':
-                $canUpdateReservation = ($currentReservationStatus !== 'canceled');
-                $availableReservationStatuses = ($currentReservationStatus !== 'canceled') ? ['canceled'] : [];
-                break;
-
-            default:
-                $canUpdateReservation = false;
-                $availableReservationStatuses = [];
-        }
-
-        return response()->json([
-            'message' => 'Qualification approval status updated successfully',
-            'qualification_status' => $validated['status'],
-            'current_reservation_status' => $currentReservationStatus,
-            'available_reservation_statuses' => $availableReservationStatuses,
-            'can_update_reservation' => $canUpdateReservation,
-        ]);
     }
-
     public function destroy(string $id)
     {
         //

@@ -346,29 +346,22 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @php
-                                $allAddons = $reservation->refundable_addon_transactions->merge(
-                                    $reservation->non_refundable_addon_transactions,
-                                );
-                            @endphp
-                            @forelse ($allAddons as $addonTransaction)
-                                @php
-                                    $addon = $addonTransaction->addon;
-                                    $reservationData = $addonTransaction->addonReservation;
-                                @endphp
+                            @php $groupedAddons = $reservation->grouped_addons ?? collect(); @endphp
+
+                            @forelse ($groupedAddons as $row)
                                 <tr>
-                                    <td>{{ $addon->name ?? '—' }}</td>
-                                    <td>{{ ucfirst(str_replace('_', ' ', $addon->billing_cycle)) }}</td>
-                                    @if ($addon->billing_cycle !== 'per_contract')
-                                        <td>{{ $reservationData?->date_from ? \Carbon\Carbon::parse($reservationData->date_from)->format('M d, Y') : '—' }}
-                                        </td>
-                                        <td>{{ $reservationData?->date_to ? \Carbon\Carbon::parse($reservationData->date_to)->format('M d, Y') : '—' }}
-                                        </td>
+                                    <td>{{ $row->addon_name }}</td>
+                                    <td>{{ $row->billing_cycle_label }}</td>
+
+                                    @if (!$row->is_contract)
+                                        <td>{{ $row->date_from_fmt }}</td>
+                                        <td>{{ $row->date_to_fmt }}</td>
                                     @else
                                         <td colspan="2" class="text-center text-muted">Contract-based</td>
                                     @endif
-                                    <td>{{ $reservationData?->quantity ?? '—' }}</td>
-                                    <td>{{ $reservationData?->days ?? '—' }}</td>
+
+                                    <td>{{ $row->quantity ?? '—' }}</td>
+                                    <td>{{ $row->days ?? '—' }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -380,7 +373,6 @@
                 </div>
             @endif
 
-            {{-- Refundable Addon Payments Section --}}
             @if (isset($reservation->refundable_addon_payments) && $reservation->refundable_addon_payments->count() > 0)
                 <div class="wg-box mt-5">
                     <h4 class="fw-bold mb-4">Refundable Addon Payments</h4>
@@ -1367,6 +1359,12 @@
 
             // Initialize reservation status form based on current state
             initializeReservationStatusForm();
+
+            // Initialize qualification status forms
+            initializeQualificationForms();
+
+            // Initialize addon payment forms
+            initializeAddonPaymentForms();
         });
 
         function initializeReservationStatusForm() {
@@ -1424,7 +1422,9 @@
                         method: 'PATCH',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
                         },
                         body: JSON.stringify({
                             status: statusSelect.value
@@ -1457,13 +1457,17 @@
             });
         }
 
-        // Qualification status update forms
-        document.addEventListener('DOMContentLoaded', function() {
+        // FIXED: Qualification status update forms initialization
+        function initializeQualificationForms() {
             const qualificationForms = document.querySelectorAll('.qualification-status-form');
 
             if (qualificationForms.length > 0) {
                 qualificationForms.forEach(form => {
-                    form.addEventListener('submit', function(e) {
+                    // Remove any existing listeners to prevent duplicates
+                    const newForm = form.cloneNode(true);
+                    form.parentNode.replaceChild(newForm, form);
+
+                    newForm.addEventListener('submit', function(e) {
                         e.preventDefault();
 
                         const qualificationId = this.dataset.qualificationId;
@@ -1476,18 +1480,33 @@
                         }
 
                         const newStatus = statusSelect.value;
+                        const currentStatus = this.dataset.currentStatus;
                         const originalButtonText = updateBtn.innerHTML;
+
+                        // Prevent update if status hasn't changed
+                        if (newStatus === currentStatus) {
+                            showAlert(this, 'info', 'Status is already ' + newStatus);
+                            return;
+                        }
 
                         statusSelect.disabled = true;
                         updateBtn.disabled = true;
                         updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
 
+                        console.log('Updating qualification status:', {
+                            qualificationId,
+                            currentStatus,
+                            newStatus
+                        });
+
                         fetch(`/admin/facilities/reservations/qualification/${qualificationId}/status`, {
                                 method: 'PATCH',
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector(
-                                        'meta[name="csrf-token"]').content
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                        .content,
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
                                 },
                                 body: JSON.stringify({
                                     status: newStatus
@@ -1495,20 +1514,28 @@
                             })
                             .then(response => {
                                 if (!response.ok) {
-                                    throw new Error('Network response was not ok');
+                                    return response.json().then(err => {
+                                        throw new Error(err.error ||
+                                            'Network response was not ok');
+                                    });
                                 }
                                 return response.json();
                             })
                             .then(data => {
                                 console.log('Qualification update response:', data);
 
-                                showAlert(this, 'success',
+                                showAlert(this, 'success', data.message ||
                                     'Qualification approval status updated successfully');
 
                                 // Update the qualification status badge
-                                updateQualificationStatusBadge(qualificationId, newStatus);
+                                updateQualificationStatusBadge(qualificationId, data
+                                    .qualification_status);
 
-                                // Update reservation form availability WITHOUT changing reservation status
+                                // Update the qualification form dropdown
+                                statusSelect.value = data.qualification_status;
+                                this.dataset.currentStatus = data.qualification_status;
+
+                                // Update reservation form availability
                                 updateReservationFormAvailability(
                                     data.qualification_status,
                                     data.current_reservation_status,
@@ -1516,22 +1543,20 @@
                                     data.can_update_reservation
                                 );
 
-                                // Update the qualification form dropdown
-                                statusSelect.value = newStatus;
-                                form.dataset.currentStatus = newStatus;
-
                                 // Disable qualification form if status is final
-                                if (['approved', 'canceled'].includes(newStatus)) {
+                                if (['approved', 'canceled'].includes(data.qualification_status)) {
                                     statusSelect.disabled = true;
                                     updateBtn.disabled = true;
                                     updateBtn.innerHTML = 'Status Updated';
 
-                                    // Show lock message
-                                    const lockDiv = document.createElement('div');
-                                    lockDiv.className = 'alert alert-info mt-2';
-                                    lockDiv.innerHTML =
-                                        '<i class="fas fa-lock"></i> Status cannot be changed.';
-                                    this.parentNode.replaceChild(lockDiv, this);
+                                    // Show lock message after a short delay
+                                    setTimeout(() => {
+                                        const lockDiv = document.createElement('div');
+                                        lockDiv.className = 'alert alert-info mt-2';
+                                        lockDiv.innerHTML =
+                                            '<i class="fas fa-lock"></i> Status cannot be changed.';
+                                        this.parentNode.replaceChild(lockDiv, this);
+                                    }, 1000);
                                 } else {
                                     statusSelect.disabled = false;
                                     updateBtn.disabled = false;
@@ -1539,44 +1564,26 @@
                                 }
                             })
                             .catch(error => {
-                                console.error('Error:', error);
+                                console.error('Error updating qualification status:', error);
                                 statusSelect.disabled = false;
                                 updateBtn.disabled = false;
                                 updateBtn.innerHTML = originalButtonText;
-                                showAlert(this, 'danger',
+                                showAlert(this, 'danger', error.message ||
                                     'Error updating status. Please try again.');
                             });
                     });
                 });
             }
-
-            document.addEventListener('qualificationStatusChanged', function(e) {
-                const qualificationId = e.detail.qualificationId;
-                const newStatus = e.detail.newStatus;
-
-                updateQualificationStatusBadge(qualificationId, newStatus);
-
-                // Update the form display
-                const form = document.querySelector(`form[data-qualification-id="${qualificationId}"]`);
-                if (form) {
-                    const lockDiv = document.createElement('div');
-                    lockDiv.className = 'alert alert-info mt-2';
-                    lockDiv.innerHTML = '<i class="fas fa-lock"></i> Status cannot be changed.';
-                    form.parentNode.replaceChild(lockDiv, form);
-                }
-            });
-        });
+        }
 
         function updateQualificationStatusBadge(qualificationId, newStatus) {
             const statusBadge = document.querySelector(`[data-qualification-id="${qualificationId}"]`);
             if (statusBadge) {
                 statusBadge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
                 statusBadge.classList.remove('bg-success', 'bg-primary', 'bg-danger', 'bg-secondary', 'bg-warning',
-                    'bg-info');\
+                    'bg-info');
                 const badgeClass = getQualificationStatusBadgeClass(newStatus);
                 statusBadge.classList.add(badgeClass);
-                statusBadge.style.color = '#fff';
-
                 statusBadge.dataset.currentQualificationStatus = newStatus;
 
                 console.log('Updated qualification badge:', {
@@ -1593,9 +1600,12 @@
             const submitButton = document.getElementById('submit-button');
             const alertDiv = document.getElementById('reservation-status-alert');
 
-            if (!statusSelect || !submitButton) return;
+            if (!statusSelect || !submitButton) {
+                console.error('Reservation form elements not found');
+                return;
+            }
 
-            console.log('Updating reservation form:', {
+            console.log('Updating reservation form availability:', {
                 qualificationStatus,
                 currentReservationStatus,
                 availableReservationStatuses,
@@ -1604,48 +1614,32 @@
 
             // Don't change anything if reservation is already at final status
             if (['completed', 'canceled'].includes(currentReservationStatus)) {
-                // Update UI to show canceled state
-                statusSelect.disabled = true;
-                submitButton.disabled = true;
-                statusSelect.classList.add('disabled');
-                submitButton.classList.add('disabled');
-                submitButton.textContent = 'Cannot Change';
-
-                // Update dropdown to show canceled (final)
-                statusSelect.innerHTML = '';
-                const option = document.createElement('option');
-                option.value = currentReservationStatus;
-                option.textContent = currentReservationStatus.charAt(0).toUpperCase() + currentReservationStatus.slice(1) +
-                    ' (Final)';
-                option.selected = true;
-                statusSelect.appendChild(option);
-
-                // Update alert if it's canceled
                 if (currentReservationStatus === 'canceled' && alertDiv) {
                     alertDiv.className = 'alert alert-danger mb-3';
                     alertDiv.innerHTML = `
-                    <i class="fas fa-exclamation-circle"></i>
-                    <strong>Reservation Canceled:</strong> This reservation has been canceled and cannot be changed.
-                `;
+                <i class="fas fa-exclamation-circle"></i>
+                <strong>Reservation Canceled:</strong> This reservation has been canceled and cannot be changed.
+            `;
                 }
                 return;
             }
 
             if (qualificationStatus === 'approved') {
-                // Enable reservation status form but don't change current values
+                // Enable reservation status form
                 statusSelect.disabled = false;
                 submitButton.disabled = false;
                 statusSelect.classList.remove('disabled');
                 submitButton.classList.remove('disabled');
+                submitButton.textContent = 'Update Status';
 
                 // Update alert message
                 if (alertDiv) {
                     alertDiv.className = 'alert alert-success mb-3';
                     alertDiv.innerHTML = `
-                    <i class="fas fa-check-circle"></i>
-                    <strong>Qualification Approved:</strong>
-                    ${getStatusTransitionMessage(currentReservationStatus)}
-                `;
+                <i class="fas fa-check-circle"></i>
+                <strong>Qualification Approved:</strong>
+                ${getStatusTransitionMessage(currentReservationStatus)}
+            `;
                 }
 
                 // Update dropdown options but keep current reservation status selected
@@ -1656,9 +1650,9 @@
                 if (alertDiv) {
                     alertDiv.className = 'alert alert-warning mb-3';
                     alertDiv.innerHTML = `
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <strong>Note:</strong> User qualification was canceled. Only cancellation is allowed.
-                `;
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Note:</strong> User qualification was canceled. Only cancellation is allowed.
+            `;
                 }
 
                 if (currentReservationStatus !== 'canceled' && canUpdate) {
@@ -1667,6 +1661,7 @@
                     submitButton.disabled = false;
                     statusSelect.classList.remove('disabled');
                     submitButton.classList.remove('disabled');
+                    submitButton.textContent = 'Update Status';
 
                     updateReservationDropdownOptions(currentReservationStatus, ['canceled'], true);
                 } else {
@@ -1683,15 +1678,16 @@
                 submitButton.disabled = true;
                 statusSelect.classList.add('disabled');
                 submitButton.classList.add('disabled');
+                submitButton.textContent = 'Awaiting Approval';
 
                 // Update alert message
                 if (alertDiv) {
                     alertDiv.className = 'alert alert-info mb-3';
                     alertDiv.innerHTML = `
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Action Required:</strong> User qualification must be approved before reservation status can be updated.
-                    <br><small class="text-muted">Current qualification status: <strong>Pending Review</strong></small>
-                `;
+                <i class="fas fa-info-circle"></i>
+                <strong>Action Required:</strong> User qualification must be approved before reservation status can be updated.
+                <br><small class="text-muted">Current qualification status: <strong>Pending Review</strong></small>
+            `;
                 }
             }
         }
@@ -1745,8 +1741,8 @@
         }
 
         function updateReservationStatusBadge(newStatus) {
-            const statusBadge = document.querySelector('.status-badge');
-            if (statusBadge && !statusBadge.classList.contains('qualification-status-badge')) {
+            const statusBadge = document.querySelector('.status-badge:not(.qualification-status-badge)');
+            if (statusBadge) {
                 statusBadge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
                 statusBadge.className = 'badge status-badge ' + getStatusBadgeClass(newStatus);
             }
@@ -1801,7 +1797,8 @@
             // Remove existing alerts
             const existingAlerts = parentElement.querySelectorAll('.alert');
             existingAlerts.forEach(alert => {
-                if (alert.classList.contains('alert-success') || alert.classList.contains('alert-danger')) {
+                if (alert.classList.contains('alert-success') || alert.classList.contains('alert-danger') || alert
+                    .classList.contains('alert-info')) {
                     alert.remove();
                 }
             });
@@ -1859,11 +1856,354 @@
             }
         }
 
-        // NEW FUNCTION: Update reservation status UI when forfeit happens
+        // Initialize addon payment forms
+        function initializeAddonPaymentForms() {
+            // Handle payment received input - calculate change
+            document.querySelectorAll('.payment-received-input').forEach(function(input) {
+                input.addEventListener('input', function() {
+                    calculateChange(this);
+                });
+
+                input.addEventListener('blur', function() {
+                    validatePaymentInput(this);
+                });
+            });
+
+            // Handle status dropdown changes
+            document.querySelectorAll('.addon-status-select').forEach(function(select) {
+                select.addEventListener('change', handleAddonStatusChange);
+            });
+
+            // Handle form submissions
+            document.querySelectorAll('.addon-payment-form').forEach(function(form) {
+                form.addEventListener('submit', handleAddonPaymentSubmit);
+            });
+        }
+
+        function calculateChange(input) {
+            const addonPaymentId = input.getAttribute('data-addon-payment-id');
+            const remainingBalance = parseFloat(input.getAttribute('data-remaining-balance')) || 0;
+            const paymentReceived = parseFloat(input.value) || 0;
+
+            const changeDisplay = document.querySelector('.change-display[data-addon-payment-id="' + addonPaymentId + '"]');
+            const changeAmount = document.querySelector('.change-amount[data-addon-payment-id="' + addonPaymentId + '"]');
+
+            if (paymentReceived > remainingBalance) {
+                const change = paymentReceived - remainingBalance;
+                if (changeDisplay && changeAmount) {
+                    changeAmount.textContent = '₱' + change.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                    changeDisplay.style.display = 'block';
+                }
+            } else {
+                if (changeDisplay) {
+                    changeDisplay.style.display = 'none';
+                }
+            }
+
+            const remainingBalanceDisplay = document.querySelector('.remaining-balance-display-' + addonPaymentId);
+            if (remainingBalanceDisplay) {
+                const newRemaining = Math.max(0, remainingBalance - paymentReceived);
+                remainingBalanceDisplay.value = newRemaining.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            }
+        }
+
+        function validatePaymentInput(input) {
+            const addonPaymentId = input.getAttribute('data-addon-payment-id');
+            const paymentReceived = parseFloat(input.value) || 0;
+            const errorDiv = document.querySelector('.invalid-feedback-custom[data-addon-payment-id="' + addonPaymentId +
+                '"]');
+
+            let isValid = true;
+            let errorMessage = '';
+
+            if (paymentReceived < 0) {
+                isValid = false;
+                errorMessage = 'Payment amount cannot be negative';
+            }
+
+            if (!isValid) {
+                input.classList.add('is-invalid');
+                input.style.borderColor = '#dc3545';
+                if (errorDiv) {
+                    errorDiv.textContent = errorMessage;
+                    errorDiv.style.display = 'block';
+                }
+            } else {
+                input.classList.remove('is-invalid');
+                input.style.borderColor = '';
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+            }
+
+            return isValid;
+        }
+
+        function handleAddonStatusChange(e) {
+            const select = e.target;
+            const addonPaymentId = select.getAttribute('data-addon-payment-id');
+            const selectedStatus = select.value;
+            const currentStatus = select.getAttribute('data-current-status');
+
+            const paymentDetails = document.querySelector('.payment-details-section[data-addon-payment-id="' +
+                addonPaymentId + '"]');
+
+            if (paymentDetails) {
+                if (selectedStatus === 'downpayment') {
+                    paymentDetails.style.display = 'block';
+                } else {
+                    paymentDetails.style.display = 'none';
+                }
+            }
+
+            const paymentInput = document.querySelector('.payment-received-input[data-addon-payment-id="' + addonPaymentId +
+                '"]');
+
+            if (paymentInput) {
+                if (selectedStatus === 'downpayment') {
+                    paymentInput.removeAttribute('readonly');
+                    if (currentStatus === 'unpaid') {
+                        paymentInput.value = '0';
+                    }
+                } else {
+                    paymentInput.setAttribute('readonly', 'readonly');
+                    paymentInput.value = '0';
+                    paymentInput.classList.remove('is-invalid');
+                    paymentInput.style.borderColor = '';
+
+                    const errorDiv = document.querySelector('.invalid-feedback-custom[data-addon-payment-id="' +
+                        addonPaymentId + '"]');
+                    if (errorDiv) {
+                        errorDiv.style.display = 'none';
+                    }
+
+                    const changeDisplay = document.querySelector('.change-display[data-addon-payment-id="' +
+                        addonPaymentId + '"]');
+                    if (changeDisplay) {
+                        changeDisplay.style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        function handleAddonPaymentSubmit(e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const statusSelect = form.querySelector('.addon-status-select');
+            const selectedStatus = statusSelect.value;
+            const currentStatus = statusSelect.getAttribute('data-current-status');
+            const paymentInput = form.querySelector('.payment-received-input');
+            const paymentReceived = parseFloat(paymentInput.value) || 0;
+            const currentDownpayment = parseFloat(form.getAttribute('data-current-downpayment')) || 0;
+            const remainingBalance = parseFloat(form.getAttribute('data-remaining-balance')) || 0;
+            const total = parseFloat(form.getAttribute('data-total'));
+            const formAction = form.action;
+
+            if (selectedStatus === 'downpayment') {
+                const isValid = validatePaymentInput(paymentInput);
+
+                if (!isValid) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        text: 'Please fix the validation errors before submitting.',
+                        confirmButtonColor: '#d33'
+                    });
+                    return;
+                }
+
+                if (paymentReceived <= 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Invalid Payment',
+                        text: 'Please enter a payment amount greater than 0.',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    paymentInput.focus();
+                    return;
+                }
+            }
+
+            let confirmTitle = 'Update Addon Payment?';
+            let confirmText = 'Are you sure you want to update this addon payment?';
+            let confirmIcon = 'question';
+
+            if (selectedStatus === 'forfeit') {
+                confirmTitle = 'Mark as Forfeit?';
+                confirmText = 'Are you sure you want to mark this as FORFEIT? This action will:\n\n' +
+                    '• Lock the addon payment status\n' +
+                    '• Automatically CANCEL the main reservation\n' +
+                    '• Update all related transactions to CANCELED\n\n' +
+                    'This action cannot be undone.';
+                confirmIcon = 'warning';
+            } else if (selectedStatus === 'paid') {
+                if (currentStatus === 'unpaid') {
+                    confirmTitle = 'Mark as Paid?';
+                    confirmText =
+                        'Are you sure you want to mark this as PAID (full payment)? This action will lock the payment status.';
+                } else if (currentStatus === 'downpayment') {
+                    confirmTitle = 'Mark as Paid?';
+                    confirmText = 'Are you sure you want to mark this as PAID? This action will lock the payment status.';
+                }
+                confirmIcon = 'success';
+            } else if (selectedStatus === 'refunded') {
+                confirmTitle = 'Refund Payment?';
+                confirmText = 'Are you sure you want to REFUND this payment? This action will lock the payment status.';
+                confirmIcon = 'warning';
+            } else if (selectedStatus === 'downpayment' && paymentReceived > 0) {
+                const newTotalPaid = currentDownpayment + Math.min(paymentReceived, remainingBalance);
+                const newRemaining = Math.max(0, remainingBalance - paymentReceived);
+                const change = Math.max(0, paymentReceived - remainingBalance);
+
+                confirmTitle = 'Process Payment?';
+                confirmText = 'Payment Received: ₱' + paymentReceived.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') +
+                    '\n' +
+                    'Total Paid: ₱' + newTotalPaid.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '\n' +
+                    'New Remaining Balance: ₱' + newRemaining.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+                if (change > 0) {
+                    confirmText += '\n\nChange to Return: ₱' + change.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                }
+
+                confirmIcon = 'info';
+            }
+
+            Swal.fire({
+                title: confirmTitle,
+                text: confirmText,
+                icon: confirmIcon,
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, proceed',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Processing...',
+                        text: 'Please wait while we update the payment.',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    const formData = new FormData();
+                    formData.append('_method', 'PUT');
+                    formData.append('status', selectedStatus);
+                    if (selectedStatus === 'downpayment') {
+                        formData.append('payment_received', paymentReceived);
+                    }
+
+                    fetch(formAction, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                    'content'),
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: formData
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(err => {
+                                    throw err;
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                if (data.reservation_status_changed && data.new_reservation_status ===
+                                    'canceled') {
+                                    updateReservationStatusUIOnForfeit();
+
+                                    if (data.qualification_ids && data.qualification_ids.length > 0) {
+                                        data.qualification_ids.forEach(qualId => {
+                                            const event = new CustomEvent(
+                                                'qualificationStatusChanged', {
+                                                    detail: {
+                                                        qualificationId: qualId,
+                                                        newStatus: 'canceled'
+                                                    }
+                                                });
+                                            document.dispatchEvent(event);
+                                        });
+                                    }
+
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Success!',
+                                        html: `<div style="text-align: left;">
+                                    <p><strong>${data.message}</strong></p>
+                                    <hr>
+                                    <p style="color: #dc3545; font-weight: 600;">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        Main Reservation Status Updated
+                                    </p>
+                                    <p>The reservation has been automatically canceled due to the forfeit status.</p>
+                                    <p><small class="text-muted">The page will refresh to show all changes.</small></p>
+                                </div>`,
+                                        confirmButtonColor: '#3085d6',
+                                        confirmButtonText: 'Okay, Refresh Page'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Success!',
+                                        text: data.message,
+                                        confirmButtonColor: '#3085d6',
+                                        timer: 3000
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                }
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Update Failed',
+                                    text: data.message ||
+                                        'An error occurred while updating the payment.',
+                                    confirmButtonColor: '#d33'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+
+                            if (error.errors) {
+                                let errorMessages = Object.values(error.errors).flat().join('\n');
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Validation Error',
+                                    text: errorMessages,
+                                    confirmButtonColor: '#d33'
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: error.message ? 'Error' : 'Network Error',
+                                    text: error.message ||
+                                        'An error occurred while processing your request. Please try again.',
+                                    confirmButtonColor: '#d33'
+                                });
+                            }
+                        });
+                }
+            });
+        }
+
         function updateReservationStatusUIOnForfeit() {
             console.log('Updating reservation status UI to canceled due to forfeit...');
 
-            // 1. Update the main reservation status badge (at the top of the page)
+            // 1. Update the main reservation status badge
             const mainStatusBadge = document.querySelector('.status-badge:not(.qualification-status-badge)');
             if (mainStatusBadge) {
                 mainStatusBadge.textContent = 'Canceled';
@@ -1880,7 +2220,6 @@
                 option.selected = true;
                 statusSelect.appendChild(option);
 
-                // Disable the dropdown
                 statusSelect.disabled = true;
                 statusSelect.classList.add('disabled');
                 statusSelect.dataset.currentStatus = 'canceled';
@@ -1899,18 +2238,17 @@
             if (alertDiv) {
                 alertDiv.className = 'alert alert-danger mb-3';
                 alertDiv.innerHTML = `
-                <i class="fas fa-exclamation-circle"></i>
-                <strong>Reservation Canceled:</strong> This reservation was automatically canceled due to addon payment forfeit. Status is now locked and cannot be changed.
-            `;
+            <i class="fas fa-exclamation-circle"></i>
+            <strong>Reservation Canceled:</strong> This reservation was automatically canceled due to addon payment forfeit. Status is now locked and cannot be changed.
+        `;
             }
 
-            // 5. Add a visual indicator that changes were made
+            // 5. Add visual indicator
             const updateReservationSection = document.querySelector('.wg-box.mt-5:has(#statusUpdateForm)');
             if (updateReservationSection) {
                 updateReservationSection.style.border = '2px solid #dc3545';
                 updateReservationSection.style.backgroundColor = '#fff5f5';
 
-                // Add a flash effect
                 setTimeout(() => {
                     updateReservationSection.style.transition = 'all 0.3s ease';
                 }, 100);
@@ -1918,5 +2256,21 @@
 
             console.log('Reservation status UI updated successfully');
         }
+
+        // Listen for custom qualification status change events
+        document.addEventListener('qualificationStatusChanged', function(e) {
+            const qualificationId = e.detail.qualificationId;
+            const newStatus = e.detail.newStatus;
+
+            updateQualificationStatusBadge(qualificationId, newStatus);
+
+            const form = document.querySelector(`form[data-qualification-id="${qualificationId}"]`);
+            if (form) {
+                const lockDiv = document.createElement('div');
+                lockDiv.className = 'alert alert-info mt-2';
+                lockDiv.innerHTML = '<i class="fas fa-lock"></i> Status cannot be changed.';
+                form.parentNode.replaceChild(lockDiv, form);
+            }
+        });
     </script>
 @endsection
