@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
             ReservationSeeder::class,
 
             AddonSeeder::class,
+            DiscountSeeder::class,
 
 
 
