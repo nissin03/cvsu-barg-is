@@ -3543,13 +3543,17 @@ class UserFacilityController extends Controller
                         if ($billing === 'per_contract' && !$addon->is_based_on_quantity) {
                             $data['quantity']           = 1;
                             $data['remaining_quantity'] = is_null($addon->quantity) ? null : max(0, (int)$addon->quantity - 1);
+                            if (!is_null($addon->quantity)) {
+                                $addon->quantity = $data['remaining_quantity'];
+                                $addon->save();
+                            }
                         } else {
                             $data['quantity']           = (int)$qty;
                             $data['remaining_quantity'] = is_null($addon->quantity) ? null : max(0, (int)$addon->quantity - (int)$qty);
-                        }
-                        if (!is_null($addon->quantity)) {
-                            $addon->quantity = $data['remaining_quantity'];
-                            $addon->save();
+                            if ($billing === 'per_contract' && !is_null($addon->quantity)) {
+                                $addon->quantity = $data['remaining_quantity'];
+                                $addon->save();
+                            }
                         }
                     } elseif ($type === 'flat_rate') {
                         $data['remaining_capacity'] = 0;
@@ -3580,13 +3584,17 @@ class UserFacilityController extends Controller
                     if ($billing === 'per_contract' && !$addon->is_based_on_quantity) {
                         $data['quantity']           = 1;
                         $data['remaining_quantity'] = is_null($addon->quantity) ? null : max(0, (int)$addon->quantity - 1);
+                        if (!is_null($addon->quantity)) {
+                            $addon->quantity = $data['remaining_quantity'];
+                            $addon->save();
+                        }
                     } else {
                         $data['quantity']           = (int)$qty;
                         $data['remaining_quantity'] = is_null($addon->quantity) ? null : max(0, (int)$addon->quantity - (int)$qty);
-                    }
-                    if (!is_null($addon->quantity)) {
-                        $addon->quantity = $data['remaining_quantity'];
-                        $addon->save();
+                        if ($billing === 'per_contract' && !is_null($addon->quantity)) {
+                            $addon->quantity = $data['remaining_quantity'];
+                            $addon->save();
+                        }
                     }
                 }
 
@@ -3598,6 +3606,7 @@ class UserFacilityController extends Controller
 
         return $result;
     }
+
 
     private function addon_payments(array $reservationData, array &$addonReservationsByAddon): array
     {

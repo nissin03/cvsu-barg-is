@@ -90,6 +90,19 @@
 @endphp
 
 <style>
+    .small-text-event {
+        text-align: center !important;
+    }
+
+    .small-text-event .fc-event-title {
+        font-size: 9px !important;
+        text-align: center !important;
+    }
+
+    .rounded-event {
+        border-radius: 10px !important;
+    }
+
     #addonsModal-{{ $section }} .addon-card {
         border: 1px solid #e9ecef !important;
         border-radius: 12px !important;
@@ -1086,11 +1099,11 @@
                         reservationData.forEach(reservation => {
                             if (reservation.remaining_quantity === 0) {
                                 unavailableEvents.push({
-
-                                    title: 'Full',
                                     start: reservation.date_from,
                                     end: reservation.date_to,
-                                    color: '#dc3545'
+                                    color: '#dc3545',
+                                    title: 'unavailable',
+                                    classNames: ['small-text-event', 'rounded-event']
                                 });
                             } else {
                                 const datesInRange = getDatesBetween(reservation.date_from, reservation
@@ -1099,7 +1112,8 @@
                                     quantityEvents.push({
                                         title: `${reservation.remaining_quantity} available`,
                                         start: date,
-                                        color: '#ffc107'
+                                        color: '#ffc107',
+                                        classNames: ['small-text-event', 'rounded-event']
                                     });
                                 });
                             }
@@ -1270,10 +1284,11 @@
                         reservationData.forEach(reservation => {
                             if (reservation.remaining_quantity === 0) {
                                 unavailableEvents.push({
-                                    title: 'Full',
                                     start: reservation.date_from,
                                     end: reservation.date_to,
-                                    color: '#dc3545'
+                                    color: '#dc3545',
+                                    title: 'unavailable',
+                                    classNames: ['small-text-event', 'rounded-event']
                                 });
                             } else {
                                 const datesInRange = getDatesBetween(reservation.date_from,
@@ -1282,7 +1297,10 @@
                                     quantityEvents.push({
                                         title: `${reservation.remaining_quantity} available`,
                                         start: date,
-                                        color: '#ffc107'
+                                        color: '#ffc107',
+                                        classNames: ['small-text-event',
+                                            'rounded-event'
+                                        ]
                                     });
                                 });
                             }
@@ -1301,14 +1319,8 @@
                                     quantityEvents.push({
                                         title: `${defaultQuantity} available`,
                                         start: date,
-                                        color: '#28a745'
-                                    });
-                                } else {
-                                    unavailableEvents.push({
-                                        title: 'Full',
-                                        start: date,
-                                        end: date,
-                                        color: '#dc3545'
+                                        color: '#28a745',
+                                        classNames: ['small-text-event', 'rounded-event']
                                     });
                                 }
                             }
@@ -1697,17 +1709,17 @@
                     const addonElement = document.createElement('div');
                     addonElement.className = 'client-type';
                     addonElement.style.cssText = `
-        margin-bottom: 15px;
-        padding: 15px;
-        min-height: 100px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        border-radius: 8px;
-        background: #f3f4f6;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-      `;
+                margin-bottom: 15px;
+                padding: 15px;
+                min-height: 100px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                border-radius: 8px;
+                background: #f3f4f6;
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            `;
                     let quantityHtml = addon.quantity ? `Qty: ${addon.quantity}` : '&nbsp;';
                     let daysHtml = addon.days && addon.billing_cycle === 'per_day' && addon.price_type !==
                         'per_item' ? `Days: ${addon.days}` : '';
@@ -1720,12 +1732,12 @@
                             `<div style="font-size: 0.9em; color: #059669; margin-bottom: 2px;">Date: ${addon.dateFrom}</div>`;
                     }
                     addonElement.innerHTML = `
-        <div style="font-weight: 600; margin-bottom: 4px; color: #111827;">Name: ${addon.name}</div>
-        <div style="font-weight: 500; margin-bottom: 4px; color: #0066cc;">Price: ₱${addon.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-        ${dateRangeHtml}
-        <div style="font-size: 0.9em; color: #374151; margin-bottom: 2px;">${quantityHtml}</div>
-        ${daysHtml ? `<div style="font-size: 0.9em; color: #374151;">${daysHtml}</div>` : ''}
-      `;
+                <div style="font-weight: 600; margin-bottom: 4px; color: #111827;">Name: ${addon.name}</div>
+                <div style="font-weight: 500; margin-bottom: 4px; color: #0066cc;">Price: ₱${addon.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                ${dateRangeHtml}
+                <div style="font-size: 0.9em; color: #374151; margin-bottom: 2px;">${quantityHtml}</div>
+                ${daysHtml ? `<div style="font-size: 0.9em; color: #374151;">${daysHtml}</div>` : ''}
+            `;
                     colElement.appendChild(addonElement);
                     rowContainer.appendChild(colElement);
                 });
@@ -1960,7 +1972,6 @@
             const addonsData = @json($filteredAddons->keyBy('id')->toArray());
             const addon = addonsData[addonId];
             if (!addon || addon.billing_cycle !== 'per_contract') return;
-            if (addon.price_type === 'flat_rate') return;
             const rem = window.perContractRemainingCapacity && window.perContractRemainingCapacity[addonId] != null ?
                 parseInt(window.perContractRemainingCapacity[addonId]) : null;
             const checkbox = gi('addon_checkbox', section, addonId);
