@@ -904,26 +904,32 @@ class ReportController extends Controller
             'availability.facility',
             'availability.facilityAttribute',
             'transactionReservations.availability',
-            'transactionReservations.addonTransaction.addon',
-            'transactionReservations.addonTransaction.addonReservation',
-            'transactionReservations.addonTransaction.addonPayment',
-        ])->orderBy('created_at', 'desc');
+            'transactionReservations.addonTransactions.addon',
+            'transactionReservations.addonTransactions.addonPayment'
+        ])
+            ->orderBy('created_at', 'desc');
 
-        if ($request->filled('facility_id')) {
-            $query->whereHas('availability', fn($q) => $q->where('facility_id', $request->facility_id));
+        if ($request->has('facility_id') && $request->facility_id) {
+            $query->whereHas('availability', function ($q) use ($request) {
+                $q->where('facility_id', $request->facility_id);
+            });
         }
-        if ($request->filled('date_from')) {
-            $query->whereHas('availability', fn($q) => $q->whereDate('date_from', '>=', $request->date_from));
+
+        if ($request->has('date_from') && $request->date_from) {
+            $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->filled('date_to')) {
-            $query->whereHas('availability', fn($q) => $q->whereDate('date_to', '<=', $request->date_to));
+
+        if ($request->has('date_to') && $request->date_to) {
+            $query->whereDate('created_at', '<=', $request->date_to);
         }
-        if ($request->filled('status')) {
+
+        if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
         }
 
         $payments = $query->get()->map(function ($payment) {
             $dates = $payment->transactionReservations->pluck('availability.date_from')->filter()->unique()->sort();
+
             if ($dates->count() > 0) {
                 $payment->date_from = $dates->first();
                 $payment->date_to = $dates->last();
@@ -932,57 +938,216 @@ class ReportController extends Controller
                 $payment->date_to = $payment->availability->date_to ?? null;
             }
 
-            $raw = $payment->transactionReservations->flatMap(function ($tr) {
-                return $tr->addonTransaction->map(function ($at) {
-                    $ar = $at->addonReservation;
-                    $ap = $at->addonPayment;
-                    return [
-                        'addon_id'   => $at->addon_id,
-                        'name'       => optional($at->addon)->name,
-                        'price_type' => optional($at->addon)->price_type,
-                        'quantity'   => optional($ar)->quantity,
-                        'date_from'  => optional($ar)->date_from,
-                        'date_to'    => optional($ar)->date_to ?: optional($ar)->date_from,
-                        'status'     => $at->status ?? optional($ap)->status,
-                        'total'      => (float) (optional($ap)->total ?? 0),
-                    ];
-                });
-            });
-
-            $grouped = $raw
-                ->groupBy(function ($row) {
-                    return ($row['addon_id'] ?? 'x') . '|' . ($row['quantity'] ?? 0);
-                })
-                ->map(function ($items) {
-                    $first = $items->first();
-                    $start = $items->pluck('date_from')->filter()->min();
-                    $end   = $items->pluck('date_to')->filter()->max() ?? $start;
-                    $total = $items->sum('total');
-                    return [
-                        'name'       => $first['name'],
-                        'price_type' => $first['price_type'],
-                        'quantity'   => $first['quantity'],
-                        'date_from'  => $start,
-                        'date_to'    => $end,
-                        'status'     => $first['status'],
-                        'total'      => $total,
-                    ];
-                })
-                ->values();
-
-            $payment->addons_list  = $grouped;
-            $payment->addons_total = $grouped->sum('total');
-            $payment->grand_total  = (float) $payment->total_price + (float) $payment->addons_total;
-
             return $payment;
         });
 
-        $facilities = \App\Models\Facility::where('archived', false)->orderBy('name')->get(['id', 'name']);
+        $facilities = \App\Models\Facility::where('archived', false)
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         return view('admin.reports.facility_statement', [
-            'payments'   => $payments,
+            'payments' => $payments,
             'facilities' => $facilities,
-            'filters'    => $request->all()
+            'filters' => $request->all()
         ]);
+    }
+
+    public function getAddonsData(Request $request)
+    {
+        $paymentId = $request->get('payment_id');
+
+        $payment = Payment::with([
+            'transactionReservations.addonTransactions.addon',
+            'transactionReservations.addonTransactions.addonReservation',
+            'transactionReservations.addonTransactions.addonPayment'
+        ])->find($paymentId);
+
+        $addons = [];
+
+        if ($payment) {
+            $addonGroups = [];
+
+            foreach ($payment->transactionReservations as $reservation) {
+                foreach ($reservation->addonTransactions as $addonTransaction) {
+                    if ($addonTransaction->addon) {
+                        $addonId = $addonTransaction->addon->id;
+
+                        if (!isset($addonGroups[$addonId])) {
+                            $addonGroups[$addonId] = [
+                                'addon' => $addonTransaction->addon,
+                                'reservations' => [],
+                                'payments' => []
+                            ];
+                        }
+
+                        if ($addonTransaction->addonReservation) {
+                            $addonGroups[$addonId]['reservations'][] = $addonTransaction->addonReservation;
+                        }
+
+                        if ($addonTransaction->addonPayment && !in_array($addonTransaction->addonPayment, $addonGroups[$addonId]['payments'])) {
+                            $addonGroups[$addonId]['payments'][] = $addonTransaction->addonPayment;
+                        }
+                    }
+                }
+            }
+
+            foreach ($addonGroups as $addonId => $group) {
+                $hasPaymentData = !empty($group['payments']);
+                $hasReservationData = !empty($group['reservations']);
+
+                $addonData = [
+                    'name' => $group['addon']->name,
+                    'quantity' => null,
+                    'date_range' => $this->formatAddonDateRange($group['reservations'], $hasPaymentData),
+                    'total_price' => null,
+                    'payment_status' => null,
+                    'show_status' => false,
+                    'show_in_modal' => $hasReservationData || $hasPaymentData
+                ];
+
+                $totalQuantity = 0;
+                foreach ($group['reservations'] as $reservation) {
+                    $totalQuantity += $reservation->quantity ?? 0;
+                }
+                $addonData['quantity'] = $totalQuantity > 0 ? $totalQuantity : null;
+
+                if ($hasPaymentData) {
+                    $payment = $group['payments'][0];
+
+                    if ($payment->total > 0) {
+                        $addonData['total_price'] = number_format($payment->total, 2);
+                    }
+
+                    $addonData['payment_status'] = $payment->status;
+                    $addonData['show_status'] = true;
+                }
+
+                if ($addonData['show_in_modal']) {
+                    $addons[] = $addonData;
+                }
+            }
+        }
+
+        return response()->json(['addons' => $addons]);
+    }
+
+    private function formatAddonDateRange($reservations, $hasPaymentData)
+    {
+        if (empty($reservations)) {
+            return null;
+        }
+
+        $allNullDates = true;
+        $hasValidDates = false;
+
+        foreach ($reservations as $reservation) {
+            if ($reservation->date_from !== null || $reservation->date_to !== null) {
+                $allNullDates = false;
+            }
+            if ($reservation->date_from !== null && $reservation->date_to !== null) {
+                $hasValidDates = true;
+            }
+        }
+
+        if ($allNullDates && !$hasPaymentData) {
+            return 'Contract Based';
+        }
+
+        if ($allNullDates && $hasPaymentData) {
+            return 'Contract Based';
+        }
+
+        $allDates = [];
+        foreach ($reservations as $reservation) {
+            if ($reservation->date_from && $reservation->date_to) {
+                if ($reservation->date_from == $reservation->date_to) {
+                    $allDates[] = $reservation->date_from;
+                } else {
+                    $allDates[] = $reservation->date_from;
+                    $allDates[] = $reservation->date_to;
+                }
+            }
+        }
+
+        if (empty($allDates)) {
+            if ($hasPaymentData) {
+                return 'Contract Based';
+            }
+            return null;
+        }
+
+        usort($allDates, function ($a, $b) {
+            return strtotime($a) - strtotime($b);
+        });
+
+        $uniqueDates = array_unique($allDates);
+
+        if ($this->areDatesConsecutive($uniqueDates)) {
+            $startDate = \Carbon\Carbon::parse($uniqueDates[0]);
+            $endDate = \Carbon\Carbon::parse(end($uniqueDates));
+
+            return $startDate->format('M d') . ' - ' . $endDate->format('d, Y');
+        } else {
+            return $this->formatNonConsecutiveDates($uniqueDates);
+        }
+    }
+
+    private function areDatesConsecutive($dates)
+    {
+        if (count($dates) <= 1) {
+            return true;
+        }
+
+        for ($i = 1; $i < count($dates); $i++) {
+            $current = \Carbon\Carbon::parse($dates[$i]);
+            $previous = \Carbon\Carbon::parse($dates[$i - 1]);
+
+            if (!$current->eq($previous->copy()->addDay())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function formatNonConsecutiveDates($dates)
+    {
+        if (empty($dates)) {
+            return null;
+        }
+
+        if (count($dates) == 1) {
+            return \Carbon\Carbon::parse($dates[0])->format('M d, Y');
+        }
+
+        $ranges = [];
+        $currentRange = [\Carbon\Carbon::parse($dates[0])];
+
+        for ($i = 1; $i < count($dates); $i++) {
+            $current = \Carbon\Carbon::parse($dates[$i]);
+            $previous = \Carbon\Carbon::parse($dates[$i - 1]);
+
+            if ($current->eq($previous->copy()->addDay())) {
+                $currentRange[] = $current;
+            } else {
+                $ranges[] = $currentRange;
+                $currentRange = [$current];
+            }
+        }
+
+        $ranges[] = $currentRange;
+
+        $formattedRanges = [];
+        foreach ($ranges as $range) {
+            if (count($range) == 1) {
+                $formattedRanges[] = $range[0]->format('M d, Y');
+            } else {
+                $start = $range[0];
+                $end = end($range);
+                $formattedRanges[] = $start->format('M d') . ' - ' . $end->format('d, Y');
+            }
+        }
+
+        return implode(', ', $formattedRanges);
     }
 }
