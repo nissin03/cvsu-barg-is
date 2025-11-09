@@ -17,6 +17,7 @@
             return $facilityMatch && $addon->show === 'both';
         }
     });
+
     $refundableAddons = $facility->addons->filter(function ($addon) use ($facility, $section) {
         $facilityMatch =
             $addon->facility_id === $facility->id &&
@@ -89,6 +90,19 @@
 @endphp
 
 <style>
+    .small-text-event {
+        text-align: center !important;
+    }
+
+    .small-text-event .fc-event-title {
+        font-size: 11px !important;
+        text-align: center !important;
+    }
+
+    .rounded-event {
+        border-radius: 10px !important;
+    }
+
     #addonsModal-{{ $section }} .addon-card {
         border: 1px solid #e9ecef !important;
         border-radius: 12px !important;
@@ -1087,7 +1101,9 @@
                                 unavailableEvents.push({
                                     start: reservation.date_from,
                                     end: reservation.date_to,
-                                    color: '#dc3545'
+                                    color: '#dc3545',
+                                    title: 'unavailable',
+                                    classNames: ['small-text-event', 'rounded-event']
                                 });
                             } else {
                                 const datesInRange = getDatesBetween(reservation.date_from, reservation
@@ -1096,7 +1112,8 @@
                                     quantityEvents.push({
                                         title: `${reservation.remaining_quantity} available`,
                                         start: date,
-                                        color: '#ffc107'
+                                        color: '#ffc107',
+                                        classNames: ['small-text-event', 'rounded-event']
                                     });
                                 });
                             }
@@ -1269,7 +1286,9 @@
                                 unavailableEvents.push({
                                     start: reservation.date_from,
                                     end: reservation.date_to,
-                                    color: '#dc3545'
+                                    color: '#dc3545',
+                                    title: 'unavailable',
+                                    classNames: ['small-text-event', 'rounded-event']
                                 });
                             } else {
                                 const datesInRange = getDatesBetween(reservation.date_from,
@@ -1278,7 +1297,10 @@
                                     quantityEvents.push({
                                         title: `${reservation.remaining_quantity} available`,
                                         start: date,
-                                        color: '#ffc107'
+                                        color: '#ffc107',
+                                        classNames: ['small-text-event',
+                                            'rounded-event'
+                                        ]
                                     });
                                 });
                             }
@@ -1297,7 +1319,8 @@
                                     quantityEvents.push({
                                         title: `${defaultQuantity} available`,
                                         start: date,
-                                        color: '#28a745'
+                                        color: '#28a745',
+                                        classNames: ['small-text-event', 'rounded-event']
                                     });
                                 }
                             }
@@ -1949,17 +1972,11 @@
             const addonsData = @json($filteredAddons->keyBy('id')->toArray());
             const addon = addonsData[addonId];
             if (!addon || addon.billing_cycle !== 'per_contract') return;
-
-            if (addon.price_type === 'flat_rate') return;
-
             const rem = window.perContractRemainingCapacity && window.perContractRemainingCapacity[addonId] != null ?
-                parseInt(window.perContractRemainingCapacity[addonId]) :
-                null;
-
+                parseInt(window.perContractRemainingCapacity[addonId]) : null;
             const checkbox = gi('addon_checkbox', section, addonId);
             const qtyInput = gi('addon_quantity', section, addonId);
             const outOfCapacity = (rem === 0);
-
             if (checkbox) {
                 checkbox.disabled = outOfCapacity || checkbox.disabled;
                 if (outOfCapacity) checkbox.checked = false;
@@ -1971,7 +1988,6 @@
                 qtyInput.setAttribute('title', outOfCapacity ? 'No remaining capacity' : '');
             }
         }
-
 
         function lockPerItemPerContractByQuantity(addonId, section) {
             const addonsData = @json($filteredAddons->keyBy('id')->toArray());

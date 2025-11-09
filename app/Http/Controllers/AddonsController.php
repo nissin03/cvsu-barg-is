@@ -44,7 +44,7 @@ class AddonsController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validationRules = [
             'name' => 'required|string|max:255',
             'price_type' => 'required|in:per_unit,flat_rate,per_night,per_item',
             'description' => 'nullable|string',
@@ -54,49 +54,69 @@ class AddonsController extends Controller
             'is_available' => 'sometimes|boolean',
             'is_refundable' => 'sometimes|boolean',
             'is_based_on_quantity' => 'sometimes|boolean',
-            'capacity' => 'nullable|integer|min:1',
             'quantity' => 'nullable|integer|min:1',
-        ]);
+        ];
+
+        switch ($request->price_type) {
+            case 'per_unit':
+                $validationRules['capacity'] = 'required|integer|min:1';
+                $validationRules['quantity_night'] = 'nullable';
+                $validationRules['quantity_item'] = 'nullable';
+                break;
+
+            case 'per_night':
+                $validationRules['capacity'] = 'nullable';
+                $validationRules['quantity_night'] = 'nullable|integer|min:1';
+                $validationRules['quantity_item'] = 'nullable';
+                break;
+
+            case 'per_item':
+                $validationRules['capacity'] = 'nullable';
+                $validationRules['quantity_night'] = 'nullable';
+                $validationRules['quantity_item'] = 'required|integer|min:1';
+                break;
+
+            case 'flat_rate':
+                $validationRules['capacity'] = 'nullable';
+                $validationRules['quantity_night'] = 'nullable';
+                $validationRules['quantity_item'] = 'nullable';
+                break;
+        }
+
+        $validated = $request->validate($validationRules);
+
+        $validated['is_available'] = $request->has('is_available');
+        $validated['is_refundable'] = $request->has('is_refundable');
+        $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
+        $validated['user_id'] = Auth::id();
 
         switch ($validated['price_type']) {
             case 'per_unit':
                 $validated['is_based_on_quantity'] = false;
                 $validated['is_refundable'] = false;
-                $validated['is_available'] = $request->has('is_available');
-                $validated['capacity'] = $request->input('capacity', 1);
-                $validated['quantity'] = 1;
+
                 break;
 
             case 'flat_rate':
                 $validated['is_based_on_quantity'] = false;
                 $validated['capacity'] = null;
                 $validated['quantity'] = null;
-                $validated['is_available'] = $request->has('is_available');
-                $validated['is_refundable'] = $request->has('is_refundable');
                 break;
 
             case 'per_night':
                 $validated['is_refundable'] = false;
                 $validated['capacity'] = null;
-                $validated['is_available'] = $request->has('is_available');
-                $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
-                if ($request->has('is_based_on_quantity')) {
-                    $validated['quantity'] = $request->input('quantity', 1);
-                } else {
-                    $validated['quantity'] = null;
-                }
+                $validated['is_based_on_quantity'] = true;
                 break;
 
             case 'per_item':
                 $validated['is_refundable'] = false;
                 $validated['capacity'] = null;
-                $validated['is_available'] = $request->has('is_available');
-                $validated['is_based_on_quantity'] = $request->has('is_based_on_quantity');
-                $validated['quantity'] = $request->input('quantity', 1);
                 break;
         }
 
-        $validated['user_id'] = Auth::id();
+        unset($validated['quantity_night']);
+        unset($validated['quantity_item']);
 
         $addon = Addon::create($validated);
 
