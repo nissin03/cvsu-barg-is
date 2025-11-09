@@ -221,7 +221,7 @@ class UserSeeder extends Seeder
             $nameParts = explode(' ', $this->generateFilipinoName($sex));
             $firstName = strtolower($nameParts[0]);
             $lastName = strtolower(end($nameParts));
-            $studentEmail = $firstName . '.' . $lastName . ($i > 1 ? $i : '') . '@cvsu.edu.ph';
+            $studentEmail = $firstName . '.' . $lastName . '.student' . $i . '@cvsu.edu.ph';
 
             User::create([
                 'name' => $this->generateFilipinoName($sex),
@@ -247,8 +247,7 @@ class UserSeeder extends Seeder
             $nameParts = explode(' ', $name);
             $firstName = strtolower($nameParts[0]);
             $lastName = strtolower(end($nameParts));
-            $employeeEmail = $firstName . '.' . $lastName . '.emp@cvsu.edu.ph';
-
+            $employeeEmail = $firstName . '.' . $lastName . '.emp' . $i . '@cvsu.edu.ph';
             User::create([
                 'name' => $name,
                 'email' => $employeeEmail,
@@ -273,7 +272,7 @@ class UserSeeder extends Seeder
             $nameParts = explode(' ', $name);
             $firstName = strtolower($nameParts[0]);
             $lastName = strtolower(end($nameParts));
-            $nonEmployeeEmail = $firstName . '.' . $lastName . '.guest@cvsu.edu.ph';
+            $nonEmployeeEmail = $firstName . '.' . $lastName . '.guest' . $i . '@gmail.com';
 
             User::create([
                 'name' => $name,
