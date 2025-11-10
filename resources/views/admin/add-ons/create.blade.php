@@ -210,7 +210,7 @@
 
                     <div class="field-group">
                         <label class="field-label">
-                            Addon Name
+                            Add-on Name
                             <span class="required-asterisk">*</span>
                         </label>
                         <input class="field-input" type="text" placeholder="Enter addon name" name="name"
@@ -303,6 +303,7 @@
                                     <span class="error-message">{{ $message }}</span>
                                 @enderror
                             </div>
+                            <input type="hidden" name="quantity" id="hidden_quantity_unit" value="1">
                         </div>
 
                         <div id="flatRateFields" class="conditional-field">
@@ -321,6 +322,7 @@
                                     Refundable
                                 </label>
                             </div>
+                            <input type="hidden" name="quantity" id="hidden_quantity_flat" value="">
                         </div>
 
                         <div id="perNightFields" class="conditional-field">
@@ -337,12 +339,14 @@
                                     Quantity <span style="color:#64748b; font-weight:400;">(optional)</span>
                                 </label>
                                 <input class="field-input" type="number" min="1"
-                                    placeholder="Enter quantity (optional)" name="quantity" id="quantity_night"
-                                    value="{{ old('quantity') }}">
-                                @error('quantity')
+                                    placeholder="Enter quantity (optional)" name="quantity_night" id="quantity_night"
+                                    value="{{ old('quantity_night') }}">
+                                @error('quantity_night')
                                     <span class="error-message">{{ $message }}</span>
                                 @enderror
                             </div>
+                            <input type="hidden" name="quantity" id="hidden_quantity_night"
+                                value="{{ old('quantity_night', 1) }}">
                         </div>
 
                         <div id="perItemFields" class="conditional-field">
@@ -369,11 +373,14 @@
                                     <span class="required-asterisk">*</span>
                                 </label>
                                 <input class="field-input" type="number" min="1" placeholder="Enter quantity"
-                                    name="quantity" id="quantity_item" value="{{ old('quantity', 1) }}" required>
-                                @error('quantity')
+                                    name="quantity_item" id="quantity_item" value="{{ old('quantity_item', 1) }}"
+                                    required>
+                                @error('quantity_item')
                                     <span class="error-message">{{ $message }}</span>
                                 @enderror
                             </div>
+                            <input type="hidden" name="quantity" id="hidden_quantity_item"
+                                value="{{ old('quantity_item', 1) }}">
                         </div>
                     </div>
 
@@ -401,7 +408,13 @@
             const perNightFields = document.getElementById('perNightFields');
             const perItemFields = document.getElementById('perItemFields');
             const quantityNightFieldInput = document.getElementById('quantity_night');
+            const quantityItemFieldInput = document.getElementById('quantity_item');
             const createAddonBtn = document.getElementById('createAddonBtn');
+
+            const hiddenQuantityUnit = document.getElementById('hidden_quantity_unit');
+            const hiddenQuantityFlat = document.getElementById('hidden_quantity_flat');
+            const hiddenQuantityNight = document.getElementById('hidden_quantity_night');
+            const hiddenQuantityItem = document.getElementById('hidden_quantity_item');
 
             const commonRequiredFields = ['name', 'base_price', 'price_type', 'billing_cycle'];
 
@@ -439,7 +452,42 @@
                         break;
                 }
 
+                updateHiddenQuantityFields();
                 updateCreateButtonState();
+            }
+
+            function updateHiddenQuantityFields() {
+                switch (priceTypeSelect.value) {
+                    case 'per_unit':
+                        hiddenQuantityUnit.disabled = false;
+                        hiddenQuantityFlat.disabled = true;
+                        hiddenQuantityNight.disabled = true;
+                        hiddenQuantityItem.disabled = true;
+                        break;
+                    case 'flat_rate':
+                        hiddenQuantityUnit.disabled = true;
+                        hiddenQuantityFlat.disabled = false;
+                        hiddenQuantityNight.disabled = true;
+                        hiddenQuantityItem.disabled = true;
+                        hiddenQuantityFlat.value = '';
+                        break;
+                    case 'per_night':
+                        hiddenQuantityUnit.disabled = true;
+                        hiddenQuantityFlat.disabled = true;
+                        hiddenQuantityNight.disabled = false;
+                        hiddenQuantityItem.disabled = true;
+                        const nightValue = quantityNightFieldInput.value || '1';
+                        hiddenQuantityNight.value = nightValue;
+                        break;
+                    case 'per_item':
+                        hiddenQuantityUnit.disabled = true;
+                        hiddenQuantityFlat.disabled = true;
+                        hiddenQuantityNight.disabled = true;
+                        hiddenQuantityItem.disabled = false;
+                        const itemValue = quantityItemFieldInput.value || '1';
+                        hiddenQuantityItem.value = itemValue;
+                        break;
+                }
             }
 
             function updateCreateButtonState() {
@@ -468,9 +516,22 @@
                 const allFields = document.querySelectorAll(
                     '#addonForm input, #addonForm select, #addonForm textarea');
                 allFields.forEach(field => {
-                    field.addEventListener('input', updateCreateButtonState);
-                    field.addEventListener('change', updateCreateButtonState);
+                    field.addEventListener('input', function() {
+                        updateHiddenQuantityFields();
+                        updateCreateButtonState();
+                    });
+                    field.addEventListener('change', function() {
+                        updateHiddenQuantityFields();
+                        updateCreateButtonState();
+                    });
                 });
+
+                if (quantityNightFieldInput) {
+                    quantityNightFieldInput.addEventListener('input', updateHiddenQuantityFields);
+                }
+                if (quantityItemFieldInput) {
+                    quantityItemFieldInput.addEventListener('input', updateHiddenQuantityFields);
+                }
             }
 
             toggleConditionalFields();
@@ -481,7 +542,7 @@
             document.getElementById('addonForm').addEventListener('submit', function(e) {
                 const currentPriceType = priceTypeSelect.value;
                 const requiredFields = [...commonRequiredFields, ...priceTypeRequirements[
-                currentPriceType]];
+                    currentPriceType]];
                 let isValid = true;
 
                 requiredFields.forEach(fieldId => {

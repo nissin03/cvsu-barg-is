@@ -79,7 +79,27 @@
     @endphp
 
     <style>
-        /* Your existing CSS styles remain the same */
+        .small-text-event .fc-event-title {
+            font-size: 11px !important;
+            text-align: center !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            height: 100% !important;
+        }
+
+        .rounded-event {
+            border-radius: 10px !important;
+        }
+
+        .centered-text .fc-event-title {
+            text-align: center !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            height: 100% !important;
+        }
+
         #addonsModal .addon-card {
             border: 1px solid #e9ecef !important;
             border-radius: 12px !important;
@@ -1035,7 +1055,7 @@
                                 unavailableEvents.push({
                                     start: adjustedStart.toISOString().split('T')[0],
                                     end: new Date(adjustedEnd.getTime() + 86400000)
-                                    .toISOString().split('T')[0],
+                                        .toISOString().split('T')[0],
                                     backgroundColor: '#dc3545',
                                     borderColor: '#dc3545',
                                     display: 'background'
@@ -1051,17 +1071,21 @@
                                 const facilityEndDate = new Date(facilityEnd);
                                 if (resStart <= facilityEndDate && resEnd >= facilityStartDate) {
                                     if (r.remaining_quantity === 0) {
-                                        const adjustedStart = resStart < facilityStartDate ?
-                                            facilityStartDate : resStart;
-                                        const adjustedEnd = resEnd > facilityEndDate ? facilityEndDate :
-                                            resEnd;
-                                        unavailableEvents.push({
-                                            start: adjustedStart.toISOString().split('T')[0],
-                                            end: new Date(adjustedEnd.getTime() + 86400000)
-                                                .toISOString().split('T')[0],
-                                            backgroundColor: '#dc3545',
-                                            borderColor: '#dc3545',
-                                            display: 'background'
+                                        getDatesBetween(
+                                            resStart < facilityStartDate ? facilityStart : r
+                                            .date_from,
+                                            resEnd > facilityEndDate ? facilityEnd : r.date_to
+                                        ).forEach(d => {
+                                            quantityEvents.push({
+                                                title: "unavailable",
+                                                start: d,
+                                                color: '#dc3545',
+                                                textColor: '#ffffff',
+                                                classNames: ['small-text-event',
+                                                    'rounded-event', 'centered-text'
+                                                ],
+                                                display: 'auto'
+                                            });
                                         });
                                     } else {
                                         getDatesBetween(
@@ -1072,7 +1096,12 @@
                                             quantityEvents.push({
                                                 title: `${r.remaining_quantity} available`,
                                                 start: d,
-                                                color: '#ffc107'
+                                                color: '#28a745',
+                                                textColor: '#ffffff',
+                                                classNames: ['small-text-event',
+                                                    'rounded-event', 'centered-text'
+                                                ],
+                                                display: 'auto'
                                             });
                                         });
                                     }
@@ -1091,7 +1120,23 @@
                                         quantityEvents.push({
                                             title: `${defaultQty} available`,
                                             start: d,
-                                            color: '#28a745'
+                                            color: '#28a745',
+                                            textColor: '#ffffff',
+                                            classNames: ['small-text-event', 'rounded-event',
+                                                'centered-text'
+                                            ],
+                                            display: 'auto'
+                                        });
+                                    } else {
+                                        quantityEvents.push({
+                                            title: "unavailable",
+                                            start: d,
+                                            color: '#dc3545',
+                                            textColor: '#ffffff',
+                                            classNames: ['small-text-event', 'rounded-event',
+                                                'centered-text'
+                                            ],
+                                            display: 'auto'
                                         });
                                     }
                                 }
@@ -1131,7 +1176,9 @@
                                 end: new Date(new Date(facilityEnd).getTime() + 86400000).toISOString()
                                     .split('T')[0]
                             },
-                            events: [...unavailableEvents, ...quantityEvents, ...selectedEvents],
+                            events: isPerItem ? [...quantityEvents, ...selectedEvents] : [...
+                                unavailableEvents, ...quantityEvents, ...selectedEvents
+                            ],
                             datesSet: function() {
                                 setTimeout(() => {
                                     calendar.updateSize();
@@ -1247,8 +1294,8 @@
                                     display: 'background'
                                 }));
                                 calendar.removeAllEvents();
-                                calendar.addEventSource([...unavailableEvents, ...quantityEvents,
-                                    ...upd
+                                calendar.addEventSource(isPerItem ? [...quantityEvents, ...upd] : [
+                                    ...unavailableEvents, ...quantityEvents, ...upd
                                 ]);
                                 updateNightsInput(addonId, selectedState.selectedDates.length);
                             }
@@ -1371,7 +1418,6 @@
                     q.title = out ? 'No remaining capacity' : '';
                 }
             }
-
 
             function lockPerItemPerContractByQuantity(addonId) {
                 const data = @json($filteredAddons->keyBy('id')->toArray());
