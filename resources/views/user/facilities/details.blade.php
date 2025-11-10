@@ -168,13 +168,9 @@
                                     <option value="">-- No discount --</option>
                                     @foreach ($discounts as $discount)
                                         <option value="{{ $discount->id }}" data-percent="{{ $discount->percent }}"
-                                            data-applies-to="{{ $discount->applies_to }}"
                                             data-requires-proof="{{ $discount->requires_proof ? '1' : '0' }}">
                                             {{ $discount->name }}
                                             ({{ rtrim(rtrim(number_format($discount->percent, 2, '.', ''), '0'), '.') }}%)
-                                            @if ($discount->applies_to === 'venue_only')
-                                                - Venue Only
-                                            @endif
                                         </option>
                                     @endforeach
                                 </select>

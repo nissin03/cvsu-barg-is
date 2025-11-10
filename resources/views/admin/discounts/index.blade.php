@@ -50,7 +50,7 @@
                                     <th style="width: 5%;">#</th>
                                     <th style="width: 20%;">Name</th>
                                     <th style="width: 10%;">Percent</th>
-                                    <th style="width: 15%;">Applies To</th>
+                                    {{-- <th style="width: 15%;">Applies To</th> --}}
                                     <th style="width: 12%;">Requires Proof</th>
                                     <th style="width: 10%;">Status</th>
                                     <th style="width: 10%;">Action</th>
@@ -63,13 +63,13 @@
                                         <td><strong>{{ $discount->name }}</strong></td>
                                         <td>{{ rtrim(rtrim(number_format($discount->percent, 2, '.', ''), '0'), '.') }}%
                                         </td>
-                                        <td>
+                                        {{-- <td>
                                             @if ($discount->applies_to === 'venue_only')
                                                 <span class="badge badge-primary">Venue Only</span>
                                             @else
                                                 <span class="badge badge-info">All Charges</span>
                                             @endif
-                                        </td>
+                                        </td> --}}
                                         <td>
                                             @if ($discount->requires_proof)
                                                 <span class="badge badge-warning">Yes</span>

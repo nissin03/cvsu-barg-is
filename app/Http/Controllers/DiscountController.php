@@ -9,7 +9,7 @@ class DiscountController extends Controller
 {
     public function index()
     {
-        $discounts = Discount::orderByDesc('active')->orderBy('name')->paginate(15);
+        $discounts = Discount::orderByDesc('active')->orderBy('id')->paginate(15);
         return view('admin.discounts.index', compact('discounts'));
     }
 
@@ -23,7 +23,7 @@ class DiscountController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'percent' => 'required|numeric|min:0|max:100',
-            'applies_to' => 'required|in:all,venue_only',
+            // 'applies_to' => 'required|in:all,venue_only',
             'requires_proof' => 'nullable|boolean',
             'active' => 'nullable|boolean',
         ]);
@@ -44,7 +44,7 @@ class DiscountController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'percent' => 'required|numeric|min:0|max:100',
-            'applies_to' => 'required|in:all,venue_only',
+            // 'applies_to' => 'required|in:all,venue_only',
             'requires_proof' => 'nullable|boolean',
             'active' => 'nullable|boolean',
         ]);

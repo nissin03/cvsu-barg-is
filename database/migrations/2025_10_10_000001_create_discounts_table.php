@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->decimal('percent', 5, 2);
-            $table->enum('applies_to', ['all', 'venue_only'])->default('all');
+            // $table->enum('applies_to', ['all', 'venue_only'])->default('all');
             $table->boolean('requires_proof')->default(true);
             $table->boolean('active')->default(true);
             $table->softDeletes();

@@ -394,178 +394,155 @@
 
 @push('scripts')
     <script>
-        const amountInput = document.getElementById('amount_paid');
-        const changeDisplay = document.getElementById('change_display');
-        const total = parseFloat(@json($order->total));
+        $(document).ready(function() {
+            const amountInput = document.getElementById('amount_paid');
+            const changeDisplay = document.getElementById('change_display');
+            const total = parseFloat(@json($order->total));
 
-        if (amountInput) {
-            amountInput.addEventListener('input', function(e) {
-                const numericValue = parseFloat(this.value.replace(/,/g, '')) || 0;
-                if (!isNaN(numericValue)) {
-                    this.value = numericValue.toLocaleString('en-US');
-                }
-                const change = numericValue - total;
-                changeDisplay.textContent = change >= 0 ?
-                    '₱' + change.toLocaleString('en-US', {
-                        minimumFractionDigits: 2
-                    }) :
-                    '₱0.00';
-                if (numericValue >= total) {
-                    amountInput.classList.remove('is-invalid');
-                    const feedback = amountInput.nextElementSibling;
-                    if (feedback && feedback.classList.contains('invalid-feedback')) {
-                        feedback.remove();
-                    }
-                }
-            });
-        }
-        if (amountInput) {
-            amountInput.addEventListener('input', function(e) {
-                const numericValue = parseFloat(this.value.replace(/,/g, '')) || 0;
-                if (!isNaN(numericValue)) {
-                    this.value = numericValue.toLocaleString('en-US');
-                }
-                const change = numericValue - total;
-                changeDisplay.textContent = change >= 0 ?
-                    '₱' + change.toLocaleString('en-US', {
-                        minimumFractionDigits: 2
-                    }) :
-                    '₱0.00';
-                if (numericValue >= total) {
-                    amountInput.classList.remove('is-invalid');
-                    const feedback = amountInput.nextElementSibling;
-                    if (feedback && feedback.classList.contains('invalid-feedback')) {
-                        feedback.remove();
-                    }
-                }
-            });
-        }
+            console.log('Total:', total); // Debug log
+            console.log('Amount Input:', amountInput); // Debug log
+            console.log('Change Display:', changeDisplay); // Debug log
 
-        $('#payment-form').on('submit', function(e) {
-            e.preventDefault();
-            const form = $(this);
-            const formData = form.serialize();
-            $.ajax({
-                url: form.attr('action'),
-                method: 'POST',
-                data: formData,
-                success: function(response) {
-                    toastr.clear();
-                    toastr.success(response.message, 'Success');
-                    $('#pdf-download-container').show();
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
-                },
-                error: function(xhr) {
-                    if (xhr.status === 422) {
-                        const errors = xhr.responseJSON.errors;
-                        if (errors.amount_paid) {
-                            $('#amount_paid').addClass('is-invalid');
-                            $('#amount_paid').next('.invalid-feedback').remove();
-                            $('<div class="invalid-feedback">' + errors.amount_paid[0] + '</div>')
-                                .insertAfter('#amount_paid');
+            // Single event listener for amount input
+            if (amountInput && changeDisplay) {
+                amountInput.addEventListener('input', function(e) {
+                    // Get raw value and remove commas
+                    let rawValue = this.value.replace(/,/g, '');
+
+                    // Convert to number
+                    const numericValue = parseFloat(rawValue) || 0;
+
+                    console.log('Input value:', numericValue); // Debug log
+
+                    // Format with thousand separators
+                    if (numericValue > 0) {
+                        this.value = numericValue.toLocaleString('en-US');
+                    }
+
+                    // Calculate change
+                    const change = numericValue - total;
+                    console.log('Change:', change); // Debug log
+
+                    changeDisplay.textContent = change >= 0 ?
+                        '₱' + change.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }) :
+                        '₱0.00';
+
+                    // Remove validation error if amount is sufficient
+                    if (numericValue >= total) {
+                        $(amountInput).removeClass('is-invalid');
+                        const feedback = amountInput.nextElementSibling;
+                        if (feedback && feedback.classList.contains('invalid-feedback')) {
+                            feedback.remove();
                         }
-                    } else {
+                    }
+                });
+
+                // Trigger on page load if there's a value
+                if (amountInput.value) {
+                    amountInput.dispatchEvent(new Event('input'));
+                }
+            } else {
+                console.error('Amount input or change display not found!');
+            }
+
+            // Payment form submission
+            $('#payment-form').on('submit', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const submitBtn = form.find('button[type="submit"]');
+
+                // Disable button to prevent double submission
+                submitBtn.prop('disabled', true).html(
+                    '<i class="fas fa-spinner fa-spin"></i> Processing...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: form.serialize(),
+                    dataType: 'json',
+                    success: function(response) {
                         toastr.clear();
-                        toastr.error('Something went wrong. Please try again.', 'Error');
-                    }
-                }
-            });
-        });
+                        toastr.success(response.message, 'Success');
 
-        // Handle cancel order form submission
-        $('#cancel-order-form').on('submit', function(e) {
-            e.preventDefault();
-            const form = $(this);
-            const formData = form.serialize();
-            $.ajax({
-                url: form.attr('action'),
-                method: form.attr('method'),
-                data: formData,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    $('#cancelReasonModal').modal('hide');
-                    toastr.success('Order cancelled successfully', 'Success');
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
-                },
-                error: function(xhr) {
-                    console.log('Error details:', xhr.responseText);
-                    if (xhr.status === 422) {
-                        const errors = xhr.responseJSON.errors;
-                        if (errors.canceled_reason) {
-                            $('#canceled_reason').addClass('is-invalid');
-                            $('#canceled_reason').next('.invalid-feedback').remove();
-                            $('<div class="invalid-feedback">' + errors.canceled_reason[0] + '</div>')
-                                .insertAfter('#canceled_reason');
+                        // Show PDF download if container exists
+                        if ($('#pdf-download-container').length) {
+                            $('#pdf-download-container').show();
                         }
-                    } else {
-                        toastr.error('Something went wrong. Please try again.', 'Error');
-                    }
-                }
-            });
-        });
 
-        $('#canceled_reason').on('input', function() {
-                    const maxLength = 255;
-                    const currentLength = $(this).val().length;
-                    const remaining = maxLength - currentLength;
+                        // Reload after delay
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    },
+                    error: function(xhr) {
+                        // Re-enable button on error
+                        submitBtn.prop('disabled', false).html('Complete Payment');
 
-                    if (remaining < 0) {
-                        $(this).val($(this).val().substring(0, maxLength));
-                    }
-                    // Handle cancel order form submission
-                    $('#cancel-order-form').on('submit', function(e) {
-                        e.preventDefault();
-                        const form = $(this);
-                        const formData = form.serialize();
-                        $.ajax({
-                            url: form.attr('action'),
-                            method: form.attr('method'),
-                            data: formData,
-                            headers: {
-                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                            },
-                            success: function(response) {
-                                $('#cancelReasonModal').modal('hide');
-                                toastr.success('Order cancelled successfully', 'Success');
-                                setTimeout(() => {
-                                    location.reload();
-                                }, 1500);
-                            },
-                            error: function(xhr) {
-                                console.log('Error details:', xhr.responseText);
-                                if (xhr.status === 422) {
-                                    const errors = xhr.responseJSON.errors;
-                                    if (errors.canceled_reason) {
-                                        $('#canceled_reason').addClass('is-invalid');
-                                        $('#canceled_reason').next('.invalid-feedback').remove();
-                                        $('<div class="invalid-feedback">' + errors.canceled_reason[0] +
-                                                '</div>')
-                                            .insertAfter('#canceled_reason');
-                                    }
-                                } else {
-                                    toastr.error('Something went wrong. Please try again.', 'Error');
-                                }
+                        if (xhr.status === 422) {
+                            const errors = xhr.responseJSON.errors;
+                            if (errors.amount_paid) {
+                                $('#amount_paid').addClass('is-invalid');
+                                $('#amount_paid').next('.invalid-feedback').remove();
+                                $('<div class="invalid-feedback">' + errors.amount_paid[0] +
+                                        '</div>')
+                                    .insertAfter('#amount_paid');
                             }
-                        });
-                    });
-
-                    $('#canceled_reason').on('input', function() {
-                        const maxLength = 255;
-                        const currentLength = $(this).val().length;
-                        const remaining = maxLength - currentLength;
-
-                        if (remaining < 0) {
-                            $(this).val($(this).val().substring(0, maxLength));
+                        } else {
+                            toastr.clear();
+                            toastr.error('Something went wrong. Please try again.', 'Error');
                         }
-                    });
+                    }
+                });
+            });
+
+            // Cancel order form submission
+            $('#cancel-order-form').on('submit', function(e) {
+                e.preventDefault();
+                const form = $(this);
+
+                $.ajax({
+                    url: form.attr('action'),
+                    method: form.attr('method'),
+                    data: form.serialize(),
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        $('#cancelReasonModal').modal('hide');
+                        toastr.success('Order cancelled successfully', 'Success');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 422) {
+                            const errors = xhr.responseJSON.errors;
+                            if (errors.canceled_reason) {
+                                $('#canceled_reason').addClass('is-invalid');
+                                $('#canceled_reason').next('.invalid-feedback').remove();
+                                $('<div class="invalid-feedback">' + errors.canceled_reason[0] +
+                                        '</div>')
+                                    .insertAfter('#canceled_reason');
+                            }
+                        } else {
+                            toastr.error('Something went wrong. Please try again.', 'Error');
+                        }
+                    }
+                });
+            });
+
+            // Cancel reason character limit
+            $('#canceled_reason').on('input', function() {
+                const maxLength = 255;
+                const currentLength = $(this).val().length;
+
+                if (currentLength > maxLength) {
+                    $(this).val($(this).val().substring(0, maxLength));
+                }
+            });
+        });
     </script>
 @endpush

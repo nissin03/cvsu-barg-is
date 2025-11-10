@@ -22,42 +22,42 @@ class DiscountSeeder extends Seeder
             [
                 'name'          => 'CVSU ALUMNI AND RETIREE',
                 'percent'       => 30.00,
-                'applies_to'    => 'all',
+                // 'applies_to'    => 'all',
                 'requires_proof' => true,
                 'active'        => true,
             ],
             [
                 'name'          => 'CVSU EMPLOYEE, SENIORS & PWD',
                 'percent'       => 20.00,
-                'applies_to'    => 'all',
+                // 'applies_to'    => 'all',
                 'requires_proof' => true,
                 'active'        => true,
             ],
             [
                 'name'          => 'CHURCHES',
                 'percent'       => 50.00,
-                'applies_to'    => 'venue_only',
+                // 'applies_to'    => 'venue_only',
                 'requires_proof' => true,
                 'active'        => true,
             ],
             [
                 'name'          => 'CVSU ALUMNI AND RETIREE',
                 'percent'       => 30.00,
-                'applies_to'    => 'venue_only',
+                // 'applies_to'    => 'venue_only',
                 'requires_proof' => true,
                 'active'        => true,
             ],
             [
                 'name'          => 'CVSU EMPLOYEE, SENIORS & PWD',
                 'percent'       => 20.00,
-                'applies_to'    => 'venue_only',
+                // 'applies_to'    => 'venue_only',
                 'requires_proof' => true,
                 'active'        => true,
             ],
         ];
         foreach ($rows as $data) {
             Discount::updateOrCreate(
-                ['name' => $data['name'], 'applies_to' => $data['applies_to']],
+                ['name' => $data['name']],
                 [
                     'percent'        => $data['percent'],
                     'requires_proof' => $data['requires_proof'],

@@ -155,19 +155,18 @@
             @method('PUT')
         @endif
 
-        <div class="field-group">
-            <label class="field-label">
-                Discount Name
-                <span class="required-asterisk">*</span>
-            </label>
-            <input class="field-input" type="text" placeholder="Enter discount name" name="name" id="name"
-                value="{{ old('name', $discount->name ?? '') }}" required>
-            @error('name')
-                <span class="error-message">{{ $message }}</span>
-            @enderror
-        </div>
-
         <div class="form-grid">
+            <div class="field-group">
+                <label class="field-label">
+                    Discount Name
+                    <span class="required-asterisk">*</span>
+                </label>
+                <input class="field-input" type="text" placeholder="Enter discount name" name="name" id="name"
+                    value="{{ old('name', $discount->name ?? '') }}" required>
+                @error('name')
+                    <span class="error-message">{{ $message }}</span>
+                @enderror
+            </div>
             <div class="field-group">
                 <label class="field-label">
                     Discount Percent
@@ -177,27 +176,6 @@
                     placeholder="0.00" name="percent" id="percent"
                     value="{{ old('percent', $discount->percent ?? '') }}" required>
                 @error('percent')
-                    <span class="error-message">{{ $message }}</span>
-                @enderror
-            </div>
-
-            <div class="field-group">
-                <label class="field-label">
-                    Applies To
-                    <span class="required-asterisk">*</span>
-                </label>
-                <select class="field-select" name="applies_to" id="applies_to" required>
-                    <option value="">Select Scope</option>
-                    <option value="all"
-                        {{ old('applies_to', $discount->applies_to ?? '') === 'all' ? 'selected' : '' }}>
-                        All Charges
-                    </option>
-                    <option value="venue_only"
-                        {{ old('applies_to', $discount->applies_to ?? '') === 'venue_only' ? 'selected' : '' }}>
-                        Venue Only
-                    </option>
-                </select>
-                @error('applies_to')
                     <span class="error-message">{{ $message }}</span>
                 @enderror
             </div>
@@ -237,27 +215,23 @@
             const submitBtn = document.getElementById('submitDiscountBtn');
             const nameField = document.getElementById('name');
             const percentField = document.getElementById('percent');
-            const appliesField = document.getElementById('applies_to');
 
             function validateForm() {
                 const hasName = nameField.value.trim() !== '';
                 const hasPercent = percentField.value !== '' &&
                     parseFloat(percentField.value) >= 0 &&
                     parseFloat(percentField.value) <= 100;
-                const hasAppliesTo = appliesField.value !== '';
 
-                submitBtn.disabled = !(hasName && hasPercent && hasAppliesTo);
+                submitBtn.disabled = !(hasName && hasPercent);
             }
 
             nameField.addEventListener('input', validateForm);
             percentField.addEventListener('input', validateForm);
-            appliesField.addEventListener('change', validateForm);
-
             // Initial validation
             validateForm();
 
             form.addEventListener('submit', function(e) {
-                if (!nameField.value.trim() || !percentField.value || !appliesField.value) {
+                if (!nameField.value.trim() || !percentField.value) {
                     e.preventDefault();
                     alert('Please fill in all required fields');
                 }
