@@ -197,6 +197,51 @@ class PdfController extends Controller
             ->header('Last-Modified', gmdate('D, d M Y H:i:s') . ' GMT');
     }
 
+    public function downloadProductList(Request $request)
+    {
+        ini_set('memory_limit', '1024M');
+        ini_set('max_execution_time', 300);
+        ini_set('pcre.backtrack_limit', 1000000);
+        ini_set('pcre.recursion_limit', 1000000);
+
+        $validator = Validator::make($request->all(), [
+            'category' => 'nullable|exists:categories,id',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('admin.report.product-list')
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $category = $request->input('category');
+
+        $query = Product::with([
+            'category',
+            'attributeValues'
+        ])->where('archived', 0);
+
+        if ($category) {
+            $query->where('category_id', $category);
+        }
+
+        $products = $query->orderBy('name')->get();
+
+        $categoryName = null;
+        if ($category) {
+            $categoryModel = Category::find($category);
+            $categoryName = $categoryModel ? $categoryModel->name : 'Unknown Category';
+        }
+
+        $pdf = PDF::loadView('admin.pdf.pdf-product-list', [
+            'products' => $products,
+            'category' => $category,
+            'categoryName' => $categoryName
+        ])->setPaper('A4', 'portrait');
+
+        return $pdf->stream('product_list.pdf');
+    }
+
 
     public function getMonthlyRegisteredUsers($month, $year)
     {

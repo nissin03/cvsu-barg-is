@@ -307,6 +307,7 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/reports', [ReportController::class, 'generateReport'])->name('admin.reports');
         Route::get('/report-user', [ReportController::class, 'generateUser'])->name('admin.report-user');
         Route::get('/report-product', [ReportController::class, 'generateProduct'])->name('admin.report-product');
+        Route::get('/admin/reports/product-list', [ReportController::class, 'productList'])->name('admin.report.product-list');
         Route::get('/report-inventory', [ReportController::class, 'generateInventory'])->name('admin.report-inventory');
         Route::get('/report-statements', [ReportController::class, 'listBillingStatements'])->name('admin.report-statements');
         Route::get('/report-statement/{orderId}', [ReportController::class, 'generateBillingStatement'])->name('admin.report-statement');
@@ -323,6 +324,7 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::post('/report-user/pdf', [PdfController::class, 'downloadUserReportPdf'])->name('admin.report-user.pdf');
         Route::get('/report-inventory/pdf', [PdfController::class, 'downloadInventoryReportPdf'])->name('admin.report-inventory.pdf');
         Route::get('/report-product/download', [PdfController::class, 'downloadProduct'])->name('admin.report-product.download');
+        Route::post('/admin/reports/product-list/download', [PdfController::class, 'downloadProductList'])->name('admin.report.product-list.download');
         Route::post('/sales-report/download', [PdfController::class, 'downloadInputSales'])->name('admin.download-input-sales');
         Route::post('/user-report/download', [PdfController::class, 'downloadInputUsers'])->name('admin.download-input-users');
         Route::get('/facility-statement/download', [PdfController::class, 'facilityStatement'])->name('admin.facility-statement.download');

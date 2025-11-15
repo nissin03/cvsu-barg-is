@@ -594,6 +594,12 @@
                                                 </a>
                                             </li>
                                             <li class="sub-menu-item">
+                                                <a href="{{ route('admin.report.product-list') }}">
+                                                    <div class="text">Product List</div>
+                                                </a>
+                                            </li>
+
+                                            <li class="sub-menu-item">
                                                 <a href="{{ route('admin.report-user') }}">
                                                     <div class="text">Users</div>
                                                 </a>

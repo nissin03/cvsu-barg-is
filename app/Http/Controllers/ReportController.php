@@ -488,6 +488,22 @@ class ReportController extends Controller
         ));
     }
 
+    public function productList(Request $request)
+    {
+        $query = Product::with([
+            'category',
+            'attributeValues'
+        ])->where('archived', 0);
+
+        if ($request->has('category') && $request->category != '') {
+            $query->where('category_id', $request->category);
+        }
+
+        $products = $query->paginate(15);
+        $categories = Category::all();
+
+        return view('admin.reports.product-list', compact('products', 'categories'));
+    }
 
 
     public function generateInventory(Request $request)
