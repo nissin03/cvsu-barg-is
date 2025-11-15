@@ -135,6 +135,26 @@ class UserSeeder extends Seeder
         return $firstName . ' ' . $middleInitial . '. ' . $lastName;
     }
 
+    private array $employeePositions = [
+        'Director',
+        'Administrator',
+        'Administrative Aide',
+        'Clerk',
+        'Registrar Staff',
+        'Guidance Staff',
+        'Librarian',
+        'Instructor I',
+        'Instructor II',
+        'Assistant Professor',
+        'Associate Professor',
+        'Professor I'
+    ];
+
+    private function getRandomEmployeePosition(): string
+    {
+        return $this->employeePositions[array_rand($this->employeePositions)];
+    }
+
     /**
      * Run the database seeds.
      */
@@ -152,6 +172,7 @@ class UserSeeder extends Seeder
             'password_set' => true,
             'utype' => 'ADM',
             'role' => 'employee',
+            'position' => 'Administrator',
             'sex' => 'male',
             'phone_number' => '09123456789',
             'college_id' => null,
@@ -168,6 +189,7 @@ class UserSeeder extends Seeder
             'password_set' => true,
             'utype' => 'USR',
             'role' => 'student',
+            'position' => null,
             'sex' => 'male',
             'phone_number' => '09123456780',
             'year_level' => '3rd Year',
@@ -185,6 +207,7 @@ class UserSeeder extends Seeder
             'password_set' => true,
             'utype' => 'DIR',
             'role' => 'employee',
+            'position' => 'Director',
             'sex' => 'male',
             'phone_number' => '09123456781',
             'college_id' => null,
@@ -203,6 +226,7 @@ class UserSeeder extends Seeder
                 'password_set' => true,
                 'utype' => 'ADM',
                 'role' => 'employee',
+                'position' => $this->getRandomEmployeePosition(),
                 'sex' => $sex,
                 'phone_number' => '09' . rand(100000000, 999999999),
                 'college_id' => null,
@@ -231,6 +255,7 @@ class UserSeeder extends Seeder
                 'password_set' => false,
                 'utype' => 'USR',
                 'role' => 'student',
+                'position' => null,
                 'sex' => $sex,
                 'phone_number' => '09' . rand(100000000, 999999999),
                 'year_level' => ['1st Year', '2nd Year', '3rd Year', '4th Year'][rand(0, 3)],
@@ -257,6 +282,7 @@ class UserSeeder extends Seeder
                 'password_set' => false,
                 'utype' => 'USR',
                 'role' => 'employee',
+                'position' => $this->getRandomEmployeePosition(),
                 'sex' => $sex,
                 'phone_number' => '09' . rand(100000000, 999999999),
                 'year_level' => null,
@@ -283,6 +309,7 @@ class UserSeeder extends Seeder
                 'password_set' => false,
                 'utype' => 'USR',
                 'role' => 'non-employee',
+                'position' => null,
                 'sex' => $sex,
                 'phone_number' => '09' . rand(100000000, 999999999),
                 'year_level' => null,

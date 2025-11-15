@@ -1,6 +1,12 @@
 @extends('layouts.admin')
 @section('content')
     <style>
+        #product-form textarea,
+        #product-form textarea.form-control {
+            font-size: 14px;
+            line-height: 20px;
+        }
+
         .file-name-overlay {
             position: absolute;
             bottom: 0;
@@ -152,7 +158,7 @@
                         <span class="alert alert-danger text-center">{{ $message }} </span>
                     @enderror
 
-                    <div class="gap22 cols">
+                    {{-- <div class="gap22 cols">
                         <fieldset class="sex">
                             <div class="body-title mb-10">Sex Category <span class="tf-color-1">*</span></div>
                             <div class="select">
@@ -167,7 +173,7 @@
                     </div>
                     @error('sex')
                         <span class="alert alert-danger text-center">{{ $message }} </span>
-                    @enderror
+                    @enderror --}}
 
                     <fieldset class="shortdescription">
                         <div class="body-title mb-10">Short Description <span class="tf-color-1">*</span></div>
@@ -243,22 +249,22 @@
                                     <input type="number" id="reorder_quantity" name="reorder_quantity" min="0"
                                         value="{{ old('reorder_quantity', 0) }}" required>
                                 </div>
-                                <div class="stock-status-item">
+                                {{-- <div class="stock-status-item">
                                     <label for="outofstock_quantity">Out of Stock Quantity:</label>
                                     <input type="number" id="outofstock_quantity" name="outofstock_quantity"
                                         min="0" value="{{ old('outofstock_quantity', 0) }}" required>
-                                </div>
+                                </div> --}}
                             </div>
                         </fieldset>
-                        @error('instock_quantity')
+                        {{-- @error('instock_quantity')
                             <span class="alert alert-danger text-center">{{ $message }} </span>
-                        @enderror
+                        @enderror --}}
                         @error('reorder_quantity')
                             <span class="alert alert-danger text-center">{{ $message }} </span>
                         @enderror
-                        @error('outofstock_quantity')
+                        {{-- @error('outofstock_quantity')
                             <span class="alert alert-danger text-center">{{ $message }} </span>
-                        @enderror
+                        @enderror --}}
                     </div>
                     <!-- **End of Stock Status Fields** -->
 
@@ -365,12 +371,13 @@
         function validateForm() {
             const productName = document.getElementById('product-name').value.trim();
             const category = document.getElementById('category-select').value;
-            const sex = document.getElementById('sex-select').value;
+            // const sex = document.getElementById('sex-select').value;
             const mainImage = document.getElementById('myFile').files.length > 0;
             const reorderQuantity = document.getElementById('reorder_quantity').value;
-            const outofstockQuantity = document.getElementById('outofstock_quantity').value;
+            // const outofstockQuantity = document.getElementById('outofstock_quantity').value;
 
-            let isValid = productName && category && sex && mainImage && reorderQuantity && outofstockQuantity;
+            // let isValid = productName && category && sex && mainImage && reorderQuantity && outofstockQuantity;
+            let isValid = productName && category && mainImage && reorderQuantity;
 
             // If no variants, check price and quantity
             if (!hasVariants) {
@@ -414,7 +421,9 @@
 
         $(function() {
             // Add event listeners to all form fields for validation
-            $('#product-name, #category-select, #sex-select, #reorder_quantity, #outofstock_quantity, #product-price, #product-quantity')
+            // $('#product-name, #category-select, #sex-select, #reorder_quantity, #outofstock_quantity, #product-price, #product-quantity')
+            //     .on('input change', validateForm);
+            $('#product-name, #category-select, #reorder_quantity, #outofstock_quantity, #product-price, #product-quantity')
                 .on('input change', validateForm);
 
             $("#myFile").on("change", function(e) {
@@ -531,6 +540,10 @@
                             <input type="text" name="variant_name[]" placeholder="Variant Name" required>
                         </fieldset>
                         <fieldset class="name">
+                            <div class="body-title mb-10 my-4">Variant Description (Optional)</div>
+                            <textarea class="mb-10" style="font-size: 14px;" name="variant_description[]" placeholder="Enter variant description (optional)" rows="3"></textarea>
+                        </fieldset>
+                        <fieldset class="name">
                             <div class="body-title mb-10 my-4">Variant Price <span class="tf-color-1">*</span></div>
                             <input class="mb-10" type="text" placeholder="Enter price" name="variant_price[]"
                                 tabindex="0" aria-required="true" required>
@@ -550,14 +563,12 @@
                     variantsContainer.removeChild(variantDiv);
                     updateMainFieldsVisibility();
                     showContainer();
-                    // Don't call updateVariantNumbers here to preserve numbering
                     validateForm();
                 });
 
-                // Add event listeners to variant fields for validation
                 const variantInputs = variantDiv.querySelectorAll(
                     'input[name="variant_name[]"], input[name="variant_price[]"], input[name="variant_quantity[]"]'
-                    );
+                );
                 variantInputs.forEach(input => {
                     input.addEventListener('input', validateForm);
                 });
@@ -566,7 +577,6 @@
                 updateMainFieldsVisibility();
                 updateRequiredIndicators();
                 showContainer();
-                // Don't call updateVariantNumbers here to preserve numbering
                 validateForm();
             }
 

@@ -301,56 +301,6 @@
                                     <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
                                             <div class="icon"><i class="icon-layers"></i></div>
-                                            <div class="text">Facilities</div>
-                                        </a>
-                                        <ul class="sub-menu">
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.facility.create') }}">
-                                                    <div class="text">Add Facility</div>
-                                                </a>
-                                            </li>
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.facilities.index') }}">
-                                                    <div class="text">Facilities</div>
-                                                </a>
-                                            </li>
-                                            <li class="divider mb-10"></li>
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.addons') }}">
-                                                    <div class="text">Manage Add-ons</div>
-                                                </a>
-                                            </li>
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.addons.create') }}">
-                                                    <div class="text">Create Add-ons</div>
-                                                </a>
-                                            </li>
-                                            <li class="divider mb-10"></li>
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('discounts.index') }}">
-                                                    <div class="text">Manage Discounts</div>
-                                                </a>
-                                            </li>
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('discounts.create') }}">
-                                                    <div class="text">Create Discount</div>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </li>
-                                    <li class="menu-item">
-                                        <a href="{{ route('admin.facilities.reservations') }}">
-                                            <div class="icon"><i class="icon-file-plus"></i></div>
-                                            <div class="text">Facility Reservation</div>
-                                        </a>
-                                    </li>
-
-
-
-
-                                    <li class="menu-item has-children">
-                                        <a href="javascript:void(0);" class="menu-item-button">
-                                            <div class="icon"><i class="icon-layers"></i></div>
                                             <div class="text">Category</div>
                                         </a>
                                         <ul class="sub-menu">
@@ -403,6 +353,54 @@
                                             <div class="text">Product Orders</div>
                                         </a>
                                     </li>
+                                    <li class="menu-item has-children">
+                                        <a href="javascript:void(0);" class="menu-item-button">
+                                            <div class="icon"><i class="icon-layers"></i></div>
+                                            <div class="text">Facilities</div>
+                                        </a>
+                                        <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.addons') }}">
+                                                    <div class="text">Manage Add-ons</div>
+                                                </a>
+                                            </li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.addons.create') }}">
+                                                    <div class="text">Create Add-ons</div>
+                                                </a>
+                                            </li>
+                                            <li class="divider mb-10"></li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('discounts.index') }}">
+                                                    <div class="text">Manage Discounts</div>
+                                                </a>
+                                            </li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('discounts.create') }}">
+                                                    <div class="text">Create Discount</div>
+                                                </a>
+                                            </li>
+                                            <li class="divider mb-10"></li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.facility.create') }}">
+                                                    <div class="text">Add Facility</div>
+                                                </a>
+                                            </li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.facilities.index') }}">
+                                                    <div class="text">Facilities</div>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li class="menu-item">
+                                        <a href="{{ route('admin.facilities.reservations') }}">
+                                            <div class="icon"><i class="icon-file-plus"></i></div>
+                                            <div class="text">Facility Reservation</div>
+                                        </a>
+                                    </li>
+
+
 
 
                                     {{-- <li class="menu-item has-children">

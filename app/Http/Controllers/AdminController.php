@@ -564,17 +564,28 @@ class AdminController extends Controller
             'price' => $hasVariant ? 'nullable' : 'required|numeric',
             'quantity' => $hasVariant ? 'nullable' : 'required|integer',
             'featured' => 'required',
-            'image' => 'required|mimes:png,jpg,jpeg|max:10240',
-            'sex' => 'required|in:male,female,all',
+            'image' => 'required|image|mimes:png,jpg,jpeg|max:5120',
+            'images.*' => 'nullable|image|mimes:png,jpg,jpeg|max:5120',
+            // 'sex' => 'required|in:male,female,all',
             'category_id' => 'required|integer|exists:categories,id',
             'reorder_quantity' => 'required|integer|min:0',
-            'outofstock_quantity' => 'required|integer|min:0',
+            'outofstock_quantity' => 'nullable|integer|min:0',
+            'variant_description.*' => 'nullable|string|max:1000',
         ], [
+            'image.required' => 'Main product image is required.',
+            'image.image' => 'The file must be an image.',
+            'image.mimes' => 'The image must be a file of type: png, jpg, jpeg.',
+            'image.max' => 'The image size must not exceed 5MB.',
+            'images.*.image' => 'All gallery files must be images.',
+            'images.*.mimes' => 'Gallery images must be files of type: png, jpg, jpeg.',
+            'images.*.max' => 'Each gallery image must not exceed 5MB.',
             'category_id.integer' => 'Please select a valid category.',
             'sex.in' => 'Please select a valid gender category.',
             'reorder_quantity.required' => 'Reorder Quantity is required.',
             'outofstock_quantity.required' => 'Out of Stock Quantity is required.',
         ]);
+
+        $outofstock_quantity = 0; // Default value
 
         $product = new Product();
         $product->name = $request->name;
@@ -585,10 +596,10 @@ class AdminController extends Controller
         $product->quantity = $hasVariant ? null : $request->quantity;
         $product->stock_status = $hasVariant ? 'instock' : 'outofstock';
         $product->featured = $request->featured;
-        $product->sex = $request->sex;
+        // $product->sex = $request->sex;
         $product->category_id = $request->category_id;
         $product->reorder_quantity = $request->reorder_quantity;
-        $product->outofstock_quantity = $request->outofstock_quantity;
+        $product->outofstock_quantity = $outofstock_quantity;
 
         $current_timestamp = now()->timestamp;
         if ($request->hasFile('image')) {
@@ -605,6 +616,7 @@ class AdminController extends Controller
             $allowedFileExtension = ['jpg', 'png', 'jpeg'];
             $files = $request->file('images');
             $counter = 1;
+            $gallery_arr = [];
 
             foreach ($files as $file) {
                 $gext = $file->getClientOriginalExtension();
@@ -621,7 +633,9 @@ class AdminController extends Controller
                     $counter++;
                 }
             }
-            $product->images = implode(',', $gallery_arr);
+            if (!empty($gallery_arr)) {
+                $product->images = implode(',', $gallery_arr);
+            }
         }
         $product->save();
         if ($hasVariant && is_array($request->variant_name)) {
@@ -631,6 +645,7 @@ class AdminController extends Controller
                     'product_id' => $product->id,
                     'product_attribute_id' => $request->product_attribute_id[$index],
                     'value' => $variantName,
+                    'description' => $request->variant_description[$index] ?? null,
                     'price' => $request->variant_price[$index],
                     'quantity' => $request->variant_quantity[$index],
                 ];
@@ -691,6 +706,7 @@ class AdminController extends Controller
     {
         $product = Product::findOrFail($request->input('id'));
         $hasVariant = !empty($request->variant_name) && is_array($request->variant_name);
+
         $request->validate([
             'name' => 'required',
             'short_description' => 'required',
@@ -700,35 +716,65 @@ class AdminController extends Controller
             'featured' => 'required|boolean',
             'image' => 'nullable|image|mimes:png,jpg,jpeg|max:5120',
             'images.*' => 'nullable|image|mimes:png,jpg,jpeg|max:5120',
-            'sex' => 'required|in:male,female,all',
+            // 'sex' => 'required|in:male,female,all',
             'category_id' => 'required|integer|exists:categories,id',
             'reorder_quantity' => 'required|integer|min:0',
-            'outofstock_quantity' => 'required|integer|min:0',
+            'outofstock_quantity' => 'nullable|integer|min:0',
+            'variant_description.*' => 'nullable|string|max:1000',
+        ], [
+            'image.image' => 'The file must be an image.',
+            'image.mimes' => 'The image must be a file of type: png, jpg, jpeg.',
+            'image.max' => 'The image size must not exceed 5MB.',
+            'images.*.image' => 'All gallery files must be images.',
+            'images.*.mimes' => 'Gallery images must be files of type: png, jpg, jpeg.',
+            'images.*.max' => 'Each gallery image must not exceed 5MB.',
+            'category_id.integer' => 'Please select a valid category.',
+            'reorder_quantity.required' => 'Reorder Quantity is required.',
+            'outofstock_quantity.required' => 'Out of Stock Quantity is required.',
         ]);
         $previousStockStatus = $product->stock_status;
-        $product->fill($request->except(['image', 'images', 'variant_name', 'product_attribute_id', 'variant_price', 'variant_quantity', 'existing_variant_ids', 'removed_variant_ids']));
+        $product->fill($request->except([
+            'image',
+            'images',
+            'variant_name',
+            'product_attribute_id',
+            'variant_price',
+            'variant_quantity',
+            'variant_description',
+            'existing_variant_ids',
+            'removed_variant_ids',
+            'removed_images'
+        ]));
+        // $product->fill($request->except(['image', 'images', 'variant_name', 'product_attribute_id', 'variant_price', 'variant_quantity', 'existing_variant_ids', 'removed_variant_ids']));
 
         $current_timestamp = now()->timestamp;
         if ($request->hasFile('image')) {
             if (!empty($product->image) && File::exists(public_path("uploads/products/{$product->image}"))) {
                 File::delete(public_path("uploads/products/{$product->image}"));
+                File::delete(public_path("uploads/products/thumbnails/{$product->image}"));
             }
+
             $image = $request->file('image');
             $imageName = "{$current_timestamp}.{$image->extension()}";
+
             $this->imageProcessor->process($image, $imageName, [
                 ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
                 ['path' => public_path('uploads/products/thumbnails'), 'resize' => [300, 300]],
             ]);
             $product->image = $imageName;
         }
+
         $existingImages = !empty($product->images) ? explode(',', $product->images) : [];
         $removedImages = $request->input('removed_images', []);
+
         foreach ($removedImages as $removedImage) {
             if (File::exists(public_path("uploads/products/{$removedImage}"))) {
                 File::delete(public_path("uploads/products/{$removedImage}"));
+                File::delete(public_path("uploads/products/thumbnails/{$removedImage}"));
             }
             $existingImages = array_diff($existingImages, [$removedImage]);
         }
+        $existingImages = array_values($existingImages);
         if ($request->hasFile('images')) {
             $newImages = [];
             $maxGalleryImages = 5;
@@ -750,10 +796,11 @@ class AdminController extends Controller
             }
 
             $allImages = array_merge($existingImages, $newImages);
-            $product->images = implode(',', $allImages);
+            $product->images = !empty($allImages) ? implode(',', $allImages) : null;
         } else {
-            $product->images = implode(',', $existingImages);
+            $product->images = !empty($existingImages) ? implode(',', $existingImages) : null;
         }
+
         $product->save();
 
         $removedVariantIds = $request->input('removed_variant_ids', []);
@@ -763,28 +810,28 @@ class AdminController extends Controller
 
         if ($hasVariant) {
             $existingVariantIds = $request->input('existing_variant_ids', []);
-            $attributeValues = [];
 
             foreach ($request->variant_name as $index => $name) {
                 $attributeValue = [
                     'product_id' => $product->id,
                     'product_attribute_id' => $request->product_attribute_id[$index],
                     'value' => $name,
+                    'description' => $request->variant_description[$index] ?? null,
                     'price' => $request->variant_price[$index] ?? null,
                     'quantity' => $request->variant_quantity[$index] ?? 0,
                 ];
+
                 if (isset($existingVariantIds[$index]) && !empty($existingVariantIds[$index])) {
                     $existingVariant = ProductAttributeValue::find($existingVariantIds[$index]);
                     if ($existingVariant) {
                         $existingVariant->update($attributeValue);
-                        $attributeValues[] = $attributeValue;
                     }
                 } else {
                     ProductAttributeValue::create($attributeValue);
-                    $attributeValues[] = $attributeValue;
                 }
             }
             $variantTotalQuantity = $product->attributeValues()->sum('quantity');
+
             if ($variantTotalQuantity > $product->reorder_quantity) {
                 $product->stock_status = 'instock';
             } elseif ($variantTotalQuantity <= $product->reorder_quantity && $variantTotalQuantity > $product->outofstock_quantity) {
@@ -794,6 +841,7 @@ class AdminController extends Controller
             }
         } else {
             $product->attributeValues()->delete();
+
             if ($product->quantity > $product->reorder_quantity) {
                 $product->stock_status = 'instock';
             } elseif ($product->quantity <= $product->reorder_quantity && $product->quantity > $product->outofstock_quantity) {
@@ -1156,7 +1204,7 @@ class AdminController extends Controller
             'transaction' => $transaction,
             'orderItems' => $orderItems
         ]);
-        return $pdf->download('receipt_order_' . $order->id . '.pdf');
+        return $pdf->stream('receipt_order_' . $order->id . '.pdf');
     }
 
 

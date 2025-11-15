@@ -2,6 +2,13 @@
 @section('content')
     <style>
         /* Existing styles from your code */
+        .box {
+            width: 15px;
+            height: 15px;
+            display: inline-block;
+            border-radius: 4px;
+        }
+
         .badge-success {
             background-color: #28a745;
             display: inline-flex;
@@ -234,6 +241,17 @@
                 </div>
 
                 <div class="divider"></div>
+                <div class="d-flex justify-content-end">
+                    <div class="legend d-flex align-items-center gap-3 small text-body-secondary" aria-label="Legend">
+                        <span class="d-inline-flex align-items-center gap-3">
+                            <div class="box bg-success"></div>
+                            <p>INSTOCK</p>
+                            <div class="box bg-warning "></div>
+                            <p>REORDER LEVEL</p>
+                            <div class="box bg-danger "></div>
+                            <p>OUT OF STOCK</p>
+                    </div>
+                </div>
                 <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination"
                     id="js-products-partial-target-pagination">
                     @include('partials._products-pagination', ['products' => $products])

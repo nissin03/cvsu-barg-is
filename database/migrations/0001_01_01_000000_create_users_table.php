@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('profile_image')->nullable();
             $table->string('utype')->default('USR')->comment('ADM for Admin, USR for User and DIR for Director');
             $table->enum('role', ['student', 'employee', 'non-employee'])->default('student');
+            $table->string('position')->nullable();
             $table->enum('sex', ['male', 'female'])->default('male');
             $table->string('phone_number')->nullable();
             $table->string('year_level')->nullable();

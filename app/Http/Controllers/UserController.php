@@ -103,7 +103,7 @@ class UserController extends Controller
         $colleges = College::all();
         $courses = Course::all();
 
-        return view('user.profile-edit', compact('user', 'colleges', 'courses')); // Add courses here
+        return view('user.profile-edit', compact('user', 'colleges', 'courses'));
     }
 
     public function profile_update(Request $request)
@@ -124,6 +124,8 @@ class UserController extends Controller
             $validationRules['year_level'] = 'required|string|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
             $validationRules['college_id'] = 'required|exists:colleges,id';
             $validationRules['course_id'] = 'required|exists:courses,id';
+        } else if ($role === 'employee') {
+            $validationRules['position'] = 'required|string|max:255';
         }
 
         $validatedData = $request->validate($validationRules);
@@ -140,6 +142,12 @@ class UserController extends Controller
             $user->year_level = $validatedData['year_level'];
             $user->college_id = $validatedData['college_id'];
             $user->course_id = $validatedData['course_id'];
+            $user->position = null;
+        } elseif ($role === 'employee') {
+            $user->position = $validatedData['position'];
+            $user->year_level = null;
+            $user->college_id = null;
+            $user->course_id = null;
         } else {
             $user->year_level = null;
             $user->college_id = null;
@@ -281,8 +289,6 @@ class UserController extends Controller
                 if ($product->sex !== 'all' && $product->sex !== $user->sex) {
                     continue;
                 }
-
-
 
                 Cart::instance('cart')->add([
                     'id' => $product->id,
