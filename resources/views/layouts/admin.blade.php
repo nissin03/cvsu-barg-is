@@ -470,7 +470,7 @@
 
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.colleges.index') }}">
-                                                    <div class="text">Colleges</div>
+                                                    <div class="text">Manage Colleges</div>
                                                 </a>
                                             </li>
 
@@ -486,7 +486,7 @@
 
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.courses.index') }}">
-                                                    <div class="text">Courses</div>
+                                                    <div class="text">Manage Courses</div>
                                                 </a>
                                             </li>
                                             <li class="sub-menu-item">

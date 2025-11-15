@@ -37,22 +37,13 @@ class AdminCourseController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|',
+            'name' => 'required|string|max:255',
             'code' => 'required|string|max:50',
             'college_id' => 'required|exists:colleges,id'
         ]);
 
         Course::create($request->all());
 
-        // Check if it's an AJAX request (which your form is making)
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Course created successfully!'
-            ]);
-        }
-
-        // Fallback for regular form submission (fixed the typo: cours -> courses)
         return redirect()->route('admin.courses.index')
             ->with('success', 'Course created successfully.');
     }
@@ -65,49 +56,16 @@ class AdminCourseController extends Controller
 
     public function update(Request $request, Course $course)
     {
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'code' => 'required|string|max:50|unique:courses,code,' . $course->id,
-                'college_id' => 'required|exists:colleges,id'
-            ]);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:courses,code,' . $course->id,
+            'college_id' => 'required|exists:colleges,id'
+        ]);
 
-            $course->update($validated);
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Course updated successfully!',
-                    'course' => $course
-                ]);
-            }
+        $course->update($validated);
 
-            return redirect()->route('admin.courses.index')
-                ->with('success', 'Course updated successfully.');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            // Handle validation errors for AJAX requests
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => $e->errors()
-                ], 422);
-            }
-
-            return redirect()->back()
-                ->withErrors($e->errors())
-                ->withInput();
-        } catch (\Exception $e) {
-            // Handle general errors
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'An error occurred while updating the course.'
-                ], 500);
-            }
-
-            return redirect()->back()
-                ->with('error', 'An error occurred while updating the course.')
-                ->withInput();
-        }
+        return redirect()->route('admin.courses.index')
+            ->with('success', 'Course updated successfully.');
     }
 
     public function destroy($id)

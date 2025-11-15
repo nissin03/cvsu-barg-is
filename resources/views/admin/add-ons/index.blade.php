@@ -181,7 +181,7 @@
                                                     method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="item text-danger delete"
+                                                    <button type="submit" class="item text-warning delete"
                                                         style="border: none; background: none;" title="Delete Addon">
                                                         <i class="icon-archive"></i>
                                                     </button>

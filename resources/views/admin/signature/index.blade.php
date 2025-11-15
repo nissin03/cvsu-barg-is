@@ -151,7 +151,7 @@
                                                     method="POST" class="d-inline archive-form">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="item text-danger archive"
+                                                    <button type="submit" class="item text-warning archive"
                                                         style="border: none; background: none;" title="Archive Signature">
                                                         <i class="icon-archive"></i>
                                                     </button>
