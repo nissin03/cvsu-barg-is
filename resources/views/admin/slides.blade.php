@@ -31,7 +31,7 @@
                         <table class="table table-striped table-bordered">
                             <thead class="thead-ligth">
                                 <tr>
-                                    <th>#</th>
+                                    {{-- <th>#</th> --}}
                                     <th style="min-width: 50px;">Image</th>
                                     <th style="min-width: 120px;">Tagline</th>
                                     <th style="min-width: 120px;">Title</th>
@@ -43,7 +43,7 @@
                             <tbody>
                                 @foreach ($slides as $slide)
                                     <tr>
-                                        <td>{{ $slide->id }}</td>
+                                        {{-- <td>{{ $slide->id }}</td> --}}
                                         <td class="pname">
                                             <div class="image">
                                                 <img src="{{ asset('uploads/slides') }}/{{ $slide->image }}"

@@ -19,21 +19,32 @@ class OrderSeeder extends Seeder
         $users = User::where('utype', 'USR')->get();
         $products = Product::all();
 
-        $startDate = Carbon::create(2024, 1, 1);
+        $startDate = Carbon::create(2025, 1, 1);
         $endDate = Carbon::now();
         $reservationStart = Carbon::create(2025, 1, 1);
 
+        $orderCount = 0;
+        $maxOrders = 500;
+
         foreach ($users as $user) {
-            $numOrders = $faker->numberBetween(3, 5);
-            
+            if ($orderCount >= $maxOrders) {
+                break;
+            }
+
+            $numOrders = $faker->numberBetween(1, 3);
+
             for ($i = 0; $i < $numOrders; $i++) {
+                if ($orderCount >= $maxOrders) {
+                    break 2; // Break both loops
+                }
+
                 $createdAt = Carbon::instance($faker->dateTimeBetween(
                     $startDate->format('Y-m-d'),
                     $endDate->format('Y-m-d')
                 ));
 
-                $earliestReservation = $createdAt->greaterThan($reservationStart) 
-                    ? $createdAt 
+                $earliestReservation = $createdAt->greaterThan($reservationStart)
+                    ? $createdAt
                     : $reservationStart;
 
                 if ($earliestReservation->greaterThan($endDate)) {
@@ -48,24 +59,15 @@ class OrderSeeder extends Seeder
                 $timeSlot = sprintf('%02d:%02d', $faker->numberBetween(7, 16), $faker->numberBetween(0, 59));
 
                 $status = $this->determineStatus($faker);
-                
+
                 $pickedUpDate = null;
-                $canceledDate = null;
-                
+
                 if ($status === 'pickedup') {
                     $maxPickupDate = min(Carbon::now(), $endDate);
                     if ($createdAt->lessThan($maxPickupDate)) {
                         $pickedUpDate = Carbon::instance($faker->dateTimeBetween(
                             $createdAt->format('Y-m-d'),
                             $maxPickupDate->format('Y-m-d')
-                        ))->format('Y-m-d');
-                    }
-                } elseif ($status === 'canceled') {
-                    $maxCancelDate = min(Carbon::now(), $endDate);
-                    if ($createdAt->lessThan($maxCancelDate)) {
-                        $canceledDate = Carbon::instance($faker->dateTimeBetween(
-                            $createdAt->format('Y-m-d'),
-                            $maxCancelDate->format('Y-m-d')
                         ))->format('Y-m-d');
                     }
                 }
@@ -76,7 +78,7 @@ class OrderSeeder extends Seeder
                     'reservation_date' => $reservationDate,
                     'time_slot' => $timeSlot,
                     'picked_up_date' => $pickedUpDate,
-                    'canceled_date' => $canceledDate,
+                    'canceled_date' => null, // Always null since we don't have canceled status
                     'status' => $status,
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
@@ -87,10 +89,10 @@ class OrderSeeder extends Seeder
 
                 for ($j = 0; $j < $numItems; $j++) {
                     $product = $products->random();
-                    $variant = $product->attributeValues()->count() > 0 
-                        ? $product->attributeValues()->inRandomOrder()->first() 
+                    $variant = $product->attributeValues()->count() > 0
+                        ? $product->attributeValues()->inRandomOrder()->first()
                         : null;
-                    
+
                     $itemPrice = $variant ? $variant->price : $product->price;
                     $quantity = $faker->numberBetween(1, 5);
                     $itemTotal = $itemPrice * $quantity;
@@ -118,6 +120,8 @@ class OrderSeeder extends Seeder
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ]);
+
+                $orderCount++;
             }
         }
     }
@@ -125,10 +129,9 @@ class OrderSeeder extends Seeder
     private function determineStatus($faker): string
     {
         $rand = $faker->numberBetween(1, 100);
-        
-        return match(true) {
-            $rand <= 10 => 'canceled',
-            $rand <= 80 => 'pickedup',
+
+        return match (true) {
+            $rand <= 70 => 'pickedup', // 70% pickedup, 30% reserved
             default => 'reserved'
         };
     }

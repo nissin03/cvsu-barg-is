@@ -446,18 +446,64 @@
                                         </a>
                                     </li>
 
-                                    <li class="menu-item">
-                                        {{-- <a href="javascript:void(0);" class="menu-item-button"> --}}
+                                    {{-- <li class="menu-item">
+                                        <a href="javascript:void(0);" class="menu-item-button">
                                         <a href="{{ route('admin.users') }}">
                                             <div class="icon"><i class="icon-users"></i></div>
 
                                             <div class="text">Users</div>
                                         </a>
-                                    </li>
+                                    </li> --}}
 
                                     <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
                                             {{-- <a href="{{ route('admin.users') }}"> --}}
+                                            <div class="icon"><i class="icon-users"></i></div>
+                                            <div class="text">Users</div>
+                                        </a>
+                                        <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.users') }}">
+                                                    <div class="text">Users</div>
+                                                </a>
+                                            </li>
+
+                                            <li class="divider mb-10"></li>
+
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.colleges.index') }}">
+                                                    <div class="text">Colleges</div>
+                                                </a>
+                                            </li>
+
+
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.colleges.create') }}">
+                                                    <div class="text">Add Colleges</div>
+                                                </a>
+                                            </li>
+
+
+                                            <li class="divider mb-10"></li>
+
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.courses.index') }}">
+                                                    <div class="text">Courses</div>
+                                                </a>
+                                            </li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.courses.create') }}">
+                                                    <div class="text">Add Courses</div>
+                                                </a>
+                                            </li>
+
+                                        </ul>
+                                    </li>
+
+
+                                    {{-- <li class="menu-item has-children">
+                                        <a href="javascript:void(0);" class="menu-item-button">
+
                                             <div class="icon"><i class="icon-settings"></i></div>
                                             <div class="text">College</div>
                                         </a>
@@ -476,11 +522,11 @@
                                             </li>
                                         </ul>
 
-                                    </li>
+                                    </li> --}}
 
-                                    <li class="menu-item has-children">
+                                    {{-- <li class="menu-item has-children">
                                         <a href="javascript:void(0);" class="menu-item-button">
-                                            {{-- <a href="{{ route('admin.users') }}"> --}}
+
                                             <div class="icon"><i class="icon-book-open"></i></div>
                                             <div class="text">Course</div>
                                         </a>
@@ -499,6 +545,30 @@
                                             </li>
                                         </ul>
 
+                                    </li> --}}
+
+
+                                    <li class="menu-item has-children">
+                                        <a href="javascript:void(0);" class="menu-item-button">
+
+                                            <div class="icon"><i class="icon-pen-tool"></i></div>
+                                            <div class="text">Signature</div>
+                                        </a>
+                                        <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.signatures.index') }}">
+                                                    <div class="text">Manage Signature</div>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                        <ul class="sub-menu">
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.signatures.create') }}">
+                                                    <div class="text">Add Signature</div>
+                                                </a>
+                                            </li>
+                                        </ul>
+
                                     </li>
                                 @endif
 
@@ -512,6 +582,11 @@
                                         <ul class="sub-menu">
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.reports') }}">
+                                                    <div class="text">Sales Charts</div>
+                                                </a>
+                                            </li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.report-statements') }}">
                                                     <div class="text">Sales</div>
                                                 </a>
                                             </li>
@@ -530,11 +605,7 @@
                                                     <div class="text">Inventory</div>
                                                 </a>
                                             </li>
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.report-statements') }}">
-                                                    <div class="text">Statements</div>
-                                                </a>
-                                            </li>
+
                                             {{-- <li class="sub-menu-item">
                                                 <a href="{{ route('admin.generate-input-users') }}">
                                                     <div class="text">Input User</div>
@@ -557,7 +628,7 @@
                                         <ul class="sub-menu">
                                             <li class="menu-item">
                                                 <a href="{{ route('admin.facility-statement') }}">
-                                                    <div class="text">Statement</div>
+                                                    <div class="text">Sales</div>
                                                 </a>
                                             </li>
                                             <li class="sub-menu-item">

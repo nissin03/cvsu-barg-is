@@ -164,23 +164,19 @@
             animation: fadeIn 0.3s ease;
         }
 
-        .field-input:invalid,
-        .field-select:invalid,
-        .field-textarea:invalid {
-            border-color: #dc2626;
-        }
-
+        /* Remove the green valid state */
         .field-input:valid,
         .field-select:valid,
         .field-textarea:valid {
-            border-color: #16a34a;
+            border-color: #cbd5e1;
+            /* Changed from #16a34a (green) to default border color */
         }
     </style>
 
     <div class="main-content-inner">
         <div class="main-content-wrap">
             <div class="flex items-center flex-wrap justify-between gap20 mb-27">
-                <h3>Add New Addon</h3>
+                <h3>Create New Add-on</h3>
                 <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
                     <li>
                         <a href="{{ route('admin.index') }}">
@@ -192,14 +188,14 @@
                     </li>
                     <li>
                         <a href="{{ route('admin.addons') }}">
-                            <div class="text-tiny">Addons</div>
+                            <div class="text-tiny">Add-ons</div>
                         </a>
                     </li>
                     <li>
                         <i class="icon-chevron-right"></i>
                     </li>
                     <li>
-                        <div class="text-tiny">Add New Addon</div>
+                        <div class="text-tiny">Create New Add-on</div>
                     </li>
                 </ul>
             </div>
@@ -389,7 +385,7 @@
                             Cancel
                         </a>
                         <button type="submit" class="save-btn" id="createAddonBtn" disabled>
-                            Create Addon
+                            Create Add-on
                         </button>
                     </div>
                 </form>
@@ -560,7 +556,8 @@
                                 field.parentNode.appendChild(errorMsg);
                             }
                         } else {
-                            field.style.borderColor = '#cbd5e1';
+                            field.style.borderColor =
+                                '#cbd5e1'; // Changed from green to default border color
                             if (field.nextElementSibling && field.nextElementSibling.classList
                                 .contains('error-message')) {
                                 field.nextElementSibling.remove();

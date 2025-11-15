@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use Dompdf\Options;
+use App\Models\User;
+use App\Models\Order;
+use App\Models\Payment;
+use App\Models\Product;
+use App\Models\Category;
+use App\Models\MonthName;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
-use App\Models\MonthName;
-use App\Models\Order;
-use App\Models\User;
-use App\Models\Product;
-use Dompdf\Options;
-use App\Models\Payment;
+use Illuminate\Support\Facades\Validator;
+
 
 class ReportController extends Controller
 {
@@ -570,45 +572,67 @@ class ReportController extends Controller
         $validator = Validator::make($request->all(), [
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
-            'today' => 'nullable|boolean',
-            'search' => 'nullable|string',
+            'status' => 'nullable|in:reserved,pickedup,canceled',
+            'category' => 'nullable|exists:categories,id',
         ]);
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        if ($request->has('today') && $request->input('today') == '1') {
-            $startDate = Carbon::today()->toDateString();
-            $endDate = Carbon::today()->toDateString();
-        } else {
-            $startDate = $request->input('start_date');
-            $endDate = $request->input('end_date');
-        }
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
 
         if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
             return redirect()->back()->withErrors(['end_date' => 'The end date must be after or equal to the start date.'])->withInput();
         }
 
-        $ordersQuery = Order::with('user');
+        $ordersQuery = Order::with(['user', 'orderItems.product.category', 'orderItems.variant']);
 
-        if ($request->has('search') && $request->input('search')) {
-            $searchTerm = $request->input('search');
-            $ordersQuery->whereHas('user', function ($query) use ($searchTerm) {
-                $query->where('name', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('email', 'like', '%' . $searchTerm . '%');
+        if ($request->has('status') && $request->input('status')) {
+            $ordersQuery->where('status', $request->input('status'));
+        }
+
+        if ($request->has('category') && $request->input('category')) {
+            $categoryId = $request->input('category');
+            $ordersQuery->whereHas('orderItems.product', function ($query) use ($categoryId) {
+                $query->where('category_id', $categoryId);
             });
         }
 
         if ($startDate && $endDate) {
             $start = Carbon::parse($startDate)->startOfDay();
             $end = Carbon::parse($endDate)->endOfDay();
-            $ordersQuery->whereBetween('created_at', [$start, $end]);
+            $ordersQuery->whereBetween('reservation_date', [$start, $end]);
+        } elseif ($startDate) {
+            $start = Carbon::parse($startDate)->startOfDay();
+            $ordersQuery->where('reservation_date', '>=', $start);
+        } elseif ($endDate) {
+            $end = Carbon::parse($endDate)->endOfDay();
+            $ordersQuery->where('reservation_date', '<=', $end);
         }
 
-        $orders = $ordersQuery->orderBy('created_at', 'desc')->paginate(20);
+        $orders = $ordersQuery->orderBy('reservation_date', 'desc')->get();
 
-        return view('admin.reports.product-statements', compact('orders', 'startDate', 'endDate'));
+        if ($request->has('category') && $request->input('category')) {
+            $categoryId = $request->input('category');
+            foreach ($orders as $order) {
+                $order->orderItems = $order->orderItems->filter(function ($item) use ($categoryId) {
+                    return $item->product->category_id == $categoryId;
+                });
+            }
+        }
+
+        $grandTotal = 0;
+        foreach ($orders as $order) {
+            foreach ($order->orderItems as $item) {
+                $grandTotal += $item->price * $item->quantity;
+            }
+        }
+
+        $categories = Category::all();
+
+        return view('admin.reports.product-statements', compact('orders', 'startDate', 'endDate', 'grandTotal', 'categories'));
     }
 
 
@@ -896,16 +920,13 @@ class ReportController extends Controller
         ));
     }
 
-
     public function facilitiesStatement(Request $request)
     {
         $query = Payment::with([
             'user',
             'availability.facility',
             'availability.facilityAttribute',
-            'transactionReservations.availability',
-            'transactionReservations.addonTransactions.addon',
-            'transactionReservations.addonTransactions.addonPayment'
+            'transactionReservations.availability'
         ])
             ->orderBy('created_at', 'desc');
 
@@ -915,24 +936,46 @@ class ReportController extends Controller
             });
         }
 
-        if ($request->has('date_from') && $request->date_from) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->has('date_to') && $request->date_to) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
         }
 
-        $payments = $query->get()->map(function ($payment) {
-            $dates = $payment->transactionReservations->pluck('availability.date_from')->filter()->unique()->sort();
+        if ($request->has('date_from') && $request->date_from) {
+            $query->whereHas('transactionReservations.availability', function ($q) use ($request) {
+                $q->where('date_to', '>=', $request->date_from);
+            });
+        }
 
-            if ($dates->count() > 0) {
-                $payment->date_from = $dates->first();
-                $payment->date_to = $dates->last();
+        if ($request->has('date_to') && $request->date_to) {
+            $query->whereHas('transactionReservations.availability', function ($q) use ($request) {
+                $q->where('date_from', '<=', $request->date_to);
+            });
+        }
+
+        $payments = $query->get()->map(function ($payment) {
+            $allDates = $payment->transactionReservations
+                ->pluck('availability')
+                ->filter()
+                ->flatMap(function ($availability) {
+                    $dates = [];
+                    if ($availability->date_from && $availability->date_to) {
+                        if ($availability->date_from == $availability->date_to) {
+                            $dates[] = $availability->date_from;
+                        } else {
+                            $dates[] = $availability->date_from;
+                            $dates[] = $availability->date_to;
+                        }
+                    }
+                    return $dates;
+                })
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values();
+
+            if ($allDates->count() > 0) {
+                $payment->date_from = $allDates->first();
+                $payment->date_to = $allDates->last();
             } else {
                 $payment->date_from = $payment->availability->date_from ?? null;
                 $payment->date_to = $payment->availability->date_to ?? null;
@@ -950,204 +993,5 @@ class ReportController extends Controller
             'facilities' => $facilities,
             'filters' => $request->all()
         ]);
-    }
-
-    public function getAddonsData(Request $request)
-    {
-        $paymentId = $request->get('payment_id');
-
-        $payment = Payment::with([
-            'transactionReservations.addonTransactions.addon',
-            'transactionReservations.addonTransactions.addonReservation',
-            'transactionReservations.addonTransactions.addonPayment'
-        ])->find($paymentId);
-
-        $addons = [];
-
-        if ($payment) {
-            $addonGroups = [];
-
-            foreach ($payment->transactionReservations as $reservation) {
-                foreach ($reservation->addonTransactions as $addonTransaction) {
-                    if ($addonTransaction->addon) {
-                        $addonId = $addonTransaction->addon->id;
-
-                        if (!isset($addonGroups[$addonId])) {
-                            $addonGroups[$addonId] = [
-                                'addon' => $addonTransaction->addon,
-                                'reservations' => [],
-                                'payments' => []
-                            ];
-                        }
-
-                        if ($addonTransaction->addonReservation) {
-                            $addonGroups[$addonId]['reservations'][] = $addonTransaction->addonReservation;
-                        }
-
-                        if ($addonTransaction->addonPayment && !in_array($addonTransaction->addonPayment, $addonGroups[$addonId]['payments'])) {
-                            $addonGroups[$addonId]['payments'][] = $addonTransaction->addonPayment;
-                        }
-                    }
-                }
-            }
-
-            foreach ($addonGroups as $addonId => $group) {
-                $hasPaymentData = !empty($group['payments']);
-                $hasReservationData = !empty($group['reservations']);
-
-                $addonData = [
-                    'name' => $group['addon']->name,
-                    'quantity' => null,
-                    'date_range' => $this->formatAddonDateRange($group['reservations'], $hasPaymentData),
-                    'total_price' => null,
-                    'payment_status' => null,
-                    'show_status' => false,
-                    'show_in_modal' => $hasReservationData || $hasPaymentData
-                ];
-
-                $totalQuantity = 0;
-                foreach ($group['reservations'] as $reservation) {
-                    $totalQuantity += $reservation->quantity ?? 0;
-                }
-                $addonData['quantity'] = $totalQuantity > 0 ? $totalQuantity : null;
-
-                if ($hasPaymentData) {
-                    $payment = $group['payments'][0];
-
-                    if ($payment->total > 0) {
-                        $addonData['total_price'] = number_format($payment->total, 2);
-                    }
-
-                    $addonData['payment_status'] = $payment->status;
-                    $addonData['show_status'] = true;
-                }
-
-                if ($addonData['show_in_modal']) {
-                    $addons[] = $addonData;
-                }
-            }
-        }
-
-        return response()->json(['addons' => $addons]);
-    }
-
-    private function formatAddonDateRange($reservations, $hasPaymentData)
-    {
-        if (empty($reservations)) {
-            return null;
-        }
-
-        $allNullDates = true;
-        $hasValidDates = false;
-
-        foreach ($reservations as $reservation) {
-            if ($reservation->date_from !== null || $reservation->date_to !== null) {
-                $allNullDates = false;
-            }
-            if ($reservation->date_from !== null && $reservation->date_to !== null) {
-                $hasValidDates = true;
-            }
-        }
-
-        if ($allNullDates && !$hasPaymentData) {
-            return 'Contract Based';
-        }
-
-        if ($allNullDates && $hasPaymentData) {
-            return 'Contract Based';
-        }
-
-        $allDates = [];
-        foreach ($reservations as $reservation) {
-            if ($reservation->date_from && $reservation->date_to) {
-                if ($reservation->date_from == $reservation->date_to) {
-                    $allDates[] = $reservation->date_from;
-                } else {
-                    $allDates[] = $reservation->date_from;
-                    $allDates[] = $reservation->date_to;
-                }
-            }
-        }
-
-        if (empty($allDates)) {
-            if ($hasPaymentData) {
-                return 'Contract Based';
-            }
-            return null;
-        }
-
-        usort($allDates, function ($a, $b) {
-            return strtotime($a) - strtotime($b);
-        });
-
-        $uniqueDates = array_unique($allDates);
-
-        if ($this->areDatesConsecutive($uniqueDates)) {
-            $startDate = \Carbon\Carbon::parse($uniqueDates[0]);
-            $endDate = \Carbon\Carbon::parse(end($uniqueDates));
-
-            return $startDate->format('M d') . ' - ' . $endDate->format('d, Y');
-        } else {
-            return $this->formatNonConsecutiveDates($uniqueDates);
-        }
-    }
-
-    private function areDatesConsecutive($dates)
-    {
-        if (count($dates) <= 1) {
-            return true;
-        }
-
-        for ($i = 1; $i < count($dates); $i++) {
-            $current = \Carbon\Carbon::parse($dates[$i]);
-            $previous = \Carbon\Carbon::parse($dates[$i - 1]);
-
-            if (!$current->eq($previous->copy()->addDay())) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private function formatNonConsecutiveDates($dates)
-    {
-        if (empty($dates)) {
-            return null;
-        }
-
-        if (count($dates) == 1) {
-            return \Carbon\Carbon::parse($dates[0])->format('M d, Y');
-        }
-
-        $ranges = [];
-        $currentRange = [\Carbon\Carbon::parse($dates[0])];
-
-        for ($i = 1; $i < count($dates); $i++) {
-            $current = \Carbon\Carbon::parse($dates[$i]);
-            $previous = \Carbon\Carbon::parse($dates[$i - 1]);
-
-            if ($current->eq($previous->copy()->addDay())) {
-                $currentRange[] = $current;
-            } else {
-                $ranges[] = $currentRange;
-                $currentRange = [$current];
-            }
-        }
-
-        $ranges[] = $currentRange;
-
-        $formattedRanges = [];
-        foreach ($ranges as $range) {
-            if (count($range) == 1) {
-                $formattedRanges[] = $range[0]->format('M d, Y');
-            } else {
-                $start = $range[0];
-                $end = end($range);
-                $formattedRanges[] = $start->format('M d') . ' - ' . $end->format('d, Y');
-            }
-        }
-
-        return implode(', ', $formattedRanges);
     }
 }

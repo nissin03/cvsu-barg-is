@@ -3,7 +3,7 @@
     <div class="main-content-inner">
         <div class="main-content-wrap">
             <div class="flex items-center flex-wrap justify-between gap20 mb-27">
-                <h3 class="page-title">Archived Add-ons</h3>
+                <h3 class="page-title">Archived Signatures</h3>
                 <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
                     <li>
                         <a href="{{ route('admin.index') }}">
@@ -14,15 +14,15 @@
                         <i class="icon-chevron-right"></i>
                     </li>
                     <li>
-                        <a href="{{ route('admin.addons') }}">
-                            <div class="text-tiny">Add-ons</div>
+                        <a href="{{ route('admin.signatures.index') }}">
+                            <div class="text-tiny">Signatures</div>
                         </a>
                     </li>
                     <li>
                         <i class="icon-chevron-right"></i>
                     </li>
                     <li>
-                        <div class="text-tiny">Archived Add-ons</div>
+                        <div class="text-tiny">Archived Signatures</div>
                     </li>
                 </ul>
             </div>
@@ -30,9 +30,9 @@
             <div class="wg-box">
                 <div class="flex items-center justify-between gap10 flex-wrap mb-3">
                     <div class="wg-filter flex-grow">
-                        <form class="form-search" method="GET" action="{{ route('admin.addons.archive') }}">
+                        <form class="form-search" method="GET" action="{{ route('admin.signatures.archive') }}">
                             <fieldset class="name">
-                                <input type="text" placeholder="Search archived addons by name or description..."
+                                <input type="text" placeholder="Search archived signatures by name, position or label..."
                                     class="search-input" name="search" value="{{ request('search') }}"
                                     aria-required="true">
                             </fieldset>
@@ -42,9 +42,9 @@
                         </form>
                     </div>
 
-                    <a class="tf-button w-auto back-button" href="{{ route('admin.addons') }}">
+                    <a class="tf-button w-auto back-button" href="{{ route('admin.signatures.index') }}">
                         <i class="icon-arrow-left"></i>
-                        <span class="button-text">Back to Add-ons</span>
+                        <span class="button-text">Back to Signatures</span>
                     </a>
                 </div>
 
@@ -56,25 +56,34 @@
 
                         <!-- Mobile Card View -->
                         <div class="mobile-cards d-block d-md-none">
-                            @forelse ($addons as $addon)
+                            @forelse ($signatures as $signature)
                                 <div class="mobile-card">
                                     <div class="mobile-card-header">
-                                        <h5 class="mobile-card-title">{{ $addon->name }}</h5>
-                                        <span class="badge badge-secondary">{{ $addon->price_type }}</span>
+                                        <h5 class="mobile-card-title">{{ $signature->name }}</h5>
+                                        <span class="badge badge-secondary">{{ $signature->category }}</span>
                                     </div>
                                     <div class="mobile-card-body">
                                         <p class="mobile-card-date">
-                                            <strong>Price:</strong> ${{ number_format($addon->base_price, 2) }}
+                                            <strong>Position:</strong> {{ $signature->position }}
                                         </p>
                                         <p class="mobile-card-date">
-                                            <strong>Role:</strong> {{ ucfirst($addon->show) }}
+                                            <strong>Category:</strong> {{ ucfirst($signature->category) }}
                                         </p>
                                         <p class="mobile-card-date">
-                                            <strong>Deleted:</strong> {{ $addon->deleted_at->format('M d, Y') }}
+                                            <strong>Report Type:</strong> {{ ucfirst($signature->report_type) }}
+                                        </p>
+                                        <p class="mobile-card-date">
+                                            <strong>Label:</strong> {{ $signature->label }}
+                                        </p>
+                                        <p class="mobile-card-date">
+                                            <strong>Order:</strong> {{ $signature->order_by }}
+                                        </p>
+                                        <p class="mobile-card-date">
+                                            <strong>Deleted:</strong> {{ $signature->deleted_at->format('M d, Y') }}
                                         </p>
                                         <div class="mobile-card-actions">
-                                            <form action="{{ route('admin.addons.restore', $addon->id) }}" method="POST"
-                                                class="d-inline">
+                                            <form action="{{ route('admin.signatures.restore', $signature->id) }}"
+                                                method="POST" class="d-inline">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" class="btn btn-sm btn-success restore mobile-btn"
@@ -82,7 +91,7 @@
                                                     <i class="icon-refresh-ccw"></i> Restore
                                                 </button>
                                             </form>
-                                            <form action="{{ route('admin.addons.force-delete', $addon->id) }}"
+                                            <form action="{{ route('admin.signatures.force-delete', $signature->id) }}"
                                                 method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
@@ -96,7 +105,7 @@
                                 </div>
                             @empty
                                 <div class="empty-state">
-                                    <p>No archived add-ons found.</p>
+                                    <p>No archived signatures found.</p>
                                 </div>
                             @endforelse
                         </div>
@@ -106,31 +115,34 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th scope="col" class="col-name">Name</th>
-                                    <th scope="col" class="col-type">Price Type</th>
-                                    <th scope="col" class="col-price">Price</th>
-                                    <th scope="col" class="col-show">Role</th>
+                                    <th scope="col" class="col-position">Position</th>
+                                    <th scope="col" class="col-category">Category</th>
+                                    <th scope="col" class="col-report-type">Report Type</th>
+                                    <th scope="col" class="col-label">Label</th>
+                                    <th scope="col" class="col-order">Order</th>
                                     <th scope="col" class="col-date">Deleted At</th>
                                     <th scope="col" class="col-action">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse ($addons as $addon)
+                                @forelse ($signatures as $signature)
                                     <tr>
                                         <td class="name-cell">
-                                            <div class="name text-truncate" title="{{ $addon->name }}">
-                                                <strong>{{ $addon->name }}</strong>
+                                            <div class="name text-truncate" title="{{ $signature->name }}">
+                                                <strong>{{ $signature->name }}</strong>
                                             </div>
                                         </td>
-                                        <td class="type-cell">
-                                            <span
-                                                class="badge badge-secondary">{{ str_replace('_', ' ', $addon->price_type) }}</span>
+                                        <td class="position-cell">{{ $signature->position }}</td>
+                                        <td class="category-cell">
+                                            <span class="badge badge-secondary">{{ ucfirst($signature->category) }}</span>
                                         </td>
-                                        <td class="price-cell">${{ number_format($addon->base_price, 2) }}</td>
-                                        <td class="show-cell">{{ ucfirst($addon->show) }}</td>
-                                        <td class="date-cell">{{ $addon->deleted_at->format('M d, Y') }}</td>
+                                        <td class="report-type-cell">{{ ucfirst($signature->report_type) }}</td>
+                                        <td class="label-cell">{{ $signature->label }}</td>
+                                        <td class="order-cell">{{ $signature->order_by }}</td>
+                                        <td class="date-cell">{{ $signature->deleted_at->format('M d, Y') }}</td>
                                         <td class="action-cell">
                                             <div class="list-icon-function">
-                                                <form action="{{ route('admin.addons.restore', $addon->id) }}"
+                                                <form action="{{ route('admin.signatures.restore', $signature->id) }}"
                                                     method="POST" class="d-inline">
                                                     @csrf
                                                     @method('PATCH')
@@ -139,12 +151,14 @@
                                                         <i class="icon-refresh-ccw"></i>
                                                     </button>
                                                 </form>
-                                                <form action="{{ route('admin.addons.force-delete', $addon->id) }}"
+                                                <form
+                                                    action="{{ route('admin.signatures.force-delete', $signature->id) }}"
                                                     method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="item text-danger force-delete"
-                                                        style="border: none; background: none;" title="Permanently Delete">
+                                                        style="border: none; background: none;"
+                                                        title="Permanently Delete">
                                                         <i class="icon-trash-2"></i>
                                                     </button>
                                                 </form>
@@ -153,7 +167,8 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center empty-state">No archived add-ons found.</td>
+                                        <td colspan="8" class="text-center empty-state">No archived signatures found.
+                                        </td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -161,7 +176,7 @@
                     </div>
                     <div class="divider"></div>
                     <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-                        {{ $addons->appends(request()->query())->links('pagination::bootstrap-5') }}
+                        {{ $signatures->appends(request()->query())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             </div>
@@ -231,23 +246,31 @@
         }
 
         .col-name {
-            width: 25%;
+            width: 20%;
         }
 
-        .col-type {
+        .col-position {
             width: 15%;
         }
 
-        .col-price {
+        .col-category {
+            width: 12%;
+        }
+
+        .col-report-type {
+            width: 13%;
+        }
+
+        .col-label {
             width: 15%;
         }
 
-        .col-show {
-            width: 15%;
+        .col-order {
+            width: 10%;
         }
 
         .col-date {
-            width: 15%;
+            width: 10%;
         }
 
         .col-action {
@@ -542,23 +565,31 @@
             }
 
             .col-name {
-                width: 25%;
+                width: 20%;
             }
 
-            .col-type {
+            .col-position {
                 width: 15%;
             }
 
-            .col-price {
+            .col-category {
+                width: 12%;
+            }
+
+            .col-report-type {
+                width: 13%;
+            }
+
+            .col-label {
                 width: 15%;
             }
 
-            .col-show {
-                width: 15%;
+            .col-order {
+                width: 10%;
             }
 
             .col-date {
-                width: 15%;
+                width: 10%;
             }
 
             .col-action {
@@ -846,7 +877,8 @@
             $('.force-delete').on('click', function(e) {
                 e.preventDefault();
                 var form = $(this).closest('form');
-                var addonName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title').text()
+                var signatureName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title')
+                    .text()
                     .trim();
 
                 Swal.fire({
@@ -857,7 +889,7 @@
                         <div style="text-align: left; line-height: 1.6;">
                             <p style="margin-bottom: 15px;">You are about to permanently delete:</p>
                             <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #dc3545;">
-                                <strong style="color: #dc3545;">${addonName}</strong>
+                                <strong style="color: #dc3545;">${signatureName}</strong>
                             </div>
                             <p style="color: #721c24; background: #f8d7da; padding: 12px; border-radius: 6px; margin: 15px 0;">
                                 <strong>Warning:</strong> This action cannot be undone! All associated data will be permanently removed from the system.
@@ -879,7 +911,7 @@
                         // Show loading state
                         Swal.fire({
                             title: 'Deleting...',
-                            html: 'Please wait while we permanently delete the addon.',
+                            html: 'Please wait while we permanently delete the signature.',
                             allowOutsideClick: false,
                             allowEscapeKey: false,
                             showConfirmButton: false,
@@ -896,21 +928,22 @@
             $('.restore').on('click', function(e) {
                 e.preventDefault();
                 var form = $(this).closest('form');
-                var addonName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title').text()
+                var signatureName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title')
+                    .text()
                     .trim();
 
                 Swal.fire({
                     ...swalConfig,
                     icon: 'question',
-                    title: 'Restore Addon',
+                    title: 'Restore Signature',
                     html: `
                         <div style="text-align: left; line-height: 1.6;">
                             <p style="margin-bottom: 15px;">You are about to restore:</p>
                             <div style="background: #d1edff; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #28a745;">
-                                <strong style="color: #155724;">${addonName}</strong>
+                                <strong style="color: #155724;">${signatureName}</strong>
                             </div>
                             <div style="background: #d4edda; padding: 12px; border-radius: 6px; margin: 15px 0;">
-                                This addon will be restored to active status and will be available for normal operations again.
+                                This signature will be restored to active status and will be available for normal operations again.
                             </div>
                             <p style="margin-top: 20px; color: #666;">Do you want to proceed with the restoration?</p>
                         </div>
@@ -918,7 +951,7 @@
                     showCancelButton: true,
                     confirmButtonColor: '#28a745',
                     cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, Restore Addon',
+                    confirmButtonText: 'Yes, Restore Signature',
                     cancelButtonText: 'Cancel',
                     customClass: {
                         popup: 'swal2-question'
@@ -928,7 +961,7 @@
                         // Show loading state
                         Swal.fire({
                             title: 'Restoring...',
-                            html: 'Please wait while we restore the addon.',
+                            html: 'Please wait while we restore the signature.',
                             allowOutsideClick: false,
                             allowEscapeKey: false,
                             showConfirmButton: false,

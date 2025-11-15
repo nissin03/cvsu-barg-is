@@ -4,13 +4,13 @@
     <div class="container-fluid px-4 py-4">
         <div class="d-flex justify-content-between align-items-center mb-4 mt-5">
             <div>
-                <h1 class="h3 mb-1 text-dark fw-semibold">Billing Statement</h1>
+                <h1 class="h3 mb-1 text-dark fw-semibold">Sales Report</h1>
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0 small text-muted">
                         <li class="breadcrumb-item">
                             <a href="{{ route('admin.index') }}" class="text-decoration-none text-muted">Dashboard</a>
                         </li>
-                        <li class="breadcrumb-item active" aria-current="page">Facilities Billing Statement</li>
+                        <li class="breadcrumb-item active" aria-current="page">Facilities Sales Report</li>
                     </ol>
                 </nav>
             </div>
@@ -19,16 +19,12 @@
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-0 py-3">
                 <div class="d-flex align-items-center">
-                    <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
-                        <i class="fas fa-filter text-primary"></i>
-                    </div>
                     <h6 class="mb-0 fw-semibold text-gray-800">Filter Options</h6>
                 </div>
             </div>
             <div class="card-body p-4">
                 <form method="GET" action="{{ route('admin.facility-statement') }}">
                     <div class="row g-3 align-items-end">
-
                         <div class="col-lg-2 col-md-6">
                             <label for="date_from" class="form-label text-gray-700 fw-medium mb-2">From Date</label>
                             <input type="date" class="form-control form-control-lg border-gray-300" id="date_from"
@@ -69,7 +65,6 @@
                                 </select>
                             </div>
                         </div>
-
                         <div class="col-lg-4 col-md-6 d-flex align-items-end gap-2">
                             <button type="submit" class="btn btn-dark btn-lg flex-fill" style="border-radius: 8px;">
                                 <i class="fas fa-filter me-1"></i>Filter
@@ -88,15 +83,12 @@
             <div class="card-header bg-white border-0 py-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <div class="bg-success bg-opacity-10 rounded-circle p-2 me-3">
-                            <i class="fas fa-file-invoice-dollar text-success"></i>
-                        </div>
                         <div>
-                            <h6 class="mb-0 fw-semibold text-gray-800">Billing Statements</h6>
+                            <h6 class="mb-0 fw-semibold text-gray-800">Sales Reports</h6>
                             <small class="text-muted">Payment records and transactions</small>
                         </div>
                     </div>
-                    <a href="{{ route('admin.facility-statement.download', request()->query()) }}"
+                    <a href="{{ route('admin.facility-statement.download', request()->query()) }} " target="_blank"
                         class="btn btn-outline-dark fs-5 py-3 px-4 w-auto" style="border-radius: 8px;">
                         <i class="fas fa-file-pdf me-1"></i>PDF
                     </a>
@@ -107,22 +99,24 @@
                     <table class="table table-hover mb-0" id="dataTable" width="100%" cellspacing="0">
                         <thead class="table-light">
                             <tr>
-                                <th class="border-0 fw-semibold text-gray-700 py-3 px-4">User</th>
+                                <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Name</th>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Facility</th>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">Status</th>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Total Amount</th>
-                                <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Actions</th>
+                                <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Reservation Dates</th>
                             </tr>
                         </thead>
                         <tbody>
+                            @php
+                                $grandTotal = 0;
+                            @endphp
                             @forelse($payments as $payment)
+                                @php
+                                    $grandTotal += $payment->total_price;
+                                @endphp
                                 <tr class="border-bottom">
                                     <td class="py-4 px-4">
                                         <div class="d-flex align-items-center">
-                                            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3"
-                                                style="width: 40px; height: 40px;">
-                                                <i class="fas fa-user text-primary"></i>
-                                            </div>
                                             <div>
                                                 <div class="fw-medium text-gray-900">{{ $payment->user->name }}</div>
                                             </div>
@@ -151,20 +145,20 @@
                                         </div>
                                     </td>
                                     <td class="py-4 px-4">
-                                        <button class="btn btn-outline-primary btn-sm view-details-btn fw-medium"
-                                            data-user-name="{{ $payment->user->name }}"
-                                            data-user-email="{{ $payment->user->email }}"
-                                            data-user-sex="{{ $payment->user->sex }}"
-                                            data-facility-name="{{ $payment->availability->facility->name }}"
-                                            data-facility-type="{{ $payment->availability->facility->facility_type }}"
-                                            data-room-name="{{ $payment->availability->facilityAttribute->room_name ?? '' }}"
-                                            data-capacity="{{ $payment->availability->facilityAttribute->whole_capacity ?? '' }}"
-                                            data-date-from="{{ $payment->date_from ? \Carbon\Carbon::parse($payment->date_from)->format('M d, Y') : '' }}"
-                                            data-date-to="{{ $payment->date_to ? \Carbon\Carbon::parse($payment->date_to)->format('M d, Y') : '' }}"
-                                            data-total-price="{{ number_format($payment->total_price, 2) }}"
-                                            data-payment-id="{{ $payment->id }}" style="border-radius: 6px;">
-                                            <i class="fas fa-eye me-1"></i> View
-                                        </button>
+                                        @if ($payment->date_from && $payment->date_to)
+                                            @if ($payment->date_from == $payment->date_to)
+                                                <div class="fw-medium text-gray-800">
+                                                    {{ \Carbon\Carbon::parse($payment->date_from)->format('M d, Y') }}
+                                                </div>
+                                            @else
+                                                <div class="fw-medium text-gray-800">
+                                                    {{ \Carbon\Carbon::parse($payment->date_from)->format('M d') }} -
+                                                    {{ \Carbon\Carbon::parse($payment->date_to)->format('M d, Y') }}
+                                                </div>
+                                            @endif
+                                        @else
+                                            <div class="text-muted">No dates</div>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
@@ -183,314 +177,66 @@
                                 </tr>
                             @endforelse
                         </tbody>
+                        @if ($payments->count() > 0)
+                            <tfoot>
+                                <tr class="bg-gray-50">
+                                    <td colspan="3" class="py-3 px-4 text-end fw-semibold text-gray-800">
+                                        Grand Total:
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <div class="fw-bold text-success fs-5">₱{{ number_format($grandTotal, 2) }}</div>
+                                    </td>
+                                    <td class="py-3 px-4"></td>
+                                </tr>
+                            </tfoot>
+                        @endif
                     </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="paymentDetailsModal" tabindex="-1" aria-labelledby="paymentDetailsModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg-responsive">
-            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
-                <div class="modal-header bg-white border-0 py-4 px-4">
-                    <div class="d-flex align-items-center w-100">
-                        <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
-                            <i class="fas fa-receipt text-primary fs-3"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h3 class="modal-title fw-bold text-gray-900 mb-0" id="paymentDetailsModalLabel">Payment
-                                Details</h3>
-                            <small class="text-muted fs-5">Complete transaction information</small>
-                        </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="card border-0 bg-gray-50 mb-4">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-2">
-                                    <i class="fas fa-user text-primary fs-4"></i>
-                                </div>
-                                <h5 class="mb-0 fw-semibold text-gray-800">User Information</h5>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-borderless mb-0 modal-detail-table">
-                                    <tbody>
-                                        <tr>
-                                            <td class="fw-medium text-muted py-2" style="width: 30%;">Full Name:</td>
-                                            <td class="fw-bold text-gray-800 py-2" id="modalUserName"></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-medium text-muted py-2">Email Address:</td>
-                                            <td class="fw-bold text-gray-700 py-2" id="modalUserEmail"></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-medium text-muted py-2">Gender:</td>
-                                            <td class="fw-bold text-gray-700 py-2" id="modalUserSex"></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card border-0 bg-gray-50 mb-4">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="bg-info bg-opacity-10 rounded-circle p-2 me-2">
-                                    <i class="fas fa-building text-info fs-4"></i>
-                                </div>
-                                <h5 class="mb-0 fw-semibold text-gray-800">Facility Details</h5>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-borderless mb-0 modal-detail-table">
-                                    <tbody>
-                                        <tr>
-                                            <td class="fw-medium text-muted py-2" style="width: 30%;">Facility Name:</td>
-                                            <td class="fw-bold text-gray-800 py-2" id="modalFacilityName"></td>
-                                        </tr>
-                                        <tr id="roomDetailsRow">
-                                            <td class="fw-medium text-muted py-2">Room Name:</td>
-                                            <td class="text-gray-700 py-2" id="modalRoomName"></td>
-                                        </tr>
-                                        <tr id="capacityDetailsRow">
-                                            <td class="fw-medium text-muted py-2">Capacity:</td>
-                                            <td class="text-gray-700 py-2" id="modalCapacity"></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-medium text-muted py-2">Reservation Period:</td>
-                                            <td class="fw-bold text-gray-700 py-2">
-                                                <span id="modalDateFrom"></span> to <span id="modalDateTo"></span>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card border-0 bg-gray-50 mb-4" id="addonsSection" style="display: none;">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="bg-warning bg-opacity-10 rounded-circle p-2 me-2">
-                                    <i class="fas fa-plus-circle text-warning fs-4"></i>
-                                </div>
-                                <h5 class="mb-0 fw-semibold text-gray-800">Addons</h5>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-borderless mb-0 modal-detail-table" id="addonsTable">
-                                    <thead>
-                                        <tr>
-                                            <th class="fw-semibold text-muted py-2">Addon Name</th>
-                                            <th class="fw-semibold text-muted py-2">Quantity</th>
-                                            <th class="fw-semibold text-muted py-2">Date Range</th>
-                                            <th class="fw-semibold text-muted py-2">Amount</th>
-                                            <th class="fw-semibold text-muted py-2">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="addonsTableBody">
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card border-0 bg-gray-50">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="bg-success bg-opacity-10 rounded-circle p-2 me-2">
-                                    <i class="fas fa-dollar-sign text-success"></i>
-                                </div>
-                                <h6 class="mb-0 fw-semibold text-gray-800">Pricing Information</h6>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-borderless mb-0 modal-detail-table">
-                                    <tbody>
-                                        <tr>
-                                            <td class="fw-medium text-muted py-2" style="width: 30%;">Total Amount:</td>
-                                            <td class="py-2">
-                                                <h4 class="mb-0 fw-bold text-success">₱<span id="modalTotalPrice"></span>
-                                                </h4>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer bg-gray-50 border-0 pb-4 px-4">
-                    <button type="button" class="btn btn-outline-secondary fw-medium px-4 py-2 fs-5"
-                        data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
                 </div>
             </div>
         </div>
     </div>
 @endsection
 
-@push('scripts')
-    <script>
-        $(document).ready(function() {
-            $(document).on('click', '.view-details-btn', function() {
-                const $button = $(this);
-                const paymentId = $button.data('payment-id');
-
-                $('#modalUserName').text($button.data('user-name') || '');
-                $('#modalUserEmail').text($button.data('user-email') || '');
-                $('#modalUserSex').text($button.data('user-sex') || '');
-                $('#modalFacilityName').text($button.data('facility-name') || '');
-                $('#modalRoomName').text($button.data('room-name') || '');
-                $('#modalCapacity').text($button.data('capacity') || '');
-                $('#modalTotalPrice').text($button.data('total-price') || '');
-                $('#modalDateFrom').text($button.data('date-from') || '');
-                $('#modalDateTo').text($button.data('date-to') || '');
-
-                if ($button.data('room-name')) {
-                    $('#roomDetailsRow').show();
-                } else {
-                    $('#roomDetailsRow').hide();
-                }
-
-                if ($button.data('capacity')) {
-                    $('#capacityDetailsRow').show();
-                } else {
-                    $('#capacityDetailsRow').hide();
-                }
-
-                fetchAddonsData(paymentId);
-
-                $('#paymentDetailsModal').modal('show');
-            });
-
-            function fetchAddonsData(paymentId) {
-                $.ajax({
-                    url: '{{ route('admin.facility-statement.addons') }}',
-                    type: 'GET',
-                    data: {
-                        payment_id: paymentId
-                    },
-                    success: function(response) {
-                        displayAddons(response.addons);
-                    },
-                    error: function(xhr) {
-                        console.error('Error fetching addons data:', xhr);
-                        hideAddonsSection();
-                    }
-                });
-            }
-
-            function displayAddons(addons) {
-                const $addonsTableBody = $('#addonsTableBody');
-                const $addonsSection = $('#addonsSection');
-
-                $addonsTableBody.empty();
-
-                if (addons && addons.length > 0) {
-                    let hasValidAddons = false;
-
-                    addons.forEach(function(addon) {
-                        if (addon.show_in_modal) {
-                            const addonRow = `
-                                <tr>
-                                    <td class="fw-medium text-gray-800 py-2">${addon.name}</td>
-                                    <td class="text-gray-700 py-2">${addon.quantity || '-'}</td>
-                                    <td class="text-gray-700 py-2">${addon.date_range || '-'}</td>
-                                    <td class="fw-bold text-gray-800 py-2">
-                                        ${addon.total_price ? '₱' + addon.total_price : '-'}
-                                    </td>
-                                    <td class="py-2">
-                                        ${addon.show_status ? `<span class="badge ${getStatusBadgeClass(addon.payment_status)}">${addon.payment_status}</span>` : '-'}
-                                    </td>
-                                </tr>
-                            `;
-                            $addonsTableBody.append(addonRow);
-                            hasValidAddons = true;
-                        }
-                    });
-
-                    if (hasValidAddons) {
-                        $addonsSection.show();
-                    } else {
-                        hideAddonsSection();
-                    }
-                } else {
-                    hideAddonsSection();
-                }
-            }
-
-            function hideAddonsSection() {
-                $('#addonsSection').hide();
-            }
-
-            function getStatusBadgeClass(status) {
-                const statusClasses = {
-                    'paid': 'badge-completed',
-                    'unpaid': 'badge-pending',
-                    'forfeit': 'badge-canceled',
-                    'refunded': 'badge-secondary',
-                    'downpayment': 'badge-reserved'
-                };
-                return statusClasses[status] || 'badge-secondary';
-            }
-        });
-    </script>
-@endpush
-
 @push('styles')
     <style>
-        :root {
-            --bs-gray-50: #f8fafc;
-            --bs-gray-100: #f1f5f9;
-            --bs-gray-300: #cbd5e1;
-            --bs-gray-400: #94a3b8;
-            --bs-gray-500: #64748b;
-            --bs-gray-600: #475569;
-            --bs-gray-700: #334155;
-            --bs-gray-800: #1e293b;
-            --bs-gray-900: #0f172a;
-        }
-
         .text-gray-900 {
-            color: var(--bs-gray-900) !important;
+            color: #0f172a !important;
         }
 
         .text-gray-800 {
-            color: var(--bs-gray-800) !important;
+            color: #1e293b !important;
         }
 
         .text-gray-700 {
-            color: var(--bs-gray-700) !important;
+            color: #334155 !important;
         }
 
         .text-gray-600 {
-            color: var(--bs-gray-600) !important;
+            color: #475569 !important;
         }
 
         .text-gray-500 {
-            color: var(--bs-gray-500) !important;
+            color: #64748b !important;
         }
 
         .text-gray-400 {
-            color: var(--bs-gray-400) !important;
+            color: #94a3b8 !important;
         }
 
         .bg-gray-50 {
-            background-color: var(--bs-gray-50) !important;
+            background-color: #f8fafc !important;
         }
 
         .bg-gray-100 {
-            background-color: var(--bs-gray-100) !important;
+            background-color: #f1f5f9 !important;
         }
 
         .border-gray-300 {
-            border-color: var(--bs-gray-300) !important;
+            border-color: #cbd5e1 !important;
         }
 
         .card {
             border-radius: 12px !important;
-            transition: all 0.2s ease-in-out;
         }
 
         .card-header {
@@ -501,8 +247,8 @@
         .form-select {
             font-size: 0.95rem;
             padding: 0.75rem 1rem;
-            transition: all 0.2s ease-in-out;
-            border: 1px solid var(--bs-gray-300);
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
         }
 
         .form-control:focus,
@@ -519,7 +265,6 @@
         .btn {
             font-size: 0.9rem;
             padding: 0.5rem 1.25rem;
-            transition: all 0.2s ease-in-out;
             border-radius: 8px !important;
         }
 
@@ -528,7 +273,7 @@
         }
 
         .table-hover tbody tr:hover {
-            background-color: var(--bs-gray-50);
+            background-color: #f8fafc;
         }
 
         .table th {
@@ -545,7 +290,7 @@
         }
 
         .badge {
-            font-size: 1rem;
+            font-size: 0.95rem;
             padding: 0.4em 0.8em;
             border-radius: 6px;
             font-weight: 600;
@@ -585,62 +330,6 @@
             color: white;
         }
 
-        .modal-lg-responsive {
-            max-width: min(90vw, 800px);
-            margin: 1rem auto;
-        }
-
-        .modal-dialog-centered {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: calc(100vh - 2rem);
-        }
-
-        .modal-content {
-            max-height: calc(100vh - 2rem);
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            padding: 1.5rem 1.5rem 1rem 1.5rem;
-        }
-
-        .modal-body p {
-            margin-bottom: 0.5rem;
-            line-height: 1.5;
-        }
-
-        .bg-primary.bg-opacity-10 {
-            background-color: rgba(13, 110, 253, 0.1) !important;
-        }
-
-        .bg-success.bg-opacity-10 {
-            background-color: rgba(25, 135, 84, 0.1) !important;
-        }
-
-        .bg-info.bg-opacity-10 {
-            background-color: rgba(13, 202, 240, 0.1) !important;
-        }
-
-        .bg-warning.bg-opacity-10 {
-            background-color: rgba(255, 193, 7, 0.1) !important;
-        }
-
-        @media (max-width: 1200px) {
-            .modal-lg-responsive {
-                max-width: 95vw;
-            }
-
-            .modal-body p {
-                font-size: 1rem !important;
-            }
-
-            .modal-title {
-                font-size: 1.25rem !important;
-            }
-        }
-
         @media (max-width: 768px) {
             .container-fluid {
                 padding-left: 1rem;
@@ -659,67 +348,6 @@
             .table-responsive {
                 font-size: 0.875rem;
             }
-
-            .modal-lg-responsive {
-                max-width: 98vw;
-                margin: 0.5rem;
-            }
-
-            .modal-dialog-centered {
-                min-height: calc(100vh - 1rem);
-            }
-
-            .modal-content {
-                max-height: calc(100vh - 1rem);
-            }
-
-            .modal-body {
-                padding: 1rem !important;
-            }
-
-            .modal-body .card-body {
-                padding: 1rem !important;
-            }
-
-            .modal-body p.fs-3 {
-                font-size: 1rem !important;
-            }
-
-            .modal-body p.fs-4 {
-                font-size: 0.9rem !important;
-            }
-
-            .modal-header {
-                padding: 1rem;
-            }
-
-            .modal-footer {
-                padding: 1rem;
-            }
-
-            .row.g-4 {
-                gap: 1rem !important;
-            }
-        }
-
-        @media (max-width: 480px) {
-
-            .modal-body .col-md-4,
-            .modal-body .col-md-6 {
-                margin-bottom: 1rem;
-            }
-
-            .modal-body p.fs-3 {
-                font-size: 0.9rem !important;
-            }
-
-            .modal-body h5 {
-                font-size: 1rem !important;
-            }
-
-            .modal-title {
-                font-size: 1.1rem !important;
-            }
         }
 
         @media print {
@@ -730,71 +358,6 @@
 
             .btn {
                 display: none !important;
-            }
-        }
-
-        .modal-detail-table {
-            font-size: 0.95rem;
-        }
-
-        .modal-detail-table td {
-            border: none !important;
-            padding: 0.75rem 0.5rem !important;
-            vertical-align: middle;
-        }
-
-        .modal-detail-table tr {
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .modal-detail-table tr:last-child {
-            border-bottom: none;
-        }
-
-        .modal-detail-table td:first-child {
-            padding-left: 0 !important;
-        }
-
-        .modal-detail-table td:last-child {
-            padding-right: 0 !important;
-        }
-
-        @media (max-width: 768px) {
-            .modal-detail-table {
-                font-size: 0.875rem;
-            }
-
-            .modal-detail-table td {
-                padding: 0.5rem 0.25rem !important;
-            }
-
-            .modal-detail-table td:first-child {
-                width: 35% !important;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .modal-detail-table td {
-                display: block;
-                width: 100% !important;
-                padding: 0.25rem 0 !important;
-            }
-
-            .modal-detail-table td:first-child {
-                font-weight: 600 !important;
-                margin-bottom: 0.25rem;
-                padding-bottom: 0 !important;
-            }
-
-            .modal-detail-table td:last-child {
-                padding-top: 0 !important;
-                margin-bottom: 1rem;
-            }
-
-            .modal-detail-table tr {
-                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-                padding-bottom: 0.5rem;
-                margin-bottom: 0.5rem;
             }
         }
     </style>
