@@ -32,26 +32,25 @@
                     <div class="wg-filter flex-grow">
                         <form class="form-search" method="GET" action="{{ route('admin.colleges.archive') }}">
                             <fieldset class="name">
-                                <input type="text" placeholder="Search archived colleges..." class="search-input" name="search"
-                                    tabindex="2" value="{{ request('search') }}" aria-required="true">
+                                <input type="text" placeholder="Search archived colleges..." class="search-input"
+                                    name="search" tabindex="2" value="{{ request('search') }}" aria-required="true">
                             </fieldset>
                             <button type="submit" style="display: none"></button>
                         </form>
                     </div>
 
                     <a class="tf-button w-auto back-button" href="{{ route('admin.colleges.index') }}">
-                        <i class="icon-arrow-left"></i> 
+                        <i class="icon-arrow-left"></i>
                         <span class="button-text">Back to Colleges</span>
                     </a>
                 </div>
-                
+
                 <div class="table-all-user g-table">
                     <div class="table-responsive">
                         @if (Session::has('error'))
                             <p class="alert alert-danger">{{ Session::get('error') }}</p>
                         @endif
-                        
-                        <!-- Mobile Card View -->
+
                         <div class="mobile-cards d-block d-md-none">
                             @forelse ($colleges as $college)
                                 <div class="mobile-card">
@@ -64,17 +63,21 @@
                                             <strong>Deleted:</strong> {{ $college->deleted_at->format('M d, Y') }}
                                         </p>
                                         <div class="mobile-card-actions">
-                                            <form action="{{ route('admin.colleges.restore', $college->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.colleges.restore', $college->id) }}"
+                                                method="POST" class="d-inline">
                                                 @csrf
                                                 @method('PATCH')
-                                                <button type="submit" class="btn btn-sm btn-success restore mobile-btn" title="Restore">
+                                                <button type="submit" class="btn btn-sm btn-success restore mobile-btn"
+                                                    title="Restore">
                                                     <i class="icon-refresh-ccw"></i> Restore
                                                 </button>
                                             </form>
-                                            <form action="{{ route('admin.colleges.force-delete', $college->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.colleges.force-delete', $college->id) }}"
+                                                method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger force-delete mobile-btn" title="Permanently Delete">
+                                                <button type="submit" class="btn btn-sm btn-danger force-delete mobile-btn"
+                                                    title="Permanently Delete">
                                                     <i class="icon-trash-2"></i> Delete
                                                 </button>
                                             </form>
@@ -88,7 +91,6 @@
                             @endforelse
                         </div>
 
-                        <!-- Desktop Table View -->
                         <table class="table table-striped table-bordered d-none d-md-table">
                             <thead class="thead-light">
                                 <tr>
@@ -112,17 +114,21 @@
                                         <td class="date-cell">{{ $college->deleted_at->format('M d, Y') }}</td>
                                         <td class="action-cell">
                                             <div class="list-icon-function">
-                                                <form action="{{ route('admin.colleges.restore', $college->id) }}" method="POST" class="d-inline">
+                                                <form action="{{ route('admin.colleges.restore', $college->id) }}"
+                                                    method="POST" class="d-inline">
                                                     @csrf
                                                     @method('PATCH')
-                                                    <button type="submit" class="item restore" style="border: none; background: none;" title="Restore">
+                                                    <button type="submit" class="item restore"
+                                                        style="border: none; background: none;" title="Restore">
                                                         <i class="icon-refresh-ccw"></i>
                                                     </button>
                                                 </form>
-                                                <form action="{{ route('admin.colleges.force-delete', $college->id) }}" method="POST" class="d-inline">
+                                                <form action="{{ route('admin.colleges.force-delete', $college->id) }}"
+                                                    method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="item text-danger force-delete" style="border: none; background: none;" title="Permanently Delete">
+                                                    <button type="submit" class="item text-danger force-delete"
+                                                        style="border: none; background: none;" title="Permanently Delete">
                                                         <i class="icon-trash-2"></i>
                                                     </button>
                                                 </form>
@@ -149,25 +155,23 @@
 
 @push('styles')
     <style>
-        /* Base Responsive Styles */
         .main-content-inner {
             padding: 15px;
         }
-        
+
         .page-title {
             font-size: 1.5rem;
             margin: 0;
         }
-        
+
         .gap20 {
             gap: 1rem;
         }
-        
+
         .mb-27 {
             margin-bottom: 1.5rem;
         }
 
-        /* Search and Button Styles */
         .search-input {
             width: 100%;
             min-width: 200px;
@@ -176,7 +180,7 @@
             border-radius: 4px;
             font-size: 14px;
         }
-        
+
         .back-button {
             white-space: nowrap;
             padding: 8px 16px;
@@ -185,7 +189,6 @@
             gap: 8px;
         }
 
-        /* Badge Styles */
         .badge {
             display: inline-block;
             padding: 4px 8px;
@@ -196,36 +199,46 @@
             line-height: 1.2;
             vertical-align: middle;
         }
-        
+
         .badge-secondary {
             background-color: #6c757d;
         }
 
-        /* Desktop Table Styles */
         .table {
             table-layout: fixed;
             width: 100%;
             margin-bottom: 0;
         }
-        
-        .col-name { width: 40%; }
-        .col-code { width: 20%; }
-        .col-date { width: 20%; }
-        .col-action { width: 20%; }
-        
+
+        .col-name {
+            width: 40%;
+        }
+
+        .col-code {
+            width: 20%;
+        }
+
+        .col-date {
+            width: 20%;
+        }
+
+        .col-action {
+            width: 20%;
+        }
+
         .name {
             max-width: 100%;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
         }
-        
+
         .list-icon-function {
             display: flex;
             gap: 8px;
             justify-content: center;
         }
-        
+
         .list-icon-function .item {
             width: 32px;
             height: 32px;
@@ -236,40 +249,39 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .list-icon-function .restore {
             background-color: rgba(40, 167, 69, 0.1);
             color: #28a745;
         }
-        
+
         .list-icon-function .restore:hover {
             background-color: #28a745;
             color: white;
         }
-        
+
         .list-icon-function .force-delete {
             background-color: rgba(220, 53, 69, 0.1);
             color: #dc3545;
         }
-        
+
         .list-icon-function .force-delete:hover {
             background-color: #dc3545;
             color: white;
         }
 
-        /* Mobile Card Styles */
         .mobile-cards {
             display: none;
         }
-        
+
         .mobile-card {
             background: #fff;
             border: 1px solid #dee2e6;
             border-radius: 8px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
+
         .mobile-card-header {
             padding: 15px;
             border-bottom: 1px solid #dee2e6;
@@ -279,7 +291,7 @@
             flex-wrap: wrap;
             gap: 10px;
         }
-        
+
         .mobile-card-title {
             margin: 0;
             font-size: 16px;
@@ -289,23 +301,23 @@
             min-width: 0;
             word-wrap: break-word;
         }
-        
+
         .mobile-card-body {
             padding: 15px;
         }
-        
+
         .mobile-card-date {
             margin: 0 0 15px 0;
             font-size: 14px;
             color: #666;
         }
-        
+
         .mobile-card-actions {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
         }
-        
+
         .mobile-btn {
             display: inline-flex;
             align-items: center;
@@ -318,7 +330,6 @@
             transition: all 0.3s ease;
         }
 
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -326,14 +337,13 @@
             font-style: italic;
         }
 
-        /* SweetAlert2 Custom Styles - Clean Version */
         .swal2-popup {
             width: 90vw !important;
             max-width: 600px !important;
             min-height: 350px !important;
             padding: 35px !important;
             border-radius: 16px !important;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.25) !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25) !important;
             backdrop-filter: blur(10px) !important;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.95)) !important;
         }
@@ -398,7 +408,6 @@
             transform: translateY(-1px) !important;
         }
 
-        /* Custom Icons using ::before pseudo-element */
         .swal2-popup::before {
             content: '' !important;
             display: block !important;
@@ -414,7 +423,6 @@
             animation: swalIconPulse 1s ease-in-out !important;
         }
 
-        /* Success Icon */
         .swal2-popup.swal2-success::before {
             content: "✓" !important;
             color: #22c55e !important;
@@ -422,7 +430,6 @@
             background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
         }
 
-        /* Error Icon */
         .swal2-popup.swal2-error::before {
             content: "✕" !important;
             color: #ef4444 !important;
@@ -430,7 +437,6 @@
             background: linear-gradient(135deg, #fef2f2, #fecaca) !important;
         }
 
-        /* Info Icon */
         .swal2-popup.swal2-info::before {
             content: "i" !important;
             color: #3b82f6 !important;
@@ -440,7 +446,6 @@
             font-size: 36px !important;
         }
 
-        /* Question Icon */
         .swal2-popup.swal2-question::before {
             content: "?" !important;
             color: #8b5cf6 !important;
@@ -449,7 +454,6 @@
             font-size: 36px !important;
         }
 
-        /* Warning Icon */
         .swal2-popup.swal2-warning::before {
             content: "!" !important;
             color: #f59e0b !important;
@@ -458,89 +462,97 @@
             font-size: 36px !important;
         }
 
-        /* Hide default SweetAlert2 icons */
         .swal2-icon {
             display: none !important;
         }
 
-        /* Animation for icons */
         @keyframes swalIconPulse {
             0% {
                 transform: scale(0.8);
                 opacity: 0.5;
             }
+
             50% {
                 transform: scale(1.05);
             }
+
             100% {
                 transform: scale(1);
                 opacity: 1;
             }
         }
 
-        /* Tablet Styles */
         @media (max-width: 991.98px) {
             .main-content-inner {
                 padding: 10px;
             }
-            
+
             .flex-wrap {
                 flex-direction: column;
                 align-items: flex-start !important;
             }
-            
+
             .wg-filter {
                 width: 100%;
                 margin-bottom: 15px;
             }
-            
+
             .back-button {
                 align-self: flex-end;
             }
-            
-            .col-name { width: 35%; }
-            .col-code { width: 15%; }
-            .col-date { width: 25%; }
-            .col-action { width: 25%; }
+
+            .col-name {
+                width: 35%;
+            }
+
+            .col-code {
+                width: 15%;
+            }
+
+            .col-date {
+                width: 25%;
+            }
+
+            .col-action {
+                width: 25%;
+            }
         }
 
-        /* Mobile Styles */
         @media (max-width: 767.98px) {
             .page-title {
                 font-size: 1.25rem;
             }
-            
+
             .breadcrumbs {
                 font-size: 12px;
             }
-            
+
             .button-text {
                 display: none;
             }
-            
+
             .mobile-cards {
                 display: block !important;
             }
-            
+
             .table {
                 display: none !important;
             }
-            
+
             .search-input {
                 min-width: unset;
             }
-            
+
             .mobile-card-actions {
                 justify-content: space-between;
             }
-            
+
             .mobile-btn {
                 flex: 1;
                 justify-content: center;
                 min-width: 0;
             }
-            
-            /* Mobile SweetAlert2 */
+
             .swal2-popup {
                 width: 95vw !important;
                 max-width: none !important;
@@ -548,30 +560,30 @@
                 padding: 25px !important;
                 min-height: 300px !important;
             }
-            
+
             .swal2-title {
                 font-size: 20px !important;
                 margin-bottom: 20px !important;
             }
-            
+
             .swal2-content {
                 font-size: 14px !important;
                 margin: 20px 0 25px 0 !important;
             }
-            
+
             .swal2-actions {
                 flex-direction: column !important;
                 width: 100% !important;
                 margin-top: 25px !important;
                 gap: 10px !important;
             }
-            
+
             .swal2-confirm,
             .swal2-cancel {
                 width: 100% !important;
                 margin: 0 !important;
             }
-            
+
             .swal2-popup::before {
                 width: 70px !important;
                 height: 70px !important;
@@ -579,7 +591,7 @@
                 font-size: 28px !important;
                 margin: 15px auto 25px auto !important;
             }
-            
+
             .swal2-popup.swal2-info::before,
             .swal2-popup.swal2-question::before,
             .swal2-popup.swal2-warning::before {
@@ -587,55 +599,54 @@
             }
         }
 
-        /* Small Mobile Styles */
         @media (max-width: 575.98px) {
             .main-content-inner {
                 padding: 8px;
             }
-            
+
             .mobile-card {
                 margin-bottom: 10px;
             }
-            
+
             .mobile-card-header,
             .mobile-card-body {
                 padding: 12px;
             }
-            
+
             .mobile-card-title {
                 font-size: 14px;
             }
-            
+
             .mobile-card-date {
                 font-size: 12px;
                 margin-bottom: 10px;
             }
-            
+
             .mobile-btn {
                 font-size: 11px;
                 padding: 5px 8px;
             }
-            
+
             .swal2-popup {
                 padding: 20px !important;
                 min-height: 280px !important;
             }
-            
+
             .swal2-title {
                 font-size: 18px !important;
             }
-            
+
             .swal2-content {
                 font-size: 13px !important;
             }
-            
+
             .swal2-popup::before {
                 width: 60px !important;
                 height: 60px !important;
                 line-height: 60px !important;
                 font-size: 24px !important;
             }
-            
+
             .swal2-popup.swal2-info::before,
             .swal2-popup.swal2-question::before,
             .swal2-popup.swal2-warning::before {
@@ -648,22 +659,22 @@
                 padding: 15px !important;
                 min-height: 260px !important;
             }
-            
+
             .swal2-title {
                 font-size: 16px !important;
             }
-            
+
             .swal2-content {
                 font-size: 12px !important;
             }
-            
+
             .swal2-popup::before {
                 width: 55px !important;
                 height: 55px !important;
                 line-height: 55px !important;
                 font-size: 20px !important;
             }
-            
+
             .swal2-popup.swal2-info::before,
             .swal2-popup.swal2-question::before,
             .swal2-popup.swal2-warning::before {
@@ -671,41 +682,40 @@
             }
         }
 
-        /* Extra Large Screens */
         @media (min-width: 1400px) {
             .main-content-inner {
                 padding: 25px;
             }
-            
+
             .page-title {
                 font-size: 1.75rem;
             }
-            
+
             .search-input {
                 font-size: 16px;
                 padding: 10px 15px;
             }
-            
+
             .swal2-popup {
                 max-width: 700px !important;
                 min-height: 400px !important;
                 padding: 45px !important;
             }
-            
+
             .swal2-title {
                 font-size: 28px !important;
                 margin-bottom: 30px !important;
             }
-            
+
             .swal2-content {
                 font-size: 18px !important;
                 margin: 30px 0 40px 0 !important;
             }
-            
+
             .swal2-actions {
                 margin-top: 40px !important;
             }
-            
+
             .swal2-popup::before {
                 width: 90px !important;
                 height: 90px !important;
@@ -713,7 +723,7 @@
                 font-size: 38px !important;
                 margin: 25px auto 35px auto !important;
             }
-            
+
             .swal2-popup.swal2-info::before,
             .swal2-popup.swal2-question::before,
             .swal2-popup.swal2-warning::before {
@@ -721,19 +731,19 @@
             }
         }
 
-        /* Print Styles */
         @media print {
+
             .back-button,
             .wg-filter,
             .list-icon-function,
             .mobile-card-actions {
                 display: none !important;
             }
-            
+
             .table {
                 display: table !important;
             }
-            
+
             .mobile-cards {
                 display: none !important;
             }
@@ -744,7 +754,6 @@
 @push('scripts')
     <script>
         $(function() {
-            // Custom SweetAlert2 configuration
             const swalConfig = {
                 customClass: {
                     popup: 'custom-swal-popup',
@@ -774,17 +783,17 @@
                     timer: 5000,
                     timerProgressBar: true,
                     customClass: {
-                        popup: 'swal2-success' 
+                        popup: 'swal2-success'
                     }
                 });
             @endif
 
-            // Force delete confirmation
             $('.force-delete').on('click', function(e) {
                 e.preventDefault();
                 var form = $(this).closest('form');
-                var collegeName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title').text().trim();
-                
+                var collegeName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title')
+                    .text().trim();
+
                 Swal.fire({
                     ...swalConfig,
                     icon: 'warning',
@@ -808,11 +817,10 @@
                     cancelButtonText: 'Cancel',
                     focusCancel: true,
                     customClass: {
-                        popup: 'swal2-warning' 
+                        popup: 'swal2-warning'
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Show loading state
                         Swal.fire({
                             title: 'Deleting...',
                             html: 'Please wait while we permanently delete the college.',
@@ -827,13 +835,13 @@
                     }
                 });
             });
-            
-            // Restore confirmation
+
             $('.restore').on('click', function(e) {
                 e.preventDefault();
                 var form = $(this).closest('form');
-                var collegeName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title').text().trim();
-                
+                var collegeName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title')
+                    .text().trim();
+
                 Swal.fire({
                     ...swalConfig,
                     icon: 'question',
@@ -856,11 +864,10 @@
                     confirmButtonText: 'Yes, Restore College',
                     cancelButtonText: 'Cancel',
                     customClass: {
-                                popup: 'swal2-question' 
-                            }
+                        popup: 'swal2-question'
+                    }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Show loading state
                         Swal.fire({
                             title: 'Restoring...',
                             html: 'Please wait while we restore the college.',
@@ -876,7 +883,6 @@
                 });
             });
 
-            // Auto-submit search on input with debounce
             let searchTimeout;
             $('input[name="search"]').on('input', function() {
                 clearTimeout(searchTimeout);
@@ -884,14 +890,6 @@
                 searchTimeout = setTimeout(() => {
                     form.submit();
                 }, 500);
-            });
-
-            // Handle responsive table on window resize
-            $(window).on('resize', function() {
-                // Force redraw to handle any layout issues
-                setTimeout(() => {
-                    $(window).trigger('resize');
-                }, 100);
             });
         });
     </script>

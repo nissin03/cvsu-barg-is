@@ -41,54 +41,40 @@ class AdminCollegeController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
         }
 
-        try {
-            $colleges = [];
-            $collegeNames = [];
+        $colleges = [];
+        $collegeNames = [];
 
-            foreach ($request->colleges as $collegeData) {
-                // Check if college already exists (additional safety check)
-                if (College::where('name', $collegeData['name'])->exists()) {
-                    continue; // Skip this college
-                }
-
-                $college = College::create([
-                    'name' => $collegeData['name'],
-                    'code' => strtoupper($collegeData['code'])
-                ]);
-
-                $colleges[] = $college;
-                $collegeNames[] = $collegeData['name'];
+        foreach ($request->colleges as $collegeData) {
+            if (College::where('name', $collegeData['name'])->exists()) {
+                continue;
             }
 
-            if (empty($colleges)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'All colleges you tried to add already exist in the database.'
-                ], 422);
-            }
-
-            $message = count($collegeNames) > 1
-                ? 'Colleges added successfully: ' . implode(', ', $collegeNames)
-                : 'College added successfully!';
-
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                'colleges' => $colleges
+            $college = College::create([
+                'name' => $collegeData['name'],
+                'code' => strtoupper($collegeData['code'])
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error saving colleges: ' . $e->getMessage()
-            ], 500);
+
+            $colleges[] = $college;
+            $collegeNames[] = $collegeData['name'];
         }
+
+        if (empty($colleges)) {
+            return redirect()->back()
+                ->with('error', 'All colleges you tried to add already exist in the database.')
+                ->withInput();
+        }
+
+        $message = count($collegeNames) > 1
+            ? 'Colleges added successfully: ' . implode(', ', $collegeNames)
+            : 'College added successfully!';
+
+        return redirect()->route('admin.colleges.index')
+            ->with('success', $message);
     }
 
     public function edit($id)
@@ -110,14 +96,6 @@ class AdminCollegeController extends Controller
         ]);
 
         if ($validator->fails()) {
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput();
@@ -129,24 +107,9 @@ class AdminCollegeController extends Controller
                 'code' => strtoupper($request->code)
             ]);
 
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'College updated successfully!',
-                    'college' => $college
-                ]);
-            }
-
             return redirect()->route('admin.colleges.index')
                 ->with('success', 'College updated successfully!');
         } catch (\Exception $e) {
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error updating college: ' . $e->getMessage()
-                ], 500);
-            }
-
             return redirect()->back()
                 ->with('error', 'Error updating college: ' . $e->getMessage())
                 ->withInput();
