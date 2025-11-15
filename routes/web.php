@@ -12,11 +12,13 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AddonController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\PrintController;
 use App\Http\Controllers\AddonsController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\PasswordController;
+use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\AdminCourseController;
 use App\Http\Controllers\DataPrivacyController;
@@ -316,7 +318,7 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/admin/facility-statement/addons', [ReportController::class, 'getAddonsData'])
             ->name('admin.facility-statement.addons');
 
-        Route::get('/report-statements/download', [PdfController::class, 'downloadBillingStatements'])->name('admin.report-statements.download');
+        Route::post('/report-statements/download', [PdfController::class, 'downloadBillingStatements'])->name('admin.report-statements.download');
         Route::post('/downloadPdf', [PdfController::class, 'downloadPdf'])->name('admin.downloadPdf');
         Route::post('/report-user/pdf', [PdfController::class, 'downloadUserReportPdf'])->name('admin.report-user.pdf');
         Route::get('/report-inventory/pdf', [PdfController::class, 'downloadInventoryReportPdf'])->name('admin.report-inventory.pdf');
@@ -351,4 +353,31 @@ Route::middleware(['auth', AuthAdmin::class])
         });
 
         Route::get('/report/facilities', [AdminController::class, 'generateFacilitespayment'])->name('admin.report.facilities');
+
+
+        // Print Data
+        // Products
+        Route::get('/admin/reports/print/product', [PrintController::class, 'printProduct'])->name('admin.report-product.print');
+
+        // signature
+        // In your web.php routes file
+        Route::resource('signatures', SignatureController::class)->names([
+            'index' => 'admin.signatures.index',
+            'create' => 'admin.signatures.create',
+            'store' => 'admin.signatures.store',
+            'show' => 'admin.signatures.show',
+            'edit' => 'admin.signatures.edit',
+            'update' => 'admin.signatures.update',
+            'destroy' => 'admin.signatures.destroy'
+        ]);
+
+        // Archive routes for signatures
+        Route::get('/admin/signatures/archive', [SignatureController::class, 'archive'])
+            ->name('admin.signatures.archive');
+        Route::patch('/admin/signatures/{id}/restore', [SignatureController::class, 'restore'])
+            ->name('admin.signatures.restore');
+        Route::delete('/admin/signatures/{id}/force-delete', [SignatureController::class, 'forceDelete'])
+            ->name('admin.signatures.force-delete');
+
+        //  Route::get('signature', [SignatureController::class, 'index'])->name('admin.signatures.index');
     });

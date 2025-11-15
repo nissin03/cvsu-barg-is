@@ -24,17 +24,14 @@ class DatabaseSeeder extends Seeder
             ContactSeeder::class,
             CategorySeeder::class,
             ProductSeeder::class,
-            // OrderSeeder::class,
+            OrderSeeder::class,
             SlidesSeeder::class,
-            // FacilityAndRelationsSeeder::class,
-            // FacilitySeeder::class,
-            // FacilityReportSeeder::class,
 
-            // ReservationSeeder::class,
-
-            // AddonSeeder::class,
+            FacilitySeeder::class,
+            ReservationSeeder::class,
             AddonSeeder::class,
             DiscountSeeder::class,
+            SignatureSeeder::class,
 
 
 

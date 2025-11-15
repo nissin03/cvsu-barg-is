@@ -177,18 +177,18 @@
     <div class="main-content-inner">
         <div class="main-content-wrap">
             <div class="flex items-center flex-wrap justify-between gap20 mb-27">
-                <h3>Edit Addon</h3>
+                <h3>Edit Add-on</h3>
                 <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
                     <li><a href="{{ route('admin.index') }}">
                             <div class="text-tiny">Dashboard</div>
                         </a></li>
                     <li><i class="icon-chevron-right"></i></li>
                     <li><a href="{{ route('admin.addons') }}">
-                            <div class="text-tiny">Addons</div>
+                            <div class="text-tiny">Add-ons</div>
                         </a></li>
                     <li><i class="icon-chevron-right"></i></li>
                     <li>
-                        <div class="text-tiny">Edit Addon</div>
+                        <div class="text-tiny">Edit Add-on</div>
                     </li>
                 </ul>
             </div>
@@ -199,7 +199,7 @@
                     @method('PUT')
 
                     <div class="field-group">
-                        <label class="field-label">Addon Name <span class="required-asterisk">*</span></label>
+                        <label class="field-label">Add-on Name <span class="required-asterisk">*</span></label>
                         <input class="field-input" type="text" placeholder="Enter addon name" name="name"
                             value="{{ old('name', $addon->name) }}" required>
                         @error('name')
@@ -344,7 +344,7 @@
 
                     <div class="form-actions">
                         <a href="{{ route('admin.addons') }}" class="cancel-btn">Cancel</a>
-                        <button type="submit" class="update-btn">Update Addon</button>
+                        <button type="submit" class="update-btn">Update Add-on</button>
                     </div>
                 </form>
             </div>

@@ -43,7 +43,7 @@
                         <table class="table table-striped table-bordered">
                             <thead class="thead-ligth">
                                 <tr>
-                                    <th scope="col" style="width: 5%;">#</th>
+                                    {{-- <th scope="col" style="width: 5%;">#</th> --}}
                                     <th scope="col" style="width: 20%;">Name</th>
                                     <th scope="col" style="width: 10%;">Action</th>
                                 </tr>
@@ -53,7 +53,7 @@
                                     <!-- Parent Category -->
                                     <tr data-toggle="collapse" data-target=".children-of-{{ $category->id }}"
                                         class="clickable-row">
-                                        <td style="width: 7%;">{{ $category->id }}</td>
+                                        {{-- <td style="width: 7%;">{{ $category->id }}</td> --}}
                                         <td class="pname" style="width: 100%">
                                             <div class="image">
                                                 <img src="{{ asset('uploads/categories') }}/{{ $category->image }}"

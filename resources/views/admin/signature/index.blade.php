@@ -1,9 +1,10 @@
 @extends('layouts.admin')
+
 @section('content')
     <div class="main-content-inner">
         <div class="main-content-wrap">
             <div class="flex items-center flex-wrap justify-between gap20 mb-27">
-                <h3 class="page-title">Add-ons</h3>
+                <h3 class="page-title">Signatures</h3>
                 <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
                     <li>
                         <a href="{{ route('admin.index') }}">
@@ -14,7 +15,7 @@
                         <i class="icon-chevron-right"></i>
                     </li>
                     <li>
-                        <div class="text-tiny">Add-ons</div>
+                        <div class="text-tiny">Signatures</div>
                     </li>
                 </ul>
             </div>
@@ -22,9 +23,9 @@
             <div class="wg-box">
                 <div class="flex items-center justify-between gap10 flex-wrap mb-3">
                     <div class="wg-filter flex-grow">
-                        <form class="form-search" method="GET" action="{{ route('admin.addons') }}">
+                        <form class="form-search" method="GET" action="#">
                             <fieldset class="name">
-                                <input type="text" placeholder="Search addons..." class="search-input" name="search"
+                                <input type="text" placeholder="Search signatures..." class="search-input" name="search"
                                     tabindex="2" value="{{ request('search') }}" aria-required="true">
                             </fieldset>
                             <button type="submit" style="display: none"></button>
@@ -32,55 +33,45 @@
                     </div>
 
                     <div class="action-buttons">
-                        <a class="tf-button w-auto" href="{{ route('admin.addons.create') }}"><i class="icon-plus"></i>Add
-                            New Add-on</a>
-                        <a class="tf-button w-auto" href="{{ route('admin.addons.archive') }}">
-                            <i class="icon-archive"></i> Archived Add-ons
+                        <a class="tf-button w-auto" href="{{ route('admin.signatures.create') }}">
+                            <i class="icon-plus"></i>Add New Signature
+                        </a>
+                        <a class="tf-button w-auto" href="{{ route('admin.signatures.archive') }}">
+                            <i class="icon-archive"></i> Archived Signatures
                         </a>
                     </div>
-
                 </div>
 
                 <div class="table-all-user g-table">
                     <div class="table-responsive">
-                        <!-- Mobile Card View -->
                         <div class="mobile-cards d-block d-md-none">
-                            @forelse ($addons as $addon)
+                            @forelse ($signatures as $signature)
                                 <div class="mobile-card">
                                     <div class="mobile-card-header">
-                                        <h5 class="mobile-card-title">{{ $addon->name }}</h5>
+                                        <h5 class="mobile-card-title">{{ $signature->name }}</h5>
                                         <span
-                                            class="badge {{ $addon->is_available ? 'badge-success' : 'badge-secondary' }}">
-                                            {{ $addon->is_available ? 'Available' : 'Unavailable' }}
+                                            class="badge {{ $signature->is_active ? 'badge-success' : 'badge-secondary' }}">
+                                            {{ $signature->is_active ? 'Active' : 'Inactive' }}
                                         </span>
                                     </div>
                                     <div class="mobile-card-body">
                                         <div class="mobile-card-details">
-                                            <p><strong>Price:</strong> ₱{{ number_format($addon->base_price, 2) }}
-                                                ({{ ucfirst(str_replace('_', ' ', $addon->price_type)) }})
-                                            </p>
-                                            <p><strong>Type:</strong>
-                                                {{ $addon->is_based_on_quantity ? 'Quantity-based' : 'Flat rate' }}</p>
-                                            <p><strong>Refundable:</strong> {{ $addon->is_refundable ? 'Yes' : 'No' }}</p>
-                                            <p><strong>Show:</strong>
-                                                <span
-                                                    class="badge {{ $addon->show == 'staff' ? 'badge-purple' : 'badge-info' }}">
-                                                    {{ ucfirst($addon->show) }}
-                                                </span>
-                                            </p>
+                                            <p><strong>Position:</strong> {{ $signature->position }}</p>
+                                            <p><strong>Category:</strong> {{ ucfirst($signature->category) }}</p>
+                                            <p><strong>Report Type:</strong> {{ ucfirst($signature->report_type) }}</p>
+                                            <p><strong>Label:</strong> {{ $signature->label }}</p>
+                                            <p><strong>Order:</strong> #{{ $signature->order_by }}</p>
                                         </div>
                                         <div class="mobile-card-actions">
-                                            {{-- {{ route('admin.addons.edit', $addon->id) }} --}}
-                                            <a href="{{ route('admin.addons.edit', $addon->id) }}"
+                                            <a href="{{ route('admin.signatures.edit', $signature->id) }}"
                                                 class="btn btn-sm btn-primary mobile-btn">
                                                 <i class="icon-edit-3"></i> Edit
                                             </a>
-                                            {{-- {{ route('admin.addons.destroy', $addon->id) }} --}}
-                                            <form action=" {{ route('admin.addons.destroy', $addon->id) }}" method="POST"
-                                                class="d-inline">
+                                            <form action="{{ route('admin.signatures.destroy', $signature->id) }}"
+                                                method="POST" class="d-inline archive-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-warning delete mobile-btn">
+                                                <button type="submit" class="btn btn-sm btn-danger archive mobile-btn">
                                                     <i class="icon-archive"></i> Archive
                                                 </button>
                                             </form>
@@ -90,99 +81,78 @@
                             @empty
                                 <div class="empty-state">
                                     <div class="empty-icon">
-                                        <i class="icon-package"></i>
+                                        <i class="icon-file-text"></i>
                                     </div>
-                                    <h4>No Addons Found</h4>
-                                    <p>Start by creating your first addon.</p>
-                                    <a href="{{ route('admin.addons.create') }}" class="btn btn-primary">
-                                        <i class="icon-plus"></i> Add New Addon
+                                    <h4>No Signatures Found</h4>
+                                    <p>Start by creating your first signature.</p>
+                                    <a href="{{ route('admin.signatures.create') }}" class="btn btn-primary">
+                                        <i class="icon-plus"></i> Add New Signature
                                     </a>
                                 </div>
                             @endforelse
                         </div>
 
-                        <!-- Desktop Table View -->
                         <table class="table table-striped table-bordered d-none d-md-table">
                             <thead class="thead-light">
                                 <tr>
+                                    <th scope="col" class="col-label">Label</th>
                                     <th scope="col" class="col-name">Name</th>
-                                    <th scope="col" class="col-facility">Facility</th>
-                                    <th scope="col" class="col-price">Price</th>
-                                    <th scope="col" class="col-type">Price Type</th>
-                                    <th scope="col" class="col-quantity">Quantity Based</th>
+                                    <th scope="col" class="col-position">Position</th>
+                                    <th scope="col" class="col-category">Category</th>
+                                    <th scope="col" class="col-report-type">Report Type</th>
+                                    <th scope="col" class="col-order">Order</th>
                                     <th scope="col" class="col-status">Status</th>
-                                    <th scope="col" class="col-refundable">Refundable</th>
-                                    {{-- <th scope="col" class="col-show">Show</th> --}}
                                     <th scope="col" class="col-action">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse ($addons as $addon)
+                                @forelse ($signatures as $signature)
                                     <tr>
+                                        <td class="label-cell">
+                                            {{ $signature->label }}
+                                        </td>
                                         <td class="name-cell">
-                                            <div class="name text-truncate" title="{{ $addon->name }}">
-                                                <strong>{{ $addon->name }}</strong>
+                                            <div class="name text-truncate" title="{{ $signature->name }}">
+                                                <strong>{{ $signature->name }}</strong>
                                             </div>
-                                            @if ($addon->description)
-                                                <div class="text-tiny text-muted text-truncate"
-                                                    title="{{ $addon->description }}">
-                                                    {{ Str::limit($addon->description, 50) }}
-                                                </div>
-                                            @endif
                                         </td>
-                                        <td class="facility-cell">
-                                            @if ($addon->facility)
-                                                <span class="text-primary">{{ $addon->facility->name }}</span>
-                                                <div class="text-tiny text-muted">ID: {{ $addon->facility->id }}</div>
-                                            @else
-                                                <span class="text-muted">—</span>
-                                            @endif
+                                        <td class="position-cell">
+                                            {{ $signature->position }}
                                         </td>
-                                        <td class="price-cell">
-                                            ₱ {{ number_format($addon->base_price, 2) }}
-                                        </td>
-                                        <td class="type-cell">
-                                            {{ ucfirst(str_replace('_', ' ', $addon->price_type)) }}
-                                        </td>
-                                        <td class="quantity-cell">
+                                        <td class="category-cell">
                                             <span
-                                                class="badge {{ $addon->is_based_on_quantity ? 'badge-info' : 'badge-secondary' }}">
-                                                {{ $addon->is_based_on_quantity ? 'Yes' : 'No' }}
+                                                class="badge {{ $signature->category == 'facility' ? 'badge-info' : 'badge-warning' }}">
+                                                {{ ucfirst($signature->category) }}
                                             </span>
+                                        </td>
+                                        <td class="report-type-cell">
+                                            <span class="badge bg-dark text-center">
+                                                {{ ucfirst($signature->report_type) }}
+                                            </span>
+                                        </td>
+                                        <td class="order-cell">
+                                            #{{ $signature->order_by }}
                                         </td>
                                         <td class="status-cell">
                                             <span
-                                                class="badge {{ $addon->is_available ? 'badge-success' : 'badge-secondary' }}">
-                                                {{ $addon->is_available ? 'Available' : 'Unavailable' }}
+                                                class="badge {{ $signature->is_active ? 'badge-success' : 'badge-secondary' }}">
+                                                {{ $signature->is_active ? 'Active' : 'Inactive' }}
                                             </span>
                                         </td>
-                                        <td class="refundable-cell">
-                                            <span
-                                                class="badge {{ $addon->is_refundable ? 'badge-warning' : 'badge-secondary' }}">
-                                                {{ $addon->is_refundable ? 'Yes' : 'No' }}
-                                            </span>
-                                        </td>
-                                        {{-- <td class="show-cell">
-                                            <span
-                                                class="badge {{ $addon->show == 'staff' ? 'badge-purple' : 'badge-info' }}">
-                                                {{ ucfirst($addon->show) }}
-                                            </span>
-                                        </td> --}}
                                         <td class="action-cell">
                                             <div class="list-icon-function">
-                                                {{-- {{ route('admin.addons.edit', $addon->id) }} --}}
-                                                <a href="{{ route('admin.addons.edit', $addon->id) }}" title="Edit Addon">
+                                                <a href="{{ route('admin.signatures.edit', $signature->id) }}"
+                                                    title="Edit Signature">
                                                     <div class="item edit">
                                                         <i class="icon-edit-3"></i>
                                                     </div>
                                                 </a>
-                                                {{-- {{ route('admin.addons.destroy', $addon->id) }} --}}
-                                                <form action="{{ route('admin.addons.destroy', $addon->id) }}"
-                                                    method="POST" class="d-inline">
+                                                <form action="{{ route('admin.signatures.destroy', $signature->id) }}"
+                                                    method="POST" class="d-inline archive-form">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="item text-danger delete"
-                                                        style="border: none; background: none;" title="Delete Addon">
+                                                    <button type="submit" class="item text-danger archive"
+                                                        style="border: none; background: none;" title="Archive Signature">
                                                         <i class="icon-archive"></i>
                                                     </button>
                                                 </form>
@@ -193,12 +163,12 @@
                                     <tr>
                                         <td colspan="8" class="text-center empty-state-table">
                                             <div class="empty-icon">
-                                                <i class="icon-package"></i>
+                                                <i class="icon-file-text"></i>
                                             </div>
-                                            <h5>No Addons Found</h5>
-                                            <p>Start by creating your first addon.</p>
-                                            <a href="{{ route('admin.addons.create') }}" class="btn btn-primary">
-                                                <i class="icon-plus"></i> Add New Addon
+                                            <h5>No Signatures Found</h5>
+                                            <p>Start by creating your first signature.</p>
+                                            <a href="{{ route('admin.signatures.create') }}" class="btn btn-primary">
+                                                <i class="icon-plus"></i> Add New Signature
                                             </a>
                                         </td>
                                     </tr>
@@ -207,9 +177,8 @@
                         </table>
                     </div>
                     <div class="divider"></div>
-                    <!-- Fixed pagination section -->
-                    <div class="pagination-container" style="padding: 15px 0; overflow: visible; min-height: 60px;">
-                        {{ $addons->appends(request()->query())->links('pagination::bootstrap-5') }}
+                    <div class="pagination-container">
+                        {{ $signatures->appends(request()->query())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             </div>
@@ -219,7 +188,6 @@
 
 @push('styles')
     <style>
-        /* Base Responsive Layout */
         .main-content-inner {
             padding: 15px;
         }
@@ -239,7 +207,6 @@
             margin-bottom: 1.5rem;
         }
 
-        /* Search and Action Button Styles */
         .search-input {
             width: 100%;
             min-width: 200px;
@@ -262,27 +229,6 @@
             flex-wrap: wrap;
         }
 
-        .add-button {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            white-space: nowrap;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-            color: white;
-            text-decoration: none;
-        }
-
-        .add-button:hover {
-            background: linear-gradient(135deg, #16a34a, #15803d);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-            color: white;
-        }
-
-        /* Badge Styles */
         .badge {
             display: inline-block;
             padding: 4px 10px;
@@ -314,7 +260,6 @@
             background: linear-gradient(135deg, #6a11cb, #a4508b);
         }
 
-        /* Desktop Table Styles */
         .table {
             table-layout: fixed;
             width: 100%;
@@ -322,35 +267,35 @@
         }
 
         .col-name {
-            width: 25%;
+            width: 20%;
         }
 
-        .col-price {
-            width: 10%;
-        }
-
-        .col-type {
+        .col-position {
             width: 15%;
         }
 
-        .col-quantity {
-            width: 10%;
+        .col-category {
+            width: 12%;
+        }
+
+        .col-report-type {
+            width: 15%;
+        }
+
+        .col-label {
+            width: 15%;
+        }
+
+        .col-order {
+            width: 8%;
         }
 
         .col-status {
             width: 10%;
         }
 
-        .col-refundable {
-            width: 10%;
-        }
-
-        .col-show {
-            width: 10%;
-        }
-
         .col-action {
-            width: 20%;
+            width: 15%;
         }
 
         .name {
@@ -408,7 +353,6 @@
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
 
-        /* Mobile Card Styles */
         .mobile-cards {
             display: none;
         }
@@ -495,17 +439,16 @@
             transform: translateY(-1px);
         }
 
-        .mobile-btn.btn-danger {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
+        .mobile-btn.btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
             color: white;
         }
 
-        .mobile-btn.btn-danger:hover {
-            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        .mobile-btn.btn-warning:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
             transform: translateY(-1px);
         }
 
-        /* Empty State Styles */
         .empty-state,
         .empty-state-table {
             text-align: center;
@@ -553,7 +496,6 @@
             box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
         }
 
-        /* Pagination Fixes */
         .pagination-container {
             display: flex;
             justify-content: center;
@@ -618,7 +560,6 @@
             transform: none;
         }
 
-        /* Show pagination info */
         .pagination-info {
             width: 100%;
             text-align: center;
@@ -627,38 +568,37 @@
             color: #6b7280;
         }
 
-        /* Responsive adjustments */
         @media (max-width: 991px) {
             .col-name {
-                width: 20%;
+                width: 18%;
             }
 
-            .col-price {
-                width: 10%;
+            .col-position {
+                width: 14%;
             }
 
-            .col-type {
-                width: 15%;
+            .col-category {
+                width: 12%;
             }
 
-            .col-quantity {
-                width: 10%;
+            .col-report-type {
+                width: 14%;
+            }
+
+            .col-label {
+                width: 14%;
+            }
+
+            .col-order {
+                width: 8%;
             }
 
             .col-status {
                 width: 10%;
             }
 
-            .col-refundable {
-                width: 10%;
-            }
-
-            .col-show {
-                width: 10%;
-            }
-
             .col-action {
-                width: 15%;
+                width: 10%;
             }
         }
 
@@ -698,7 +638,7 @@
                 align-items: flex-end;
             }
 
-            .add-button {
+            .tf-button {
                 width: 100%;
                 justify-content: center;
             }
@@ -715,7 +655,6 @@
             }
         }
 
-        /* Print Styles */
         @media print {
 
             .action-buttons,
@@ -743,13 +682,7 @@
                 display: none !important;
             }
         }
-    </style>
-@endpush
 
-
-@push('styles')
-    <style>
-        /* SweetAlert2 Custom Styles - Clean Version */
         .swal2-popup {
             width: 90vw !important;
             max-width: 600px !important;
@@ -821,7 +754,6 @@
             transform: translateY(-1px) !important;
         }
 
-        /* Custom Icons using ::before pseudo-element */
         .swal2-popup::before {
             content: '' !important;
             display: block !important;
@@ -837,7 +769,6 @@
             animation: swalIconPulse 1s ease-in-out !important;
         }
 
-        /* Success Icon */
         .swal2-popup.swal2-success::before {
             content: "✓" !important;
             color: #22c55e !important;
@@ -845,7 +776,6 @@
             background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
         }
 
-        /* Error Icon */
         .swal2-popup.swal2-error::before {
             content: "✕" !important;
             color: #ef4444 !important;
@@ -853,7 +783,6 @@
             background: linear-gradient(135deg, #fef2f2, #fecaca) !important;
         }
 
-        /* Info Icon */
         .swal2-popup.swal2-info::before {
             content: "i" !important;
             color: #3b82f6 !important;
@@ -863,7 +792,6 @@
             font-size: 36px !important;
         }
 
-        /* Question Icon */
         .swal2-popup.swal2-question::before {
             content: "?" !important;
             color: #8b5cf6 !important;
@@ -872,7 +800,6 @@
             font-size: 36px !important;
         }
 
-        /* Warning Icon - FIXED */
         .swal2-popup.swal2-warning::before {
             content: "!" !important;
             color: #f59e0b !important;
@@ -881,12 +808,10 @@
             font-size: 36px !important;
         }
 
-        /* Hide default SweetAlert2 icons */
         .swal2-icon {
             display: none !important;
         }
 
-        /* Animation for icons */
         @keyframes swalIconPulse {
             0% {
                 transform: scale(0.8);
@@ -903,7 +828,6 @@
             }
         }
 
-        /* Responsive Adjustments */
         @media (max-width: 767px) {
             .swal2-popup {
                 width: 95vw !important;
@@ -1007,7 +931,6 @@
             }
         }
 
-        /* Extra Large Screens */
         @media (min-width: 1400px) {
             .swal2-popup {
                 max-width: 700px !important;
@@ -1049,7 +972,6 @@
 @push('scripts')
     <script>
         $(function() {
-            // Enhanced SweetAlert2 configuration
             const customSwalConfig = {
                 customClass: {
                     popup: 'enhanced-swal-popup',
@@ -1068,11 +990,9 @@
                 backdrop: true
             };
 
-            // Success message display
             @if (Session::has('success'))
                 Swal.fire({
                     ...customSwalConfig,
-                    // icon: 'success',
                     customClass: {
                         popup: 'swal2-success'
                     },
@@ -1100,33 +1020,33 @@
                 });
             @endif
 
-            // Delete confirmation with enhanced modal
-            $('.delete').on('click', function(e) {
+            // Archive Signature Confirmation
+            $('.archive').on('click', function(e) {
                 e.preventDefault();
                 var form = $(this).closest('form');
-                var addonName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title').text()
+                var signatureName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title')
+                    .text()
                     .trim();
 
                 Swal.fire({
                     ...customSwalConfig,
-                    title: 'Archive Add-on Confirmation',
+                    title: 'Archive Signature Confirmation',
                     html: `
-                          <div style="text-align: left; line-height: 1.6;">
-                                <p style="margin-bottom: 15px; text-align: center;">You are about to archive the following college:</p>
-                                <div style="background: linear-gradient(135deg, #fffbeb, #fef3c7); padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #f59e0b;">
-                                    <strong style="color: #92400e; font-size: 16px;">${addonName}</strong>
-                                </div>
-
-                             <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #fcd34d;">
-                                    <p style="margin: 0; color: #92400e; font-size: 14px;">
-                                        <i class="icon-info" style="margin-right: 8px;"></i>
-                                        <strong>Note:</strong> Archiving will move this Add-on to the archived section. It can be restored later if needed.
-                                    </p>
-                                </div>
-                                <p style="margin-top: 20px; color: #64748b; text-align: center;">
-                                    This action is reversible. The Add-on will remain in the system but will be hidden from the main list.
+                        <div style="text-align: left; line-height: 1.6;">
+                            <p style="margin-bottom: 15px; text-align: center;">You are about to archive the following signature:</p>
+                            <div style="background: linear-gradient(135deg, #fffbeb, #fef3c7); padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #f59e0b;">
+                                <strong style="color: #92400e; font-size: 16px;">${signatureName}</strong>
+                            </div>
+                            <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #fcd34d;">
+                                <p style="margin: 0; color: #92400e; font-size: 14px;">
+                                    <i class="icon-info" style="margin-right: 8px;"></i>
+                                    <strong>Note:</strong> Archiving will move this signature to the archived section. It can be restored later if needed.
                                 </p>
                             </div>
+                            <p style="margin-top: 20px; color: #64748b; text-align: center;">
+                                This action is reversible. The signature will remain in the system but will be hidden from the main list.
+                            </p>
+                        </div>
                     `,
                     customClass: {
                         popup: 'swal2-warning'
@@ -1141,7 +1061,7 @@
                     if (result.isConfirmed) {
                         // Show loading state
                         Swal.fire({
-                            title: 'Deleting Addon...',
+                            title: 'Archiving Signature...',
                             html: `
                                 <div style="text-align: center;">
                                     <div style="margin: 20px 0;">
@@ -1154,7 +1074,7 @@
                                             animation: spin 1s linear infinite;
                                             margin: 0 auto 15px auto;
                                         "></div>
-                                        <p style="color: #64748b; margin: 0;">Please wait while we delete the addon...</p>
+                                        <p style="color: #64748b; margin: 0;">Please wait while we archive the signature...</p>
                                     </div>
                                 </div>
                                 <style>
@@ -1174,7 +1094,6 @@
                 });
             });
 
-            // Auto-submit search with debounce
             let searchTimeout;
             $('input[name="search"]').on('input', function() {
                 clearTimeout(searchTimeout);
@@ -1188,7 +1107,6 @@
                 }, 500);
             });
 
-            // Enhanced search functionality
             $('.search-input').on('focus', function() {
                 $(this).css({
                     'border-color': '#3498db',
@@ -1203,8 +1121,7 @@
                 });
             });
 
-            // Add loading states to buttons
-            $('.add-button').on('click', function() {
+            $('.tf-button').on('click', function() {
                 const $this = $(this);
                 const originalHtml = $this.html();
 
@@ -1212,7 +1129,6 @@
                     .prop('disabled', true)
                     .css('opacity', '0.7');
 
-                // Reset after a delay (for page navigation)
                 setTimeout(() => {
                     $this.html(originalHtml)
                         .prop('disabled', false)
@@ -1220,29 +1136,24 @@
                 }, 2000);
             });
 
-            // Mobile card hover effects
             $('.mobile-card').on('touchstart mouseenter', function() {
                 $(this).css('transform', 'translateY(-3px)');
             }).on('touchend mouseleave', function() {
                 $(this).css('transform', 'translateY(0)');
             });
 
-            // Keyboard navigation
             $(document).on('keydown', function(e) {
-                // Ctrl/Cmd + K to focus search
                 if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                     e.preventDefault();
                     $('.search-input').focus();
                 }
 
-                // Ctrl/Cmd + N for new addon
                 if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
                     e.preventDefault();
-                    window.location.href = "{{ route('admin.addons.create') }}";
+                    window.location.href = "{{ route('admin.signatures.create') }}";
                 }
             });
 
-            // Table row hover effects for desktop
             $('.table tbody tr').on('mouseenter', function() {
                 $(this).css({
                     'background-color': '#f8fafc',
@@ -1257,7 +1168,6 @@
                 });
             });
 
-            // Enhanced action button animations
             $('.list-icon-function .item').on('mouseenter', function() {
                 $(this).css({
                     'transform': 'translateY(-2px) scale(1.1)',
@@ -1270,7 +1180,6 @@
                 });
             });
 
-            // Responsive adjustments
             function handleResize() {
                 const windowWidth = $(window).width();
 
@@ -1282,19 +1191,16 @@
                     $('.mobile-cards').hide();
                 }
 
-                // Ensure pagination is always visible
                 $('.pagination-container').css('display', 'flex');
             }
 
             $(window).on('resize', handleResize);
             handleResize();
 
-            // Add smooth transitions to all interactive elements
-            $('.mobile-btn, .list-icon-function .item, .add-button').css({
+            $('.mobile-btn, .list-icon-function .item, .tf-button').css({
                 'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             });
 
-            // Accessibility improvements
             $('.mobile-btn, .list-icon-function .item').on('focus', function() {
                 $(this).css({
                     'outline': '2px solid #3498db',
@@ -1304,7 +1210,6 @@
                 $(this).css('outline', 'none');
             });
 
-            // Progressive enhancement for touch devices
             if ('ontouchstart' in window) {
                 $('.mobile-card').css('cursor', 'pointer');
                 $('.list-icon-function .item').css('cursor', 'pointer');
