@@ -387,7 +387,7 @@
             $leftSignatures[] = (object) [
                 'label' => 'Prepared by',
                 'name' => Auth::user()->name,
-                'position' => Auth::user()->role,
+                'position' => Auth::user()->position,
                 'is_prepared_by' => true,
             ];
 
@@ -406,7 +406,7 @@
                     @foreach ($leftSignatures as $signature)
                         <div class="signature-block" style="margin-bottom: 30px;">
                             <div style="font-weight: bold;">{{ $signature->label }}:</div>
-                            <div class="signature-line" style="width: 250px; margin: 5px 0;"></div>
+                            <div style="height: 20px;">&nbsp;</div> <!-- Two spaces above the name -->
                             <div><strong>{{ $signature->name }}</strong></div>
                             <div>{{ $signature->position }}</div>
                         </div>
@@ -417,7 +417,7 @@
                     @foreach ($rightSignatures as $signature)
                         <div class="signature-block" style="margin-bottom: 30px;">
                             <div style="font-weight: bold;">{{ $signature->label }}:</div>
-                            <div class="signature-line" style="width: 250px; margin: 5px 0;"></div>
+                            <div style="height: 20px;">&nbsp;</div> <!-- Two spaces above the name -->
                             <div><strong>{{ $signature->name }}</strong></div>
                             <div>{{ $signature->position }}</div>
                         </div>

@@ -57,18 +57,19 @@
             text-align: left;
         }
 
+
         .logo-left img {
             height: 80px;
-            max-width: 90px;
-            margin-right: -250px;
-            margin-bottom: 20px;
+            max-width: 80px;
+            margin-right: -90px;
+            margin-top: -10px;
         }
 
         .logo-right img {
             height: 80px;
             max-width: 110px;
-            margin-left: -260px;
-            margin-bottom: 20px;
+            margin-left: -100px;
+            margin-top: -10px;
         }
 
         .center-cell {
@@ -306,7 +307,7 @@
                 <tr>
                     <th>Name</th>
                     <th>Category</th>
-                    <th>Price</th>
+                    {{-- <th>Price</th> --}}
                     @if (!isset($statusLabel))
                         <th>Stock Status</th>
                     @endif
@@ -318,13 +319,13 @@
                     <tr>
                         <td>{{ $product->name }}</td>
                         <td>{{ $product->category->name }}</td>
-                        <td>
+                        {{-- <td>
                             @if ($product->attributeValues->isNotEmpty())
                                 ₱{{ number_format($product->attributeValues->first()->price, 2) }}
                             @else
                                 ₱{{ number_format($product->price, 2) }}
                             @endif
-                        </td>
+                        </td> --}}
                         @if (!isset($statusLabel))
                             <td>
                                 @php
@@ -361,7 +362,7 @@
             @php
                 $signatures = \App\Models\Signature::where('category', 'product')
                     ->where(function ($query) {
-                        $query->where('report_type', 'inventory')->orWhere('report_type', 'all');
+                        $query->where('report_type', 'product')->orWhere('report_type', 'all');
                     })
                     ->where('is_active', true)
                     ->where('is_archived', false)
@@ -374,7 +375,7 @@
                 $leftSignatures[] = (object) [
                     'label' => 'Prepared by',
                     'name' => Auth::user()->name,
-                    'position' => Auth::user()->role,
+                    'position' => Auth::user()->position,
                     'is_prepared_by' => true,
                 ];
 
@@ -385,8 +386,6 @@
                         $rightSignatures[] = $signature;
                     }
                 }
-
-                $maxRows = max(count($leftSignatures), count($rightSignatures));
             @endphp
 
             <table class="signatures-table"
@@ -396,7 +395,7 @@
                         @foreach ($leftSignatures as $signature)
                             <div class="signature-block" style="margin-bottom: 30px;">
                                 <div style="font-weight: bold;">{{ $signature->label }}:</div>
-                                <div class="signature-line" style="width: 250px; margin: 5px 0;"></div>
+                                <div style="height: 20px;">&nbsp;</div>
                                 <div><strong>{{ $signature->name }}</strong></div>
                                 <div>{{ $signature->position }}</div>
                             </div>
@@ -407,7 +406,7 @@
                         @foreach ($rightSignatures as $signature)
                             <div class="signature-block" style="margin-bottom: 30px;">
                                 <div style="font-weight: bold;">{{ $signature->label }}:</div>
-                                <div class="signature-line" style="width: 250px; margin: 5px 0;"></div>
+                                <div style="height: 20px;">&nbsp;</div>
                                 <div><strong>{{ $signature->name }}</strong></div>
                                 <div>{{ $signature->position }}</div>
                             </div>

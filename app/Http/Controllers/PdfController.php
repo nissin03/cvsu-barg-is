@@ -447,7 +447,7 @@ class PdfController extends Controller
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($pdfView);
 
-        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->setPaper('A4', 'portrait');
 
         $dompdf->render();
 

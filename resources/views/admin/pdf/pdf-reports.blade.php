@@ -306,7 +306,7 @@
         @php
             $signatures = \App\Models\Signature::where('category', 'product')
                 ->where(function ($query) {
-                    $query->where('report_type', 'sales')->orWhere('report_type', 'all');
+                    $query->where('report_type', 'product')->orWhere('report_type', 'all');
                 })
                 ->where('is_active', true)
                 ->where('is_archived', false)
@@ -319,7 +319,7 @@
             $leftSignatures[] = (object) [
                 'label' => 'Prepared by',
                 'name' => Auth::user()->name,
-                'position' => Auth::user()->role,
+                'position' => Auth::user()->position,
                 'is_prepared_by' => true,
             ];
 
@@ -330,8 +330,6 @@
                     $rightSignatures[] = $signature;
                 }
             }
-
-            $maxRows = max(count($leftSignatures), count($rightSignatures));
         @endphp
 
         <table class="signatures-table" style="width: 100%; margin-top: 10px; border-collapse: collapse; border: none;">
@@ -340,7 +338,7 @@
                     @foreach ($leftSignatures as $signature)
                         <div class="signature-block" style="margin-bottom: 30px;">
                             <div style="font-weight: bold;">{{ $signature->label }}:</div>
-                            <div class="signature-line" style="width: 250px; margin: 5px 0;"></div>
+                            <div style="height: 20px;">&nbsp;</div> <!-- Two spaces above the name -->
                             <div><strong>{{ $signature->name }}</strong></div>
                             <div>{{ $signature->position }}</div>
                         </div>
@@ -351,7 +349,7 @@
                     @foreach ($rightSignatures as $signature)
                         <div class="signature-block" style="margin-bottom: 30px;">
                             <div style="font-weight: bold;">{{ $signature->label }}:</div>
-                            <div class="signature-line" style="width: 250px; margin: 5px 0;"></div>
+                            <div style="height: 20px;">&nbsp;</div> <!-- Two spaces above the name -->
                             <div><strong>{{ $signature->name }}</strong></div>
                             <div>{{ $signature->position }}</div>
                         </div>
