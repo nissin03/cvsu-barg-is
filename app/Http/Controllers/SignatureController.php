@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Signature;
 use Illuminate\View\View;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class SignatureController extends Controller
@@ -42,6 +43,16 @@ class SignatureController extends Controller
             'is_active'   => 'nullable|boolean',
             'is_archived' => 'nullable|boolean',
         ]);
+
+        $name = Str::of($validated['name']);
+
+        if ($name->contains(',')) {
+            $main = $name->before(',')->trim()->upper();
+            $profession = $name->after(',')->trim();
+            $validated['name'] = "$main, $profession";
+        } else {
+            $validated['name'] = $name->upper();
+        }
 
         $nextOrder = Signature::where('category', $validated['category'])
             ->where('report_type', $validated['report_type'])

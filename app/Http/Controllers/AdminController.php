@@ -364,13 +364,29 @@ class AdminController extends Controller
 
         return response()->json(['weeks' => $weeks]);
     }
-    public function categories()
+    public function categories(Request $request)
     {
-        // $categories = Category::orderBy('id', 'DESC')->paginate(10);
-        $categories = Category::whereNull('parent_id')
-            ->with('children')
-            ->orderBy('id', 'DESC')
-            ->paginate(5);
+        $search = $request->input('search');
+        $query = Category::whereNull('parent_id')->with('children');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhereHas('children', function ($childQuery) use ($search) {
+                        $childQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('slug', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $categories = $query->orderBy('id', 'DESC')->paginate(5)->withQueryString();
+        if ($request->ajax()) {
+            return response()->json([
+                'categories' => view('partials._categories-table', compact('categories'))->render(),
+                'pagination' => view('partials._categories-pagination', compact('categories'))->render()
+            ]);
+        }
+
         $pageTitle = 'Category Dashboard';
         return view('admin.categories', compact('categories', 'pageTitle'));
     }
