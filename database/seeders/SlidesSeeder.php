@@ -1,5 +1,7 @@
 <?php
+
 namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 use App\Models\Slide;
@@ -20,7 +22,7 @@ class SlidesSeeder extends Seeder
                 'title' => 'Shop Now',
                 'subtitle' => 'Discover the best products today',
                 'link' => route('shop.index'),
-                'image' => '1746751051.jpg',  
+                'image' => 'shop.jpg',
                 'status' => true,
             ],
             [
@@ -28,7 +30,7 @@ class SlidesSeeder extends Seeder
                 'title' => 'Our Story',
                 'subtitle' => 'Why BaRG is trusted by many',
                 'link' => route('about.index'),
-                'image' => '1746751045.jpg',  
+                'image' => 'about.jpg',
                 'status' => true,
             ],
             [
@@ -36,7 +38,7 @@ class SlidesSeeder extends Seeder
                 'title' => 'Need Help?',
                 'subtitle' => 'We’re here to answer your questions',
                 'link' => route('home.contact'),
-                'image' => '1746751038.jpg', 
+                'image' => 'contact.jpg',
                 'status' => true,
             ],
         ];
