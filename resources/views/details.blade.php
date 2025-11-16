@@ -370,7 +370,74 @@
                                     <i class="fas fa-info-circle"></i>
                                 </div>
                                 <div class="description-text">
-                                    <p>{{ $product->description }}</p>
+                                    @php
+                                        // Function to format the description
+                                        function formatProductDescription($description)
+                                        {
+                                            if (empty($description)) {
+                                                return '<p class="text-muted">No description available.</p>';
+                                            }
+
+                                            // Split by lines first
+                                            $lines = explode("\n", $description);
+                                            $formattedLines = [];
+
+                                            foreach ($lines as $line) {
+                                                $trimmedLine = trim($line);
+
+                                                if (empty($trimmedLine)) {
+                                                    continue; // Skip empty lines
+                                                }
+
+                                                // Check if line ends with '.' and has content before it
+                                                if (str_ends_with($trimmedLine, '.') && strlen($trimmedLine) > 1) {
+                                                    $formattedLines[] = '<p>' . $trimmedLine . '</p>';
+                                                }
+                                                // Check if line contains ':' (specifications)
+                                                elseif (str_contains($trimmedLine, ':')) {
+                                                    $parts = explode(':', $trimmedLine, 2);
+                                                    if (count($parts) === 2) {
+                                                        $title = trim($parts[0]);
+                                                        $content = trim($parts[1]);
+
+                                                        $formattedLines[] = '<div class="specification-section">';
+                                                        $formattedLines[] =
+                                                            '<h6 class="specification-title">' . $title . ':</h6>';
+
+                                                        // Split specifications by lines or commas
+                                                        $specs = preg_split('/[\n,]+/', $content);
+                                                        $formattedLines[] = '<ul class="specification-list">';
+
+                                                        foreach ($specs as $spec) {
+                                                            $trimmedSpec = trim($spec);
+                                                            if (!empty($trimmedSpec)) {
+                                                                // Remove any existing bullet points and add proper formatting
+                                                                $cleanSpec = preg_replace(
+                                                                    '/^[a-zA-Z]\.\s*/',
+                                                                    '',
+                                                                    $trimmedSpec,
+                                                                );
+                                                                $formattedLines[] = '<li>' . $cleanSpec . '</li>';
+                                                            }
+                                                        }
+
+                                                        $formattedLines[] = '</ul>';
+                                                        $formattedLines[] = '</div>';
+                                                    } else {
+                                                        $formattedLines[] = '<p>' . $trimmedLine . '</p>';
+                                                    }
+                                                }
+                                                // Regular paragraph
+                                                else {
+                                                    $formattedLines[] = '<p>' . $trimmedLine . '</p>';
+                                                }
+                                            }
+
+                                            return implode('', $formattedLines);
+                                        }
+                                    @endphp
+
+                                    {!! formatProductDescription($product->description) !!}
                                 </div>
                             </div>
                         </div>
@@ -1077,6 +1144,87 @@
 
         .product-card {
             animation: fadeInUp 0.6s ease forwards;
+        }
+
+        /* Enhanced Description Styles */
+        .description-text p {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            text-align: justify;
+        }
+
+        .description-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Specification Styles */
+        .specification-section {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .specification-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .specification-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .specification-list li {
+            position: relative;
+            padding: 0.5rem 0 0.5rem 1.5rem;
+            line-height: 1.5;
+            color: var(--text-dark);
+        }
+
+        .specification-list li::before {
+            content: '•';
+            position: absolute;
+            left: 0.5rem;
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Alternative bullet style - uncomment if you prefer letters */
+        /*
+        .specification-list {
+            list-style-type: lower-alpha;
+            padding-left: 1.5rem;
+        }
+
+        .specification-list li {
+            padding: 0.25rem 0;
+            margin-bottom: 0.25rem;
+        }
+        */
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .description-text p {
+                font-size: 1rem;
+                text-align: left;
+            }
+
+            .specification-section {
+                margin: 1rem 0;
+                padding: 0.75rem;
+            }
+
+            .specification-title {
+                font-size: 1rem;
+            }
         }
     </style>
 @endpush

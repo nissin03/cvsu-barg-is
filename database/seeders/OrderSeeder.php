@@ -78,7 +78,7 @@ class OrderSeeder extends Seeder
                     'reservation_date' => $reservationDate,
                     'time_slot' => $timeSlot,
                     'picked_up_date' => $pickedUpDate,
-                    'canceled_date' => null, // Always null since we don't have canceled status
+                    'canceled_date' => null, // Always null since we don't have canceled orders
                     'status' => $status,
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
@@ -112,11 +112,14 @@ class OrderSeeder extends Seeder
                 $order->total = $orderTotal;
                 $order->save();
 
+                // Set transaction status based on order status
+                $transactionStatus = $status === 'pickedup' ? 'paid' : 'unpaid';
+
                 Transaction::create([
                     'order_id' => $order->id,
                     'amount_paid' => $orderTotal,
                     'change' => 0,
-                    'status' => $status === 'pickedup' ? 'paid' : 'unpaid',
+                    'status' => $transactionStatus,
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ]);
@@ -130,9 +133,7 @@ class OrderSeeder extends Seeder
     {
         $rand = $faker->numberBetween(1, 100);
 
-        return match (true) {
-            $rand <= 70 => 'pickedup', // 70% pickedup, 30% reserved
-            default => 'reserved'
-        };
+        // 80% reserved, 20% pickedup - no canceled orders
+        return $rand <= 20 ? 'pickedup' : 'reserved';
     }
 }
