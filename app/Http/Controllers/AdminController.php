@@ -506,8 +506,14 @@ class AdminController extends Controller
     {
         $archived = $request->query('archived', 0);
         $search = $request->input('search');
-        $sortColumn = $request->input('sort_column', 'created_at');
-        $sortDirection = $request->input('sort_direction', 'DESC');
+        $category = $request->input('category');
+        $stockStatus = $request->input('stock_status');
+        $sortBy = $request->input('sort_by', 'newest');
+
+        $categories = Category::whereNull('parent_id')
+            ->with('children')
+            ->orderBy('name')
+            ->get();
 
         $query = Product::with([
             'category' => function ($query) {
@@ -517,9 +523,10 @@ class AdminController extends Controller
             'attributeValues.productAttribute'
         ])
             ->where('archived', $archived);
-        $isNumeric = is_numeric($search);
+
 
         if ($search) {
+            $isNumeric = is_numeric($search);
             $query->where(function ($q) use ($search, $isNumeric) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
@@ -529,32 +536,68 @@ class AdminController extends Controller
                         ->orWhere('price', 'like', "%{$search}%");
                 }
             });
-            if ($isNumeric) {
-                $exactQuantityMatch = Product::where('quantity', $search)->exists();
-                if ($exactQuantityMatch) {
-                    $sortColumn = 'quantity';
-                } else {
-                    $priceMatch = Product::where('price', 'like', "%{$search}%")->exists();
-                    if ($priceMatch) {
-                        $sortColumn = 'price';
-                    }
-                }
-            } else {
-                $sortColumn = 'name';
-            }
         }
-        $query->orderBy($sortColumn, $sortDirection);
+
+        // Category filter
+        if ($category) {
+            $query->where(function ($q) use ($category) {
+                $selectedCategory = Category::find($category);
+                if ($selectedCategory) {
+                    $categoryIds = [$category];
+                    if ($selectedCategory->children->isNotEmpty()) {
+                        $categoryIds = array_merge(
+                            $categoryIds,
+                            $selectedCategory->children->pluck('id')->toArray()
+                        );
+                    }
+
+                    $q->whereIn('category_id', $categoryIds);
+                } else {
+                    $q->where('category_id', $category);
+                }
+            });
+        }
+
+        if ($stockStatus) {
+            $query->where('stock_status', $stockStatus);
+        }
+
+
+        switch ($sortBy) {
+            case 'oldest':
+                $query->orderBy('created_at', 'ASC');
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'ASC');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'DESC');
+                break;
+            case 'stock_low':
+                $query->orderBy('quantity', 'ASC');
+                break;
+            case 'stock_high':
+                $query->orderBy('quantity', 'DESC');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('created_at', 'DESC');
+                break;
+        }
 
         $products = $query->paginate(10)->withQueryString();
+        $count = $products->total();
+
 
         if ($request->ajax()) {
             return response()->json([
                 'products' => view('partials._products-table', compact('products'))->render(),
-                'pagination' => view('partials._products-pagination', compact('products'))->render()
+                'pagination' => view('partials._products-pagination', compact('products'))->render(),
+                'count' => $count
             ]);
         }
 
-        return view('admin.products', compact('products', 'archived'));
+        return view('admin.products', compact('products', 'archived', 'categories'));
     }
 
     public function product_add()
@@ -1318,11 +1361,66 @@ class AdminController extends Controller
     }
 
     // Contact PAGE
-    public function contacts()
+    // public function contacts(Request $request)
+    // {
+    //     $contacts = Contact::with(['user', 'replies.admin'])
+    //         ->latest()
+    //         ->paginate(10);
+    //     return view('admin.contacts', compact('contacts'));
+    // }
+
+    public function contacts(Request $request)
     {
-        $contacts = Contact::with(['user', 'replies.admin'])
-            ->latest()
-            ->paginate(10);
+        $search = $request->input('search');
+        $sortBy = $request->input('sort_by', 'newest');
+        $dateFilter = $request->input('date_filter');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $query = Contact::with(['user', 'replies.admin']);
+
+        // Search Filter - by user name and email
+        if ($search) {
+            $query->whereHas('user', function ($userQuery) use ($search) {
+                $userQuery->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Date Filter
+        if ($dateFilter === 'today') {
+            $query->whereDate('created_at', today());
+        } elseif ($dateFilter === '7days') {
+            $query->where('created_at', '>=', now()->subDays(7));
+        } elseif ($dateFilter === '30days') {
+            $query->where('created_at', '>=', now()->subDays(30));
+        } elseif ($dateFilter === 'custom' && $startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        // Sort Filter
+        switch ($sortBy) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'replied':
+                $query->has('replies')->latest();
+                break;
+            default: // newest
+                $query->latest();
+                break;
+        }
+
+        $contacts = $query->paginate(10)->withQueryString();
+
+        // For AJAX requests
+        if ($request->ajax()) {
+            return response()->json([
+                'contacts' => view('partials._contacts-cards', compact('contacts'))->render(),
+                'pagination' => view('partials._contacts-pagination', compact('contacts'))->render()
+            ]);
+        }
+
         return view('admin.contacts', compact('contacts'));
     }
     public function contact_delete($id)
