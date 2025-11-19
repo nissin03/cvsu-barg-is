@@ -138,6 +138,7 @@ class UserSeeder extends Seeder
     private array $employeePositions = [
         'Director',
         'Administrator',
+        'Bookkeeper',
         'Administrative Aide',
         'Clerk',
         'Registrar Staff',
@@ -172,7 +173,7 @@ class UserSeeder extends Seeder
             'password_set' => true,
             'utype' => 'ADM',
             'role' => 'employee',
-            'position' => 'Administrator',
+            'position' => 'Bookkeeper',
             'sex' => 'male',
             'phone_number' => '09123456789',
             'college_id' => null,
