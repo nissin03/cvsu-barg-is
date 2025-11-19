@@ -223,17 +223,35 @@ function getDayCellClassNames(info, userType, userRole, availabilities, facility
 
 function getCalendarEvents(availabilities) {
     const reservedDates = getReservedDates(availabilities);
-    const events = reservedDates.map(date => ({
-        id: `reserved-${date}`,
-        title: 'Booked',
-        start: date,
-        allDay: true,
-        backgroundColor: '#dc3545',
-        borderColor: '#dc3545',
-        textColor: 'white',
-        classNames: ['fully-booked-event']
-    }));
-    
+    const events = reservedDates.map(date => {
+        const availability = availabilities.find(avail => avail.date_from === date || avail.date_to === date);
+        const title = availability && availability.remaining_capacity <= 0 ? 'Booked' : '';
+        
+        if (title === 'Booked') {
+            return {
+                id: `reserved-${date}`,
+                title: 'Booked',
+                start: date,
+                allDay: true,
+                backgroundColor: '#dc3545',
+                borderColor: '#dc3545',
+                textColor: 'white',
+                classNames: ['fully-booked-event']
+            };
+        }
+
+        return {
+            id: `reserved-${date}`,
+            title: '',
+            start: date,
+            allDay: true,
+            backgroundColor: '#f8d7da',
+            borderColor: '#f8d7da',
+            textColor: 'black',
+            classNames: ['available-event']
+        };
+    });
+
     return events;
 }
 
