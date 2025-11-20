@@ -71,7 +71,7 @@
                                                 method="POST" class="d-inline archive-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger archive mobile-btn">
+                                                <button type="submit" class="btn btn-sm btn-warning archive mobile-btn">
                                                     <i class="icon-archive"></i> Archive
                                                 </button>
                                             </form>

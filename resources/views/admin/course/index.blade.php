@@ -3,7 +3,7 @@
     <div class="main-content-inner">
         <div class="main-content-wrap">
             <div class="flex items-center flex-wrap justify-between gap20 mb-27">
-                <h3>Courses</h3>
+                <h3 class="page-title">Courses</h3>
                 <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
                     <li>
                         <a href="{{ route('admin.index') }}">
@@ -20,41 +20,97 @@
             </div>
 
             <div class="wg-box">
-                <div class="flex items-center justify-between gap10 flex-wrap">
+                <div class="flex items-center justify-between gap10 flex-wrap mb-3">
                     <div class="wg-filter flex-grow">
                         <form class="form-search" method="GET" action="{{ route('admin.courses.index') }}">
                             <fieldset class="name">
                                 <input type="text" placeholder="Search by course name, code, or college..."
-                                    class="" name="search" tabindex="2" value="{{ request('search') }}"
-                                    aria-required="true" required="">
+                                    class="search-input" name="search" tabindex="2" value="{{ request('search') }}"
+                                    aria-required="true">
                             </fieldset>
                             <button type="submit" style="display: none"></button>
                         </form>
                     </div>
 
-                    <a class="tf-button w-auto" href="{{ route('admin.courses.create') }}"><i class="icon-plus"></i>Add New
-                        Course</a>
-                    <a href="{{ route('admin.courses.archive') }}" class="tf-button w-auto">
-                        <i class="icon-archive"></i>
-                        <span class="button-text">View Archive</span>
-                    </a>
+                    <div class="action-buttons">
+                        <a class="tf-button w-auto" href="{{ route('admin.courses.create') }}">
+                            <i class="icon-plus"></i>Add New Course
+                        </a>
+                        <a href="{{ route('admin.courses.archive') }}" class="tf-button w-auto">
+                            <i class="icon-archive"></i>
+                            <span class="button-text">View Archive</span>
+                        </a>
+                    </div>
                 </div>
+
                 <div class="table-all-user g-table">
                     <div class="table-responsive">
                         @if (Session::has('status'))
-                            <p class="alert alert-success">{{ Session::get('status') }}</p>
+                            <p class="alert alert-success mb-3">{{ Session::get('status') }}</p>
                         @endif
-                        <table class="table table-striped table-bordered">
-                            <thead class="thead-ligth">
+
+                        <!-- Mobile Card View -->
+                        <div class="mobile-cards d-block d-md-none">
+                            @forelse ($courses as $course)
+                                <div class="mobile-card">
+                                    <div class="mobile-card-header">
+                                        <h5 class="mobile-card-title" title="{{ $course->name }}">
+                                            {{ $course->name }}
+                                        </h5>
+                                        <span class="badge badge-secondary">{{ $course->code }}</span>
+                                    </div>
+                                    <div class="mobile-card-body">
+                                        <div class="mobile-card-row">
+                                            <span class="mobile-card-label">College:</span>
+                                            <span class="mobile-card-value">
+                                                {{ $course->college->name }}
+                                            </span>
+                                        </div>
+
+                                        <div class="mobile-card-actions">
+                                            <a href="{{ route('admin.courses.edit', $course->id) }}"
+                                                class="btn btn-sm btn-primary mobile-btn">
+                                                <i class="icon-edit-3"></i> Edit
+                                            </a>
+                                            <form id="archive-form-mobile-{{ $course->id }}"
+                                                action="{{ route('admin.courses.destroy', $course->id) }}" method="POST"
+                                                class="d-inline archive-form">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="button" class="btn btn-sm btn-warning mobile-btn archive-btn"
+                                                    data-id="{{ $course->id }}">
+                                                    <i class="icon-archive"></i> Archive
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="icon-book-open"></i>
+                                    </div>
+                                    <h4>No Courses Found</h4>
+                                    <p>Start by creating your first course.</p>
+                                    <a href="{{ route('admin.courses.create') }}" class="btn btn-primary">
+                                        <i class="icon-plus"></i> Add New Course
+                                    </a>
+                                </div>
+                            @endforelse
+                        </div>
+
+                        <!-- Desktop Table View -->
+                        <table class="table table-striped table-bordered d-none d-md-table">
+                            <thead class="thead-ligth thead-light">
                                 <tr>
-                                    <th scope="col" style="width: 30%; min-width: 200px;">Name</th>
-                                    <th scope="col" style="width: 10%;">Code</th>
-                                    <th scope="col" style="width: 35%;">College</th>
-                                    <th scope="col" style="width: 15%;">Action</th>
+                                    <th scope="col" class="col-name">Name</th>
+                                    <th scope="col" class="col-code">Code</th>
+                                    <th scope="col" class="col-college">College</th>
+                                    <th scope="col" class="col-action">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($courses as $course)
+                                @forelse ($courses as $course)
                                     <tr>
                                         <td>
                                             <div class="name text-truncate" title="{{ $course->name }}">
@@ -70,7 +126,8 @@
                                         </td>
                                         <td>
                                             <div class="list-icon-function">
-                                                <a href="{{ route('admin.courses.edit', $course->id) }}">
+                                                <a href="{{ route('admin.courses.edit', $course->id) }}"
+                                                    title="Edit Course">
                                                     <div class="item edit">
                                                         <i class="icon-edit-3"></i>
                                                     </div>
@@ -89,12 +146,26 @@
                                             </div>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center empty-state-table">
+                                            <div class="empty-icon">
+                                                <i class="icon-book-open"></i>
+                                            </div>
+                                            <h5>No Courses Found</h5>
+                                            <p>Start by creating your first course.</p>
+                                            <a href="{{ route('admin.courses.create') }}" class="btn btn-primary">
+                                                <i class="icon-plus"></i> Add New Course
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
+
                     <div class="divider"></div>
-                    <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
+                    <div class="pagination-container">
                         {{ $courses->appends(request()->query())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
@@ -105,6 +176,49 @@
 
 @push('styles')
     <style>
+        .main-content-inner {
+            padding: 15px;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            margin: 0;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .gap20 {
+            gap: 1rem;
+        }
+
+        .mb-27 {
+            margin-bottom: 1.5rem;
+        }
+
+        .search-input {
+            width: 100%;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
         .badge {
             display: inline-block;
             padding: 5px 10px;
@@ -124,9 +238,40 @@
             background-color: #3498db;
         }
 
+        .g-table .table {
+            table-layout: fixed;
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .col-name {
+            width: 35%;
+            min-width: 200px;
+        }
+
+        .col-code {
+            width: 15%;
+        }
+
+        .col-college {
+            width: 35%;
+        }
+
+        .col-action {
+            width: 15%;
+        }
+
+        .name {
+            max-width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
         .list-icon-function {
             display: flex;
             gap: 10px;
+            justify-content: center;
         }
 
         .list-icon-function .item {
@@ -150,9 +295,10 @@
             color: white;
         }
 
-        .list-icon-function .archive-btn {
+        .archive-btn {
             background-color: rgba(231, 76, 60, 0.1);
             color: #e74c3c;
+            border-radius: 50%;
         }
 
         .list-icon-function .archive-btn:hover {
@@ -160,39 +306,293 @@
             color: white;
         }
 
-        /* Fix for table layout and long text */
-        .table {
-            table-layout: fixed;
+        /* Mobile cards */
+        .mobile-cards {
+            display: none;
+        }
+
+        .mobile-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+        }
+
+        .mobile-card-header {
+            padding: 16px;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .mobile-card-title {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            flex: 1;
+            min-width: 0;
+            word-wrap: break-word;
+        }
+
+        .mobile-card-body {
+            padding: 16px;
+        }
+
+        .mobile-card-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .mobile-card-label {
+            font-weight: 600;
+            color: #6b7280;
+            flex-shrink: 0;
+        }
+
+        .mobile-card-value {
+            color: #111827;
+            overflow-wrap: anywhere;
+        }
+
+        .mobile-card-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .mobile-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .mobile-btn.btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .mobile-btn.btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9, #21618c);
+            transform: translateY(-1px);
+        }
+
+        .mobile-btn.btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .mobile-btn.btn-warning:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            transform: translateY(-1px);
+        }
+
+        /* Empty states */
+        .empty-state,
+        .empty-state-table {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            color: #cbd5e1;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h4,
+        .empty-state-table h5 {
+            color: #475569;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .empty-state p,
+        .empty-state-table p {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+
+        .empty-state .btn,
+        .empty-state-table .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .empty-state .btn:hover,
+        .empty-state-table .btn:hover {
+            background: linear-gradient(135deg, #2980b9, #21618c);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        /* Pagination */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 15px 0;
+            overflow: visible !important;
+            min-height: 60px;
+        }
+
+        .pagination {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
             width: 100%;
         }
 
-        .name {
-            max-width: 100%;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
+        .pagination li {
+            display: inline-block;
+            margin: 0;
         }
 
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .table th:nth-child(1) {
+        .pagination .page-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background-color: white;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .pagination .page-link:hover {
+            background-color: #f3f4f6;
+            border-color: #9ca3af;
+            transform: translateY(-1px);
+        }
+
+        .pagination .active .page-link {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-color: #3498db;
+            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+        }
+
+        .pagination .disabled .page-link {
+            background-color: #f9fafb;
+            color: #9ca3af;
+            border-color: #e5e7eb;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Breakpoints */
+        @media (max-width: 991px) {
+            .col-name {
+                width: 40%;
+            }
+
+            .col-code {
+                width: 15%;
+            }
+
+            .col-college {
                 width: 30%;
             }
 
-            .table th:nth-child(2) {
-                width: 15%;
-            }
-
-            .table th:nth-child(3) {
-                width: 25%;
-            }
-
-            .table th:nth-child(4) {
+            .col-action {
                 width: 15%;
             }
         }
 
-        /* SweetAlert2 Custom Styles */
+        @media (max-width: 768px) {
+            .mobile-cards {
+                display: block;
+            }
+
+            .d-md-table {
+                display: none !important;
+            }
+
+            .action-buttons {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .pagination {
+                gap: 5px;
+            }
+
+            .pagination .page-link {
+                min-width: 36px;
+                height: 36px;
+                padding: 0 8px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .mobile-card-actions {
+                flex-direction: column;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: flex-end;
+            }
+
+            .tf-button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .pagination {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+        }
+
+        /* SweetAlert2 Custom Styles (kept from original) */
         .swal2-popup {
             width: 90vw !important;
             max-width: 600px !important;
@@ -531,11 +931,14 @@
                 });
             @endif
 
-            // Archive Course Confirmation
+            // Archive Course Confirmation (supports table + mobile cards)
             $('.archive-btn').on('click', function(e) {
                 e.preventDefault();
                 var form = $(this).closest('form');
-                var courseName = $(this).closest('tr').find('.name').text().trim();
+                var courseName = $(this).closest('tr, .mobile-card')
+                    .find('.name, .mobile-card-title')
+                    .text()
+                    .trim();
 
                 Swal.fire({
                     ...customSwalConfig,
@@ -616,20 +1019,6 @@
                 }, 500);
             });
 
-            $('.search-input').on('focus', function() {
-                $(this).css({
-                    'border-color': '#3498db',
-                    'box-shadow': '0 0 0 3px rgba(52, 152, 219, 0.15)',
-                    'transform': 'translateY(-1px)'
-                });
-            }).on('blur', function() {
-                $(this).css({
-                    'border-color': '#ddd',
-                    'box-shadow': 'none',
-                    'transform': 'translateY(0)'
-                });
-            });
-
             $('.tf-button').on('click', function() {
                 const $this = $(this);
                 const originalHtml = $this.html();
@@ -671,24 +1060,11 @@
                 });
             });
 
-            function handleResize() {
-                const windowWidth = $(window).width();
-
-                if (windowWidth <= 768) {
-                    $('.table').hide();
-                } else {
-                    $('.table').show();
-                }
-            }
-
-            $(window).on('resize', handleResize);
-            handleResize();
-
-            $('.list-icon-function .item, .tf-button').css({
+            $('.list-icon-function .item, .tf-button, .mobile-btn').css({
                 'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             });
 
-            $('.list-icon-function .item').on('focus', function() {
+            $('.list-icon-function .item, .mobile-btn').on('focus', function() {
                 $(this).css({
                     'outline': '2px solid #3498db',
                     'outline-offset': '2px'
@@ -698,7 +1074,7 @@
             });
 
             if ('ontouchstart' in window) {
-                $('.list-icon-function .item').css('cursor', 'pointer');
+                $('.list-icon-function .item, .mobile-card').css('cursor', 'pointer');
             }
         });
     </script>
