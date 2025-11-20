@@ -1664,17 +1664,22 @@ class AdminController extends Controller
         if ($isAdmin) {
             $validationRules['form_type'] = 'required|in:admin';
             $validationRules['sex'] = 'required|in:male,female';
+            $validationRules['position'] = 'required|string|max:255';
         } else {
             $validationRules['role'] = 'required|in:student,employee,non-employee';
             $validationRules['year_level'] = 'nullable|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
             $validationRules['college_id'] = 'nullable|exists:colleges,id';
             $validationRules['course_id'] = 'nullable|exists:courses,id';
             $validationRules['form_type'] = 'nullable|in:user';
+            $validationRules['position'] = 'nullable|string|max:255';
 
             if ($request->role === 'student') {
                 $validationRules['year_level'] = 'required|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
                 $validationRules['college_id'] = 'required|exists:colleges,id';
                 $validationRules['course_id'] = 'required|exists:courses,id';
+            }
+            if ($request->role === 'employee') {
+                $validationRules['position'] = 'required|string|max:255';
             }
         }
 
@@ -1684,6 +1689,7 @@ class AdminController extends Controller
             'year_level.required' => 'Year level is required for students.',
             'college_id.required' => 'College is required for students.',
             'course_id.required' => 'Course is required for students.',
+            'position.required' => 'Position is required for employees and admins.',
         ];
 
         $validated = $request->validate($validationRules, $customMessages);
@@ -1705,6 +1711,9 @@ class AdminController extends Controller
                 $validated['year_level'] = null;
                 $validated['college_id'] = null;
                 $validated['course_id'] = null;
+            }
+            if ($validated['role'] === 'student' || $validated['role'] === 'non-employee') {
+                $validated['position'] = null;
             }
         }
 
@@ -1740,12 +1749,14 @@ class AdminController extends Controller
         $user = User::findOrFail($id);
 
         $isStudent = $user->role === 'student';
+        $isEmployee = $user->role === 'employee' || $user->utype === 'ADM';
 
         $rules = [
             'phone_number' => ['nullable', 'string', 'regex:/^9\d{9}$/'],
             'year_level'   => $isStudent ? ['required', 'in:1st Year,2nd Year,3rd Year,4th Year,5th Year'] : ['nullable'],
             'college_id'   => $isStudent ? ['required', 'exists:colleges,id'] : ['nullable'],
             'course_id'    => $isStudent ? ['required', 'exists:courses,id'] : ['nullable'],
+            'position'     => $isEmployee ? ['required', 'string', 'max:255'] : ['nullable', 'string', 'max:255'],
         ];
 
         $messages = [
@@ -1753,6 +1764,7 @@ class AdminController extends Controller
             'year_level.required' => 'Year level is required for students.',
             'college_id.required' => 'College is required for students.',
             'course_id.required' => 'Course is required for students.',
+            'position.required' => 'Position is required for employees and admins.',
         ];
         $validated = $request->validate($rules, $messages);
         $user->phone_number = $validated['phone_number'] ?? null;
@@ -1763,10 +1775,17 @@ class AdminController extends Controller
             $user->year_level = $validated['year_level'];
             $user->college_id = $validated['college_id'];
             $user->course_id  = $validated['course_id'];
+            $user->position = null;
         } else {
             $user->year_level = null;
             $user->college_id = null;
             $user->course_id  = null;
+
+            if ($isEmployee) {
+                $user->position = $validated['position'];
+            } else {
+                $user->position = null;
+            }
         }
         $user->save();
         return redirect()->route('admin.users')->with('status', 'User has been updated successfully!');

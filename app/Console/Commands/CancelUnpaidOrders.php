@@ -31,13 +31,16 @@ class CancelUnpaidOrders extends Command
      */
     public function handle()
     {
-        $expirationTime = Carbon::now()->subHours(24);
+        // $expirationTime = Carbon::now()->subHours(24);
+        $expirationDate = Carbon::now()->subHours(24)->startOfDay();
         // $expirationTime = Carbon::now()->subSeconds(10);
         $orders = Order::where('status', 'reserved')
-            ->where('created_at', '<', $expirationTime)
-            ->whereHas('transaction', function ($query) {
-                $query->where('status', 'unpaid');
-            })
+            ->whereDate('reservation_date', '<', $expirationDate)
+            ->whereHas(
+                'transaction',
+                fn($query) =>
+                $query->where('status', 'unpaid')
+            )
             ->get();
 
         $canceledCount = 0;
@@ -62,13 +65,13 @@ class CancelUnpaidOrders extends Command
                             }
                         }
                     }
-
-                    $order->status = 'canceled';
-                    $order->canceled_date = Carbon::now();
-                    $order->canceled_reason = 'Your order was automatically canceled because it was not paid within 24 hours.';
-                    $order->updated_by = null;
-                    $order->save();
-
+                    $order->update([
+                        'status' => 'canceled',
+                        'canceled_date' => now(),
+                        'canceled_reason' => 'Your reservation was not claimed or paid within 24 hours after the reservation date.',
+                        'updated_by' => null,
+                    ]);
+                    // notify user
                     if ($order->user) {
                         $order->user->notify(new OrderCanceledNotification($order));
                     }
@@ -81,12 +84,7 @@ class CancelUnpaidOrders extends Command
             }
         }
 
-        if ($canceledCount > 0) {
-            $this->info("Successfully canceled {$canceledCount} unpaid orders.");
-        } else {
-            $this->info("No unpaid orders found to cancel.");
-        }
-
+        $this->info("Auto-cancel completed. {$canceledCount} orders canceled.");
         return Command::SUCCESS;
     }
 }

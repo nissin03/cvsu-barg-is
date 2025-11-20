@@ -14,6 +14,8 @@ class Payment extends Model
         'user_id',
         'status',
         'total_price',
+        'canceled_at',
+        'cancellation_reason',
         'updated_by',
         'discount_id',
         'gross_total',

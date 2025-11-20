@@ -34,6 +34,13 @@ use App\Http\Controllers\FacilityReservationController;
 Auth::routes(['verify' => true]);
 
 Route::get('/', [HomeController::class, 'index'])->name('home.index');
+
+Route::get('auth/google', [SocialAuthController::class, 'redirectToGoogle'])
+    ->name('google-auth');
+
+Route::get('auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])
+    ->name('google-auth-callback');
+
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 Route::get('/shop/{product_slug}', [ShopController::class, 'product_details'])->name('shop.product.details');
 
@@ -60,8 +67,7 @@ Route::get('/preorders/accept/{preOrder}', [CartController::class, 'acceptPreOrd
 Route::get('/preorders/cancel/{preOrder}', [CartController::class, 'cancelPreOrder'])->name('preorders.cancel');
 
 
-Route::get('auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('google-auth-callback');
-Route::get('auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('google-auth');
+
 
 Route::get('/contact-us', [HomeController::class, 'contact'])->name('home.contact');
 Route::post('/contact-us', [HomeController::class, 'contact_store'])->name('home.contact.store');
@@ -129,8 +135,13 @@ Route::middleware(['auth', 'verified', AuthUser::class])->group(function () {
     });
 });
 
-Route::get('/password/set', [PasswordController::class, 'showSetPasswordForm'])->name('password.set');
-Route::post('/password/set', [PasswordController::class, 'setPassword']);
+// Route::get('/password/set', [PasswordController::class, 'showSetPasswordForm'])->name('password.set');
+// Route::post('/password/set', [PasswordController::class, 'setPassword']);
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/password/set', [PasswordController::class, 'showSetPasswordForm'])->name('password.set');
+    Route::post('/password/set', [PasswordController::class, 'setPassword']);
+});
 
 Route::middleware(['auth', AuthAdmin::class])
     ->prefix('admin')
