@@ -44,12 +44,46 @@ class SignatureController extends Controller
             'is_archived' => 'nullable|boolean',
         ]);
 
-        $name = Str::of($validated['name']);
+        $degreeList = [
+            'phd' => 'PhD',
+            'ma'  => 'MA',
+            'ba'  => 'BA',
+            'mba' => 'MBA',
+            'cpa' => 'CPA',
+            'md'  => 'MD',
+            'dmd' => 'DMD',
+            'llb' => 'LLB',
+            'llm' => 'LLM',
+            'edd' => 'EdD',
+            'jd'  => 'JD',
+            'rn'  => 'RN',
+            'ms'  => 'MS',
+            'bs'  => 'BS',
+            'bsc' => 'BSc',
+            'msc' => 'MSc',
+            'dpt' => 'DPT',
+            'drph' => 'DrPH',
+            'dds' => 'DDS',
+            'do'  => 'DO',
+            'maed' => 'MAEd',
+            'med' => 'MEd',
+            'bfa' => 'BFA',
+            'mpa' => 'MPA',
+            'mph' => 'MPH',
+            'msn' => 'MSN',
+            'bsa' => 'BSA',
+        ];
+
+        $name = Str::of($validated['name'])->trim();
 
         if ($name->contains(',')) {
-            $main = $name->before(',')->trim()->upper();
-            $profession = $name->after(',')->trim();
-            $validated['name'] = "$main, $profession";
+            $main = Str::of($name->before(','))->trim()->upper();
+            $degree = Str::of($name->after(','))->trim();
+
+            $degreeKey = strtolower((string) $degree);
+            $degreeFormatted = $degreeList[$degreeKey] ?? Str::upper((string) $degree);
+
+            $validated['name'] = "$main, $degreeFormatted";
         } else {
             $validated['name'] = $name->upper();
         }
@@ -68,6 +102,8 @@ class SignatureController extends Controller
             ->route('admin.signatures.index')
             ->with('success', 'Signature created successfully.');
     }
+
+
 
 
 
@@ -100,13 +136,58 @@ class SignatureController extends Controller
             'is_archived' => 'boolean',
         ]);
 
+        $degreeList = [
+            'phd' => 'PhD',
+            'ma'  => 'MA',
+            'ba'  => 'BA',
+            'mba' => 'MBA',
+            'cpa' => 'CPA',
+            'md'  => 'MD',
+            'dmd' => 'DMD',
+            'llb' => 'LLB',
+            'llm' => 'LLM',
+            'edd' => 'EdD',
+            'jd'  => 'JD',
+            'rn'  => 'RN',
+            'ms'  => 'MS',
+            'bs'  => 'BS',
+            'bsc' => 'BSc',
+            'msc' => 'MSc',
+            'dpt' => 'DPT',
+            'drph' => 'DrPH',
+            'dds' => 'DDS',
+            'do'  => 'DO',
+            'maed' => 'MAEd',
+            'med' => 'MEd',
+            'bfa' => 'BFA',
+            'mpa' => 'MPA',
+            'mph' => 'MPH',
+            'msn' => 'MSN',
+            'bsa' => 'BSA',
+        ];
+
+        $name = Str::of($validated['name'])->trim();
+
+        if ($name->contains(',')) {
+            $main = Str::of($name->before(','))->trim()->upper();
+            $degree = Str::of($name->after(','))->trim();
+            $degreeKey = strtolower((string) $degree);
+            $degreeFormatted = $degreeList[$degreeKey] ?? Str::upper((string) $degree);
+            $validated['name'] = "$main, $degreeFormatted";
+        } else {
+            $validated['name'] = $name->upper();
+        }
+
         $validated['is_active'] = $request->has('is_active') ? 1 : 0;
+        $validated['is_archived'] = $request->has('is_archived') ? 1 : 0;
 
         $signature->update($validated);
 
-        return redirect()->route('admin.signatures.index')
+        return redirect()
+            ->route('admin.signatures.index')
             ->with('success', 'Signature updated successfully');
     }
+
 
     public function destroy($id)
     {
