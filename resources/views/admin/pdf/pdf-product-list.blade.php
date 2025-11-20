@@ -240,7 +240,7 @@
                     </div>
                     <div class="subtext">
                         Indang, Cavite<br>
-                        <a href="http://www.cvsu.edu.ph" target="_blank">www.cvsu.edu.ph</a>
+                        <a href="https://cvsu.edu.ph/" target="_blank">www.cvsu.edu.ph</a>
                     </div>
                 </td>
                 <td class="logo-right">
