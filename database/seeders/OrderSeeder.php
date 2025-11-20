@@ -19,9 +19,10 @@ class OrderSeeder extends Seeder
         $users = User::where('utype', 'USR')->get();
         $products = Product::all();
 
-        $startDate = Carbon::create(2025, 1, 1);
-        $endDate = Carbon::now();
-        $reservationStart = Carbon::create(2025, 1, 1);
+        $reservationStartDate = Carbon::now()->addDays(10);
+        $reservationEndDate = Carbon::now()->addDays(10)->addMonths(2);
+        $orderCreationStartDate = Carbon::now()->subMonths(1);
+        $orderCreationEndDate = Carbon::now();
 
         $orderCount = 0;
         $maxOrders = 500;
@@ -35,66 +36,55 @@ class OrderSeeder extends Seeder
 
             for ($i = 0; $i < $numOrders; $i++) {
                 if ($orderCount >= $maxOrders) {
-                    break 2; // Break both loops
+                    break 2;
                 }
 
                 $createdAt = Carbon::instance($faker->dateTimeBetween(
-                    $startDate->format('Y-m-d'),
-                    $endDate->format('Y-m-d')
+                    $orderCreationStartDate->format('Y-m-d'),
+                    $orderCreationEndDate->format('Y-m-d')
                 ));
 
-                $earliestReservation = $createdAt->greaterThan($reservationStart)
-                    ? $createdAt
-                    : $reservationStart;
-
-                if ($earliestReservation->greaterThan($endDate)) {
-                    continue;
-                }
-
                 $reservationDate = Carbon::instance($faker->dateTimeBetween(
-                    $earliestReservation->format('Y-m-d'),
-                    $endDate->format('Y-m-d')
+                    $reservationStartDate->format('Y-m-d'),
+                    $reservationEndDate->format('Y-m-d')
                 ))->format('Y-m-d');
 
-                $timeSlot = sprintf('%02d:%02d', $faker->numberBetween(7, 16), $faker->numberBetween(0, 59));
-
-                $status = $this->determineStatus($faker);
-
-                $pickedUpDate = null;
-
-                if ($status === 'pickedup') {
-                    $maxPickupDate = min(Carbon::now(), $endDate);
-                    if ($createdAt->lessThan($maxPickupDate)) {
-                        $pickedUpDate = Carbon::instance($faker->dateTimeBetween(
-                            $createdAt->format('Y-m-d'),
-                            $maxPickupDate->format('Y-m-d')
-                        ))->format('Y-m-d');
-                    }
-                }
+                $hour = $faker->numberBetween(7, 16);
+                $minute = $faker->randomElement([0, 15, 30, 45]);
+                $timeSlot = sprintf(
+                    '%d:%02d%s',
+                    $hour > 12 ? $hour - 12 : $hour,
+                    $minute,
+                    $hour >= 12 ? 'PM' : 'AM'
+                );
 
                 $order = Order::create([
                     'user_id' => $user->id,
                     'total' => 0,
                     'reservation_date' => $reservationDate,
                     'time_slot' => $timeSlot,
-                    'picked_up_date' => $pickedUpDate,
-                    'canceled_date' => null, // Always null since we don't have canceled orders
-                    'status' => $status,
+                    'picked_up_date' => null,
+                    'canceled_date' => null,
+                    'updated_by' => null,
+                    'canceled_reason' => null,
+                    'status' => 'reserved',
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ]);
 
                 $orderTotal = 0;
-                $numItems = $faker->numberBetween(1, 5);
+                $numItems = $faker->numberBetween(1, 3);
 
                 for ($j = 0; $j < $numItems; $j++) {
                     $product = $products->random();
-                    $variant = $product->attributeValues()->count() > 0
-                        ? $product->attributeValues()->inRandomOrder()->first()
-                        : null;
+
+                    $variant = null;
+                    if ($product->attributeValues()->count() > 0) {
+                        $variant = $product->attributeValues()->inRandomOrder()->first();
+                    }
 
                     $itemPrice = $variant ? $variant->price : $product->price;
-                    $quantity = $faker->numberBetween(1, 5);
+                    $quantity = $faker->numberBetween(1, 3);
                     $itemTotal = $itemPrice * $quantity;
                     $orderTotal += $itemTotal;
 
@@ -112,14 +102,11 @@ class OrderSeeder extends Seeder
                 $order->total = $orderTotal;
                 $order->save();
 
-                // Set transaction status based on order status
-                $transactionStatus = $status === 'pickedup' ? 'paid' : 'unpaid';
-
                 Transaction::create([
                     'order_id' => $order->id,
-                    'amount_paid' => $orderTotal,
-                    'change' => 0,
-                    'status' => $transactionStatus,
+                    'amount_paid' => 0.0,
+                    'change' => 0.0,
+                    'status' => 'unpaid',
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ]);
@@ -127,13 +114,5 @@ class OrderSeeder extends Seeder
                 $orderCount++;
             }
         }
-    }
-
-    private function determineStatus($faker): string
-    {
-        $rand = $faker->numberBetween(1, 100);
-
-        // 80% reserved, 20% pickedup - no canceled orders
-        return $rand <= 20 ? 'pickedup' : 'reserved';
     }
 }

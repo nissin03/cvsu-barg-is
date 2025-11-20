@@ -90,7 +90,7 @@
                     </div>
                     <a href="{{ route('admin.facility-statement.download', request()->query()) }} " target="_blank"
                         class="btn btn-outline-dark fs-5 py-3 px-4 w-auto" style="border-radius: 8px;">
-                        <i class="fas fa-file-pdf me-1"></i>PDF
+                        <i class="fas fa-file-pdf me-1"></i>PRINT
                     </a>
                 </div>
             </div>
@@ -180,13 +180,13 @@
                         @if ($payments->count() > 0)
                             <tfoot>
                                 <tr class="bg-gray-50">
-                                    <td colspan="3" class="py-3 px-4 text-end fw-semibold text-gray-800">
+                                    <td colspan="4" class="py-3 px-4 text-end fw-semibold text-gray-800">
                                         Grand Total:
                                     </td>
                                     <td class="py-3 px-4">
-                                        <div class="fw-bold text-success fs-5">₱{{ number_format($grandTotal, 2) }}</div>
+                                        <div class="fw-bold text-success fs-7">₱{{ number_format($grandTotal, 2) }}</div>
                                     </td>
-                                    <td class="py-3 px-4"></td>
+                                    {{-- <td class="py-3 px-4"></td> --}}
                                 </tr>
                             </tfoot>
                         @endif

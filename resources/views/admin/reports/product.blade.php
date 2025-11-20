@@ -23,7 +23,7 @@
                     <form action="{{ route('admin.report-product.download') }}" method="GET" target="_blank">
                         <button type="submit" class="btn btn-dark d-flex align-items-center fs-4 px-4 py-2">
                             <i class="bi bi-file-pdf me-2"></i>
-                            PDF
+                            PRINT
                         </button>
                     </form>
 

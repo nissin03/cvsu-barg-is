@@ -190,7 +190,7 @@
                                         <input type="hidden" name="dailyChartData" value="{{ $dailyChartData }}">
                                         <input type="hidden" name="week" value="{{ $selectedWeekId }}">
                                         <button type="submit" class="btn btn-outline-dark fs-5 py-3 px-4 w-auto">
-                                            <i class="fas fa-file-pdf me-1"></i>PDF
+                                            <i class="fas fa-file-pdf me-1"></i>PRINT
                                         </button>
                                     </form>
                                 </div>

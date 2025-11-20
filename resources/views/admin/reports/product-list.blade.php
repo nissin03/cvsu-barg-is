@@ -67,7 +67,7 @@
                                 <input type="hidden" name="category" value="{{ request('category') }}">
                                 <button type="submit" class="btn btn-outline-dark fs-5 py-3 px-4 w-auto"
                                     style="border-radius: 8px;">
-                                    <i class="fas fa-file-pdf me-1"></i>PDF
+                                    <i class="fas fa-file-pdf me-1"></i>PRINT
                                 </button>
                             </form>
                         </div>
