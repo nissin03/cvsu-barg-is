@@ -81,7 +81,7 @@
                                         </button>
                                         <button type="button" class="btn  btn btn-dark fs-5 py-3 px-4 w-auto"
                                             id="pdf-export-btn" style="min-width: 120px;">
-                                            <i class="fas fa-file-pdf me-1"></i>PDF
+                                            <i class="fas fa-file-pdf me-1"></i>PRINT
                                         </button>
 
                                     </div>

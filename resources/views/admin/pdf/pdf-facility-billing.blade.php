@@ -406,7 +406,7 @@
         @php
             $signatures = \App\Models\Signature::where('category', 'product')
                 ->where(function ($query) {
-                    $query->where('report_type', 'product')->orWhere('report_type', 'all');
+                    $query->where('report_type', 'sales')->orWhere('report_type', 'all');
                 })
                 ->where('is_active', true)
                 ->where('is_archived', false)
