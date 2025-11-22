@@ -1,5 +1,13 @@
 @extends('layouts.admin')
 @section('content')
+    <div id="loading-indicator" class="loading-indicator">
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+
     <div class="main-content-inner">
         <div class="main-content-wrap">
             <div class="flex items-center flex-wrap justify-between gap20 mb-27">
@@ -10,9 +18,7 @@
                             <div class="text-tiny">Dashboard</div>
                         </a>
                     </li>
-                    <li>
-                        <i class="icon-chevron-right"></i>
-                    </li>
+                    <li><i class="icon-chevron-right"></i></li>
                     <li>
                         <div class="text-tiny">Add-ons</div>
                     </li>
@@ -20,85 +26,190 @@
             </div>
 
             <div class="wg-box">
-                <div class="flex items-center justify-between gap10 flex-wrap mb-3">
+                <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
                     <div class="wg-filter flex-grow">
-                        <form class="form-search" method="GET" action="{{ route('admin.addons') }}">
+                        <form class="form-search" onsubmit="return false;">
                             <fieldset class="name">
-                                <input type="text" placeholder="Search addons..." class="search-input" name="search"
+                                <input type="text" id="addon-search"
+                                    placeholder="Search addons by name, description, facility..." name="search"
                                     tabindex="2" value="{{ request('search') }}" aria-required="true">
                             </fieldset>
                             <button type="submit" style="display: none"></button>
                         </form>
                     </div>
 
-                    <div class="action-buttons">
-                        <a class="tf-button w-auto" href="{{ route('admin.addons.create') }}"><i class="icon-plus"></i>Add
-                            New Add-on</a>
-                        <a class="tf-button w-auto" href="{{ route('admin.addons.archive') }}">
-                            <i class="icon-archive"></i> Archived Add-ons
-                        </a>
+                    <div class="filter-toggle-section d-flex align-items-center gap-3">
+                        <span class="badge bg-primary fs-6 py-2 px-3" id="activeFiltersCount" style="display: none;">0
+                            filters</span>
+                        <button class="btn btn-outline-primary btn-lg position-relative" id="filterToggle" type="button">
+                            <i class="icon-filter me-1"></i> Filters
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                id="filterBadge" style="display: none;">0</span>
+                        </button>
+                        <button class="btn btn-outline-secondary" id="clearAllFilters" style="display: none;">
+                            <i class="icon-x-circle me-1"></i> Clear All
+                        </button>
                     </div>
+                </div>
 
+                <!-- Filter Container -->
+                <div class="collapse mb-4" id="filterContainer">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="row g-3 mb-4">
+                                <!-- Facility Filter -->
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="filter-group">
+                                        <label class="text-muted small mb-2 d-block">Facility</label>
+                                        <select name="facility" id="facility" class="filter-select form-select">
+                                            <option value="">All Facilities</option>
+                                            @foreach ($facilities as $facility)
+                                                <option value="{{ $facility->id }}"
+                                                    {{ request('facility') == $facility->id ? 'selected' : '' }}>
+                                                    {{ $facility->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Price Type Filter -->
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="filter-group">
+                                        <label class="text-muted small mb-2 d-block">Price Type</label>
+                                        <select name="price_type" id="price_type" class="filter-select form-select">
+                                            <option value="">All Price Types</option>
+                                            <option value="per_unit"
+                                                {{ request('price_type') == 'per_unit' ? 'selected' : '' }}>Per Unit
+                                            </option>
+                                            <option value="flat_rate"
+                                                {{ request('price_type') == 'flat_rate' ? 'selected' : '' }}>Flat Rate
+                                            </option>
+                                            <option value="per_night"
+                                                {{ request('price_type') == 'per_night' ? 'selected' : '' }}>Per Night
+                                            </option>
+                                            <option value="per_item"
+                                                {{ request('price_type') == 'per_item' ? 'selected' : '' }}>Per Item
+                                            </option>
+                                            <option value="per_hour"
+                                                {{ request('price_type') == 'per_hour' ? 'selected' : '' }}>Per Hour
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Availability Filter -->
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="filter-group">
+                                        <label class="text-muted small mb-2 d-block">Availability</label>
+                                        <select name="availability" id="availability" class="filter-select form-select">
+                                            <option value="">All Status</option>
+                                            <option value="available"
+                                                {{ request('availability') == 'available' ? 'selected' : '' }}>Available
+                                            </option>
+                                            <option value="unavailable"
+                                                {{ request('availability') == 'unavailable' ? 'selected' : '' }}>
+                                                Unavailable</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Refundable Filter -->
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="filter-group">
+                                        <label class="text-muted small mb-2 d-block">Refundable</label>
+                                        <select name="refundable" id="refundable" class="filter-select form-select">
+                                            <option value="">All</option>
+                                            <option value="yes" {{ request('refundable') == 'yes' ? 'selected' : '' }}>
+                                                Refundable</option>
+                                            <option value="no" {{ request('refundable') == 'no' ? 'selected' : '' }}>
+                                                Non-Refundable</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Billing Cycle Filter -->
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="filter-group">
+                                        <label class="text-muted small mb-2 d-block">Billing Cycle</label>
+                                        <select name="billing_cycle" id="billing_cycle" class="filter-select form-select">
+                                            <option value="">All Cycles</option>
+                                            <option value="per_day"
+                                                {{ request('billing_cycle') == 'per_day' ? 'selected' : '' }}>Per Day
+                                            </option>
+                                            <option value="per_contract"
+                                                {{ request('billing_cycle') == 'per_contract' ? 'selected' : '' }}>Per
+                                                Contract</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Sort By -->
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="filter-group">
+                                        <label class="text-muted small mb-2 d-block">Sort By</label>
+                                        <select name="sort_by" id="sort_by" class="filter-select form-select">
+                                            <option value="newest"
+                                                {{ request('sort_by', 'newest') == 'newest' ? 'selected' : '' }}>Newest
+                                                First</option>
+                                            <option value="oldest" {{ request('sort_by') == 'oldest' ? 'selected' : '' }}>
+                                                Oldest First</option>
+                                            <option value="name_asc"
+                                                {{ request('sort_by') == 'name_asc' ? 'selected' : '' }}>Name (A-Z)
+                                            </option>
+                                            <option value="name_desc"
+                                                {{ request('sort_by') == 'name_desc' ? 'selected' : '' }}>Name (Z-A)
+                                            </option>
+                                            <option value="price_low"
+                                                {{ request('sort_by') == 'price_low' ? 'selected' : '' }}>Price: Low to
+                                                High</option>
+                                            <option value="price_high"
+                                                {{ request('sort_by') == 'price_high' ? 'selected' : '' }}>Price: High to
+                                                Low</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center mt-4">
+                                <button class="btn btn-primary btn-lg me-4" id="applyFilters">
+                                    <i class="icon-filter me-1"></i> Apply Filters
+                                </button>
+                                <button class="btn btn-outline-secondary btn-lg" id="resetFilters">
+                                    <i class="icon-refresh-cw me-1"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Filters Display -->
+                <div class="active-filters-row mb-4" id="activeFiltersRow" style="display: none;">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body py-2">
+                            <div class="d-flex align-items-center gap-3 flex-wrap">
+                                <span class="text-muted fs-6 fw-medium">Active filters:</span>
+                                <div class="filter-tags d-flex gap-2 flex-wrap" id="filterTags"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons mb-3">
+                    <a class="tf-button w-auto" href="{{ route('admin.addons.create') }}">
+                        <i class="icon-plus"></i> Add New Add-on
+                    </a>
+                    <a class="tf-button w-auto" href="{{ route('admin.addons.archive') }}">
+                        <i class="icon-archive"></i> Archived Add-ons
+                    </a>
                 </div>
 
                 <div class="table-all-user g-table">
                     <div class="table-responsive">
                         <!-- Mobile Card View -->
-                        <div class="mobile-cards d-block d-md-none">
-                            @forelse ($addons as $addon)
-                                <div class="mobile-card">
-                                    <div class="mobile-card-header">
-                                        <h5 class="mobile-card-title">{{ $addon->name }}</h5>
-                                        <span
-                                            class="badge {{ $addon->is_available ? 'badge-success' : 'badge-secondary' }}">
-                                            {{ $addon->is_available ? 'Available' : 'Unavailable' }}
-                                        </span>
-                                    </div>
-                                    <div class="mobile-card-body">
-                                        <div class="mobile-card-details">
-                                            <p><strong>Price:</strong> ₱{{ number_format($addon->base_price, 2) }}
-                                                ({{ ucfirst(str_replace('_', ' ', $addon->price_type)) }})
-                                            </p>
-                                            <p><strong>Type:</strong>
-                                                {{ $addon->is_based_on_quantity ? 'Quantity-based' : 'Flat rate' }}</p>
-                                            <p><strong>Refundable:</strong> {{ $addon->is_refundable ? 'Yes' : 'No' }}</p>
-                                            <p><strong>Show:</strong>
-                                                <span
-                                                    class="badge {{ $addon->show == 'staff' ? 'badge-purple' : 'badge-info' }}">
-                                                    {{ ucfirst($addon->show) }}
-                                                </span>
-                                            </p>
-                                        </div>
-                                        <div class="mobile-card-actions">
-                                            {{-- {{ route('admin.addons.edit', $addon->id) }} --}}
-                                            <a href="{{ route('admin.addons.edit', $addon->id) }}"
-                                                class="btn btn-sm btn-primary mobile-btn">
-                                                <i class="icon-edit-3"></i> Edit
-                                            </a>
-                                            {{-- {{ route('admin.addons.destroy', $addon->id) }} --}}
-                                            <form action=" {{ route('admin.addons.destroy', $addon->id) }}" method="POST"
-                                                class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-warning delete mobile-btn">
-                                                    <i class="icon-archive"></i> Archive
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="empty-state">
-                                    <div class="empty-icon">
-                                        <i class="icon-package"></i>
-                                    </div>
-                                    <h4>No Addons Found</h4>
-                                    <p>Start by creating your first addon.</p>
-                                    <a href="{{ route('admin.addons.create') }}" class="btn btn-primary">
-                                        <i class="icon-plus"></i> Add New Addon
-                                    </a>
-                                </div>
-                            @endforelse
+                        <div class="mobile-cards d-block d-md-none" id="js-addons-mobile-target">
+                            @include('partials._addons-mobile', ['addons' => $addons])
                         </div>
 
                         <!-- Desktop Table View -->
@@ -112,103 +223,16 @@
                                     <th scope="col" class="col-quantity">Quantity Based</th>
                                     <th scope="col" class="col-status">Status</th>
                                     <th scope="col" class="col-refundable">Refundable</th>
-                                    {{-- <th scope="col" class="col-show">Show</th> --}}
                                     <th scope="col" class="col-action">Action</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @forelse ($addons as $addon)
-                                    <tr>
-                                        <td class="name-cell">
-                                            <div class="name text-truncate" title="{{ $addon->name }}">
-                                                <strong>{{ $addon->name }}</strong>
-                                            </div>
-                                            @if ($addon->description)
-                                                <div class="text-tiny text-muted text-truncate"
-                                                    title="{{ $addon->description }}">
-                                                    {{ Str::limit($addon->description, 50) }}
-                                                </div>
-                                            @endif
-                                        </td>
-                                        <td class="facility-cell">
-                                            @if ($addon->facility)
-                                                <span class="text-primary">{{ $addon->facility->name }}</span>
-                                                <div class="text-tiny text-muted">ID: {{ $addon->facility->id }}</div>
-                                            @else
-                                                <span class="text-muted">—</span>
-                                            @endif
-                                        </td>
-                                        <td class="price-cell">
-                                            ₱ {{ number_format($addon->base_price, 2) }}
-                                        </td>
-                                        <td class="type-cell">
-                                            {{ ucfirst(str_replace('_', ' ', $addon->price_type)) }}
-                                        </td>
-                                        <td class="quantity-cell">
-                                            <span
-                                                class="badge {{ $addon->is_based_on_quantity ? 'badge-info' : 'badge-secondary' }}">
-                                                {{ $addon->is_based_on_quantity ? 'Yes' : 'No' }}
-                                            </span>
-                                        </td>
-                                        <td class="status-cell">
-                                            <span
-                                                class="badge {{ $addon->is_available ? 'badge-success' : 'badge-secondary' }}">
-                                                {{ $addon->is_available ? 'Available' : 'Unavailable' }}
-                                            </span>
-                                        </td>
-                                        <td class="refundable-cell">
-                                            <span
-                                                class="badge {{ $addon->is_refundable ? 'badge-warning' : 'badge-secondary' }}">
-                                                {{ $addon->is_refundable ? 'Yes' : 'No' }}
-                                            </span>
-                                        </td>
-                                        {{-- <td class="show-cell">
-                                            <span
-                                                class="badge {{ $addon->show == 'staff' ? 'badge-purple' : 'badge-info' }}">
-                                                {{ ucfirst($addon->show) }}
-                                            </span>
-                                        </td> --}}
-                                        <td class="action-cell">
-                                            <div class="list-icon-function">
-                                                {{-- {{ route('admin.addons.edit', $addon->id) }} --}}
-                                                <a href="{{ route('admin.addons.edit', $addon->id) }}" title="Edit Addon">
-                                                    <div class="item edit">
-                                                        <i class="icon-edit-3"></i>
-                                                    </div>
-                                                </a>
-                                                {{-- {{ route('admin.addons.destroy', $addon->id) }} --}}
-                                                <form action="{{ route('admin.addons.destroy', $addon->id) }}"
-                                                    method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="item text-warning delete"
-                                                        style="border: none; background: none;" title="Delete Addon">
-                                                        <i class="icon-archive"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="8" class="text-center empty-state-table">
-                                            <div class="empty-icon">
-                                                <i class="icon-package"></i>
-                                            </div>
-                                            <h5>No Addons Found</h5>
-                                            <p>Start by creating your first addon.</p>
-                                            <a href="{{ route('admin.addons.create') }}" class="btn btn-primary">
-                                                <i class="icon-plus"></i> Add New Addon
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforelse
+                            <tbody id="js-addons-partial-target">
+                                @include('partials._addons-table', ['addons' => $addons])
                             </tbody>
                         </table>
                     </div>
                     <div class="divider"></div>
-                    <!-- Fixed pagination section -->
-                    <div class="pagination-container" style="padding: 15px 0; overflow: visible; min-height: 60px;">
+                    <div class="pagination-container" id="js-addons-partial-target-pagination">
                         {{ $addons->appends(request()->query())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
@@ -219,6 +243,25 @@
 
 @push('styles')
     <style>
+        /* Loading Indicator */
+        .loading-indicator {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
         /* Base Responsive Layout */
         .main-content-inner {
             padding: 15px;
@@ -239,8 +282,68 @@
             margin-bottom: 1.5rem;
         }
 
-        /* Search and Action Button Styles */
-        .search-input {
+        /* Filter Styles */
+        .filter-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            min-width: 150px;
+            background: #fff;
+            transition: border-color 0.2s;
+        }
+
+        .filter-select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+        }
+
+        /* Filter Tags */
+        .filter-tag-enhanced {
+            background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .filter-tag-enhanced:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .filter-tag-enhanced .btn-close {
+            background-color: #fff;
+            color: #dc3545;
+            border-radius: 50%;
+            width: 1.4rem;
+            height: 1.4rem;
+            padding: 0;
+            opacity: 0.8;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+        }
+
+        .filter-tag-enhanced .btn-close:hover {
+            background-color: #fff;
+            color: #b02a37;
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* Search Input */
+        .search-input,
+        .form-search input {
             width: 100%;
             min-width: 200px;
             padding: 8px 12px;
@@ -250,36 +353,18 @@
             transition: border-color 0.3s ease;
         }
 
-        .search-input:focus {
+        .search-input:focus,
+        .form-search input:focus {
             outline: none;
             border-color: #3498db;
             box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
         }
 
+        /* Action Buttons */
         .action-buttons {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
-        }
-
-        .add-button {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            white-space: nowrap;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-            color: white;
-            text-decoration: none;
-        }
-
-        .add-button:hover {
-            background: linear-gradient(135deg, #16a34a, #15803d);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-            color: white;
         }
 
         /* Badge Styles */
@@ -291,7 +376,6 @@
             color: #fff;
             border-radius: 4px;
             line-height: 1.2;
-            vertical-align: middle;
         }
 
         .badge-success {
@@ -310,11 +394,7 @@
             background: linear-gradient(135deg, #f59e0b, #d97706);
         }
 
-        .badge-purple {
-            background: linear-gradient(135deg, #6a11cb, #a4508b);
-        }
-
-        /* Desktop Table Styles */
+        /* Table Styles */
         .table {
             table-layout: fixed;
             width: 100%;
@@ -322,7 +402,11 @@
         }
 
         .col-name {
-            width: 25%;
+            width: 22%;
+        }
+
+        .col-facility {
+            width: 13%;
         }
 
         .col-price {
@@ -330,7 +414,7 @@
         }
 
         .col-type {
-            width: 15%;
+            width: 12%;
         }
 
         .col-quantity {
@@ -345,12 +429,8 @@
             width: 10%;
         }
 
-        .col-show {
-            width: 10%;
-        }
-
         .col-action {
-            width: 20%;
+            width: 13%;
         }
 
         .name {
@@ -446,7 +526,6 @@
             color: #1e293b;
             flex: 1;
             min-width: 0;
-            word-wrap: break-word;
         }
 
         .mobile-card-body {
@@ -490,22 +569,12 @@
             color: white;
         }
 
-        .mobile-btn.btn-primary:hover {
-            background: linear-gradient(135deg, #2980b9, #21618c);
-            transform: translateY(-1px);
-        }
-
-        .mobile-btn.btn-danger {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
+        .mobile-btn.btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
             color: white;
         }
 
-        .mobile-btn.btn-danger:hover {
-            background: linear-gradient(135deg, #dc2626, #b91c1c);
-            transform: translateY(-1px);
-        }
-
-        /* Empty State Styles */
+        /* Empty State */
         .empty-state,
         .empty-state-table {
             text-align: center;
@@ -519,149 +588,15 @@
             margin-bottom: 16px;
         }
 
-        .empty-state h4,
-        .empty-state-table h5 {
-            color: #475569;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .empty-state p,
-        .empty-state-table p {
-            color: #64748b;
-            margin-bottom: 20px;
-        }
-
-        .empty-state .btn,
-        .empty-state-table .btn {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .empty-state .btn:hover,
-        .empty-state-table .btn:hover {
-            background: linear-gradient(135deg, #2980b9, #21618c);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-        }
-
-        /* Pagination Fixes */
+        /* Pagination */
         .pagination-container {
             display: flex;
             justify-content: center;
-            align-items: center;
-            width: 100%;
             padding: 15px 0;
-            overflow: visible !important;
             min-height: 60px;
         }
 
-        .pagination {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
-            margin: 0;
-            padding: 0;
-            list-style: none;
-            width: 100%;
-        }
-
-        .pagination li {
-            display: inline-block;
-            margin: 0;
-        }
-
-        .pagination .page-link {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 40px;
-            height: 40px;
-            padding: 0 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            background-color: white;
-            color: #374151;
-            font-size: 14px;
-            font-weight: 500;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-
-        .pagination .page-link:hover {
-            background-color: #f3f4f6;
-            border-color: #9ca3af;
-            transform: translateY(-1px);
-        }
-
-        .pagination .active .page-link {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            border-color: #3498db;
-            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
-        }
-
-        .pagination .disabled .page-link {
-            background-color: #f9fafb;
-            color: #9ca3af;
-            border-color: #e5e7eb;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Show pagination info */
-        .pagination-info {
-            width: 100%;
-            text-align: center;
-            margin-top: 10px;
-            font-size: 14px;
-            color: #6b7280;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 991px) {
-            .col-name {
-                width: 20%;
-            }
-
-            .col-price {
-                width: 10%;
-            }
-
-            .col-type {
-                width: 15%;
-            }
-
-            .col-quantity {
-                width: 10%;
-            }
-
-            .col-status {
-                width: 10%;
-            }
-
-            .col-refundable {
-                width: 10%;
-            }
-
-            .col-show {
-                width: 10%;
-            }
-
-            .col-action {
-                width: 15%;
-            }
-        }
-
+        /* Responsive */
         @media (max-width: 768px) {
             .mobile-cards {
                 display: block;
@@ -676,15 +611,9 @@
                 justify-content: flex-end;
             }
 
-            .pagination {
-                gap: 5px;
-            }
-
-            .pagination .page-link {
-                min-width: 36px;
-                height: 36px;
-                padding: 0 8px;
-                font-size: 13px;
+            .filter-tag-enhanced {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
             }
         }
 
@@ -697,618 +626,296 @@
                 flex-direction: column;
                 align-items: flex-end;
             }
-
-            .add-button {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .pagination {
-                flex-direction: column;
-                align-items: center;
-                gap: 10px;
-            }
-
-            .pagination-info {
-                order: -1;
-                margin-bottom: 10px;
-            }
-        }
-
-        /* Print Styles */
-        @media print {
-
-            .action-buttons,
-            .wg-filter,
-            .list-icon-function,
-            .mobile-card-actions {
-                display: none !important;
-            }
-
-            .table {
-                display: table !important;
-            }
-
-            .mobile-cards {
-                display: none !important;
-            }
-
-            .wg-box,
-            .mobile-card {
-                box-shadow: none !important;
-                border: 1px solid #ccc !important;
-            }
-
-            .pagination {
-                display: none !important;
-            }
-        }
-    </style>
-@endpush
-
-
-@push('styles')
-    <style>
-        /* SweetAlert2 Custom Styles - Clean Version */
-        .swal2-popup {
-            width: 90vw !important;
-            max-width: 600px !important;
-            min-height: 350px !important;
-            padding: 35px !important;
-            border-radius: 16px !important;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25) !important;
-            backdrop-filter: blur(10px) !important;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.95)) !important;
-        }
-
-        .swal2-title {
-            font-size: 24px !important;
-            font-weight: 700 !important;
-            margin: 0 0 25px 0 !important;
-            text-align: center !important;
-            line-height: 1.3 !important;
-            color: #1e293b !important;
-        }
-
-        .swal2-content {
-            font-size: 16px !important;
-            line-height: 1.6 !important;
-            margin: 25px 0 35px 0 !important;
-            text-align: center !important;
-            color: #475569 !important;
-        }
-
-        .swal2-actions {
-            margin: 35px 0 0 0 !important;
-            gap: 15px !important;
-            justify-content: center !important;
-        }
-
-        .swal2-confirm,
-        .swal2-cancel {
-            font-size: 15px !important;
-            font-weight: 600 !important;
-            padding: 12px 30px !important;
-            min-width: 120px !important;
-            height: 45px !important;
-            border-radius: 8px !important;
-            border: none !important;
-            cursor: pointer !important;
-            transition: all 0.3s ease !important;
-        }
-
-        .swal2-confirm {
-            background: linear-gradient(135deg, #f59e0b, #d97706) !important;
-            color: white !important;
-            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3) !important;
-        }
-
-        .swal2-confirm:hover {
-            background: linear-gradient(135deg, #d97706, #b45309) !important;
-            transform: translateY(-2px) !important;
-            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4) !important;
-        }
-
-        .swal2-cancel {
-            background: #f8fafc !important;
-            color: #64748b !important;
-            border: 2px solid #cbd5e1 !important;
-        }
-
-        .swal2-cancel:hover {
-            background: #e2e8f0 !important;
-            border-color: #94a3b8 !important;
-            transform: translateY(-1px) !important;
-        }
-
-        /* Custom Icons using ::before pseudo-element */
-        .swal2-popup::before {
-            content: '' !important;
-            display: block !important;
-            text-align: center !important;
-            margin: 20px auto 30px auto !important;
-            width: 80px !important;
-            height: 80px !important;
-            line-height: 80px !important;
-            border-radius: 50% !important;
-            font-size: 32px !important;
-            font-weight: 900 !important;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-            animation: swalIconPulse 1s ease-in-out !important;
-        }
-
-        /* Success Icon */
-        .swal2-popup.swal2-success::before {
-            content: "✓" !important;
-            color: #22c55e !important;
-            border: 4px solid #22c55e !important;
-            background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
-        }
-
-        /* Error Icon */
-        .swal2-popup.swal2-error::before {
-            content: "✕" !important;
-            color: #ef4444 !important;
-            border: 4px solid #ef4444 !important;
-            background: linear-gradient(135deg, #fef2f2, #fecaca) !important;
-        }
-
-        /* Info Icon */
-        .swal2-popup.swal2-info::before {
-            content: "i" !important;
-            color: #3b82f6 !important;
-            border: 4px solid #3b82f6 !important;
-            background: linear-gradient(135deg, #eff6ff, #dbeafe) !important;
-            font-style: italic !important;
-            font-size: 36px !important;
-        }
-
-        /* Question Icon */
-        .swal2-popup.swal2-question::before {
-            content: "?" !important;
-            color: #8b5cf6 !important;
-            border: 4px solid #8b5cf6 !important;
-            background: linear-gradient(135deg, #faf5ff, #ede9fe) !important;
-            font-size: 36px !important;
-        }
-
-        /* Warning Icon - FIXED */
-        .swal2-popup.swal2-warning::before {
-            content: "!" !important;
-            color: #f59e0b !important;
-            border: 4px solid #f59e0b !important;
-            background: linear-gradient(135deg, #fffbeb, #fef3c7) !important;
-            font-size: 36px !important;
-        }
-
-        /* Hide default SweetAlert2 icons */
-        .swal2-icon {
-            display: none !important;
-        }
-
-        /* Animation for icons */
-        @keyframes swalIconPulse {
-            0% {
-                transform: scale(0.8);
-                opacity: 0.5;
-            }
-
-            50% {
-                transform: scale(1.05);
-            }
-
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        /* Responsive Adjustments */
-        @media (max-width: 767px) {
-            .swal2-popup {
-                width: 95vw !important;
-                max-width: none !important;
-                margin: 10px !important;
-                padding: 25px !important;
-                min-height: 300px !important;
-            }
-
-            .swal2-title {
-                font-size: 20px !important;
-                margin-bottom: 20px !important;
-            }
-
-            .swal2-content {
-                font-size: 14px !important;
-                margin: 20px 0 25px 0 !important;
-            }
-
-            .swal2-actions {
-                flex-direction: column !important;
-                width: 100% !important;
-                margin-top: 25px !important;
-                gap: 10px !important;
-            }
-
-            .swal2-confirm,
-            .swal2-cancel {
-                width: 100% !important;
-                margin: 0 !important;
-            }
-
-            .swal2-popup::before {
-                width: 70px !important;
-                height: 70px !important;
-                line-height: 70px !important;
-                font-size: 28px !important;
-                margin: 15px auto 25px auto !important;
-            }
-
-            .swal2-popup.swal2-info::before,
-            .swal2-popup.swal2-question::before,
-            .swal2-popup.swal2-warning::before {
-                font-size: 30px !important;
-            }
-        }
-
-        @media (max-width: 575px) {
-            .swal2-popup {
-                padding: 20px !important;
-                min-height: 280px !important;
-            }
-
-            .swal2-title {
-                font-size: 18px !important;
-            }
-
-            .swal2-content {
-                font-size: 13px !important;
-            }
-
-            .swal2-popup::before {
-                width: 60px !important;
-                height: 60px !important;
-                line-height: 60px !important;
-                font-size: 24px !important;
-            }
-
-            .swal2-popup.swal2-info::before,
-            .swal2-popup.swal2-question::before,
-            .swal2-popup.swal2-warning::before {
-                font-size: 26px !important;
-            }
-        }
-
-        @media (max-width: 400px) {
-            .swal2-popup {
-                padding: 15px !important;
-                min-height: 260px !important;
-            }
-
-            .swal2-title {
-                font-size: 16px !important;
-            }
-
-            .swal2-content {
-                font-size: 12px !important;
-            }
-
-            .swal2-popup::before {
-                width: 55px !important;
-                height: 55px !important;
-                line-height: 55px !important;
-                font-size: 20px !important;
-            }
-
-            .swal2-popup.swal2-info::before,
-            .swal2-popup.swal2-question::before,
-            .swal2-popup.swal2-warning::before {
-                font-size: 22px !important;
-            }
-        }
-
-        /* Extra Large Screens */
-        @media (min-width: 1400px) {
-            .swal2-popup {
-                max-width: 700px !important;
-                min-height: 400px !important;
-                padding: 45px !important;
-            }
-
-            .swal2-title {
-                font-size: 28px !important;
-                margin-bottom: 30px !important;
-            }
-
-            .swal2-content {
-                font-size: 18px !important;
-                margin: 30px 0 40px 0 !important;
-            }
-
-            .swal2-actions {
-                margin-top: 40px !important;
-            }
-
-            .swal2-popup::before {
-                width: 90px !important;
-                height: 90px !important;
-                line-height: 90px !important;
-                font-size: 38px !important;
-                margin: 25px auto 35px auto !important;
-            }
-
-            .swal2-popup.swal2-info::before,
-            .swal2-popup.swal2-question::before,
-            .swal2-popup.swal2-warning::before {
-                font-size: 42px !important;
-            }
         }
     </style>
 @endpush
 
 @push('scripts')
     <script>
-        $(function() {
-            // Enhanced SweetAlert2 configuration
-            const customSwalConfig = {
-                customClass: {
-                    popup: 'enhanced-swal-popup',
-                    title: 'enhanced-swal-title',
-                    content: 'enhanced-swal-content',
-                    actions: 'enhanced-swal-actions',
-                    confirmButton: 'enhanced-swal-confirm',
-                    cancelButton: 'enhanced-swal-cancel'
-                },
-                buttonsStyling: false,
-                allowOutsideClick: false,
-                allowEscapeKey: true,
-                showCloseButton: true,
-                focusConfirm: false,
-                reverseButtons: true,
-                backdrop: true
-            };
+        $(document).ready(function() {
+            let lastScrollPosition = 0;
+            let searchTimeout = null;
 
-            // Success message display
-            @if (Session::has('success'))
-                Swal.fire({
-                    ...customSwalConfig,
-                    // icon: 'success',
-                    customClass: {
-                        popup: 'swal2-success'
-                    },
-                    title: 'Operation Successful!',
-                    html: `
-                        <div style="text-align: center; line-height: 1.6;">
-                            <p style="font-size: 16px; color: #22c55e; margin-bottom: 15px;">
-                                <strong>{{ Session::get('success') }}</strong>
-                            </p>
-                            <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #22c55e;">
-                                <p style="margin: 0; color: #166534; font-weight: 500;">
-                                    <i class="icon-check-circle" style="margin-right: 8px;"></i>
-                                    The operation has been completed successfully.
-                                </p>
-                            </div>
-                            <p style="color: #64748b; font-size: 14px; margin-top: 15px;">
-                                Your changes have been saved and are now active.
-                            </p>
-                        </div>
-                    `,
-                    confirmButtonText: '<i class="icon-check"></i> Great!',
-                    timer: 5000,
-                    timerProgressBar: true,
-                    showCloseButton: true
-                });
-            @endif
+            // Filter toggle functionality
+            $('#filterToggle').on('click', function() {
+                const container = $('#filterContainer');
+                const icon = $(this).find('i');
 
-            // Delete confirmation with enhanced modal
-            $('.delete').on('click', function(e) {
-                e.preventDefault();
-                var form = $(this).closest('form');
-                var addonName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title').text()
-                    .trim();
-
-                Swal.fire({
-                    ...customSwalConfig,
-                    title: 'Archive Add-on Confirmation',
-                    html: `
-                          <div style="text-align: left; line-height: 1.6;">
-                                <p style="margin-bottom: 15px; text-align: center;">You are about to archive the following college:</p>
-                                <div style="background: linear-gradient(135deg, #fffbeb, #fef3c7); padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #f59e0b;">
-                                    <strong style="color: #92400e; font-size: 16px;">${addonName}</strong>
-                                </div>
-
-                             <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #fcd34d;">
-                                    <p style="margin: 0; color: #92400e; font-size: 14px;">
-                                        <i class="icon-info" style="margin-right: 8px;"></i>
-                                        <strong>Note:</strong> Archiving will move this Add-on to the archived section. It can be restored later if needed.
-                                    </p>
-                                </div>
-                                <p style="margin-top: 20px; color: #64748b; text-align: center;">
-                                    This action is reversible. The Add-on will remain in the system but will be hidden from the main list.
-                                </p>
-                            </div>
-                    `,
-                    customClass: {
-                        popup: 'swal2-warning'
-                    },
-                    showCancelButton: true,
-                    confirmButtonColor: '#ef4444',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: '<i class="icon-trash-2"></i> Yes, Archive It',
-                    cancelButtonText: '<i class="icon-x"></i> Cancel',
-                    focusCancel: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Show loading state
-                        Swal.fire({
-                            title: 'Deleting Addon...',
-                            html: `
-                                <div style="text-align: center;">
-                                    <div style="margin: 20px 0;">
-                                        <div class="loading-spinner" style="
-                                            width: 40px;
-                                            height: 40px;
-                                            border: 4px solid #f3f4f6;
-                                            border-top: 4px solid #ef4444;
-                                            border-radius: 50%;
-                                            animation: spin 1s linear infinite;
-                                            margin: 0 auto 15px auto;
-                                        "></div>
-                                        <p style="color: #64748b; margin: 0;">Please wait while we delete the addon...</p>
-                                    </div>
-                                </div>
-                                <style>
-                                    @keyframes spin {
-                                        0% { transform: rotate(0deg); }
-                                        100% { transform: rotate(360deg); }
-                                    }
-                                </style>
-                            `,
-                            allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            showConfirmButton: false,
-                            showCancelButton: false
-                        });
-                        form.submit();
-                    }
-                });
+                if (container.hasClass('show')) {
+                    container.removeClass('show').slideUp(300);
+                    icon.removeClass('icon-x-circle').addClass('icon-filter');
+                } else {
+                    container.addClass('show').hide().slideDown(300);
+                    icon.removeClass('icon-filter').addClass('icon-x-circle');
+                }
             });
 
-            // Auto-submit search with debounce
-            let searchTimeout;
-            $('input[name="search"]').on('input', function() {
+            // Search with debounce
+            $('#addon-search').on('input', function() {
                 clearTimeout(searchTimeout);
-                const form = $(this).closest('form');
-                const query = $(this).val().trim();
-
-                searchTimeout = setTimeout(() => {
-                    if (query.length >= 2 || query.length === 0) {
-                        form.submit();
-                    }
+                searchTimeout = setTimeout(function() {
+                    performFilter();
                 }, 500);
             });
 
-            // Enhanced search functionality
-            $('.search-input').on('focus', function() {
-                $(this).css({
-                    'border-color': '#3498db',
-                    'box-shadow': '0 0 0 3px rgba(52, 152, 219, 0.15)',
-                    'transform': 'translateY(-1px)'
+            function performFilter() {
+                lastScrollPosition = $(window).scrollTop();
+
+                const search = $('#addon-search').val();
+                const facility = $('#facility').val();
+                const priceType = $('#price_type').val();
+                const availability = $('#availability').val();
+                const refundable = $('#refundable').val();
+                const billingCycle = $('#billing_cycle').val();
+                const sortBy = $('#sort_by').val();
+
+                showLoadingState(true);
+
+                let url = '{{ route('admin.addons') }}';
+                let params = [];
+
+                if (search) params.push('search=' + encodeURIComponent(search));
+                if (facility) params.push('facility=' + encodeURIComponent(facility));
+                if (priceType) params.push('price_type=' + encodeURIComponent(priceType));
+                if (availability) params.push('availability=' + encodeURIComponent(availability));
+                if (refundable) params.push('refundable=' + encodeURIComponent(refundable));
+                if (billingCycle) params.push('billing_cycle=' + encodeURIComponent(billingCycle));
+                if (sortBy && sortBy !== 'newest') params.push('sort_by=' + encodeURIComponent(sortBy));
+
+                if (params.length > 0) url += '?' + params.join('&');
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        $('#js-addons-partial-target').html(response.addons);
+                        $('#js-addons-partial-target-pagination').html(response.pagination);
+                        showLoadingState(false);
+                        window.history.pushState({}, '', url);
+                        initPaginationEvents();
+                        initArchiveButtons();
+                        updateActiveFiltersDisplay();
+                        $(window).scrollTop(lastScrollPosition);
+                        showNotification(`Found ${response.count} add-on(s)`, 'info', 2000);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error:', error);
+                        showLoadingState(false);
+                        showNotification('An error occurred. Please try again.', 'error');
+                    }
                 });
-            }).on('blur', function() {
-                $(this).css({
-                    'border-color': '#ddd',
-                    'box-shadow': 'none',
-                    'transform': 'translateY(0)'
-                });
-            });
+            }
 
-            // Add loading states to buttons
-            $('.add-button').on('click', function() {
-                const $this = $(this);
-                const originalHtml = $this.html();
-
-                $this.html('<i class="icon-loader"></i> Loading...')
-                    .prop('disabled', true)
-                    .css('opacity', '0.7');
-
-                // Reset after a delay (for page navigation)
-                setTimeout(() => {
-                    $this.html(originalHtml)
-                        .prop('disabled', false)
-                        .css('opacity', '1');
-                }, 2000);
-            });
-
-            // Mobile card hover effects
-            $('.mobile-card').on('touchstart mouseenter', function() {
-                $(this).css('transform', 'translateY(-3px)');
-            }).on('touchend mouseleave', function() {
-                $(this).css('transform', 'translateY(0)');
-            });
-
-            // Keyboard navigation
-            $(document).on('keydown', function(e) {
-                // Ctrl/Cmd + K to focus search
-                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                    e.preventDefault();
-                    $('.search-input').focus();
-                }
-
-                // Ctrl/Cmd + N for new addon
-                if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-                    e.preventDefault();
-                    window.location.href = "{{ route('admin.addons.create') }}";
-                }
-            });
-
-            // Table row hover effects for desktop
-            $('.table tbody tr').on('mouseenter', function() {
-                $(this).css({
-                    'background-color': '#f8fafc',
-                    'transform': 'scale(1.01)',
-                    'box-shadow': '0 2px 8px rgba(0,0,0,0.1)'
-                });
-            }).on('mouseleave', function() {
-                $(this).css({
-                    'background-color': '',
-                    'transform': 'scale(1)',
-                    'box-shadow': ''
-                });
-            });
-
-            // Enhanced action button animations
-            $('.list-icon-function .item').on('mouseenter', function() {
-                $(this).css({
-                    'transform': 'translateY(-2px) scale(1.1)',
-                    'box-shadow': '0 4px 12px rgba(0,0,0,0.15)'
-                });
-            }).on('mouseleave', function() {
-                $(this).css({
-                    'transform': 'translateY(0) scale(1)',
-                    'box-shadow': ''
-                });
-            });
-
-            // Responsive adjustments
-            function handleResize() {
-                const windowWidth = $(window).width();
-
-                if (windowWidth <= 768) {
-                    $('.table').hide();
-                    $('.mobile-cards').show();
+            function showLoadingState(isLoading) {
+                if (isLoading) {
+                    $('#loading-indicator').show();
+                    $('.filter-select, #addon-search').prop('disabled', true);
+                    $('#applyFilters').prop('disabled', true).html(
+                        '<span class="spinner-border spinner-border-sm me-1"></span>Loading...');
                 } else {
-                    $('.table').show();
-                    $('.mobile-cards').hide();
+                    $('#loading-indicator').hide();
+                    $('.filter-select, #addon-search').prop('disabled', false);
+                    $('#applyFilters').prop('disabled', false).html(
+                        '<i class="icon-filter me-1"></i> Apply Filters');
                 }
-
-                // Ensure pagination is always visible
-                $('.pagination-container').css('display', 'flex');
             }
 
-            $(window).on('resize', handleResize);
-            handleResize();
+            function initPaginationEvents() {
+                $('.pagination a').off('click').on('click', function(e) {
+                    e.preventDefault();
+                    lastScrollPosition = $(window).scrollTop();
+                    const url = $(this).attr('href');
+                    showLoadingState(true);
 
-            // Add smooth transitions to all interactive elements
-            $('.mobile-btn, .list-icon-function .item, .add-button').css({
-                'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-            });
-
-            // Accessibility improvements
-            $('.mobile-btn, .list-icon-function .item').on('focus', function() {
-                $(this).css({
-                    'outline': '2px solid #3498db',
-                    'outline-offset': '2px'
+                    $.ajax({
+                        url: url,
+                        type: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        success: function(response) {
+                            $('#js-addons-partial-target').html(response.addons);
+                            $('#js-addons-partial-target-pagination').html(response.pagination);
+                            showLoadingState(false);
+                            window.history.pushState({}, '', url);
+                            initPaginationEvents();
+                            initArchiveButtons();
+                            $(window).scrollTop(lastScrollPosition);
+                        },
+                        error: function() {
+                            showLoadingState(false);
+                            showNotification('Error loading page.', 'error');
+                        }
+                    });
                 });
-            }).on('blur', function() {
-                $(this).css('outline', 'none');
+            }
+
+            function updateActiveFiltersDisplay() {
+                let count = 0;
+                const filterTags = $('#filterTags');
+                filterTags.empty();
+                const urlParams = new URLSearchParams(window.location.search);
+
+                const filters = [{
+                        param: 'search',
+                        label: 'Search',
+                        format: v => `"${v}"`
+                    },
+                    {
+                        param: 'facility',
+                        label: 'Facility',
+                        selector: '#facility'
+                    },
+                    {
+                        param: 'price_type',
+                        label: 'Price Type',
+                        selector: '#price_type'
+                    },
+                    {
+                        param: 'availability',
+                        label: 'Status',
+                        selector: '#availability'
+                    },
+                    {
+                        param: 'refundable',
+                        label: 'Refundable',
+                        selector: '#refundable'
+                    },
+                    {
+                        param: 'billing_cycle',
+                        label: 'Billing',
+                        selector: '#billing_cycle'
+                    },
+                    {
+                        param: 'sort_by',
+                        label: 'Sort',
+                        selector: '#sort_by',
+                        skip: 'newest'
+                    }
+                ];
+
+                filters.forEach(f => {
+                    const val = urlParams.get(f.param);
+                    if (val && val !== f.skip) {
+                        count++;
+                        const text = f.format ? f.format(val) : (f.selector ? $(
+                            `${f.selector} option:selected`).text() : val);
+                        addFilterTag(`${f.label}: ${text}`, f.param);
+                    }
+                });
+
+                if (count > 0) {
+                    $('#activeFiltersCount').show().text(`${count} filter${count > 1 ? 's' : ''}`);
+                    $('#clearAllFilters, #activeFiltersRow').show();
+                    $('#filterBadge').show().text(count);
+                } else {
+                    $('#activeFiltersCount, #clearAllFilters, #activeFiltersRow, #filterBadge').hide();
+                }
+            }
+
+            function addFilterTag(text, filterName) {
+                const tag = $(`
+                    <span class="filter-tag-enhanced">
+                        ${text}
+                        <button type="button" class="btn-close icon-x text-danger" data-filter="${filterName}" title="Remove"></button>
+                    </span>
+                `);
+
+                tag.find('.btn-close').on('click', function() {
+                    const filter = $(this).data('filter');
+                    if (filter === 'search') {
+                        $('#addon-search').val('');
+                    } else {
+                        $(`#${filter}`).val('');
+                    }
+                    performFilter();
+                });
+
+                filterTags.append(tag);
+            }
+
+            // Event bindings
+            $('#applyFilters').on('click', performFilter);
+            $('#facility, #price_type, #availability, #refundable, #billing_cycle, #sort_by').on('change',
+                performFilter);
+
+            $('#clearAllFilters, #resetFilters').on('click', function() {
+                $('#addon-search, #facility, #price_type, #availability, #refundable, #billing_cycle').val(
+                    '');
+                $('#sort_by').val('newest');
+                performFilter();
             });
 
-            // Progressive enhancement for touch devices
-            if ('ontouchstart' in window) {
-                $('.mobile-card').css('cursor', 'pointer');
-                $('.list-icon-function .item').css('cursor', 'pointer');
+            function initArchiveButtons() {
+                $('.delete').off('click').on('click', function(e) {
+                    e.preventDefault();
+                    var form = $(this).closest('form');
+                    var addonName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title')
+                        .text().trim();
+
+                    Swal.fire({
+                        title: 'Archive Add-on?',
+                        html: `<p>Are you sure you want to archive <strong>${addonName}</strong>?</p><p class="text-muted">This can be restored later.</p>`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#f59e0b',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: '<i class="icon-archive"></i> Yes, Archive',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) form.submit();
+                    });
+                });
             }
+
+            function showNotification(message, type = 'info', duration = 4000) {
+                const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' :
+                    'alert-info';
+                const notification = $(`
+                    <div class="alert ${alertClass} alert-dismissible fade show position-fixed" style="top:20px;right:20px;z-index:9999;min-width:300px;">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `);
+                $('body').append(notification);
+                setTimeout(() => notification.fadeOut(function() {
+                    $(this).remove();
+                }), duration);
+            }
+
+            // Keyboard shortcuts
+            $(document).on('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.keyCode === 13) {
+                    e.preventDefault();
+                    performFilter();
+                }
+                if (e.keyCode === 27) {
+                    $('#clearAllFilters').click();
+                }
+                if ((e.ctrlKey || e.metaKey) && e.keyCode === 70) {
+                    e.preventDefault();
+                    $('#filterToggle').click();
+                    setTimeout(() => $('#addon-search').focus(), 100);
+                }
+            });
+
+            // Initialize
+            initPaginationEvents();
+            initArchiveButtons();
+            updateActiveFiltersDisplay();
+
+            @if (Session::has('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: '{{ Session::get('success') }}',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            @endif
         });
     </script>
 @endpush

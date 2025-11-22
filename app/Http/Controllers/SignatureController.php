@@ -12,11 +12,69 @@ class SignatureController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $signatures = Signature::where('is_archived', false)
-            ->orderBy('order_by')
-            ->paginate(10);
+        $query = Signature::where('is_archived', false);
+
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('position', 'like', "%{$search}%")
+                    ->orWhere('label', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        if ($request->filled('report_type')) {
+            $query->where('report_type', $request->report_type);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+
+        $sortBy = $request->input('sort_by', 'order');
+        switch ($sortBy) {
+            case 'newest':
+                $query->orderBy('created_at', 'DESC');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'ASC');
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'ASC');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'DESC');
+                break;
+            case 'order_asc':
+                $query->orderBy('order_by', 'ASC');
+                break;
+            case 'order_desc':
+                $query->orderBy('order_by', 'DESC');
+                break;
+            case 'order':
+            default:
+                $query->orderBy('order_by', 'ASC');
+                break;
+        }
+
+        $signatures = $query->paginate(10)->withQueryString();
+        $count = $signatures->total();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'signatures' => view('partials._signatures-table', compact('signatures'))->render(),
+                'mobile' => view('partials._signatures-mobile', compact('signatures'))->render(),
+                'pagination' => view('partials._signatures-pagination', compact('signatures'))->render(),
+                'count' => $count
+            ]);
+        }
 
         return view('admin.signature.index', compact('signatures'));
     }

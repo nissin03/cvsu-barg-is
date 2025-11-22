@@ -16,6 +16,7 @@ class AddonsController extends Controller
     {
         $query = Addon::with('user', 'facility');
 
+        // Search filter
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -26,9 +27,69 @@ class AddonsController extends Controller
                     });
             });
         }
-        $addons = $query->latest()->paginate(10);
 
-        return view('admin.add-ons.index', compact('addons'));
+        // Facility filter
+        if ($request->filled('facility')) {
+            $query->where('facility_id', $request->facility);
+        }
+
+        if ($request->filled('price_type')) {
+            $query->where('price_type', $request->price_type);
+        }
+
+        if ($request->filled('availability')) {
+            $query->where('is_available', $request->availability === 'available');
+        }
+
+        if ($request->filled('refundable')) {
+            $query->where('is_refundable', $request->refundable === 'yes');
+        }
+        if ($request->filled('billing_cycle')) {
+            $query->where('billing_cycle', $request->billing_cycle);
+        }
+        if ($request->filled('quantity_based')) {
+            $query->where('is_based_on_quantity', $request->quantity_based === 'yes');
+        }
+
+        $sortBy = $request->input('sort_by', 'newest');
+        switch ($sortBy) {
+            case 'oldest':
+                $query->orderBy('created_at', 'ASC');
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'ASC');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'DESC');
+                break;
+            case 'price_low':
+                $query->orderBy('base_price', 'ASC');
+                break;
+            case 'price_high':
+                $query->orderBy('base_price', 'DESC');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('created_at', 'DESC');
+                break;
+        }
+
+        $addons = $query->paginate(10)->withQueryString();
+        $count = $addons->total();
+
+        $facilities = Facility::orderBy('name')->get();
+
+
+        if ($request->ajax()) {
+            return response()->json([
+                'addons' => view('partials._addons-table', compact('addons'))->render(),
+                'pagination' => view('partials._addons-pagination', compact('addons'))->render(),
+                'count' => $count
+            ]);
+        }
+
+
+        return view('admin.add-ons.index',  compact('addons', 'facilities'));
     }
 
     public function create()
