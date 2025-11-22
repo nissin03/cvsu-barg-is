@@ -1,210 +1,244 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div class="main-content-inner">
-        <div class="main-content-wrap p-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-                <div>
-                    <h3 class="fw-bold text-dark mb-2 display-5">Product Reports</h3>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb m-0">
-                            <li class="breadcrumb-item">
-                                <a href="{{ route('admin.index') }}" class="text-decoration-none text-muted fs-4">
-                                    <i class="bi bi-house-door me-1"></i>Dashboard
-                                </a>
-                            </li>
-                            <li class="breadcrumb-item">
-                                <span class="text-muted fs-4">Product Reports</span>
-                            </li>
-                        </ol>
-                    </nav>
-                </div>
-                <div class="d-flex gap-2">
-                    <form action="{{ route('admin.report-product.download') }}" method="GET" target="_blank">
-                        <button type="submit" class="btn btn-dark d-flex align-items-center fs-4 px-4 py-2">
-                            <i class="bi bi-file-pdf me-2"></i>
-                            PRINT
-                        </button>
-                    </form>
+    <div class="container-fluid px-4 py-4">
 
-                    {{-- <form action="{{ route('admin.report-product.print') }}" method="GET" target="_blank">
-                        <button type="submit" class="btn btn-success d-flex align-items-center fs-4 px-4 py-2">
-                            <i class="bi bi-printer me-2"></i>
-                            Print
-                        </button>
-                    </form> --}}
-
-
-                </div>
-
-
+        <!-- HEADER -->
+        <div class="d-flex justify-content-between align-items-center mb-4 mt-5">
+            <div>
+                <h1 class="h3 mb-1 text-dark fw-semibold">Product Reports</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0 small text-muted">
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('admin.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">Product Reports</li>
+                    </ol>
+                </nav>
             </div>
 
-            <div class="card border-0 shadow-lg">
-                <div class="card-header bg-white py-3 border-bottom">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-graph-up text-primary fs-2 me-3"></i>
-                        <h5 class="fw-bold m-0 display-6">Product Reports Overview</h5>
-                    </div>
-                </div>
-
-                <div class="card-body p-4">
-                    <div class="mb-5">
-                        <h6 class="fw-bold mb-4 text-dark fs-3">
-                            <i class="bi bi-arrow-up-circle text-success me-2"></i>
-                            Most Ordered Products
-                        </h6>
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="py-3 px-4 border-0 fs-4">Product Name</th>
-                                        <th class="py-3 px-4 border-0 text-center fs-4">Total Orders</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($mostFrequentLabels as $index => $label)
-                                        <tr>
-                                            <td class="py-3 px-4">
-                                                <div class="d-flex align-items-center">
-                                                    <span class="badge bg-light text-dark rounded-pill me-3 fs-3 px-3 py-1">
-                                                        #{{ $index + 1 }}
-                                                    </span>
-                                                    <span class="fw-medium fs-3">{{ $label }}</span>
-                                                </div>
-                                            </td>
-                                            <td class="py-3 px-4 text-center">
-                                                <span class="px-4 py-1 fs-3">
-                                                    {{ number_format($mostFrequentData[$index]) }}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <hr class="my-5 border-2">
-
-                    <div>
-                        <h6 class="fw-bold mb-4 text-dark fs-3">
-                            <i class="bi bi-arrow-down-circle text-danger me-2"></i>
-                            Least Ordered Products
-                        </h6>
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="py-3 px-4 border-0 fs-4">Product Name</th>
-                                        <th class="py-3 px-4 border-0 text-center fs-4">Total Orders</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($leastBoughtLabels as $index => $label)
-                                        <tr>
-                                            <td class="py-3 px-4">
-                                                <div class="d-flex align-items-center">
-                                                    <span class="badge bg-light text-dark rounded-pill me-3 fs-3 px-3 py-1">
-                                                        #{{ $index + 1 }}
-                                                    </span>
-                                                    <span class="fw-medium fs-3">{{ $label }}</span>
-                                                </div>
-                                            </td>
-                                            <td class="py-3 px-4 text-center">
-                                                <span class=" px-4 py-1 fs-3">
-                                                    {{ number_format($leastBoughtData[$index]) }}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+            <div class="d-flex gap-2">
+                <form action="{{ route('admin.report-product.download') }}" method="GET" target="_blank">
+                    <button type="submit" class="btn btn-outline-dark fs-5 py-3 px-4" style="border-radius: 8px;">
+                        <i class="bi bi-file-pdf me-2"></i>PRINT
+                    </button>
+                </form>
             </div>
         </div>
+
+        <!-- PRODUCT REPORT CARD -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-4">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-graph-up text-primary fs-2 me-3"></i>
+                    <div>
+                        <h6 class="mb-0 fw-semibold text-gray-800">Product Reports Overview</h6>
+                        <small class="text-muted">Most & least purchased products</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+
+                <!-- MOST ORDERED PRODUCTS -->
+                <div class="mb-5">
+                    <h6 class="fw-semibold mb-4 text-gray-800 fs-4 d-flex align-items-center">
+                        <i class="bi bi-arrow-up-circle text-success me-2"></i>
+                        Most Ordered Products
+                    </h6>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Product Name</th>
+                                    <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">Total Orders</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($mostFrequentLabels as $index => $label)
+                                    <tr class="border-bottom">
+                                        <td class="py-4 px-4">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <span class="badge bg-gray-100 text-gray-800 rounded-pill fs-6 px-3 py-2">
+                                                    #{{ $index + 1 }}
+                                                </span>
+                                                <span class="fw-semibold text-gray-800 fs-5">{{ $label }}</span>
+                                            </div>
+                                        </td>
+
+                                        <td class="py-4 px-4 text-center">
+                                            <span class="fw-bold fs-5 text-gray-800">
+                                                {{ number_format($mostFrequentData[$index]) }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <hr class="my-5">
+
+                <!-- LEAST ORDERED PRODUCTS -->
+                <div>
+                    <h6 class="fw-semibold mb-4 text-gray-800 fs-4 d-flex align-items-center">
+                        <i class="bi bi-arrow-down-circle text-danger me-2"></i>
+                        Least Ordered Products
+                    </h6>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Product Name</th>
+                                    <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">Total Orders</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($leastBoughtLabels as $index => $label)
+                                    <tr class="border-bottom">
+                                        <td class="py-4 px-4">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <span class="badge bg-gray-100 text-gray-800 rounded-pill fs-6 px-3 py-2">
+                                                    #{{ $index + 1 }}
+                                                </span>
+                                                <span class="fw-semibold text-gray-800 fs-5">{{ $label }}</span>
+                                            </div>
+                                        </td>
+
+                                        <td class="py-4 px-4 text-center">
+                                            <span class="fw-bold fs-5 text-gray-800">
+                                                {{ number_format($leastBoughtData[$index]) }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 @endsection
 
+
 @push('styles')
     <style>
+        :root {
+            --bs-gray-50: #f8fafc;
+            --bs-gray-100: #f1f5f9;
+            --bs-gray-300: #cbd5e1;
+            --bs-gray-400: #94a3b8;
+            --bs-gray-500: #64748b;
+            --bs-gray-600: #475569;
+            --bs-gray-700: #334155;
+            --bs-gray-800: #1e293b;
+            --bs-gray-900: #0f172a;
+        }
+
+        /* Typography Utilities */
+        .text-gray-700 {
+            color: var(--bs-gray-700) !important;
+        }
+
+        .text-gray-800 {
+            color: var(--bs-gray-800) !important;
+        }
+
+        .text-gray-900 {
+            color: var(--bs-gray-900) !important;
+        }
+
+        .bg-gray-100 {
+            background-color: var(--bs-gray-100) !important;
+        }
+
+        /* Card */
         .card {
-            border-radius: 1rem;
-            transition: all 0.3s ease;
+            border-radius: 12px !important;
+            transition: all 0.25s ease-in-out;
         }
 
         .card:hover {
-            box-shadow: 0 1rem 1.5rem rgba(0, 0, 0, 0.1) !important;
-            transform: translateY(-3px);
+            box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.08);
         }
 
-        .breadcrumb {
-            display: flex;
-            align-items: center;
+        /* Tables */
+        .table th {
+            font-size: 1.75rem;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            white-space: nowrap;
         }
 
-        .breadcrumb-item {
-            display: flex;
-            align-items: center;
-        }
-
-        .breadcrumb-item+.breadcrumb-item::before {
-            content: "›";
-            padding: 0 0.5rem;
-            color: #6c757d;
-            font-size: 1.5rem;
-            line-height: 1;
-        }
-
-        .table {
-            font-size: 1.2rem;
-        }
-
-        .table> :not(caption)>*>* {
-            padding: 1.25rem 1.5rem;
-        }
-
-        .table-hover>tbody>tr:hover {
-            background-color: rgba(248, 249, 250, 0.8);
+        .table td {
+            vertical-align: middle;
+            font-size: 1.25rem;
         }
 
         .badge {
+            font-size: .95rem;
             font-weight: 600;
-            padding: 0.6rem 1.2rem;
-            font-size: 1em;
-        }
-
-        .table-responsive::-webkit-scrollbar {
-            height: 10px;
-        }
-
-        .table-responsive::-webkit-scrollbar-thumb {
-            background-color: #ced4da;
             border-radius: 6px;
         }
 
-        .btn {
-            padding: 0.75rem 1.75rem;
-            font-weight: 600;
+        /* RESPONSIVE TABLE BREAKPOINTS (MATCHING YOUR FORMAT) */
+
+        @media (max-width: 1200px) {
+            .table {
+                min-width: 900px;
+            }
         }
 
-        .bi {
-            font-size: 1.3em;
+        @media (max-width: 992px) {
+            .table {
+                min-width: 850px;
+            }
         }
 
-        .mb-4 {
-            margin-bottom: 1.5rem !important;
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .table {
+                min-width: 780px;
+            }
+
+            .table td {
+                font-size: 1.1rem;
+            }
         }
 
-        .mb-5 {
-            margin-bottom: 3rem !important;
+        @media (max-width: 576px) {
+            .table {
+                min-width: 720px;
+            }
+
+            .card-header .d-flex {
+                flex-direction: column;
+                align-items: flex-start !important;
+            }
+
+            .card-header .d-flex>div:first-child {
+                margin-bottom: 1rem;
+            }
         }
 
-        .py-3 {
-            padding-top: 1.25rem !important;
-            padding-bottom: 1.25rem !important;
+        @media (max-width: 400px) {
+            .table {
+                min-width: 650px;
+            }
+
+            .table> :not(caption)>*>* {
+                padding: .75rem 1rem;
+            }
         }
     </style>
 @endpush

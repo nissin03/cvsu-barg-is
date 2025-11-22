@@ -31,10 +31,10 @@
 
         <div class="mb-md-1 pb-md-3"></div>
         <section class="product-single container">
-            <div class="row">
-                <div class="col-lg-7">
-                    <div class="product-gallery">
-                        <div class="gallery-wrapper">
+            <div class="row product-main-row">
+                <div class="col-12 col-lg-7 mb-4 mb-lg-0">
+                    <div class="product-gallery w-100">
+                        <div class="gallery-wrapper w-100">
                             <div class="thumbnails">
                                 <div class="swiper-container thumbnail-swiper">
                                     <div class="swiper-wrapper">
@@ -45,12 +45,14 @@
                                                 onerror="this.src='{{ asset('images/no-image.jpg') }}'">
                                         </div>
                                         @foreach (explode(',', $product->images) as $gimg)
-                                            <div class="swiper-slide">
-                                                <img loading="lazy" class="thumbnail-img"
-                                                    src="{{ asset('uploads/products/thumbnails') }}/{{ $gimg }}"
-                                                    alt="{{ $product->name }}"
-                                                    onerror="this.src='{{ asset('images/no-image.jpg') }}'">
-                                            </div>
+                                            @if (trim($gimg) !== '')
+                                                <div class="swiper-slide">
+                                                    <img loading="lazy" class="thumbnail-img"
+                                                        src="{{ asset('uploads/products/thumbnails') }}/{{ trim($gimg) }}"
+                                                        alt="{{ $product->name }}"
+                                                        onerror="this.src='{{ asset('images/no-image.jpg') }}'">
+                                                </div>
+                                            @endif
                                         @endforeach
                                     </div>
                                 </div>
@@ -60,24 +62,34 @@
                                 <div class="swiper-container main-swiper">
                                     <div class="swiper-wrapper">
                                         <div class="swiper-slide">
-                                            <img loading="lazy" class="h-auto main-img"
+                                            <img loading="lazy" class="h-auto main-img image-clickable"
                                                 src="{{ asset('uploads/products') }}/{{ $product->image }}"
-                                                alt="{{ $product->name }}">
+                                                alt="{{ $product->name }}" data-bs-toggle="modal"
+                                                data-bs-target="#imageModal"
+                                                data-image-src="{{ asset('uploads/products') }}/{{ $product->image }}"
+                                                data-image-alt="{{ $product->name }}" style="cursor: pointer;">
                                             <a data-fancybox="gallery"
                                                 href="{{ asset('uploads/products') }}/{{ $product->image }}"
                                                 data-bs-toggle="tooltip" data-bs-placement="left"
-                                                title="{{ $product->name }}" aria-label="View full image"></a>
+                                                title="{{ $product->name }}" aria-label="View full image"
+                                                style="display: none;"></a>
                                         </div>
                                         @foreach (explode(',', $product->images) as $gimg)
-                                            <div class="swiper-slide">
-                                                <img loading="lazy" class="h-auto main-img"
-                                                    src="{{ asset('uploads/products') }}/{{ $gimg }}"
-                                                    alt="{{ $product->name }}">
-                                                <a data-fancybox="gallery"
-                                                    href="{{ asset('uploads/products') }}/{{ $gimg }}"
-                                                    data-bs-toggle="tooltip" data-bs-placement="left"
-                                                    title="{{ $product->name }}" aria-label="View full image"></a>
-                                            </div>
+                                            @if (trim($gimg) !== '')
+                                                <div class="swiper-slide">
+                                                    <img loading="lazy" class="h-auto main-img image-clickable"
+                                                        src="{{ asset('uploads/products') }}/{{ trim($gimg) }}"
+                                                        alt="{{ $product->name }}" data-bs-toggle="modal"
+                                                        data-bs-target="#imageModal"
+                                                        data-image-src="{{ asset('uploads/products') }}/{{ trim($gimg) }}"
+                                                        data-image-alt="{{ $product->name }}" style="cursor: pointer;">
+                                                    <a data-fancybox="gallery"
+                                                        href="{{ asset('uploads/products') }}/{{ trim($gimg) }}"
+                                                        data-bs-toggle="tooltip" data-bs-placement="left"
+                                                        title="{{ $product->name }}" aria-label="View full image"
+                                                        style="display: none;"></a>
+                                                </div>
+                                            @endif
                                         @endforeach
                                     </div>
                                     <div class="swiper-button-prev" aria-label="Previous image"></div>
@@ -87,7 +99,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-5">
+
+                <div class="col-12 col-lg-5">
                     <div class="product-header">
                         <h1 class="product-single__name h2 mb-3">
                             {{ ucfirst(strtolower(strtok($product->name, ' '))) . substr($product->name, strlen(strtok($product->name, ' '))) }}
@@ -196,7 +209,6 @@
                         </div>
                     </div>
 
-                    <!-- Selected Variant Summary (hidden by default) -->
                     <div id="variant-summary" class="card border-0 shadow-sm mb-3" style="display:none;">
                         <div class="card-body d-flex justify-content-between align-items-center">
                             <div>
@@ -216,7 +228,6 @@
                         </div>
                     </div>
 
-                    <!-- Variant Details Modal -->
                     <div class="modal fade" id="variantDetailsModal" tabindex="-1"
                         aria-labelledby="variantDetailsModalLabel" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -356,7 +367,6 @@
 
             <hr class="section-separator" />
 
-            <!-- Improved Product Description Section -->
             <div class="row mt-5">
                 <div class="col-12">
                     <div class="product-description-wrapper">
@@ -371,14 +381,12 @@
                                 </div>
                                 <div class="description-text">
                                     @php
-                                        // Function to format the description
                                         function formatProductDescription($description)
                                         {
                                             if (empty($description)) {
                                                 return '<p class="text-muted">No description available.</p>';
                                             }
 
-                                            // Split by lines first
                                             $lines = explode("\n", $description);
                                             $formattedLines = [];
 
@@ -386,15 +394,12 @@
                                                 $trimmedLine = trim($line);
 
                                                 if (empty($trimmedLine)) {
-                                                    continue; // Skip empty lines
+                                                    continue;
                                                 }
 
-                                                // Check if line ends with '.' and has content before it
                                                 if (str_ends_with($trimmedLine, '.') && strlen($trimmedLine) > 1) {
                                                     $formattedLines[] = '<p>' . $trimmedLine . '</p>';
-                                                }
-                                                // Check if line contains ':' (specifications)
-                                                elseif (str_contains($trimmedLine, ':')) {
+                                                } elseif (str_contains($trimmedLine, ':')) {
                                                     $parts = explode(':', $trimmedLine, 2);
                                                     if (count($parts) === 2) {
                                                         $title = trim($parts[0]);
@@ -404,14 +409,12 @@
                                                         $formattedLines[] =
                                                             '<h6 class="specification-title">' . $title . ':</h6>';
 
-                                                        // Split specifications by lines or commas
                                                         $specs = preg_split('/[\n,]+/', $content);
                                                         $formattedLines[] = '<ul class="specification-list">';
 
                                                         foreach ($specs as $spec) {
                                                             $trimmedSpec = trim($spec);
                                                             if (!empty($trimmedSpec)) {
-                                                                // Remove any existing bullet points and add proper formatting
                                                                 $cleanSpec = preg_replace(
                                                                     '/^[a-zA-Z]\.\s*/',
                                                                     '',
@@ -426,9 +429,7 @@
                                                     } else {
                                                         $formattedLines[] = '<p>' . $trimmedLine . '</p>';
                                                     }
-                                                }
-                                                // Regular paragraph
-                                                else {
+                                                } else {
                                                     $formattedLines[] = '<p>' . $trimmedLine . '</p>';
                                                 }
                                             }
@@ -449,7 +450,6 @@
 
     <hr class="section-separator" />
 
-    <!-- Improved Related Products Section -->
     <section id="related-products" class="related-products-section py-5">
         <div class="container">
             <div class="section-header text-center mb-5">
@@ -476,12 +476,14 @@
                                                 </a>
                                             </div>
                                             @foreach (explode(',', $rproduct->images) as $gimg)
-                                                <div class="swiper-slide">
-                                                    <img loading="lazy"
-                                                        src="{{ asset('uploads/products') }}/{{ $gimg }}"
-                                                        alt="{{ $rproduct->name }}" class="product-image"
-                                                        onerror="this.src='{{ asset('images/no-image.jpg') }}'">
-                                                </div>
+                                                @if (trim($gimg) !== '')
+                                                    <div class="swiper-slide">
+                                                        <img loading="lazy"
+                                                            src="{{ asset('uploads/products') }}/{{ trim($gimg) }}"
+                                                            alt="{{ $rproduct->name }}" class="product-image"
+                                                            onerror="this.src='{{ asset('images/no-image.jpg') }}'">
+                                                    </div>
+                                                @endif
                                             @endforeach
                                         </div>
                                         <div class="swiper-pagination slideshow-pagination"></div>
@@ -533,6 +535,43 @@
             </div>
         </div>
     </section>
+
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white" id="imageModalLabel">
+                        <i class="fas fa-image me-2"></i>
+                        <span id="imageModalTitle">{{ $product->name }}</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body d-flex align-items-center justify-content-center p-0">
+                    <div class="position-relative w-100 h-100 d-flex align-items-center justify-content-center">
+                        <img id="modalImage" src="" alt="" class="img-fluid"
+                            style="max-height: 90vh; max-width: 100%; object-fit: contain;">
+                        <button type="button" id="modalPrevBtn"
+                            class="btn btn-light position-absolute start-0 top-50 translate-middle-y ms-3 rounded-circle"
+                            style="width: 50px; height: 50px; opacity: 0.8;">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button type="button" id="modalNextBtn"
+                            class="btn btn-light position-absolute end-0 top-50 translate-middle-y me-3 rounded-circle"
+                            style="width: 50px; height: 50px; opacity: 0.8;">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <div class="text-white-50 small">
+                        <span id="imageCounter">1 of 1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('styles')
@@ -552,7 +591,95 @@
             --transition: all 0.3s ease;
         }
 
-        /* Original styles preserved */
+        .product-main-row {
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        .product-main-row>[class*="col-"] {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        @media (min-width: 992px) {
+            .product-main-row {
+                margin-left: -0.75rem;
+                margin-right: -0.75rem;
+            }
+
+            .product-main-row>[class*="col-"] {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+        }
+
+        .product-gallery {
+            width: 100%;
+        }
+
+        .product-gallery .gallery-wrapper {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .product-gallery .thumbnails {
+            max-width: 120px;
+        }
+
+        .product-gallery .thumbnail-swiper {
+            width: 100%;
+        }
+
+        .product-gallery .thumbnail-swiper .swiper-slide {
+            width: 100%;
+        }
+
+        .product-gallery .main-image {
+            flex: 1;
+        }
+
+        .main-img {
+            width: 100%;
+            display: block;
+            margin: 0 auto;
+            object-fit: contain;
+        }
+
+        @media (max-width: 991.98px) {
+            .product-gallery .gallery-wrapper {
+                flex-direction: column;
+            }
+
+            .product-gallery .thumbnails {
+                max-width: 100%;
+                width: 100%;
+                order: 2;
+            }
+
+            .product-gallery .main-image {
+                order: 1;
+                width: 100%;
+            }
+
+            .product-gallery .thumbnail-swiper {
+                width: 100%;
+            }
+
+            .product-gallery .thumbnail-swiper .swiper-wrapper {
+                display: flex;
+                align-items: center;
+            }
+
+            .product-gallery .thumbnail-swiper .swiper-slide {
+                width: auto;
+            }
+
+            .product-single__addtocart {
+                width: 100%;
+            }
+        }
+
         .quantity-selector {
             border: 1px solid #dee2e6;
             border-radius: 4px;
@@ -592,6 +719,9 @@
             cursor: pointer;
             border: 2px solid transparent;
             transition: border-color 0.2s;
+            width: 100%;
+            height: auto;
+            object-fit: cover;
         }
 
         .thumbnail-img.active {
@@ -663,7 +793,6 @@
             font-size: 0.875rem;
         }
 
-        /* ========== IMPROVED PRODUCT DESCRIPTION STYLES ========== */
         .product-description-wrapper {
             margin: 3rem 0;
         }
@@ -735,7 +864,6 @@
             text-align: justify;
         }
 
-        /* ========== IMPROVED RELATED PRODUCTS STYLES ========== */
         .related-products-section {
             background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
             position: relative;
@@ -946,7 +1074,6 @@
             font-size: 1.2rem;
         }
 
-        /* ========== RESPONSIVE DESIGN ========== */
         @media (max-width: 768px) {
             .section-title {
                 font-size: 1.75rem;
@@ -1032,7 +1159,6 @@
             }
         }
 
-        /* ========== SWIPER CUSTOMIZATION FOR RELATED PRODUCTS ========== */
         .related-products-section .swiper-button-next,
         .related-products-section .swiper-button-prev {
             color: var(--primary-color);
@@ -1071,7 +1197,6 @@
             transform: scale(1.2);
         }
 
-        /* ========== LOADING AND HOVER EFFECTS ========== */
         .product-card {
             position: relative;
             overflow: hidden;
@@ -1094,7 +1219,6 @@
             left: 100%;
         }
 
-        /* ========== ACCESSIBILITY IMPROVEMENTS ========== */
         .product-card:focus-within {
             outline: 2px solid var(--primary-color);
             outline-offset: 2px;
@@ -1113,7 +1237,6 @@
             transform: translateY(0);
         }
 
-        /* ========== ANIMATION DELAYS FOR STAGGERED EFFECT ========== */
         .product-card:nth-child(1) {
             animation-delay: 0.1s;
         }
@@ -1146,7 +1269,6 @@
             animation: fadeInUp 0.6s ease forwards;
         }
 
-        /* Enhanced Description Styles */
         .description-text p {
             font-size: 1.1rem;
             line-height: 1.7;
@@ -1159,7 +1281,6 @@
             margin-bottom: 0;
         }
 
-        /* Specification Styles */
         .specification-section {
             margin: 1.5rem 0;
             padding: 1rem;
@@ -1197,20 +1318,6 @@
             font-size: 1.2rem;
         }
 
-        /* Alternative bullet style - uncomment if you prefer letters */
-        /*
-        .specification-list {
-            list-style-type: lower-alpha;
-            padding-left: 1.5rem;
-        }
-
-        .specification-list li {
-            padding: 0.25rem 0;
-            margin-bottom: 0.25rem;
-        }
-        */
-
-        /* Responsive adjustments */
         @media (max-width: 768px) {
             .description-text p {
                 font-size: 1rem;
@@ -1226,8 +1333,43 @@
                 font-size: 1rem;
             }
         }
+
+        @media (max-width: 767.98px) {
+            .product-main-row {
+                margin-left: 0;
+                margin-right: 0;
+            }
+
+            .product-main-row>[class*="col-"] {
+                padding-left: 0;
+                padding-right: 0;
+            }
+
+            .product-gallery {
+                width: 100%;
+            }
+
+            .product-gallery .gallery-wrapper {
+                width: 100%;
+            }
+
+            .product-gallery .main-image {
+                width: 100%;
+            }
+
+            .main-img {
+                width: 100%;
+                max-width: 100%;
+                display: block;
+            }
+
+            .product-single__addtocart {
+                width: 100%;
+            }
+        }
     </style>
 @endpush
+
 
 @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
@@ -1264,6 +1406,23 @@
                 slidesPerView: 'auto',
                 spaceBetween: 10,
                 freeMode: true,
+                breakpoints: {
+                    0: {
+                        direction: 'horizontal',
+                        slidesPerView: 4,
+                        spaceBetween: 8,
+                    },
+                    576: {
+                        direction: 'horizontal',
+                        slidesPerView: 5,
+                        spaceBetween: 10,
+                    },
+                    768: {
+                        direction: 'vertical',
+                        slidesPerView: 'auto',
+                        spaceBetween: 10,
+                    },
+                },
             });
 
             document.querySelectorAll('.thumbnail-img').forEach((thumbnail, index) => {
@@ -1285,13 +1444,85 @@
                 thumbnail.setAttribute('role', 'button');
             });
 
-            document.querySelector('.thumbnail-img').classList.add('active');
+            const firstThumb = document.querySelector('.thumbnail-img');
+            if (firstThumb) {
+                firstThumb.classList.add('active');
+            }
+
+            const imageModal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            const imageCounter = document.getElementById('imageCounter');
+            const modalPrevBtn = document.getElementById('modalPrevBtn');
+            const modalNextBtn = document.getElementById('modalNextBtn');
+
+            let allImages = [];
+            let currentImageIndex = 0;
+
+            const mainImageSrc = "{{ asset('uploads/products') . '/' . $product->image }}";
+            allImages.push({
+                src: mainImageSrc,
+                alt: "{{ $product->name }}",
+            });
+
+            @foreach (explode(',', $product->images) as $gimg)
+                @if (trim($gimg) !== '')
+                    allImages.push({
+                        src: "{{ asset('uploads/products') . '/' . trim($gimg) }}",
+                        alt: "{{ $product->name }}",
+                    });
+                @endif
+            @endforeach
+
+            function updateModalImage(index) {
+                if (!allImages[index]) return;
+
+                modalImage.src = allImages[index].src;
+                modalImage.alt = allImages[index].alt;
+                imageCounter.textContent = `${index + 1} of ${allImages.length}`;
+                currentImageIndex = index;
+
+                const showNav = allImages.length > 1;
+                modalPrevBtn.style.display = showNav ? 'block' : 'none';
+                modalNextBtn.style.display = showNav ? 'block' : 'none';
+            }
+
+            function showPrevImage() {
+                const newIndex = currentImageIndex > 0 ? currentImageIndex - 1 : allImages.length - 1;
+                updateModalImage(newIndex);
+            }
+
+            function showNextImage() {
+                const newIndex = currentImageIndex < allImages.length - 1 ? currentImageIndex + 1 : 0;
+                updateModalImage(newIndex);
+            }
+
+            if (imageModal) {
+                imageModal.addEventListener('show.bs.modal', function(event) {
+                    const trigger = event.relatedTarget;
+                    const imageSrc = trigger.getAttribute('data-image-src');
+                    const clickedIndex = allImages.findIndex(img => img.src === imageSrc);
+                    updateModalImage(clickedIndex >= 0 ? clickedIndex : 0);
+                });
+
+                modalPrevBtn.addEventListener('click', showPrevImage);
+                modalNextBtn.addEventListener('click', showNextImage);
+
+                imageModal.addEventListener('keydown', function(event) {
+                    if (event.key === 'ArrowLeft') {
+                        event.preventDefault();
+                        showPrevImage();
+                    } else if (event.key === 'ArrowRight') {
+                        event.preventDefault();
+                        showNextImage();
+                    }
+                });
+            }
 
             const qtyInputs = document.querySelectorAll('.qty-control__number');
             const decreaseBtns = document.querySelectorAll('.qty-control__reduce');
             const increaseBtns = document.querySelectorAll('.qty-control__increase');
             const availableQuantitySpan = document.getElementById('available-quantity');
-            let maxAvailableQty = parseInt(availableQuantitySpan.textContent) || 0;
+            let maxAvailableQty = parseInt(availableQuantitySpan ? availableQuantitySpan.textContent : 0) || 0;
 
             decreaseBtns.forEach((decreaseBtn, index) => {
                 decreaseBtn.addEventListener('click', function() {
@@ -1310,7 +1541,9 @@
                             if (result.isConfirmed) {
                                 const form = document.getElementById(
                                     `remove-item-form-${index}`);
-                                form.submit();
+                                if (form) {
+                                    form.submit();
+                                }
                             }
                         });
                     }
@@ -1369,13 +1602,15 @@
                 event.preventDefault();
 
                 if (hasVariants && !selectedVariantIdInput.value) {
-                    errorMessage.style.display = 'block';
-                    errorMessage.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
+                    if (errorMessage) {
+                        errorMessage.style.display = 'block';
+                        errorMessage.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
                     return;
-                } else {
+                } else if (errorMessage) {
                     errorMessage.style.display = 'none';
                 }
 
@@ -1446,7 +1681,9 @@
                             addToCartButton.disabled = maxAvailableQty <= 0;
                         }
 
-                        errorMessage.style.display = 'none';
+                        if (errorMessage) {
+                            errorMessage.style.display = 'none';
+                        }
                     });
                 });
             }
@@ -1533,7 +1770,7 @@
 
     <script>
         (function() {
-            const currency = '₱'; // Change if needed or pull from server
+            const currency = '₱';
             const formatMoney = (num) => {
                 if (num === null || num === undefined || num === '') return '';
                 const n = Number(num);
@@ -1564,10 +1801,8 @@
             const mImgWrap = document.getElementById('variant-modal-image-wrap');
             const mImg = document.getElementById('variant-modal-image');
 
-            // Handle selection of a variant
             document.querySelectorAll('.variant-button').forEach(function(btn) {
                 btn.addEventListener('click', function() {
-                    // Visual toggle within the same attribute group
                     const attributeId = this.dataset.attributeId;
                     document.querySelectorAll('.variant-button[data-attribute-id="' + attributeId +
                         '"]').forEach(function(sib) {
@@ -1577,100 +1812,94 @@
                     this.classList.add('active');
                     this.setAttribute('aria-pressed', 'true');
 
-                    // Update the hidden input for this attribute
                     const hidden = document.getElementById('attribute-' + attributeId);
                     if (hidden) hidden.value = this.dataset.variantId || '';
 
-                    // Store last selected (for modal "View details" button)
                     lastSelectedBtn = this;
 
-                    // Update summary
                     const label = this.dataset.variantLabel || (this.dataset.variantValue ||
                         'Selected variant');
                     const price = this.dataset.variantPrice;
                     const qty = this.dataset.variantQuantity;
                     const sku = (this.dataset.variantSku || '').trim();
 
-                    sLabel.textContent = label;
-                    sPrice.textContent = formatMoney(price);
-                    sStock.textContent = (qty !== undefined && qty !== null && qty !== '') ? (Number(
-                        qty) > 0 ? `${qty} in stock` : 'Out of stock') : '';
+                    if (sLabel) sLabel.textContent = label;
+                    if (sPrice) sPrice.textContent = formatMoney(price);
+                    // if (sStock) sStock.textContent = (qty !== undefined && qty !== null && qty !== '') ?
+                    //     (Number(
+                    //         qty) > 0 ? `${qty} in stock` : 'Out of stock') : '';
                     if (sku) {
-                        sSku.textContent = sku;
-                        sSkuWrap.style.display = '';
+                        if (sSku) sSku.textContent = sku;
+                        if (sSkuWrap) sSkuWrap.style.display = '';
                     } else {
-                        sSkuWrap.style.display = 'none';
+                        if (sSkuWrap) sSkuWrap.style.display = 'none';
                     }
-                    summaryCard.style.display = '';
+                    if (summaryCard) summaryCard.style.display = '';
 
-                    // Hide any prior error message if you use it
                     const err = document.getElementById('error-message');
                     if (err) err.style.display = 'none';
                 });
             });
 
-            // Populate modal when it opens
             const detailsModalEl = document.getElementById('variantDetailsModal');
-            detailsModalEl.addEventListener('show.bs.modal', function() {
-                if (!lastSelectedBtn) return;
+            if (detailsModalEl) {
+                detailsModalEl.addEventListener('show.bs.modal', function() {
+                    if (!lastSelectedBtn) return;
 
-                const label = lastSelectedBtn.dataset.variantLabel || lastSelectedBtn.dataset.variantValue ||
-                    'Variant';
-                const id = lastSelectedBtn.dataset.variantId || '';
-                const price = lastSelectedBtn.dataset.variantPrice;
-                const qty = lastSelectedBtn.dataset.variantQuantity;
-                const sku = (lastSelectedBtn.dataset.variantSku || '').trim();
-                const desc = (lastSelectedBtn.dataset.variantDescription || '').trim();
-                const img = (lastSelectedBtn.dataset.variantImage || '').trim();
+                    const label = lastSelectedBtn.dataset.variantLabel || lastSelectedBtn.dataset
+                        .variantValue ||
+                        'Variant';
+                    const id = lastSelectedBtn.dataset.variantId || '';
+                    const price = lastSelectedBtn.dataset.variantPrice;
+                    const qty = lastSelectedBtn.dataset.variantQuantity;
+                    const sku = (lastSelectedBtn.dataset.variantSku || '').trim();
+                    const desc = (lastSelectedBtn.dataset.variantDescription || '').trim();
+                    const img = (lastSelectedBtn.dataset.variantImage || '').trim();
 
-                mLabel.textContent = label;
-                mId.textContent = id;
-                mPrice.textContent = formatMoney(price);
-                mStock.textContent = (qty !== undefined && qty !== null && qty !== '') ? (Number(qty) > 0 ?
-                    `${qty} available` : 'Out of stock') : '';
-                if (sku) {
-                    mSku.textContent = sku;
-                    mSkuWrap.style.display = '';
-                } else {
-                    mSkuWrap.style.display = 'none';
-                }
-                if (desc) {
-                    mDesc.textContent = desc;
-                    mDescWrap.style.display = '';
-                } else {
-                    mDescWrap.style.display = 'none';
-                }
-                if (img) {
-                    mImg.src = img;
-                    mImg.alt = label;
-                    mImgWrap.style.display = '';
-                } else {
-                    mImgWrap.style.display = 'none';
-                    mImg.src = '';
-                    mImg.alt = '';
-                }
-                // Title
-                document.getElementById('variantDetailsModalLabel').textContent = label;
-            });
-
-            // (Optional) If you want to block form submits unless every attribute has a selection:
-            // document.querySelector('form').addEventListener('submit', function(e) {
-            //   const missing = Array.from(document.querySelectorAll('input[id^="attribute-"]')).some(i => !i.value);
-            //   if (missing) {
-            //     e.preventDefault();
-            //     const err = document.getElementById('error-message');
-            //     if (err) err.style.display = '';
-            //     window.scrollTo({ top: err.offsetTop - 120, behavior: 'smooth' });
-            //   }
-            // });
+                    if (mLabel) mLabel.textContent = label;
+                    if (mId) mId.textContent = id;
+                    if (mPrice) mPrice.textContent = formatMoney(price);
+                    if (mStock) mStock.textContent = (qty !== undefined && qty !== null && qty !== '') ? (
+                        Number(qty) > 0 ?
+                        `${qty} available` : 'Out of stock') : '';
+                    if (sku) {
+                        if (mSku) mSku.textContent = sku;
+                        if (mSkuWrap) mSkuWrap.style.display = '';
+                    } else {
+                        if (mSkuWrap) mSkuWrap.style.display = 'none';
+                    }
+                    if (desc) {
+                        if (mDesc) mDesc.textContent = desc;
+                        if (mDescWrap) mDescWrap.style.display = '';
+                    } else {
+                        if (mDescWrap) mDescWrap.style.display = 'none';
+                    }
+                    if (img) {
+                        if (mImg) {
+                            mImg.src = img;
+                            mImg.alt = label;
+                        }
+                        if (mImgWrap) mImgWrap.style.display = '';
+                    } else {
+                        if (mImgWrap) mImgWrap.style.display = 'none';
+                        if (mImg) {
+                            mImg.src = '';
+                            mImg.alt = '';
+                        }
+                    }
+                    const modalTitle = document.getElementById('variantDetailsModalLabel');
+                    if (modalTitle) modalTitle.textContent = label;
+                });
+            }
         })();
     </script>
-
 
     @if ($hasAttributes)
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const stockBadge = document.getElementById('dynamic-stock-badge');
+                if (!stockBadge) return;
+
                 const reorderQty = parseInt(stockBadge.dataset.reorderQty);
                 const outofstockQty = parseInt(stockBadge.dataset.outofstockQty);
                 const variantButtons = document.querySelectorAll('.variant-button');
@@ -1690,7 +1919,6 @@
                     } else if (quantity <= reorderQty) {
                         badgeClass = 'bg-warning';
                         icon = 'fa-exclamation-triangle';
-                        // text = `Stock (${quantity} left)`;
                         text = `Stock`;
                         if (addToCartButton) {
                             addToCartButton.disabled = false;

@@ -1,4 +1,5 @@
 @extends('layouts.admin')
+
 @section('content')
     <style>
         /* Existing styles from your code */
@@ -258,11 +259,211 @@
             border-radius: 4px;
         }
 
-        /* Responsive Design */
+        /* RESPONSIVE LAYOUT ADDITIONS (mobile cards, table, pagination) */
+
+        .table-all-user {
+            width: 100%;
+        }
+
+        .mobile-cards {
+            display: none;
+        }
+
+        .mobile-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .mobile-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .mobile-card-header {
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mobile-card-image {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .mobile-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mobile-card-title {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            word-wrap: break-word;
+        }
+
+        .mobile-card-subtitle {
+            margin-top: 4px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .mobile-card-body {
+            padding: 12px 16px 14px;
+        }
+
+        .mobile-card-details p {
+            margin: 0 0 6px 0;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        .mobile-card-details p strong {
+            color: #111827;
+        }
+
+        .mobile-card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .mobile-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 10px 18px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .mobile-btn-primary {
+            background: linear-gradient(135deg, #0d6efd, #2563eb);
+            color: #ffffff;
+        }
+
+        .mobile-btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #ffffff;
+        }
+
+        .mobile-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+        }
+
+
+        .name-cell .name {
+            max-width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        /* Pagination wrapper */
+        .wgp-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 15px 0;
+        }
+
+        .wgp-pagination .pagination {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .wgp-pagination .page-link {
+            min-width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Filter badge responsive text */
         @media (max-width: 768px) {
             .filter-tag-enhanced {
                 font-size: 0.9rem;
                 padding: 0.5rem 1rem;
+            }
+
+            .mobile-card-actions {
+                flex-direction: column;
+            }
+
+            .filter-toggle-section {
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .mobile-card-header {
+                flex-wrap: wrap;
+                align-items: flex-start;
+            }
+
+            .mobile-card-image {
+                width: 40px;
+                height: 40px;
+            }
+
+            .mobile-card-title {
+                font-size: 14px;
+            }
+
+            .mobile-card-details p {
+                font-size: 12px;
+            }
+
+            .mobile-btn {
+                font-size: 11px;
+                padding: 7px 10px;
+            }
+        }
+
+        /* Switch between table and cards using breakpoints */
+        @media (max-width: 767.98px) {
+            .mobile-cards {
+                display: block;
+            }
+
+            .d-md-table {
+                display: none !important;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .mobile-cards {
+                display: none !important;
             }
         }
     </style>
@@ -296,7 +497,7 @@
             </div>
 
             <div class="wg-box">
-                <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
+                <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-4">
                     <div class="wg-filter flex-grow">
                         <form class="form-search" onsubmit="return false;">
                             <fieldset class="name">
@@ -411,8 +612,8 @@
                                 </div>
                             </div>
 
-                            <div class="d-flex align-items-center mt-4">
-                                <button class="btn btn-primary btn-lg me-4" id="applyFilters">
+                            <div class="d-flex align-items-center mt-4 gap-3 flex-wrap">
+                                <button class="btn btn-primary btn-lg" id="applyFilters">
                                     <i class="icon-filter me-1"></i> Apply Filters
                                 </button>
                                 <button class="btn btn-outline-secondary btn-lg" id="resetFilters">
@@ -436,8 +637,8 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="d-flex gap-2">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
                         <a class="tf-button w-auto" href="{{ route('admin.product.add') }}">
                             <i class="icon-plus"></i>Add Product
                         </a>
@@ -450,27 +651,21 @@
                     </div>
                 </div>
 
-                <div class="table-responsive">
-                    @if (Session::has('status'))
-                        <p class="alert alert-success">{{ Session::get('status') }}</p>
-                    @endif
-                    <table class="table table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th class="text-center align-middle" scope="col" style="width: 20%">Name</th>
-                                <th class="text-center align-middle" scope="col" style="width: 10%">Quantity</th>
-                                <th class="text-center align-middle" scope="col" style="width: 15%">Price</th>
-                                <th class="text-center align-middle" scope="col" style="width: 15%">Category</th>
-                                <th class="text-center align-middle" scope="col" style="width: 15%">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="js-products-partial-target">
+                @if (Session::has('status'))
+                    <p class="alert alert-success">{{ Session::get('status') }}</p>
+                @endif
+
+                <div class="table-all-user g-table">
+                    <div class="table-responsive">
+                        <div id="js-products-partial-target">
+                            {{-- This partial now contains BOTH mobile cards + desktop table --}}
                             @include('partials._products-table', ['products' => $products])
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="divider"></div>
+
                 <div class="d-flex justify-content-end">
                     <div class="legend d-flex align-items-center gap-3 small text-body-secondary" aria-label="Legend">
                         <span class="d-inline-flex align-items-center gap-3">
@@ -483,6 +678,7 @@
                         </span>
                     </div>
                 </div>
+
                 <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination"
                     id="js-products-partial-target-pagination">
                     @include('partials._products-pagination', ['products' => $products])
@@ -535,7 +731,11 @@
             });
 
             function initRowClicks() {
-                $('.product-row').off('click').on('click', function() {
+                // Make both table rows & mobile cards clickable, but ignore clicks on buttons/links/forms
+                $('.product-row, .product-card').off('click').on('click', function(e) {
+                    if ($(e.target).closest('a, button, .archive, form').length) {
+                        return;
+                    }
                     window.location = $(this).data('href');
                 });
             }
@@ -579,6 +779,7 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     },
                     success: function(response) {
+                        // response.products now contains the mobile cards + table markup
                         $('#js-products-partial-target').html(response.products);
                         $('#js-products-partial-target-pagination').html(response.pagination);
                         showLoadingState(false);

@@ -103,8 +103,6 @@ class ShopController extends Controller
         $orderQueries = [
             1 => ['created_at', 'DESC'],
             2 => ['created_at', 'ASC'],
-            3 => ['price', 'ASC'],
-            4 => ['price', 'DESC'],
         ];
 
         if ($order == 5) {
@@ -127,18 +125,44 @@ class ShopController extends Controller
                 ->orderByRaw('FIELD(id, ' . $bestSellingProductIds->implode(',') . ')')
                 ->paginate(9);
         } else {
-            $products = $productsQuery->orderBy(
-                $orderQueries[$order][0] ?? 'id',
-                $orderQueries[$order][1] ?? 'DESC'
-            )->paginate(9);
+            if ($order == 3) {
+                $productsQuery->orderByRaw("
+                COALESCE(
+                    (SELECT MIN(price) FROM product_attribute_values 
+                     WHERE product_attribute_values.product_id = products.id 
+                     AND price IS NOT NULL),
+                    products.price
+                ) ASC
+            ");
+            } elseif ($order == 4) {
+                $productsQuery->orderByRaw("
+                COALESCE(
+                    (SELECT MAX(price) FROM product_attribute_values 
+                     WHERE product_attribute_values.product_id = products.id 
+                     AND price IS NOT NULL),
+                    products.price
+                ) DESC
+            ");
+            } else {
+                $productsQuery->orderBy(
+                    $orderQueries[$order][0] ?? 'id',
+                    $orderQueries[$order][1] ?? 'DESC'
+                );
+            }
+
+            $products = $productsQuery->paginate(9);
         }
 
         if ($request->ajax()) {
-            return view('partials.products-list', compact('products'));
+            return response()->json([
+                'products' => view('partials.products-list', compact('products'))->render(),
+                'pagination' => view('partials._products-pagination', compact('products'))->render(),
+            ]);
         }
 
         return view('shop', compact('products', 'order', 'categories', 'f_categories', 'sex', 'priceRange'));
     }
+
 
     public function product_details($product_slug)
     {

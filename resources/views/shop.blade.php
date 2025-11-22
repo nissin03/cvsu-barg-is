@@ -73,7 +73,6 @@
                         Filter by:
                     </h5>
                     <div class="d-flex align-items-center gap-3">
-
                         <div class="price-range-filter">
                             <label for="priceRange" class="me-2 text-muted" style="font-size: 0.9rem;">Price:</label>
                             <select class="modern-select" name="priceRange" id="priceRange">
@@ -110,8 +109,8 @@
             </div>
         </div>
 
-        <div class="pagination-container">
-            {{ $products->withQueryString()->links('pagination::bootstrap-5') }}
+        <div class="pagination-container" id="pagination-container">
+            @include('partials._products-pagination', ['products' => $products])
         </div>
     </main>
 
@@ -212,9 +211,11 @@
                 $.ajax({
                     url: $('#frmfilter').attr('action'),
                     type: 'GET',
+                    dataType: 'json',
                     data: $('#frmfilter').serialize(),
                     success: function(data) {
-                        $('#product-list').html(data);
+                        $('#product-list').html(data.products);
+                        $('#pagination-container').html(data.pagination);
                         updatePagination();
                         isSubmitting = false;
                     },
@@ -252,8 +253,6 @@
             }
 
             $('#priceRange').on('change', function() {
-                // $('#orderBy').val('3');
-                // $('#order').val('3');
                 submitFilterForm();
             });
 
