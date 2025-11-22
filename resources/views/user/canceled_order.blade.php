@@ -17,7 +17,7 @@
 
                 <!-- Content -->
                 <div class="col-lg-10">
-                    @if($canceledOrders->count() > 0)
+                    @if ($canceledOrders->count() > 0)
                         <!-- Information Message -->
                         <div class="alert alert-warning mb-4" role="alert">
                             <div class="d-flex align-items-center">
@@ -25,16 +25,18 @@
                                 <div>
                                     <h5 class="alert-heading mb-2">Unpaid Reservations Voided</h5>
                                     <p class="mb-2">
-                                        Your reserved items were automatically canceled because payment was not completed within 24 hours of placing the order.
+                                        Your reserved items were automatically canceled because payment was not completed
+                                        within 24 hours of placing the order.
                                     </p>
                                     <p class="mb-0">
-                                        <strong>Note:</strong> You can re-book the same items within 24 hours of the original order placement by clicking the "Re-book Reservation" button below.
+                                        <strong>Note:</strong> You can re-book the same items within 24 hours of the
+                                        original order placement by clicking the "Re-book Reservation" button below.
                                     </p>
                                 </div>
                             </div>
                         </div>
                     @endif
-                    
+
                     @forelse ($canceledOrders as $order)
                         <div class="accordion mt-4" id="canceledOrderAccordion">
                             <div class="accordion-item mb-3 shadow-sm border rounded">
@@ -98,21 +100,22 @@
                                                     $hoursSinceCreated = $order->created_at->diffInHours(now());
                                                     $canRebook = $hoursSinceCreated <= 24;
                                                 @endphp
-                                                @if($canRebook)
+                                                @if ($canRebook)
                                                     <small class="text-success">
-                                                        <i class="fas fa-clock"></i> 
+                                                        <i class="fas fa-clock"></i>
                                                         Re-booking available for {{ 24 - $hoursSinceCreated }} more hours
                                                     </small>
                                                 @else
                                                     <small class="text-danger">
-                                                        <i class="fas fa-times-circle"></i> 
+                                                        <i class="fas fa-times-circle"></i>
                                                         Re-booking no longer available (expired)
                                                     </small>
                                                 @endif
                                             </div>
                                             <div class="text-center">
-                                                @if($canRebook)
-                                                    <form action="{{ route('user.order.rebook', $order->id) }}" method="POST" class="d-inline">
+                                                @if ($canRebook)
+                                                    <form action="{{ route('user.order.rebook', $order->id) }}"
+                                                        method="POST" class="d-inline">
                                                         @csrf
                                                         <button type="submit" class="btn btn-primary btn-lg">
                                                             <i class="fas fa-redo me-2"></i>
@@ -136,8 +139,10 @@
                             <div class="empty-state text-center">
                                 <i class="fas fa-check-circle text-success mb-3" style="font-size: 3rem;"></i>
                                 <h4>No Canceled Orders</h4>
-                                <p class="text-muted">Great! You don't have any unpaid orders that were automatically canceled.</p>
-                                <p class="text-muted">All your reservations have been properly completed or are still active.</p>
+                                <p class="text-muted">Great! You don't have any unpaid orders that were automatically
+                                    canceled.</p>
+                                <p class="text-muted">All your reservations have been properly completed or are still
+                                    active.</p>
                                 <a href="{{ route('shop.index') }}" class="btn btn-custom btn-outline-primary">
                                     <i class="fas fa-shopping-cart me-2"></i>
                                     Browse Products

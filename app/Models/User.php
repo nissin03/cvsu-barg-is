@@ -24,6 +24,7 @@ class User extends Authenticatable
         'utype',
         'role',
         'sex',
+        'position',
         'phone_number',
         'year_level',
         'course_id',

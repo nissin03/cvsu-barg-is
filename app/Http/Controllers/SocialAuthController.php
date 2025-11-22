@@ -37,7 +37,7 @@ class SocialAuthController extends Controller
                 ]
             );
 
-            if ($user->wasRecentlyCreated) {
+            if ($user->wasRecentlyCreated && is_null($user->email_verified_at)) {
                 $user->sendEmailVerificationNotification();
             }
 
@@ -47,12 +47,6 @@ class SocialAuthController extends Controller
                 return redirect()->route('verification.notice');
             }
 
-            if (!$user->wasRecentlyCreated && $user->password_set) {
-                Auth::login($user);
-                return redirect()->intended('/');
-            }
-
-            Auth::login($user);
             if (!$user->password_set) {
                 return redirect()->route('password.set');
             }

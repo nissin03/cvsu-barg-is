@@ -62,54 +62,68 @@
                         <span class="alert alert-danger text-center">{{ $message }}</span>
                     @enderror
 
-                    <fieldset class="mb-4">
-                        <div class="body-title">Year Level</div>
-                        <select class="" name="year_level">
-                            <option value="" disabled>Select Year Level</option>
-                            @foreach (['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'] as $year)
-                                <option value="{{ $year }}"
-                                    {{ old('year_level', $user->year_level) == $year ? 'selected' : '' }}>
-                                    {{ $year }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('year_level')
-                            <span class="text-red-600">{{ $message }}</span>
-                        @enderror
-                    </fieldset>
+                    <!-- Position field - only show for employees/admins -->
+                    @if ($user->role === 'employee' || $user->utype === 'ADM')
+                        <fieldset class="mb-4">
+                            <div class="body-title">Position <span class="tf-color-1">*</span></div>
+                            <input class="mb-10" type="text" name="position"
+                                value="{{ old('position', $user->position) }}" placeholder="Enter position" required>
+                            @error('position')
+                                <span class="text-red-600">{{ $message }}</span>
+                            @enderror
+                        </fieldset>
+                    @endif
 
-                    <fieldset class="mb-4">
-                        <div class="body-title">College</div>
-                        <select class="" name="college_id" id="collegeSelect">
-                            <option value="" disabled>Select College</option>
-                            @foreach ($colleges as $college)
-                                <option value="{{ $college->id }}"
-                                    {{ old('college_id', $user->college_id) == $college->id ? 'selected' : '' }}>
-                                    {{ $college->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('college_id')
-                            <span class="text-red-600">{{ $message }}</span>
-                        @enderror
-                    </fieldset>
+                    <!-- Student-specific fields -->
+                    @if ($user->role === 'student')
+                        <fieldset class="mb-4">
+                            <div class="body-title">Year Level</div>
+                            <select class="" name="year_level">
+                                <option value="" disabled>Select Year Level</option>
+                                @foreach (['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'] as $year)
+                                    <option value="{{ $year }}"
+                                        {{ old('year_level', $user->year_level) == $year ? 'selected' : '' }}>
+                                        {{ $year }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('year_level')
+                                <span class="text-red-600">{{ $message }}</span>
+                            @enderror
+                        </fieldset>
 
-                    <fieldset class="mb-4">
-                        <div class="body-title">Course</div>
-                        <select name="course_id" id="courseSelect">
-                            <option value="" disabled>Select Course</option>
-                            @foreach ($courses as $course)
-                                <option value="{{ $course->id }}"
-                                    {{ old('course_id', $user->course_id) == $course->id ? 'selected' : '' }}>
-                                    {{ $course->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('course_id')
-                            <span class="text-red-600">{{ $message }}</span>
-                        @enderror
-                    </fieldset>
-                    </fieldset>
+                        <fieldset class="mb-4">
+                            <div class="body-title">College</div>
+                            <select class="" name="college_id" id="collegeSelect">
+                                <option value="" disabled>Select College</option>
+                                @foreach ($colleges as $college)
+                                    <option value="{{ $college->id }}"
+                                        {{ old('college_id', $user->college_id) == $college->id ? 'selected' : '' }}>
+                                        {{ $college->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('college_id')
+                                <span class="text-red-600">{{ $message }}</span>
+                            @enderror
+                        </fieldset>
+
+                        <fieldset class="mb-4">
+                            <div class="body-title">Course</div>
+                            <select name="course_id" id="courseSelect">
+                                <option value="" disabled>Select Course</option>
+                                @foreach ($courses as $course)
+                                    <option value="{{ $course->id }}"
+                                        {{ old('course_id', $user->course_id) == $course->id ? 'selected' : '' }}>
+                                        {{ $course->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('course_id')
+                                <span class="text-red-600">{{ $message }}</span>
+                            @enderror
+                        </fieldset>
+                    @endif
 
                     <div class="cols gap-10">
                         <button type="submit" class="btn btn-dark btn-lg btn-xl">Update User</button>
@@ -182,9 +196,11 @@
                     }
                 }
             }
-            studentDepartmentSelect.addEventListener('change', updateCourseOptions);
 
-            updateCourseOptions();
+            if (studentDepartmentSelect) {
+                studentDepartmentSelect.addEventListener('change', updateCourseOptions);
+                updateCourseOptions();
+            }
         });
     </script>
 @endpush

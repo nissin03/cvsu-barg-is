@@ -342,7 +342,8 @@
             function initCategoryToggle() {
 
                 $('.parent-row').off('click').on('click', function(e) {
-                    if (!$(e.target).closest('.list-icon-function, .action-link').length) {
+                    if (!$(e.target).closest('.list-icon-function').length) {
+                        // if (!$(e.target).closest('.list-icon-function, .action-link').length) {
                         const categoryId = $(this).data('category-id');
                         const childRows = $(`.children-of-${categoryId}`);
 

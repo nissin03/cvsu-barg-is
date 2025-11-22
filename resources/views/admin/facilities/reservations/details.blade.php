@@ -144,6 +144,12 @@
         .align-items-center {
             align-items: center;
         }
+
+        .table-transaction th,
+        .table-transaction td {
+            width: 50%;
+            vertical-align: middle;
+        }
     </style>
 
     <div class="main-content-inner">
@@ -338,6 +344,7 @@
                         <thead>
                             <tr>
                                 <th>Add-on Name</th>
+                                <th>Add-on Base Price</th>
                                 <th>Billing Cycle</th>
                                 <th>Date From</th>
                                 <th>Date To</th>
@@ -351,6 +358,7 @@
                             @forelse ($groupedAddons as $row)
                                 <tr>
                                     <td>{{ $row->addon_name }}</td>
+                                    <td>{{ $row->base_price }}</td>
                                     <td>{{ $row->billing_cycle_label }}</td>
 
                                     @if (!$row->is_contract)
@@ -1026,19 +1034,75 @@
             @endif
 
 
-            <div class="wg-box mt-5 table-responsive">
+            {{-- <div class="wg-box mt-5 table-responsive">
                 <h5>Transaction Details</h5>
                 <table class="table table-striped table-bordered table-transaction">
                     <tbody>
                         <tr>
                             <th>Total Price</th>
                             <td>&#8369;{{ number_format($reservation->total_price, 2) }}</td>
-                            <th>Last Updated By</th>
-                            <td>{{ $reservation->updated_by ? $reservation->updatedBy->name : 'Not Applicable' }}</td>
                         </tr>
                     </tbody>
                 </table>
+            </div> --}}
+
+            <div class="wg-box mt-5 table-responsive">
+                <h5 class="mb-3">Transaction Details</h5>
+
+                <table class="table table-bordered table-striped table-transaction mb-0">
+                    <tbody>
+                        {{-- DISCOUNT SECTION --}}
+                        @if ($reservation->discount_amount && $reservation->discount_amount > 0)
+                            <tr>
+                                <th>Discount Type</th>
+                                <td>
+                                    <span class="badge bg-success">
+                                        {{ $reservation->discount_percent ? number_format($reservation->discount_percent, 0) . '%' : '' }}
+                                        Discount
+                                    </span>
+
+                                    @if ($reservation->discount_applies_to)
+                                        <small class="text-muted d-block mt-1">
+                                            Applies to:
+                                            <strong>{{ ucfirst(str_replace('_', ' ', $reservation->discount_applies_to)) }}</strong>
+                                        </small>
+                                    @endif
+                                </td>
+                            </tr>
+
+                            @if ($reservation->discount_proof_path)
+                                <tr>
+                                    <th>Discount Proof</th>
+                                    <td>
+                                        <a href="{{ asset('storage/' . $reservation->discount_proof_path) }}"
+                                            target="_blank" class="btn btn-info btn-lg text-white">
+                                            <i class="icon-download"></i> View Proof
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endif
+                        @endif
+
+                        <tr class="table-primary">
+                            <th class="fw-bold">Total</th>
+                            <td class="fw-bold fs-5">
+                                ₱{{ number_format($reservation->total_price, 2) }}
+                            </td>
+                        </tr>
+
+
+                        {{-- Updated By --}}
+                        @if ($reservation->updatedBy)
+                            <tr>
+                                <th>Last Updated By</th>
+                                <td>{{ $reservation->updatedBy->name ?? 'System' }}</td>
+                            </tr>
+                        @endif
+
+                    </tbody>
+                </table>
             </div>
+
 
             @if ($reservation->qualification_approvals && $reservation->qualification_approvals->count() > 0)
                 <div class="wg-box mt-5">
@@ -1346,41 +1410,103 @@
                     </div>
                 </form>
             </div>
+
+            @if ($reservation->status === 'canceled' && $reservation->cancellation_reason)
+                <div class="wg-box mt-5">
+                    <h5 class="text-danger">Cancellation Information</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <tbody>
+                                <tr>
+                                    <th style="width: 20%;">Canceled At</th>
+                                    <td style="width: 30%;">
+                                        {{ $reservation->canceled_at ? \Carbon\Carbon::parse($reservation->canceled_at)->format('M d, Y h:i A') : 'N/A' }}
+                                    </td>
+                                    <th style="width: 20%;">Canceled By</th>
+                                    <td style="width: 30%;">
+                                        {{ $reservation->updatedBy ? $reservation->updatedBy->name : 'System' }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Cancellation Reason</th>
+                                    <td colspan="3">
+                                        <div class=" mb-0">
+                                            {{ $reservation->cancellation_reason }}
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 
+    <!-- Cancellation Reason Modal -->
+    <div class="modal fade" id="cancelReasonModal" tabindex="-1" aria-labelledby="cancelReasonModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelReasonModalLabel">Provide Cancellation Reason</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="cancellation_reason" class="form-label">
+                            Reason for Cancellation <span class="text-danger">*</span>
+                        </label>
+                        <textarea name="cancellation_reason" id="cancellation_reason" class="form-control" rows="4"
+                            placeholder="Please provide a reason for canceling this reservation..." required maxlength="500"></textarea>
+                        <div class="form-text">Maximum 500 characters</div>
+                        <div class="invalid-feedback" id="cancellation-error"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id="confirmCancelBtn">Confirm
+                        Cancellation</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize status elements
-            const statusSelect = document.getElementById('status');
-            const submitButton = document.getElementById('submit-button');
-            const initialQualificationStatus = document.getElementById('initialQualificationStatus')?.value ||
-                'pending';
-
-            // Initialize reservation status form based on current state
+            // const statusSelect = document.getElementById('status');
+            // const submitButton = document.getElementById('submit-button');
+            // const initialQualificationStatus = document.getElementById('initialQualificationStatus')?.value ||
+            //     'pending';
             initializeReservationStatusForm();
-
-            // Initialize qualification status forms
             initializeQualificationForms();
-
-            // Initialize addon payment forms
             initializeAddonPaymentForms();
         });
 
         function initializeReservationStatusForm() {
             const statusSelect = document.getElementById('status');
             const submitButton = document.getElementById('submit-button');
+            const statusUpdateForm = document.getElementById('statusUpdateForm');
+            const cancellationReasonTextarea = document.getElementById('cancellation_reason');
+            const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+            const cancellationError = document.getElementById('cancellation-error');
 
-            if (!statusSelect || !submitButton) return;
+            if (!statusSelect || !submitButton || !statusUpdateForm) {
+                console.error('Required form elements not found');
+                return;
+            }
 
             const currentReservationStatus = statusSelect.dataset.currentStatus;
             const initialQualificationStatus = document.getElementById('initialQualificationStatus')?.value || 'pending';
-
-            // Get qualification approvals count
             const hasQualifications =
                 {{ $reservation->qualification_approvals && $reservation->qualification_approvals->count() > 0 ? 'true' : 'false' }};
 
-            // Only disable if there are qualifications AND they are pending
+            // Initialize Bootstrap modal
+            const modalElement = document.getElementById('cancelReasonModal');
+            const cancelModal = new bootstrap.Modal(modalElement);
+            let pendingStatusChange = null;
+
+            // Disable form if qualification is pending
             if (hasQualifications && initialQualificationStatus === 'pending') {
                 statusSelect.disabled = true;
                 submitButton.disabled = true;
@@ -1395,68 +1521,281 @@
                 statusSelect.classList.add('disabled');
                 submitButton.classList.add('disabled');
             }
-        }
 
-        // Reservation status update form
-        const statusUpdateForm = document.getElementById('statusUpdateForm');
-        if (statusUpdateForm) {
+            // Handle status dropdown change - show modal for cancellation
+            statusSelect.addEventListener('change', function(e) {
+                const selectedStatus = this.value;
+                const currentStatus = this.dataset.currentStatus;
+
+                console.log('Status changed:', {
+                    selectedStatus,
+                    currentStatus
+                });
+
+                if (selectedStatus === 'canceled' && currentStatus !== 'canceled') {
+                    pendingStatusChange = selectedStatus;
+                    cancellationReasonTextarea.value = '';
+                    cancellationReasonTextarea.classList.remove('is-invalid');
+                    cancellationError.textContent = '';
+                    cancelModal.show();
+                    this.value = currentStatus; // Reset to current status
+                }
+            });
+
+            if (confirmCancelBtn) {
+                const newConfirmBtn = confirmCancelBtn.cloneNode(true);
+                confirmCancelBtn.parentNode.replaceChild(newConfirmBtn, confirmCancelBtn);
+
+                newConfirmBtn.addEventListener('click', function() {
+                    const cancellationReason = cancellationReasonTextarea.value.trim();
+
+                    console.log('Confirm cancel clicked, reason:', cancellationReason);
+
+                    // Validation
+                    if (!cancellationReason) {
+                        cancellationReasonTextarea.classList.add('is-invalid');
+                        cancellationError.textContent = 'Cancellation reason is required.';
+                        return;
+                    }
+
+                    if (cancellationReason.length > 500) {
+                        cancellationReasonTextarea.classList.add('is-invalid');
+                        cancellationError.textContent = 'Cancellation reason must not exceed 500 characters.';
+                        return;
+                    }
+
+                    // Close modal - compatible with Bootstrap 4 and 5
+                    try {
+                        // Try Bootstrap 5 method first
+                        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                            const bsModal = bootstrap.Modal.getInstance(modalElement);
+                            if (bsModal) {
+                                bsModal.hide();
+                            } else {
+                                cancelModal.hide();
+                            }
+                        } else {
+                            // Bootstrap 4 fallback
+                            $(modalElement).modal('hide');
+                        }
+                    } catch (e) {
+                        console.log('Using cancelModal.hide()');
+                        cancelModal.hide();
+                    }
+
+                    // Submit after a short delay to ensure modal is closed
+                    setTimeout(() => {
+                        console.log('Submitting cancellation...');
+
+                        // Update select value
+                        statusSelect.value = 'canceled';
+
+                        // Disable button
+                        const originalButtonText = submitButton.textContent;
+                        submitButton.disabled = true;
+                        submitButton.textContent = 'Updating...';
+
+                        // Create form data
+                        const formData = new FormData();
+                        formData.append('_token', document.querySelector('meta[name="csrf-token"]')
+                            .content);
+                        formData.append('_method', 'PATCH');
+                        formData.append('status', 'canceled');
+                        formData.append('cancellation_reason', cancellationReason);
+
+                        console.log('Form data prepared:', {
+                            status: 'canceled',
+                            reason: cancellationReason,
+                            url: statusUpdateForm.action
+                        });
+
+                        // Submit via fetch
+                        fetch(statusUpdateForm.action, {
+                                method: 'POST',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                body: formData
+                            })
+                            .then(response => {
+                                console.log('Response status:', response.status);
+                                if (!response.ok) {
+                                    return response.json().then(errorData => {
+                                        console.error('Error response:', errorData);
+                                        throw new Error(errorData.error || errorData.message ||
+                                            'Failed to cancel reservation');
+                                    });
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('Success response:', data);
+
+                                // Show success message
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: data.message || 'Reservation canceled successfully',
+                                    confirmButtonColor: '#3085d6',
+                                    timer: 2000
+                                }).then(() => {
+                                    // Reload page to show updated status
+                                    location.reload();
+                                });
+                            })
+                            .catch(error => {
+                                console.error('Cancellation error:', error);
+
+                                // Re-enable button
+                                submitButton.disabled = false;
+                                submitButton.textContent = originalButtonText;
+                                statusSelect.value = statusSelect.dataset.currentStatus;
+
+                                // Show error message
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: error.message ||
+                                        'Error canceling reservation. Please try again.',
+                                    confirmButtonColor: '#d33'
+                                });
+                            });
+                    }, 300);
+                });
+            }
+            // Clear validation on input
+            if (cancellationReasonTextarea) {
+                cancellationReasonTextarea.addEventListener('input', function() {
+                    this.classList.remove('is-invalid');
+                    cancellationError.textContent = '';
+
+                    // Enforce max length
+                    if (this.value.length > 500) {
+                        this.value = this.value.substring(0, 500);
+                    }
+                });
+            }
+
+            // Reset form when modal is closed without confirmation
+            if (modalElement) {
+                modalElement.addEventListener('hidden.bs.modal', function() {
+                    console.log('Modal hidden');
+                    cancellationReasonTextarea.value = '';
+                    cancellationReasonTextarea.classList.remove('is-invalid');
+                    cancellationError.textContent = '';
+
+                    // Reset select to current status if cancellation wasn't confirmed
+                    if (statusSelect.value === 'canceled' && statusSelect.dataset.currentStatus !== 'canceled') {
+                        statusSelect.value = statusSelect.dataset.currentStatus;
+                    }
+
+                    pendingStatusChange = null;
+                });
+            }
+
+            // Handle form submission for non-cancellation status changes
             statusUpdateForm.addEventListener('submit', function(e) {
                 e.preventDefault();
 
-                const form = this;
-                const submitButton = document.getElementById('submit-button');
-                const statusSelect = document.getElementById('status');
+                const selectedStatus = statusSelect.value;
+                const currentStatus = statusSelect.dataset.currentStatus;
 
+                console.log('Form submitted:', {
+                    selectedStatus,
+                    currentStatus
+                });
+
+                // If changing to canceled, show modal first
+                if (selectedStatus === 'canceled' && currentStatus !== 'canceled') {
+                    pendingStatusChange = selectedStatus;
+                    cancellationReasonTextarea.value = '';
+                    cancellationReasonTextarea.classList.remove('is-invalid');
+                    cancellationError.textContent = '';
+                    cancelModal.show();
+                    statusSelect.value = currentStatus;
+                    return;
+                }
+
+                // For other status changes, submit normally
+                submitStatusUpdate(this, null);
+            });
+
+            // Submit status update function for non-cancellation changes
+            function submitStatusUpdate(form, cancellationReason = null) {
                 if (!submitButton || !statusSelect) {
                     console.error('Required form elements not found');
                     return;
                 }
 
-                if (submitButton.disabled) return;
+                if (submitButton.disabled) {
+                    console.log('Submit button already disabled, skipping');
+                    return;
+                }
 
                 const originalButtonText = submitButton.textContent;
                 submitButton.disabled = true;
                 submitButton.textContent = 'Updating...';
 
+                // Use FormData for better compatibility
+                const formData = new FormData();
+                formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                formData.append('_method', 'PATCH');
+                formData.append('status', statusSelect.value);
+
+                if (cancellationReason) {
+                    formData.append('cancellation_reason', cancellationReason);
+                }
+
+                console.log('Submitting status update:', {
+                    status: statusSelect.value,
+                    hasCancellationReason: !!cancellationReason,
+                    url: form.action
+                });
+
                 fetch(form.action, {
-                        method: 'PATCH',
+                        method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest'
                         },
-                        body: JSON.stringify({
-                            status: statusSelect.value
-                        })
+                        body: formData
                     })
                     .then(response => {
+                        console.log('Response status:', response.status);
                         if (!response.ok) {
                             return response.json().then(errorData => {
-                                throw new Error(errorData.error || 'Failed to update status');
+                                console.error('Error response:', errorData);
+                                throw new Error(errorData.error || errorData.message ||
+                                    'Failed to update status');
+                            }).catch(err => {
+                                if (err.message) throw err;
+                                throw new Error('Server error occurred. Please check the logs.');
                             });
                         }
                         return response.json();
                     })
                     .then(data => {
+                        console.log('Success response:', data);
                         showAlert(form, 'success', data.message || 'Status updated successfully');
-
-                        // Update the status badge
                         updateReservationStatusBadge(data.new_status);
-
-                        // Update the form based on new status
                         statusSelect.dataset.currentStatus = data.new_status;
                         updateReservationDropdown(data.new_status, data.available_next_statuses, submitButton,
                             originalButtonText);
+
+                        pendingStatusChange = null;
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
                     })
                     .catch(error => {
+                        console.error('Status update error:', error);
                         submitButton.disabled = false;
                         submitButton.textContent = originalButtonText;
                         showAlert(form, 'danger', error.message || 'Error updating status. Please try again.');
                     });
-            });
+            }
         }
-
         // FIXED: Qualification status update forms initialization
         function initializeQualificationForms() {
             const qualificationForms = document.querySelectorAll('.qualification-status-form');
@@ -2123,18 +2462,18 @@
                                     'canceled') {
                                     updateReservationStatusUIOnForfeit();
 
-                                    if (data.qualification_ids && data.qualification_ids.length > 0) {
-                                        data.qualification_ids.forEach(qualId => {
-                                            const event = new CustomEvent(
-                                                'qualificationStatusChanged', {
-                                                    detail: {
-                                                        qualificationId: qualId,
-                                                        newStatus: 'canceled'
-                                                    }
-                                                });
-                                            document.dispatchEvent(event);
-                                        });
-                                    }
+                                    // if (data.qualification_ids && data.qualification_ids.length > 0) {
+                                    //     data.qualification_ids.forEach(qualId => {
+                                    //         const event = new CustomEvent(
+                                    //             'qualificationStatusChanged', {
+                                    //                 detail: {
+                                    //                     qualificationId: qualId,
+                                    //                     newStatus: 'canceled'
+                                    //                 }
+                                    //             });
+                                    //         document.dispatchEvent(event);
+                                    //     });
+                                    // }
 
                                     Swal.fire({
                                         icon: 'success',

@@ -576,6 +576,16 @@ class FacilityController extends Controller
             } else {
                 $facility->discounts()->detach();
             }
+            $selectedAddonIds = collect(explode(',', $request->input('selected_addons', '')))
+                ->filter()
+                ->map(fn($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+
+            Addon::where('facility_id', $facility->id)->update(['facility_id' => null]);
+
+            Addon::whereIn('id', $selectedAddonIds)->update(['facility_id' => $facility->id]);
 
 
             return redirect()->route('admin.facilities.index')->with('success', 'Facility updated successfully.');
