@@ -6,103 +6,158 @@ use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Models\ProductAttribute;
+use Illuminate\Support\Facades\DB;
 
 
 class ShopController extends Controller
 {
     public function index(Request $request)
     {
-        $o_column = "";
-        $o_order = "";
-        $order = $request->query('order') ? $request->query('order') : -1;
+        $order = $request->query('order', -1);
         $f_categories = $request->query('categories', '');
         $sex = $request->query('sex', '');
         $priceRange = $request->query('priceRange', '');
 
-        switch ($order) {
-            case 1:
-                $o_column = 'created_at';
-                $o_order = 'DESC';
-                break;
-            case 2:
-                $o_column = 'created_at';
-                $o_order = 'ASC';
-                break;
-            case 3:
-                $o_column = 'price';
-                $o_order = 'ASC';
-                break;
-            case 4:
-                $o_column = 'price';
-                $o_order = 'DESC';
-                break;
-            default:
-                $o_column = 'id';
-                $o_order = 'DESC';
-                break;
+        if ($priceRange !== '' && $order == -1) {
+            $order = 3;
         }
 
-        $categories = Category::with(['children', 'products'])
+        $categories = Category::withCount([
+            'products as direct_products_count',
+            'children' => function ($query) {
+                $query->withCount('products');
+            }
+        ])
             ->whereNull('parent_id')
             ->orderBy('name', 'ASC')
             ->get()
             ->map(function ($category) {
-                $category->total_products = $category->products->count() +
-                    $category->children->sum(function ($child) {
-                        return $child->products->count();
-                    });
+                $childProductsCount = $category->children->sum('products_count');
+                $category->total_products = $category->direct_products_count + $childProductsCount;
                 return $category;
             });
 
         $selected_categories = $f_categories ? explode(',', $f_categories) : [];
-        $expanded_categories = [];
 
-        foreach ($selected_categories as $category_id) {
-            $category = Category::find($category_id);
-            if ($category) {
-                $expanded_categories[] = $category_id;
+        $expanded_categories = collect($selected_categories)
+            ->map(function ($category_id) {
+                return Category::find($category_id);
+            })
+            ->filter()
+            ->flatMap(function ($category) {
                 if (is_null($category->parent_id)) {
-                    $expanded_categories = array_merge(
-                        $expanded_categories,
+                    return array_merge(
+                        [$category->id],
                         $category->children->pluck('id')->toArray()
                     );
                 }
-            }
-        }
-        $expanded_categories = array_unique($expanded_categories);
+                return [$category->id];
+            })
+            ->unique()
+            ->toArray();
 
-        $products = Product::where('archived', false)
-            ->where(function ($query) use ($expanded_categories, $f_categories) {
-                if (!empty($expanded_categories)) {
-                    $query->whereIn('category_id', $expanded_categories);
-                } elseif ($f_categories === '') {
+        $productsQuery = Product::where('archived', false)
+            ->with(['category', 'attributeValues'])
+            ->when(!empty($expanded_categories), function ($query) use ($expanded_categories) {
+                return $query->whereIn('category_id', $expanded_categories);
+            }, function ($query) use ($f_categories) {
+                if ($f_categories === '') {
                     $query->whereNotNull('category_id');
                 }
             })
             ->when($sex !== '', function ($query) use ($sex) {
                 return $query->where('sex', $sex);
-            })
-            ->when($priceRange !== '', function ($query) use ($priceRange) {
-                switch ($priceRange) {
-                    case '0-50':
-                        return $query->whereBetween('price', [0, 50]);
-                    case '50-100':
-                        return $query->whereBetween('price', [50, 100]);
-                    case '100-200':
-                        return $query->whereBetween('price', [100, 200]);
-                    case '200-500':
-                        return $query->whereBetween('price', [200, 500]);
-                    case '500+':
-                        return $query->where('price', '>', 500);
-                    default:
-                        return $query;
-                }
-            })
-            ->orderBy($o_column, $o_order)
-            ->paginate(9);
+            });
+
+        $priceRangeQuery = function ($query) use ($priceRange) {
+            if ($priceRange === '') return;
+
+            $priceConditions = [
+                '0-50' => [0, 50],
+                '50-100' => [50, 100],
+                '100-200' => [100, 200],
+                '200-500' => [200, 500],
+            ];
+
+            if (isset($priceConditions[$priceRange])) {
+                [$min, $max] = $priceConditions[$priceRange];
+                $query->where(function ($q) use ($min, $max) {
+                    $q->where(function ($q2) use ($min, $max) {
+                        $q2->where('price', '>', 0)->whereBetween('price', [$min, $max]);
+                    })->orWhereHas('attributeValues', function ($attrQuery) use ($min, $max) {
+                        $attrQuery->whereBetween('price', [$min, $max]);
+                    });
+                });
+            } elseif ($priceRange === '500+') {
+                $query->where(function ($q) {
+                    $q->where('price', '>', 500)
+                        ->orWhereHas('attributeValues', function ($attrQuery) {
+                            $attrQuery->where('price', '>', 500);
+                        });
+                });
+            }
+        };
+
+        $productsQuery->where($priceRangeQuery);
+
+        $orderQueries = [
+            1 => ['created_at', 'DESC'],
+            2 => ['created_at', 'ASC'],
+        ];
+
+        if ($order == 5) {
+            $bestSellingProductIds = DB::table('order_items')
+                ->select('product_id', DB::raw('SUM(quantity) as total_sold'))
+                ->groupBy('product_id')
+                ->orderBy('total_sold', 'DESC')
+                ->pluck('product_id');
+
+            $products = Product::where('archived', false)
+                ->with(['category', 'attributeValues'])
+                ->whereIn('id', $bestSellingProductIds)
+                ->when(!empty($expanded_categories), function ($query) use ($expanded_categories) {
+                    return $query->whereIn('category_id', $expanded_categories);
+                })
+                ->when($sex !== '', function ($query) use ($sex) {
+                    return $query->where('sex', $sex);
+                })
+                ->where($priceRangeQuery)
+                ->orderByRaw('FIELD(id, ' . $bestSellingProductIds->implode(',') . ')')
+                ->paginate(9);
+        } else {
+            if ($order == 3) {
+                $productsQuery->orderByRaw("
+                COALESCE(
+                    (SELECT MIN(price) FROM product_attribute_values 
+                     WHERE product_attribute_values.product_id = products.id 
+                     AND price IS NOT NULL),
+                    products.price
+                ) ASC
+            ");
+            } elseif ($order == 4) {
+                $productsQuery->orderByRaw("
+                COALESCE(
+                    (SELECT MAX(price) FROM product_attribute_values 
+                     WHERE product_attribute_values.product_id = products.id 
+                     AND price IS NOT NULL),
+                    products.price
+                ) DESC
+            ");
+            } else {
+                $productsQuery->orderBy(
+                    $orderQueries[$order][0] ?? 'id',
+                    $orderQueries[$order][1] ?? 'DESC'
+                );
+            }
+
+            $products = $productsQuery->paginate(9);
+        }
 
         if ($request->ajax()) {
-            return view('partials.products-list', compact('products'));
+            return response()->json([
+                'products' => view('partials.products-list', compact('products'))->render(),
+                'pagination' => view('partials._products-pagination', compact('products'))->render(),
+            ]);
         }
 
         return view('shop', compact('products', 'order', 'categories', 'f_categories', 'sex', 'priceRange'));

@@ -3,7 +3,7 @@
     <div class="main-content-inner">
         <div class="main-content-wrap">
             <div class="flex items-center flex-wrap justify-between gap20 mb-27">
-                <h3 class="page-title">Archived Addons</h3>
+                <h3 class="page-title">Archived Add-ons</h3>
                 <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
                     <li>
                         <a href="{{ route('admin.index') }}">
@@ -15,14 +15,14 @@
                     </li>
                     <li>
                         <a href="{{ route('admin.addons') }}">
-                            <div class="text-tiny">Addons</div>
+                            <div class="text-tiny">Add-ons</div>
                         </a>
                     </li>
                     <li>
                         <i class="icon-chevron-right"></i>
                     </li>
                     <li>
-                        <div class="text-tiny">Archived Addons</div>
+                        <div class="text-tiny">Archived Add-ons</div>
                     </li>
                 </ul>
             </div>
@@ -32,25 +32,28 @@
                     <div class="wg-filter flex-grow">
                         <form class="form-search" method="GET" action="{{ route('admin.addons.archive') }}">
                             <fieldset class="name">
-                                <input type="text" placeholder="Search archived addons..." class="search-input" name="search"
-                                    tabindex="2" value="{{ request('search') }}" aria-required="true">
+                                <input type="text" placeholder="Search archived addons by name or description..."
+                                    class="search-input" name="search" value="{{ request('search') }}"
+                                    aria-required="true">
                             </fieldset>
-                            <button type="submit" style="display: none"></button>
+                            <button type="submit" class="search-submit" style="display: none">
+                                <i class="icon-search"></i>
+                            </button>
                         </form>
                     </div>
 
                     <a class="tf-button w-auto back-button" href="{{ route('admin.addons') }}">
-                        <i class="icon-arrow-left"></i> 
-                        <span class="button-text">Back to Addons</span>
+                        <i class="icon-arrow-left"></i>
+                        <span class="button-text">Back to Add-ons</span>
                     </a>
                 </div>
-                
+
                 <div class="table-all-user g-table">
                     <div class="table-responsive">
                         @if (Session::has('error'))
                             <p class="alert alert-danger">{{ Session::get('error') }}</p>
                         @endif
-                        
+
                         <!-- Mobile Card View -->
                         <div class="mobile-cards d-block d-md-none">
                             @forelse ($addons as $addon)
@@ -70,17 +73,21 @@
                                             <strong>Deleted:</strong> {{ $addon->deleted_at->format('M d, Y') }}
                                         </p>
                                         <div class="mobile-card-actions">
-                                            <form action="{{ route('admin.addons.restore', $addon->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.addons.restore', $addon->id) }}" method="POST"
+                                                class="d-inline">
                                                 @csrf
                                                 @method('PATCH')
-                                                <button type="submit" class="btn btn-sm btn-success restore mobile-btn" title="Restore">
+                                                <button type="submit" class="btn btn-sm btn-success restore mobile-btn"
+                                                    title="Restore">
                                                     <i class="icon-refresh-ccw"></i> Restore
                                                 </button>
                                             </form>
-                                            <form action="{{ route('admin.addons.force-delete', $addon->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.addons.force-delete', $addon->id) }}"
+                                                method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger force-delete mobile-btn" title="Permanently Delete">
+                                                <button type="submit" class="btn btn-sm btn-danger force-delete mobile-btn"
+                                                    title="Permanently Delete">
                                                     <i class="icon-trash-2"></i> Delete
                                                 </button>
                                             </form>
@@ -89,7 +96,7 @@
                                 </div>
                             @empty
                                 <div class="empty-state">
-                                    <p>No archived addons found.</p>
+                                    <p>No archived add-ons found.</p>
                                 </div>
                             @endforelse
                         </div>
@@ -115,24 +122,29 @@
                                             </div>
                                         </td>
                                         <td class="type-cell">
-                                            <span class="badge badge-secondary">{{ str_replace('_', ' ', $addon->price_type) }}</span>
+                                            <span
+                                                class="badge badge-secondary">{{ str_replace('_', ' ', $addon->price_type) }}</span>
                                         </td>
                                         <td class="price-cell">${{ number_format($addon->base_price, 2) }}</td>
                                         <td class="show-cell">{{ ucfirst($addon->show) }}</td>
                                         <td class="date-cell">{{ $addon->deleted_at->format('M d, Y') }}</td>
                                         <td class="action-cell">
                                             <div class="list-icon-function">
-                                                <form action="{{ route('admin.addons.restore', $addon->id) }}" method="POST" class="d-inline">
+                                                <form action="{{ route('admin.addons.restore', $addon->id) }}"
+                                                    method="POST" class="d-inline">
                                                     @csrf
                                                     @method('PATCH')
-                                                    <button type="submit" class="item restore" style="border: none; background: none;" title="Restore">
+                                                    <button type="submit" class="item restore"
+                                                        style="border: none; background: none;" title="Restore">
                                                         <i class="icon-refresh-ccw"></i>
                                                     </button>
                                                 </form>
-                                                <form action="{{ route('admin.addons.force-delete', $addon->id) }}" method="POST" class="d-inline">
+                                                <form action="{{ route('admin.addons.force-delete', $addon->id) }}"
+                                                    method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="item text-danger force-delete" style="border: none; background: none;" title="Permanently Delete">
+                                                    <button type="submit" class="item text-danger force-delete"
+                                                        style="border: none; background: none;" title="Permanently Delete">
                                                         <i class="icon-trash-2"></i>
                                                     </button>
                                                 </form>
@@ -141,7 +153,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center empty-state">No archived addons found.</td>
+                                        <td colspan="6" class="text-center empty-state">No archived add-ons found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -163,16 +175,16 @@
         .main-content-inner {
             padding: 15px;
         }
-        
+
         .page-title {
             font-size: 1.5rem;
             margin: 0;
         }
-        
+
         .gap20 {
             gap: 1rem;
         }
-        
+
         .mb-27 {
             margin-bottom: 1.5rem;
         }
@@ -186,7 +198,7 @@
             border-radius: 4px;
             font-size: 14px;
         }
-        
+
         .back-button {
             white-space: nowrap;
             padding: 8px 16px;
@@ -206,7 +218,7 @@
             line-height: 1.2;
             vertical-align: middle;
         }
-        
+
         .badge-secondary {
             background-color: #6c757d;
         }
@@ -217,27 +229,44 @@
             width: 100%;
             margin-bottom: 0;
         }
-        
-        .col-name { width: 25%; }
-        .col-type { width: 15%; }
-        .col-price { width: 15%; }
-        .col-show { width: 15%; }
-        .col-date { width: 15%; }
-        .col-action { width: 15%; }
-        
+
+        .col-name {
+            width: 25%;
+        }
+
+        .col-type {
+            width: 15%;
+        }
+
+        .col-price {
+            width: 15%;
+        }
+
+        .col-show {
+            width: 15%;
+        }
+
+        .col-date {
+            width: 15%;
+        }
+
+        .col-action {
+            width: 15%;
+        }
+
         .name {
             max-width: 100%;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
         }
-        
+
         .list-icon-function {
             display: flex;
             gap: 8px;
             justify-content: center;
         }
-        
+
         .list-icon-function .item {
             width: 32px;
             height: 32px;
@@ -248,22 +277,22 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .list-icon-function .restore {
             background-color: rgba(40, 167, 69, 0.1);
             color: #28a745;
         }
-        
+
         .list-icon-function .restore:hover {
             background-color: #28a745;
             color: white;
         }
-        
+
         .list-icon-function .force-delete {
             background-color: rgba(220, 53, 69, 0.1);
             color: #dc3545;
         }
-        
+
         .list-icon-function .force-delete:hover {
             background-color: #dc3545;
             color: white;
@@ -273,15 +302,15 @@
         .mobile-cards {
             display: none;
         }
-        
+
         .mobile-card {
             background: #fff;
             border: 1px solid #dee2e6;
             border-radius: 8px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
+
         .mobile-card-header {
             padding: 15px;
             border-bottom: 1px solid #dee2e6;
@@ -291,7 +320,7 @@
             flex-wrap: wrap;
             gap: 10px;
         }
-        
+
         .mobile-card-title {
             margin: 0;
             font-size: 16px;
@@ -301,23 +330,23 @@
             min-width: 0;
             word-wrap: break-word;
         }
-        
+
         .mobile-card-body {
             padding: 15px;
         }
-        
+
         .mobile-card-date {
             margin: 0 0 10px 0;
             font-size: 14px;
             color: #666;
         }
-        
+
         .mobile-card-actions {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
         }
-        
+
         .mobile-btn {
             display: inline-flex;
             align-items: center;
@@ -345,7 +374,7 @@
             min-height: 350px !important;
             padding: 35px !important;
             border-radius: 16px !important;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.25) !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25) !important;
             backdrop-filter: blur(10px) !important;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.95)) !important;
         }
@@ -481,9 +510,11 @@
                 transform: scale(0.8);
                 opacity: 0.5;
             }
+
             50% {
                 transform: scale(1.05);
             }
+
             100% {
                 transform: scale(1);
                 opacity: 1;
@@ -495,27 +526,44 @@
             .main-content-inner {
                 padding: 10px;
             }
-            
+
             .flex-wrap {
                 flex-direction: column;
                 align-items: flex-start !important;
             }
-            
+
             .wg-filter {
                 width: 100%;
                 margin-bottom: 15px;
             }
-            
+
             .back-button {
                 align-self: flex-end;
             }
-            
-            .col-name { width: 25%; }
-            .col-type { width: 15%; }
-            .col-price { width: 15%; }
-            .col-show { width: 15%; }
-            .col-date { width: 15%; }
-            .col-action { width: 15%; }
+
+            .col-name {
+                width: 25%;
+            }
+
+            .col-type {
+                width: 15%;
+            }
+
+            .col-price {
+                width: 15%;
+            }
+
+            .col-show {
+                width: 15%;
+            }
+
+            .col-date {
+                width: 15%;
+            }
+
+            .col-action {
+                width: 15%;
+            }
         }
 
         /* Mobile Styles */
@@ -523,37 +571,37 @@
             .page-title {
                 font-size: 1.25rem;
             }
-            
+
             .breadcrumbs {
                 font-size: 12px;
             }
-            
+
             .button-text {
                 display: none;
             }
-            
+
             .mobile-cards {
                 display: block !important;
             }
-            
+
             .table {
                 display: none !important;
             }
-            
+
             .search-input {
                 min-width: unset;
             }
-            
+
             .mobile-card-actions {
                 justify-content: space-between;
             }
-            
+
             .mobile-btn {
                 flex: 1;
                 justify-content: center;
                 min-width: 0;
             }
-            
+
             /* Mobile SweetAlert2 */
             .swal2-popup {
                 width: 95vw !important;
@@ -562,30 +610,30 @@
                 padding: 25px !important;
                 min-height: 300px !important;
             }
-            
+
             .swal2-title {
                 font-size: 20px !important;
                 margin-bottom: 20px !important;
             }
-            
+
             .swal2-content {
                 font-size: 14px !important;
                 margin: 20px 0 25px 0 !important;
             }
-            
+
             .swal2-actions {
                 flex-direction: column !important;
                 width: 100% !important;
                 margin-top: 25px !important;
                 gap: 10px !important;
             }
-            
+
             .swal2-confirm,
             .swal2-cancel {
                 width: 100% !important;
                 margin: 0 !important;
             }
-            
+
             .swal2-popup::before {
                 width: 70px !important;
                 height: 70px !important;
@@ -593,7 +641,7 @@
                 font-size: 28px !important;
                 margin: 15px auto 25px auto !important;
             }
-            
+
             .swal2-popup.swal2-info::before,
             .swal2-popup.swal2-question::before,
             .swal2-popup.swal2-warning::before {
@@ -606,50 +654,50 @@
             .main-content-inner {
                 padding: 8px;
             }
-            
+
             .mobile-card {
                 margin-bottom: 10px;
             }
-            
+
             .mobile-card-header,
             .mobile-card-body {
                 padding: 12px;
             }
-            
+
             .mobile-card-title {
                 font-size: 14px;
             }
-            
+
             .mobile-card-date {
                 font-size: 12px;
                 margin-bottom: 10px;
             }
-            
+
             .mobile-btn {
                 font-size: 11px;
                 padding: 5px 8px;
             }
-            
+
             .swal2-popup {
                 padding: 20px !important;
                 min-height: 280px !important;
             }
-            
+
             .swal2-title {
                 font-size: 18px !important;
             }
-            
+
             .swal2-content {
                 font-size: 13px !important;
             }
-            
+
             .swal2-popup::before {
                 width: 60px !important;
                 height: 60px !important;
                 line-height: 60px !important;
                 font-size: 24px !important;
             }
-            
+
             .swal2-popup.swal2-info::before,
             .swal2-popup.swal2-question::before,
             .swal2-popup.swal2-warning::before {
@@ -662,22 +710,22 @@
                 padding: 15px !important;
                 min-height: 260px !important;
             }
-            
+
             .swal2-title {
                 font-size: 16px !important;
             }
-            
+
             .swal2-content {
                 font-size: 12px !important;
             }
-            
+
             .swal2-popup::before {
                 width: 55px !important;
                 height: 55px !important;
                 line-height: 55px !important;
                 font-size: 20px !important;
             }
-            
+
             .swal2-popup.swal2-info::before,
             .swal2-popup.swal2-question::before,
             .swal2-popup.swal2-warning::before {
@@ -690,36 +738,36 @@
             .main-content-inner {
                 padding: 25px;
             }
-            
+
             .page-title {
                 font-size: 1.75rem;
             }
-            
+
             .search-input {
                 font-size: 16px;
                 padding: 10px 15px;
             }
-            
+
             .swal2-popup {
                 max-width: 700px !important;
                 min-height: 400px !important;
                 padding: 45px !important;
             }
-            
+
             .swal2-title {
                 font-size: 28px !important;
                 margin-bottom: 30px !important;
             }
-            
+
             .swal2-content {
                 font-size: 18px !important;
                 margin: 30px 0 40px 0 !important;
             }
-            
+
             .swal2-actions {
                 margin-top: 40px !important;
             }
-            
+
             .swal2-popup::before {
                 width: 90px !important;
                 height: 90px !important;
@@ -727,7 +775,7 @@
                 font-size: 38px !important;
                 margin: 25px auto 35px auto !important;
             }
-            
+
             .swal2-popup.swal2-info::before,
             .swal2-popup.swal2-question::before,
             .swal2-popup.swal2-warning::before {
@@ -737,17 +785,18 @@
 
         /* Print Styles */
         @media print {
+
             .back-button,
             .wg-filter,
             .list-icon-function,
             .mobile-card-actions {
                 display: none !important;
             }
-            
+
             .table {
                 display: table !important;
             }
-            
+
             .mobile-cards {
                 display: none !important;
             }
@@ -788,7 +837,7 @@
                     timer: 5000,
                     timerProgressBar: true,
                     customClass: {
-                        popup: 'swal2-success' 
+                        popup: 'swal2-success'
                     }
                 });
             @endif
@@ -797,8 +846,9 @@
             $('.force-delete').on('click', function(e) {
                 e.preventDefault();
                 var form = $(this).closest('form');
-                var addonName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title').text().trim();
-                
+                var addonName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title').text()
+                    .trim();
+
                 Swal.fire({
                     ...swalConfig,
                     icon: 'warning',
@@ -822,7 +872,7 @@
                     cancelButtonText: 'Cancel',
                     focusCancel: true,
                     customClass: {
-                        popup: 'swal2-warning' 
+                        popup: 'swal2-warning'
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {
@@ -841,13 +891,14 @@
                     }
                 });
             });
-            
+
             // Restore confirmation
             $('.restore').on('click', function(e) {
                 e.preventDefault();
                 var form = $(this).closest('form');
-                var addonName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title').text().trim();
-                
+                var addonName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title').text()
+                    .trim();
+
                 Swal.fire({
                     ...swalConfig,
                     icon: 'question',
@@ -870,8 +921,8 @@
                     confirmButtonText: 'Yes, Restore Addon',
                     cancelButtonText: 'Cancel',
                     customClass: {
-                                popup: 'swal2-question' 
-                            }
+                        popup: 'swal2-question'
+                    }
                 }).then((result) => {
                     if (result.isConfirmed) {
                         // Show loading state

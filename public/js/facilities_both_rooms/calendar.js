@@ -1,4 +1,3 @@
-// Calendar functionality for both shared and whole bookings
 document.addEventListener('DOMContentLoaded', function() {
     var dateFromInput = document.getElementById('date_from');
     var dateToInput = document.getElementById('date_to');
@@ -9,21 +8,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var today = new Date();
     var tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 7);
-    var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
     
     var userType = window.userType || 'USR';
+    
+    if (userType === 'ADM') {
+        tomorrow.setDate(tomorrow.getDate() + 1);
+    } else {
+        tomorrow.setDate(tomorrow.getDate() + 7);
+    }
+    
+    var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
     
     var maxDate = null;
     var maxDateFormatted = null;
     
     if (userType === 'USR') {
-        maxDate = new Date(tomorrow);
+        maxDate = new Date(today);
         maxDate.setMonth(maxDate.getMonth() + 3);
+        maxDateFormatted = maxDate.toISOString().split('T')[0];
+    } else if (userType === 'ADM') {
+        maxDate = new Date(today);
+        maxDate.setFullYear(maxDate.getFullYear() + 1);
         maxDateFormatted = maxDate.toISOString().split('T')[0];
     }
     
-    // Set min and max dates for all date inputs
     if (dateFromInput) dateFromInput.min = tomorrowFormatted;
     if (dateToInput) dateToInput.min = tomorrowFormatted;
     if (wholeDateFromInput) wholeDateFromInput.min = tomorrowFormatted;
@@ -31,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sharedDateFromInput) sharedDateFromInput.min = tomorrowFormatted;
     if (sharedDateToInput) sharedDateToInput.min = tomorrowFormatted;
     
-    if (userType === 'USR' && maxDateFormatted) {
+    if (maxDateFormatted) {
         if (dateFromInput) dateFromInput.max = maxDateFormatted;
         if (dateToInput) dateToInput.max = maxDateFormatted;
         if (wholeDateFromInput) wholeDateFromInput.max = maxDateFormatted;
@@ -47,7 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var currentSelectedRoom = null;
     var currentSelectedWholeRoom = null;
 
-    // Room selection event listeners
     document.getElementById('shared_selected_room')?.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         currentSelectedRoom = selectedOption.value ? facilityAttributes.find(attr => attr.id == selectedOption.value) : null;
@@ -100,7 +107,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Calendar helper functions
     function getAvailabilityForDate(dateStr) {
         if (!currentSelectedRoom) return null;
         const checkDate = new Date(dateStr);
@@ -179,7 +185,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Initialize calendar function
     function initializeCalendar(section) {
         const isWhole = section === 'whole';
         const modalId = isWhole ? 'wholeCalendarModal' : 'calendarModal';
@@ -209,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 let validRange = { start: tomorrowFormatted };
-                if (userType === 'USR' && maxDateFormatted) {
+                if (maxDateFormatted) {
                     validRange.end = maxDateFormatted;
                 }
                 
@@ -463,7 +468,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Booking type change listeners
     document.querySelectorAll('input[name="booking_type"]').forEach(radio => {
         radio.addEventListener('change', function() {
             if (this.value === 'shared') {
@@ -483,7 +487,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Initialize default calendar
     const defaultBookingType = document.querySelector('input[name="booking_type"]:checked');
     if (defaultBookingType) {
         const activeSection = defaultBookingType.value;
@@ -495,7 +498,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Export functions to window for global access
     window.initializeCalendar = initializeCalendar;
     window.getDatesInRange = getDatesInRange;
 });

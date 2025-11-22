@@ -58,7 +58,7 @@
 
                         <!-- Place Reservation Button - Centered -->
                         <div class="d-flex justify-content-center mt-4">
-                            <button type="submit" class="btn reservation-btn" id="placeReservationBtn" disabled>
+                            <button type="button" class="btn reservation-btn" id="placeReservationBtn" disabled>
                                 <i class="fas fa-check-circle"></i>
                                 Place Reservation
                             </button>
@@ -123,6 +123,35 @@
 @push('scripts')
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js'></script>
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form[name="checkout-form"]');
+            const placeBtn = document.getElementById('placeReservationBtn');
+
+            placeBtn.addEventListener('click', function() {
+                if (placeBtn.disabled) {
+                    return;
+                }
+                Swal.fire({
+                    title: 'Confirm Reservation',
+                    html: `
+                        <p class="mb-0 text-danger">
+                            <strong>NOTE:</strong> This order will be <strong>automatically canceled</strong> if payment is not made
+                            within 24 hours based on your <strong>reservation date</strong>.
+                        </p>
+                    `,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, place my reservation',
+                    cancelButtonText: 'Review my order',
+                    reverseButtons: true,
+                    focusCancel: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
         let selectedDate = null;
 
         // Simple function to check if a date is Monday-Thursday (1-4)

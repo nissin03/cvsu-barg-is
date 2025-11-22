@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Sales Report</title>
@@ -11,9 +12,12 @@
             font-weight: normal;
             font-style: normal;
         }
+
         @page {
-            margin: 0.25in 0.75in 0.75in 0.75in; /* top, right, bottom, left */
+            margin: 0.25in 0.75in 0.75in 0.75in;
+            /* top, right, bottom, left */
         }
+
         /* General PDF Styles */
         body {
             font-family: 'DejaVu Sans', Arial, sans-serif;
@@ -21,65 +25,84 @@
             margin: 20px;
             line-height: 1.4;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
-        th, td {
+
+        th,
+        td {
             padding: 8px 12px;
             border: 1px solid #ddd;
             text-align: left;
         }
+
         th {
             background-color: #f4f4f4;
         }
-        h1, h3 {
+
+        h1,
+        h3 {
             text-align: center;
         }
-        
+
         /* Header Styles */
         .header {
             width: 100%;
             margin-top: 20px;
         }
+
         .header-table {
             width: 100%;
             border-collapse: collapse;
         }
+
         /* Remove borders from header table cells */
         .header-table td {
             vertical-align: middle;
             padding: 0 10px;
             border: none;
         }
-        .logo-left, .logo-right {
-            width: 70px;  /* fixed width for the logo cells */
+
+        .logo-left,
+        .logo-right {
+            width: 70px;
+            /* fixed width for the logo cells */
             padding: 0;
         }
+
         .logo-left {
             text-align: right;
         }
+
         .logo-right {
             text-align: left;
         }
+
         /* Negative margins applied directly to the images to shift them closer */
         .logo-left img {
             height: 80px;
             max-width: 80px;
-            margin-right: -95px;  /* adjust this value as needed */
+            margin-right: -95px;
+            /* adjust this value as needed */
             margin-top: -20px;
         }
+
         .logo-right img {
             height: 80px;
             max-width: 110px;
-            margin-left: -110px;  /* adjust this value as needed */
+            margin-left: -110px;
+            /* adjust this value as needed */
             margin-top: -20px;
         }
+
         .center-cell {
             text-align: center;
             vertical-align: middle;
         }
+
         .university-name {
             font-size: 13px;
             font-weight: bold;
@@ -88,23 +111,80 @@
             white-space: nowrap;
             word-break: keep-all;
         }
+
         .subtext {
             font-size: 12px;
             margin: 0;
         }
-            .prepared-by {
-      margin-top: 40px;
-      text-align: right;
-      width: 100%;
-    }
-    .signature-line {
-      border-top: 1px solid #000;
-      width: 250px;
-      /* margin-top: 40px; */
-      margin-left: auto;
-    }
+
+        .info-container {
+            text-align: left;
+            margin: 15px 0;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .info-row {
+            margin-bottom: 5px;
+            white-space: nowrap;
+        }
+
+        .info-label {
+            display: inline-block;
+            font-weight: bold;
+            width: 150px;
+            text-align: left;
+        }
+
+        .info-separator {
+            display: inline-block;
+            width: 10px;
+            text-align: center;
+        }
+
+        .info-value {
+            display: inline-block;
+            text-align: left;
+        }
+
+        .office-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .signatures-section {
+            width: 100%;
+            margin-top: 40px;
+        }
+
+        .signatures-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .signatures-table td {
+            vertical-align: top;
+            padding: 0 20px;
+        }
+
+        .prepared-by {
+            margin-bottom: 30px;
+        }
+
+        .signature-block {
+            margin-bottom: 30px;
+        }
+
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 250px;
+            margin: 5px 0;
+        }
     </style>
 </head>
+
 <body>
 
     <div class="header">
@@ -121,7 +201,7 @@
                     </div>
                     <div class="subtext">
                         Indang, Cavite<br>
-                        <a href="http://www.cvsu.edu.ph" target="_blank">www.cvsu.edu.ph</a>
+                        <a href="https://cvsu.edu.ph/" target="_blank">www.cvsu.edu.ph</a>
                     </div>
                 </td>
                 <td class="logo-right">
@@ -130,13 +210,22 @@
             </tr>
         </table>
     </div>
- 
 
 
-    <h2 style="text-align: center;">SALES REPORT OF BUSINESS AFFAIRS AND MARKETING OFFICE</h2>
-    <p style="text-align: center; font-size: 14px;">
-        Downloaded on: {{ \Carbon\Carbon::now()->setTimezone('Asia/Manila')->format('F j, Y, g:i a') }}
-    </p>
+    <div class="office-name">
+        OFFICE BUSINESS AFFAIRS AND MARKETING OFFICE
+    </div>
+
+    <h3 style="text-align: center;">SALES CHART REPORT </h3>
+    <div class="info-container">
+        <div class="info-row">
+            <span class="info-label">Downloaded on</span>
+            <span class="info-separator">:</span>
+            <span class="info-value">
+                {{ \Carbon\Carbon::now()->setTimezone('Asia/Manila')->format('F j, Y, g:i a') }}
+            </span>
+        </div>
+    </div>
 
     <!-- Monthly Earned Sales -->
     <h3>Total Earned Sales for {{ $selectedYear }}</h3>
@@ -213,13 +302,62 @@
         </tr>
     </table>
 
-    <div class="prepared-by">
-    <div>Prepared by:</div>
-    <div class="signature-line"></div>
-    <div>{{ Auth::user()->name }}</div>
-    <div>{{ Auth::user()->role ? ucfirst(Auth::user()->role) : 'Administrator' }}</div>
-    <div>Business Affairs and Marketing Office</div>
-    <div>Cavite State University</div>
-</div>
+    <div class="signatures-section">
+        @php
+            $signatures = \App\Models\Signature::where('category', 'product')
+                ->where(function ($query) {
+                    $query->where('report_type', 'sales')->orWhere('report_type', 'all');
+                })
+                ->where('is_active', true)
+                ->where('is_archived', false)
+                ->orderBy('order_by')
+                ->get();
+
+            $leftSignatures = [];
+            $rightSignatures = [];
+
+            $leftSignatures[] = (object) [
+                'label' => 'Prepared by',
+                'name' => Auth::user()->name,
+                'position' => Auth::user()->position,
+                'is_prepared_by' => true,
+            ];
+
+            foreach ($signatures as $signature) {
+                if ($signature->order_by % 2 == 1) {
+                    $leftSignatures[] = $signature;
+                } else {
+                    $rightSignatures[] = $signature;
+                }
+            }
+        @endphp
+
+        <table class="signatures-table" style="width: 100%; margin-top: 10px; border-collapse: collapse; border: none;">
+            <tr>
+                <td style="width: 50%; vertical-align: top; text-align: left; border: none;">
+                    @foreach ($leftSignatures as $signature)
+                        <div class="signature-block" style="margin-bottom: 30px;">
+                            <div style="font-weight: bold;">{{ $signature->label }}:</div>
+                            <div style="height: 20px;">&nbsp;</div> <!-- Two spaces above the name -->
+                            <div><strong>{{ $signature->name }}</strong></div>
+                            <div>{{ $signature->position }}</div>
+                        </div>
+                    @endforeach
+                </td>
+
+                <td style="width: 50%; vertical-align: top; text-align: left; border: none;">
+                    @foreach ($rightSignatures as $signature)
+                        <div class="signature-block" style="margin-bottom: 30px;">
+                            <div style="font-weight: bold;">{{ $signature->label }}:</div>
+                            <div style="height: 20px;">&nbsp;</div> <!-- Two spaces above the name -->
+                            <div><strong>{{ $signature->name }}</strong></div>
+                            <div>{{ $signature->position }}</div>
+                        </div>
+                    @endforeach
+                </td>
+            </tr>
+        </table>
+    </div>
 </body>
+
 </html>

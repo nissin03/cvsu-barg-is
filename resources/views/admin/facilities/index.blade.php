@@ -193,7 +193,6 @@
 
         </div>
     </div>
-    
 @endsection
 
 @push('scripts')
@@ -253,6 +252,7 @@
             function initArchiveButton() {
                 $('.archive').on('click', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     const form = $(this).closest('form');
                     const row = $(this).closest('tr');
 

@@ -10,7 +10,7 @@
             </a>
         </li>
         <li><a href="{{ route('user.order.history') }}" class="menu-link menu-link_us-s">Order History</a></li>
-        <li><a href="{{ route('user.canceled-orders') }}" class="menu-link menu-link_us-s">Cancelled Order</a></li>
+        {{-- <li><a href="{{ route('user.canceled-orders') }}" class="menu-link menu-link_us-s">Cancelled Order</a></li> --}}
         <li><a href="{{ route('user.reservations') }}" class="menu-link menu-link_us-s">Facility Reservation</a></li>
         <li><a href="{{ route('user.reservations_history') }}" class="menu-link menu-link_us-s">Facility Reservation
                 History</a>

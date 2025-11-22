@@ -8,11 +8,11 @@ use App\Models\Facility;
 use App\Models\User;
 
 class AddonSeeder extends Seeder
-{       
+{
     public function run()
     {
         $adminUser = User::where('utype', 'ADM')->first();
-        
+
         if (!$adminUser) {
             $adminUser = User::create([
                 'name' => 'Admin User',
@@ -22,122 +22,451 @@ class AddonSeeder extends Seeder
             ]);
         }
 
-        $addons = [
+        // Get specific facilities
+        $maleDormitory = Facility::where('name', 'Male Dormitory')->first();
+        $femaleDormitory = Facility::where('name', 'Female Dormitory')->first();
+        $rolleHall = Facility::where('name', 'Rolle Hall')->first();
+        $icon = Facility::where('name', 'Icon')->first();
+        $internationalHouseII = Facility::where('name', 'International House II')->first();
+        $swimmingPool = Facility::where('name', 'Swimming Pool')->first();
+
+        $addons = [];
+
+        // Common addons for all facilities
+        $commonAddons = [
             [
-                'user_id' => $adminUser->id,
-                'name' => 'Cottage (10-15 pax)',
+                'name' => 'WASTE MANAGEMENT FEE',
+                'price_type' => 'flat_rate',
+                'description' => 'Covers the daily cost of proper waste disposal and sanitation maintenance within the facility.',
+                'base_price' => 1000.00,
+                'capacity' => null,
+                'quantity' => 0,
+                'is_based_on_quantity' => false,
+                'is_available' => true,
+                'is_refundable' => true,
+                'billing_cycle' => 'per_day',
+                'show' => 'both',
+            ]
+        ];
+
+        // Add common addons to all facilities
+        $facilities = Facility::all();
+        foreach ($facilities as $facility) {
+            foreach ($commonAddons as $addon) {
+                $addons[] = array_merge($addon, [
+                    'facility_id' => $facility->id,
+                    'facility_attribute_id' => null,
+                    'user_id' => $adminUser->id,
+                ]);
+            }
+        }
+
+        // Addons for Male Dormitory and Female Dormitory
+        $dormitoryAddons = [
+            [
+                'name' => 'Electric Fan',
                 'price_type' => 'per_unit',
-                'description' => 'Cottage good for 10-15 people',
+                'description' => null,
                 'base_price' => 500.00,
-                'is_based_on_quantity' => true,
-                'is_available' => true,
-                'is_refundable' => false,
-                'show' => 'both',
-            ],
-            [
-                'user_id' => $adminUser->id,
-                'name' => 'Table (6-8 pax)',
-                'price_type' => 'per_unit',
-                'description' => 'Table good for 6-8 people',
-                'base_price' => 300.00,
-                'is_based_on_quantity' => true,
-                'is_available' => true,
-                'is_refundable' => false,
-                'show' => 'both',
-            ],
-            [
-                'user_id' => $adminUser->id,
-                'name' => 'Extra Pillow',
-                'price_type' => 'per_unit',
-                'description' => 'Additional pillow',
-                'base_price' => 50.00,
-                'is_based_on_quantity' => true,
-                'is_available' => true,
-                'is_refundable' => false,
-                'show' => 'both',
-            ],
-            [
-                'user_id' => $adminUser->id,
-                'name' => 'Extra Person',
-                'price_type' => 'per_night',
-                'description' => 'Additional person per night',
-                'base_price' => 750.00,
-                'is_based_on_quantity' => true,
-                'is_available' => true,
-                'is_refundable' => false,
-                'show' => 'both',
-            ],
-            [
-                'user_id' => $adminUser->id,
-                'name' => 'Miscellaneous Fee',
-                'price_type' => 'flat_rate',
-                'description' => 'Additional miscellaneous charges',
-                'base_price' => 1000.00,
+                'capacity' => 100,
+                'quantity' => null,
                 'is_based_on_quantity' => false,
                 'is_available' => true,
                 'is_refundable' => false,
+                'billing_cycle' => 'per_contract',
                 'show' => 'both',
             ],
             [
-                'user_id' => $adminUser->id,
-                'name' => 'External Catering',
-                'price_type' => 'flat_rate',
-                'description' => 'External catering service',
-                'base_price' => 1000.00,
+                'name' => 'Radio / Cassette',
+                'price_type' => 'per_unit',
+                'description' => null,
+                'base_price' => 325.00,
+                'capacity' => 100,
+                'quantity' => null,
                 'is_based_on_quantity' => false,
                 'is_available' => true,
                 'is_refundable' => false,
+                'billing_cycle' => 'per_contract',
                 'show' => 'both',
             ],
             [
-                'user_id' => $adminUser->id,
+                'name' => 'Computer / Laptop',
+                'price_type' => 'per_unit',
+                'description' => null,
+                'base_price' => 500.00,
+                'capacity' => 100,
+                'quantity' => null,
+                'is_based_on_quantity' => false,
+                'is_available' => true,
+                'is_refundable' => false,
+                'billing_cycle' => 'per_contract',
+                'show' => 'both',
+            ],
+            [
+                'name' => 'Television',
+                'price_type' => 'per_unit',
+                'description' => null,
+                'base_price' => 400.00,
+                'capacity' => 100,
+                'quantity' => null,
+                'is_based_on_quantity' => false,
+                'is_available' => true,
+                'is_refundable' => false,
+                'billing_cycle' => 'per_contract',
+                'show' => 'both',
+            ],
+            [
+                'name' => 'Cellular Phone',
+                'price_type' => 'per_unit',
+                'description' => null,
+                'base_price' => 150.00,
+                'capacity' => 100,
+                'quantity' => null,
+                'is_based_on_quantity' => false,
+                'is_available' => true,
+                'is_refundable' => false,
+                'billing_cycle' => 'per_contract',
+                'show' => 'both',
+            ],
+            [
+                'name' => 'Refrigerator',
+                'price_type' => 'per_unit',
+                'description' => null,
+                'base_price' => 1500.00,
+                'capacity' => 50,
+                'quantity' => null,
+                'is_based_on_quantity' => false,
+                'is_available' => true,
+                'is_refundable' => false,
+                'billing_cycle' => 'per_contract',
+                'show' => 'both',
+            ],
+            [
+                'name' => 'Flat Iron',
+                'price_type' => 'per_unit',
+                'description' => null,
+                'base_price' => 825.00,
+                'capacity' => 100,
+                'quantity' => null,
+                'is_based_on_quantity' => false,
+                'is_available' => true,
+                'is_refundable' => false,
+                'billing_cycle' => 'per_contract',
+                'show' => 'both',
+            ],
+            [
+                'name' => 'Foam',
+                'price_type' => 'per_unit',
+                'description' => null,
+                'base_price' => 500.00,
+                'capacity' => 100,
+                'quantity' => null,
+                'is_based_on_quantity' => false,
+                'is_available' => true,
+                'is_refundable' => false,
+                'billing_cycle' => 'per_contract',
+                'show' => 'both',
+            ],
+        ];
+
+        if ($maleDormitory) {
+            foreach ($dormitoryAddons as $addon) {
+                $addons[] = array_merge($addon, [
+                    'facility_id' => $maleDormitory->id,
+                    'facility_attribute_id' => null,
+                    'user_id' => $adminUser->id,
+                ]);
+            }
+        }
+
+        if ($femaleDormitory) {
+            foreach ($dormitoryAddons as $addon) {
+                $addons[] = array_merge($addon, [
+                    'facility_id' => $femaleDormitory->id,
+                    'facility_attribute_id' => null,
+                    'user_id' => $adminUser->id,
+                ]);
+            }
+        }
+
+        // Addons for Rolle Hall and Icon
+        $eventHallAddons = [
+            [
                 'name' => 'LED Wall',
                 'price_type' => 'flat_rate',
                 'description' => 'LED wall display',
                 'base_price' => 15000.00,
+                'capacity' => null,
+                'quantity' => null,
                 'is_based_on_quantity' => false,
                 'is_available' => true,
                 'is_refundable' => false,
+                'billing_cycle' => 'per_day',
                 'show' => 'both',
             ],
             [
-                'user_id' => $adminUser->id,
-                'name' => 'Staff Overtime',
+                'name' => 'External Catering',
                 'price_type' => 'flat_rate',
-                'description' => 'Staff overtime charges (non-paying)',
-                'base_price' => 130.00,
-                'is_based_on_quantity' => false,
-                'is_available' => true,
-                'is_refundable' => false,
-                'show' => 'staff',
-            ],
-            [
-                'user_id' => $adminUser->id,
-                'name' => 'Waste Management Fee',
-                'price_type' => 'flat_rate',
-                'description' => 'Refundable waste management fee',
+                'description' => 'External catering service',
                 'base_price' => 1000.00,
+                'capacity' => null,
+                'quantity' => null,
                 'is_based_on_quantity' => false,
                 'is_available' => true,
-                'is_refundable' => true,
+                'is_refundable' => false,
+                'billing_cycle' => 'per_day',
                 'show' => 'both',
             ],
-            [
-                'user_id' => $adminUser->id,
-                'name' => 'EXCESS Hour',
-                'price_type' => 'per_unit',
-                'description' => 'Additional hours beyond reserved time (₱800 per hour)',
-                'base_price' => 800.00,
-                'is_based_on_quantity' => true,
-                'is_available' => true,
-                'is_refundable' => false,
-                'show' => 'staff',
-            ],
+            // [
+            //     'name' => 'Staff Overtime',
+            //     'price_type' => 'flat_rate',
+            //     'description' => 'Staff overtime charges (non-paying)',
+            //     'base_price' => 130.00,
+            //     'capacity' => null,
+            //     'quantity' => null,
+            //     'is_based_on_quantity' => false,
+            //     'is_available' => true,
+            //     'is_refundable' => false,
+            //     'billing_cycle' => 'per_day',
+            //     'show' => 'staff',
+            // ],
         ];
 
+        if ($rolleHall) {
+            foreach ($eventHallAddons as $addon) {
+                $addons[] = array_merge($addon, [
+                    'facility_id' => $rolleHall->id,
+                    'facility_attribute_id' => null,
+                    'user_id' => $adminUser->id,
+                ]);
+            }
+        }
+
+        if ($icon) {
+            foreach ($eventHallAddons as $addon) {
+                $addons[] = array_merge($addon, [
+                    'facility_id' => $icon->id,
+                    'facility_attribute_id' => null,
+                    'user_id' => $adminUser->id,
+                ]);
+            }
+        }
+
+        // Addons for International House II
+        if ($internationalHouseII) {
+            $internationalHouseAddons = [
+                [
+                    'facility_id' => $internationalHouseII->id,
+                    'facility_attribute_id' => null,
+                    'user_id' => $adminUser->id,
+                    'name' => 'Extra Person',
+                    'price_type' => 'per_night',
+                    'description' => 'Additional person per night',
+                    'base_price' => 750.00,
+                    'capacity' => null,
+                    'quantity' => null,
+                    'is_based_on_quantity' => true,
+                    'is_available' => true,
+                    'is_refundable' => false,
+                    'billing_cycle' => 'per_day',
+                    'show' => 'both',
+                ],
+                [
+                    'facility_id' => $internationalHouseII->id,
+                    'facility_attribute_id' => null,
+                    'user_id' => $adminUser->id,
+                    'name' => 'Extra Pillow',
+                    'price_type' => 'per_item',
+                    'description' => 'Additional pillow',
+                    'base_price' => 50.00,
+                    'capacity' => null,
+                    'quantity' => 50,
+                    'is_based_on_quantity' => true,
+                    'is_available' => true,
+                    'is_refundable' => false,
+                    'billing_cycle' => 'per_day',
+                    'show' => 'both',
+                ],
+                [
+                    'facility_id' => $internationalHouseII->id,
+                    'facility_attribute_id' => null,
+                    'user_id' => $adminUser->id,
+                    'name' => 'Hotel Kits',
+                    'price_type' => 'per_item',
+                    'description' => null,
+                    'base_price' => 50.00,
+                    'capacity' => null,
+                    'quantity' => 99,
+                    'is_based_on_quantity' => false,
+                    'is_available' => true,
+                    'is_refundable' => false,
+                    'billing_cycle' => 'per_contract',
+                    'show' => 'both',
+                ],
+            ];
+            $addons = array_merge($addons, $internationalHouseAddons);
+        }
+
+        // Addons for Swimming Pool
+        if ($swimmingPool) {
+            $swimmingPoolAddons = [
+                [
+                    'facility_id' => $swimmingPool->id,
+                    'facility_attribute_id' => null,
+                    'user_id' => $adminUser->id,
+                    'name' => 'Pavillion 1',
+                    'price_type' => 'per_unit',
+                    'description' => 'ASDADSADSA',
+                    'base_price' => 2000.00,
+                    'capacity' => 30,
+                    'quantity' => 1,
+                    'is_based_on_quantity' => false,
+                    'is_available' => true,
+                    'is_refundable' => false,
+                    'billing_cycle' => 'per_day',
+                    'show' => 'both',
+                ],
+                [
+                    'facility_id' => $swimmingPool->id,
+                    'facility_attribute_id' => null,
+                    'user_id' => $adminUser->id,
+                    'name' => 'Pavillion 2',
+                    'price_type' => 'per_unit',
+                    'description' => null,
+                    'base_price' => 1000.00,
+                    'capacity' => 20,
+                    'quantity' => 1,
+                    'is_based_on_quantity' => false,
+                    'is_available' => true,
+                    'is_refundable' => false,
+                    'billing_cycle' => 'per_day',
+                    'show' => 'both',
+                ],
+                [
+                    'facility_id' => $swimmingPool->id,
+                    'facility_attribute_id' => null,
+                    'user_id' => $adminUser->id,
+                    'name' => 'Table',
+                    'price_type' => 'per_item',
+                    'description' => '6-8 pax',
+                    'base_price' => 300.00,
+                    'capacity' => null,
+                    'quantity' => 30,
+                    'is_based_on_quantity' => true,
+                    'is_available' => true,
+                    'is_refundable' => false,
+                    'billing_cycle' => 'per_day',
+                    'show' => 'both',
+                ],
+                [
+                    'facility_id' => $swimmingPool->id,
+                    'facility_attribute_id' => null,
+                    'user_id' => $adminUser->id,
+                    'name' => 'Cottage',
+                    'price_type' => 'per_unit',
+                    'description' => '10-15 pax',
+                    'base_price' => 500.00,
+                    'capacity' => 15,
+                    'quantity' => null,
+                    'is_based_on_quantity' => false,
+                    'is_available' => true,
+                    'is_refundable' => false,
+                    'billing_cycle' => 'per_day',
+                    'show' => 'both',
+                ],
+            ];
+            $addons = array_merge($addons, $swimmingPoolAddons);
+        }
+
+        // Global addons (no facility_id)
+        // // $globalAddons = [
+        // //     [
+        // //         'facility_id' => null,
+        // //         'facility_attribute_id' => null,
+        // //         'user_id' => $adminUser->id,
+        // //         'name' => 'Cottage (10-15 pax)',
+        // //         'price_type' => 'per_unit',
+        // //         'description' => 'Cottage good for 10-15 people',
+        // //         'base_price' => 500.00,
+        // //         'capacity' => 15,
+        // //         'quantity' => null,
+        // //         'is_based_on_quantity' => true,
+        // //         'is_available' => true,
+        // //         'is_refundable' => false,
+        // //         'billing_cycle' => 'per_day',
+        // //         'show' => 'both',
+        // //     ],
+        // //     [
+        // //         'facility_id' => null,
+        // //         'facility_attribute_id' => null,
+        // //         'user_id' => $adminUser->id,
+        // //         'name' => 'Table (6-8 pax)',
+        // //         'price_type' => 'per_unit',
+        // //         'description' => 'Table good for 6-8 people',
+        // //         'base_price' => 300.00,
+        // //         'capacity' => 8,
+        // //         'quantity' => null,
+        // //         'is_based_on_quantity' => true,
+        // //         'is_available' => true,
+        // //         'is_refundable' => false,
+        // //         'billing_cycle' => 'per_day',
+        // //         'show' => 'both',
+        // //     ],
+        // //     [
+        // //         'facility_id' => null,
+        // //         'facility_attribute_id' => null,
+        // //         'user_id' => $adminUser->id,
+        // //         'name' => 'Extra Pillow',
+        // //         'price_type' => 'per_unit',
+        // //         'description' => 'Additional pillow',
+        // //         'base_price' => 50.00,
+        // //         'capacity' => null,
+        // //         'quantity' => null,
+        // //         'is_based_on_quantity' => true,
+        // //         'is_available' => true,
+        // //         'is_refundable' => false,
+        // //         'billing_cycle' => 'per_day',
+        // //         'show' => 'both',
+        // //     ],
+        // //     [
+        // //         'facility_id' => null,
+        // //         'facility_attribute_id' => null,
+        // //         'user_id' => $adminUser->id,
+        // //         'name' => 'Miscellaneous Fee',
+        // //         'price_type' => 'flat_rate',
+        // //         'description' => 'Additional miscellaneous charges',
+        // //         'base_price' => 1000.00,
+        // //         'capacity' => null,
+        // //         'quantity' => null,
+        // //         'is_based_on_quantity' => false,
+        // //         'is_available' => true,
+        // //         'is_refundable' => false,
+        // //         'billing_cycle' => 'per_day',
+        // //         'show' => 'both',
+        // //     ],
+        // //     [
+        // //         'facility_id' => null,
+        // //         'facility_attribute_id' => null,
+        // //         'user_id' => $adminUser->id,
+        // //         'name' => 'EXCESS Hour',
+        // //         'price_type' => 'per_unit',
+        // //         'description' => 'Additional hours beyond reserved time (₱800 per hour)',
+        // //         'base_price' => 800.00,
+        // //         'capacity' => null,
+        // //         'quantity' => null,
+        // //         'is_based_on_quantity' => true,
+        // //         'is_available' => true,
+        // //         'is_refundable' => false,
+        // //         'billing_cycle' => 'per',
+        // //         'show' => 'staff',
+        // //     ],
+        // // ];
+
+        // $addons = array_merge($addons, $globalAddons);
+
+        // Create all addons
         foreach ($addons as $addon) {
             Addon::create($addon);
         }
-
     }
 }

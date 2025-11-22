@@ -20,14 +20,14 @@ return new class extends Migration
             $table->decimal('price', 8, 2)->nullable();
             $table->unsignedInteger('quantity')->default(10)->nullable();
             $table->enum('stock_status', ['instock', 'outofstock', 'reorder'])->default('instock');
-            // $table->unsignedInteger('instock_quantity')->default(0); 
+            // $table->unsignedInteger('instock_quantity')->default(0);
             $table->unsignedInteger('reorder_quantity')->default(0);
             $table->unsignedInteger('outofstock_quantity')->default(0);
-            
+
             $table->boolean('featured')->default(false);
             $table->string('image')->nullable();
             $table->text('images')->nullable();
-            $table->enum('sex', ['male', 'female', 'all'])->default('all');
+            // $table->enum('sex', ['male', 'female', 'all'])->default('all');
             $table->boolean('low_stock_notified')->default(false);
             $table->boolean('archived')->default(0);
             $table->timestamp('archived_at')->nullable();

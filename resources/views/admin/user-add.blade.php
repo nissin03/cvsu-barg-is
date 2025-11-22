@@ -107,8 +107,9 @@
                         <div class="select">
                             <select name="college_id" id="college_id">
                                 <option value="" disabled selected>Select College</option>
-                                @foreach($colleges as $college)
-                                    <option value="{{ $college->id }}">{{ $college->code }} - {{ $college->name }}</option>
+                                @foreach ($colleges as $college)
+                                    <option value="{{ $college->id }}">{{ $college->code }} - {{ $college->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -123,7 +124,7 @@
                         <div class="select">
                             <select name="course_id" id="course_id">
                                 <option value="" disabled selected>Select Course</option>
-                                @foreach($courses as $course)
+                                @foreach ($courses as $course)
                                     <option value="{{ $course->id }}" data-college="{{ $course->college_id }}">
                                         {{ $course->code }} - {{ $course->name }}
                                     </option>
@@ -228,6 +229,16 @@
                     @error('phone_number')
                         <span class="alert alert-danger text-center">{{ $message }}</span>
                     @enderror
+
+                    <fieldset class="position">
+                        <div class="body-title mb-10">Position <span class="tf-color-1">*</span></div>
+                        <input class="mb-10" type="text" placeholder="Enter admin position" name="position"
+                            required>
+                    </fieldset>
+                    @error('position')
+                        <span class="alert alert-danger text-center">{{ $message }}</span>
+                    @enderror
+
 
                     <div class="bot">
                         <button type="button" class="tf-button style-3 w208" id="back-to-selection-admin">
@@ -346,12 +357,12 @@
             }
         }
 
-           .tf-button:disabled {
+        .tf-button:disabled {
             background: linear-gradient(135deg, #cccccc 0%, #999999 100%) !important;
             cursor: not-allowed !important;
             opacity: 0.6 !important;
         }
-        
+
         .tf-button:disabled:hover {
             transform: none !important;
             box-shadow: none !important;
@@ -392,6 +403,7 @@
             const adminPhoneInput = document.querySelector('#admin-form input[name="phone_number"]');
             const adminSexInputs = document.querySelectorAll('#admin-form input[name="sex"]');
             const saveAdminBtn = adminForm.querySelector('button[type="submit"]');
+            const adminPositionInput = document.querySelector('#admin-form input[name="position"]');
 
             // Show user form
             selectUserBtn.addEventListener('click', function() {
@@ -483,7 +495,7 @@
                     }
                     validateUserForm();
                 });
-                
+
                 // Trigger change event on page load
                 roleSelect.dispatchEvent(new Event('change'));
             }
@@ -493,12 +505,12 @@
                 collegeSelect.addEventListener('change', function() {
                     const collegeId = this.value;
                     const courseOptions = courseSelect.querySelectorAll('option');
-                    
+
                     // Show all options initially
                     courseOptions.forEach(option => {
                         option.style.display = 'block';
                     });
-                    
+
                     // Hide options that don't belong to the selected college
                     if (collegeId) {
                         courseOptions.forEach(option => {
@@ -506,7 +518,7 @@
                                 option.style.display = 'none';
                             }
                         });
-                        
+
                         // Reset course selection
                         courseSelect.value = '';
                     }
@@ -529,7 +541,7 @@
                     }
 
                     this.value = value;
-                    
+
                     // Validate form after phone input
                     if (this.closest('#user-form')) {
                         validateUserForm();
@@ -543,32 +555,32 @@
             if (nameInput) {
                 nameInput.addEventListener('input', validateUserForm);
             }
-            
+
             if (emailInput) {
                 emailInput.addEventListener('input', validateUserForm);
             }
-            
+
             if (yearLevelSelect) {
                 yearLevelSelect.addEventListener('change', validateUserForm);
             }
-            
+
             if (collegeSelect) {
                 collegeSelect.addEventListener('change', validateUserForm);
             }
-            
+
             if (courseSelect) {
                 courseSelect.addEventListener('change', validateUserForm);
             }
-            
+
             // Admin form validation listeners
             if (adminNameInput) {
                 adminNameInput.addEventListener('input', validateAdminForm);
             }
-            
+
             if (adminEmailInput) {
                 adminEmailInput.addEventListener('input', validateAdminForm);
             }
-            
+
             if (adminSexInputs) {
                 adminSexInputs.forEach(input => {
                     input.addEventListener('change', validateAdminForm);
@@ -577,7 +589,7 @@
 
             function validateUserForm() {
                 if (!saveUserBtn) return;
-                
+
                 const name = nameInput ? nameInput.value.trim() : '';
                 const email = emailInput ? emailInput.value.trim() : '';
                 const phone = phoneInput ? phoneInput.value.trim() : '';
@@ -585,28 +597,28 @@
                 const yearLevel = yearLevelSelect ? yearLevelSelect.value : '';
                 const college = collegeSelect ? collegeSelect.value : '';
                 const course = courseSelect ? courseSelect.value : '';
-                
+
                 let isValid = true;
-                
+
                 // Basic validation for all roles
                 if (!name || !email) {
                     isValid = false;
                 }
-                
+
                 // Phone validation (must be exactly 10 digits if provided)
                 if (phone && phone.length !== 10) {
                     isValid = false;
                 }
-                
+
                 // Additional validation for students
                 if (role === 'student') {
                     if (!yearLevel || !college || !course) {
                         isValid = false;
                     }
                 }
-                
+
                 saveUserBtn.disabled = !isValid;
-                
+
                 // Update button style based on validation
                 if (isValid) {
                     saveUserBtn.classList.remove('disabled');
@@ -617,37 +629,41 @@
                     saveUserBtn.style.opacity = '0.6';
                     saveUserBtn.style.cursor = 'not-allowed';
                 }
-                
+
                 return isValid;
             }
-            
+
             function validateAdminForm() {
                 if (!saveAdminBtn) return;
-                
+
                 const name = adminNameInput ? adminNameInput.value.trim() : '';
                 const email = adminEmailInput ? adminEmailInput.value.trim() : '';
                 const phone = adminPhoneInput ? adminPhoneInput.value.trim() : '';
-                
+                const position = adminPositionInput ? adminPositionInput.value.trim() : '';
+
                 // Check if at least one sex option is selected
                 let sexSelected = false;
                 if (adminSexInputs) {
                     sexSelected = Array.from(adminSexInputs).some(input => input.checked);
                 }
-                
+
                 let isValid = true;
-                
+
                 // Basic validation for admin
-                if (!name || !email || !sexSelected) {
+                if (!name || !email || !sexSelected || !position) {
                     isValid = false;
                 }
-                
+
                 // Phone validation (must be exactly 10 digits if provided)
                 if (phone && phone.length !== 10) {
                     isValid = false;
                 }
-                
+
+                if (adminPositionInput) {
+                    adminPositionInput.addEventListener('input', validateAdminForm);
+                }
                 saveAdminBtn.disabled = !isValid;
-                
+
                 // Update button style based on validation
                 if (isValid) {
                     saveAdminBtn.classList.remove('disabled');
@@ -658,7 +674,7 @@
                     saveAdminBtn.style.opacity = '0.6';
                     saveAdminBtn.style.cursor = 'not-allowed';
                 }
-                
+
                 return isValid;
             }
 
@@ -669,10 +685,10 @@
                 if (yearLevelSelect) yearLevelSelect.required = false;
                 if (collegeSelect) collegeSelect.required = false;
                 if (courseSelect) courseSelect.required = false;
-                
+
                 validateUserForm();
             }
-            
+
             // Initial validation
             validateUserForm();
             validateAdminForm();

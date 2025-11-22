@@ -8,9 +8,23 @@ use Illuminate\Http\Request;
 
 class AdminCourseController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $courses = Course::with('college')->paginate(10);
+        $search = $request->input('search');
+
+        $courses = Course::with('college')
+            ->when($search, function ($query, $search) {
+                return $query->where(function ($q) use ($search) {
+                    $q->where('courses.name', 'like', '%' . $search . '%')
+                        ->orWhere('courses.code', 'like', '%' . $search . '%')
+                        ->orWhereHas('college', function ($collegeQuery) use ($search) {
+                            $collegeQuery->where('name', 'like', '%' . $search . '%');
+                        });
+                });
+            })
+            ->orderBy('courses.name')
+            ->paginate(10);
+
         return view('admin.course.index', compact('courses'));
     }
 
@@ -23,22 +37,13 @@ class AdminCourseController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|',
+            'name' => 'required|string|max:255',
             'code' => 'required|string|max:50',
             'college_id' => 'required|exists:colleges,id'
         ]);
 
         Course::create($request->all());
 
-        // Check if it's an AJAX request (which your form is making)
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Course created successfully!'
-            ]);
-        }
-
-        // Fallback for regular form submission (fixed the typo: cours -> courses)
         return redirect()->route('admin.courses.index')
             ->with('success', 'Course created successfully.');
     }
@@ -51,85 +56,50 @@ class AdminCourseController extends Controller
 
     public function update(Request $request, Course $course)
     {
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'code' => 'required|string|max:50|unique:courses,code,' . $course->id,
-                'college_id' => 'required|exists:colleges,id'
-            ]);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:courses,code,' . $course->id,
+            'college_id' => 'required|exists:colleges,id'
+        ]);
 
-            $course->update($validated);
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Course updated successfully!',
-                    'course' => $course
-                ]);
-            }
+        $course->update($validated);
 
-            return redirect()->route('admin.courses.index')
-                ->with('success', 'Course updated successfully.');
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            // Handle validation errors for AJAX requests
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => $e->errors()
-                ], 422);
-            }
-
-            return redirect()->back()
-                ->withErrors($e->errors())
-                ->withInput();
-
-        } catch (\Exception $e) {
-            // Handle general errors
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'An error occurred while updating the course.'
-                ], 500);
-            }
-
-            return redirect()->back()
-                ->with('error', 'An error occurred while updating the course.')
-                ->withInput();
-        }
+        return redirect()->route('admin.courses.index')
+            ->with('success', 'Course updated successfully.');
     }
 
     public function destroy($id)
     {
         $course = Course::findOrFail($id);
         $course->delete();
-        
+
         return redirect()->route('admin.courses.index')
             ->with('success', 'Course archived successfully.');
     }
-     public function archive(Request $request)
+    public function archive(Request $request)
     {
         $search = $request->input('search');
-        
+
         $courses = Course::onlyTrashed()
-            ->with(['college' => function($query) {
+            ->with(['college' => function ($query) {
                 $query->withTrashed();
             }])
-            ->when($search, function($query, $search) {
-                return $query->where(function($q) use ($search) {
+            ->when($search, function ($query, $search) {
+                return $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('code', 'like', "%{$search}%")
-                      ->orWhereHas('college', function($q) use ($search) {
-                          $q->where('name', 'like', "%{$search}%")
-                            ->orWhere('code', 'like', "%{$search}%");
-                      });
+                        ->orWhere('code', 'like', "%{$search}%")
+                        ->orWhereHas('college', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%")
+                                ->orWhere('code', 'like', "%{$search}%");
+                        });
                 });
             })
             ->orderBy('deleted_at', 'desc')
             ->paginate(10);
-            
+
         return view('admin.course.archive', compact('courses', 'search'));
     }
-    
+
     /**
      * Restore an archived course
      */
@@ -137,11 +107,11 @@ class AdminCourseController extends Controller
     {
         $course = Course::onlyTrashed()->findOrFail($id);
         $course->restore();
-        
+
         return redirect()->route('admin.courses.archive')
             ->with('success', 'Course restored successfully.');
     }
-    
+
     /**
      * Permanently delete a course
      */
@@ -149,7 +119,7 @@ class AdminCourseController extends Controller
     {
         $course = Course::onlyTrashed()->findOrFail($id);
         $course->forceDelete();
-        
+
         return redirect()->route('admin.courses.archive')
             ->with('success', 'Course permanently deleted.');
     }

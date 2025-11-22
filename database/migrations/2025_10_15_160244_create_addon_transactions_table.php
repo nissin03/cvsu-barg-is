@@ -19,8 +19,7 @@ return new class extends Migration
             $table->foreignId('addon_payment_id')->nullable()->constrained('addon_payments')->cascadeOnDelete();
             $table->enum('status', ['unpaid', 'paid','forfeit', 'refunded'])->default('unpaid');
             $table->timestamps();
-            $table->unique(['addon_payment_id']);
-             $table->unique(['transaction_reservation_id', 'addon_id', 'addon_reservation_id'], 'trx_addon_unique');
+           
         });
     }
 

@@ -307,6 +307,16 @@ class NotificationManager {
                 this.handleReservation(event.reservationData);
             });
 
+        this.echo
+            .private(`App.Models.User.${this.userId}`)
+            .listen(".ReservationCanceled", (event) => {
+                console.log(
+                    "Reservation canceled notification received:",
+                    event
+                );
+                this.handleReservationCanceled(event.payment);
+            });
+
         if (this.isAdmin) {
             this.echo
                 .private("admin-notification")
@@ -400,6 +410,39 @@ class NotificationManager {
         this.handleNewNotification(notification);
     }
 
+    handleReservationCanceled(payment) {
+        const facilityName = payment.facility_name || "your facility";
+        const canceledBy =
+            payment.canceled_by === "system"
+                ? "automatically by the system"
+                : "by staff";
+
+        const notification = {
+            id: Date.now(),
+            data: {
+                title: "Reservation Canceled",
+                body: `Your reservation for ${facilityName} has been canceled ${canceledBy}.`,
+                icon: "fas fa-calendar-times",
+                url:
+                    payment.url ||
+                    `/user/reservation/details/${
+                        payment.payment_id || payment.id
+                    }`,
+                meta: {
+                    payment_id: payment.id || payment.payment_id,
+                    facility_name: facilityName,
+                    canceled_by: payment.canceled_by || "staff",
+                    cancellation_reason: payment.cancellation_reason,
+                    total_price: payment.total_price,
+                },
+            },
+            created_at: new Date().toISOString(),
+        };
+
+        this.handleNewNotification(notification);
+        this.showCancellationToast(notification.data);
+    }
+
     /**
      * Show toast notification
      */
@@ -425,6 +468,21 @@ class NotificationManager {
             } else {
                 window.toastr.success(`<strong>${title}</strong>: ${body}`);
             }
+        }
+    }
+
+    showCancellationToast(notificationData) {
+        if (window.toastr) {
+            const title = notificationData.title || "Reservation Canceled";
+            const body =
+                notificationData.body || "Your reservation has been canceled.";
+
+            window.toastr.error(`<strong>${title}</strong><br>${body}`, "", {
+                timeOut: 10000,
+                extendedTimeOut: 5000,
+                closeButton: true,
+                progressBar: true,
+            });
         }
     }
 

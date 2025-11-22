@@ -3,7 +3,7 @@
     <div class="main-content-inner">
         <div class="main-content-wrap">
             <div class="flex items-center flex-wrap justify-between gap20 mb-27">
-                <h3>Courses</h3>
+                <h3 class="page-title">Courses</h3>
                 <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
                     <li>
                         <a href="{{ route('admin.index') }}">
@@ -20,38 +20,97 @@
             </div>
 
             <div class="wg-box">
-                <div class="flex items-center justify-between gap10 flex-wrap">
+                <div class="flex items-center justify-between gap10 flex-wrap mb-3">
                     <div class="wg-filter flex-grow">
-                        <form class="form-search">
+                        <form class="form-search" method="GET" action="{{ route('admin.courses.index') }}">
                             <fieldset class="name">
-                                <input type="text" placeholder="Search courses..." class="" name="name"
-                                    tabindex="2" value="" aria-required="true" required="">
+                                <input type="text" placeholder="Search by course name, code, or college..."
+                                    class="search-input" name="search" tabindex="2" value="{{ request('search') }}"
+                                    aria-required="true">
                             </fieldset>
+                            <button type="submit" style="display: none"></button>
                         </form>
                     </div>
 
-                  <a class="tf-button w-auto" href="{{ route('admin.courses.create') }}"><i class="icon-plus"></i>Add New Course</a>
-                    <a href="{{ route('admin.courses.archive') }}" class="tf-button w-auto">
-                        <i class="icon-archive"></i>
-                        <span class="button-text">View Archive</span>
-                    </a>
+                    <div class="action-buttons">
+                        <a class="tf-button w-auto" href="{{ route('admin.courses.create') }}">
+                            <i class="icon-plus"></i>Add New Course
+                        </a>
+                        <a href="{{ route('admin.courses.archive') }}" class="tf-button w-auto">
+                            <i class="icon-archive"></i>
+                            <span class="button-text">View Archive</span>
+                        </a>
+                    </div>
                 </div>
+
                 <div class="table-all-user g-table">
                     <div class="table-responsive">
                         @if (Session::has('status'))
-                            <p class="alert alert-success">{{ Session::get('status') }}</p>
+                            <p class="alert alert-success mb-3">{{ Session::get('status') }}</p>
                         @endif
-                        <table class="table table-striped table-bordered">
-                            <thead class="thead-ligth">
+
+                        <!-- Mobile Card View -->
+                        <div class="mobile-cards d-block d-md-none">
+                            @forelse ($courses as $course)
+                                <div class="mobile-card">
+                                    <div class="mobile-card-header">
+                                        <h5 class="mobile-card-title" title="{{ $course->name }}">
+                                            {{ $course->name }}
+                                        </h5>
+                                        <span class="badge badge-secondary">{{ $course->code }}</span>
+                                    </div>
+                                    <div class="mobile-card-body">
+                                        <div class="mobile-card-row">
+                                            <span class="mobile-card-label">College:</span>
+                                            <span class="mobile-card-value">
+                                                {{ $course->college->name }}
+                                            </span>
+                                        </div>
+
+                                        <div class="mobile-card-actions">
+                                            <a href="{{ route('admin.courses.edit', $course->id) }}"
+                                                class="btn btn-sm btn-primary mobile-btn">
+                                                <i class="icon-edit-3"></i> Edit
+                                            </a>
+                                            <form id="archive-form-mobile-{{ $course->id }}"
+                                                action="{{ route('admin.courses.destroy', $course->id) }}" method="POST"
+                                                class="d-inline archive-form">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="button" class="btn btn-sm btn-warning mobile-btn archive-btn"
+                                                    data-id="{{ $course->id }}">
+                                                    <i class="icon-archive"></i> Archive
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="icon-book-open"></i>
+                                    </div>
+                                    <h4>No Courses Found</h4>
+                                    <p>Start by creating your first course.</p>
+                                    <a href="{{ route('admin.courses.create') }}" class="btn btn-primary">
+                                        <i class="icon-plus"></i> Add New Course
+                                    </a>
+                                </div>
+                            @endforelse
+                        </div>
+
+                        <!-- Desktop Table View -->
+                        <table class="table table-striped table-bordered d-none d-md-table">
+                            <thead class="thead-ligth thead-light">
                                 <tr>
-                                    <th scope="col" style="width: 30%; min-width: 200px;">Name</th>
-                                    <th scope="col" style="width: 10%;">Code</th>
-                                    <th scope="col" style="width: 35%;">College</th>
-                                    <th scope="col" style="width: 15%;">Action</th>
+                                    <th scope="col" class="col-name">Name</th>
+                                    <th scope="col" class="col-code">Code</th>
+                                    <th scope="col" class="col-college">College</th>
+                                    <th scope="col" class="col-action">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($courses as $course)
+                                @forelse ($courses as $course)
                                     <tr>
                                         <td>
                                             <div class="name text-truncate" title="{{ $course->name }}">
@@ -67,28 +126,47 @@
                                         </td>
                                         <td>
                                             <div class="list-icon-function">
-                                                <a href="{{ route('admin.courses.edit', $course->id) }}">
+                                                <a href="{{ route('admin.courses.edit', $course->id) }}"
+                                                    title="Edit Course">
                                                     <div class="item edit">
                                                         <i class="icon-edit-3"></i>
                                                     </div>
                                                 </a>
-                                                <form id="archive-form-{{ $course->id }}" action="{{ route('admin.courses.destroy', $course->id) }}" method="POST">
+                                                <form id="archive-form-{{ $course->id }}"
+                                                    action="{{ route('admin.courses.destroy', $course->id) }}"
+                                                    method="POST">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="button" class="item text-danger archive-btn" data-id="{{ $course->id }}" style="border: none; background: none;" title="Archive Course">
+                                                    <button type="button" class="item text-warning archive-btn"
+                                                        data-id="{{ $course->id }}"
+                                                        style="border: none; background: none;" title="Archive Course">
                                                         <i class="icon-archive"></i>
                                                     </button>
                                                 </form>
                                             </div>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center empty-state-table">
+                                            <div class="empty-icon">
+                                                <i class="icon-book-open"></i>
+                                            </div>
+                                            <h5>No Courses Found</h5>
+                                            <p>Start by creating your first course.</p>
+                                            <a href="{{ route('admin.courses.create') }}" class="btn btn-primary">
+                                                <i class="icon-plus"></i> Add New Course
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
+
                     <div class="divider"></div>
-                    <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-                        {{ $courses->links('pagination::bootstrap-5') }}
+                    <div class="pagination-container">
+                        {{ $courses->appends(request()->query())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             </div>
@@ -98,6 +176,49 @@
 
 @push('styles')
     <style>
+        .main-content-inner {
+            padding: 15px;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            margin: 0;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .gap20 {
+            gap: 1rem;
+        }
+
+        .mb-27 {
+            margin-bottom: 1.5rem;
+        }
+
+        .search-input {
+            width: 100%;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
         .badge {
             display: inline-block;
             padding: 5px 10px;
@@ -108,20 +229,51 @@
             line-height: 1;
             vertical-align: middle;
         }
-        
+
         .badge-secondary {
             background-color: #6c757d;
         }
-        
+
         .badge-primary {
             background-color: #3498db;
         }
-        
+
+        .g-table .table {
+            table-layout: fixed;
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .col-name {
+            width: 35%;
+            min-width: 200px;
+        }
+
+        .col-code {
+            width: 15%;
+        }
+
+        .col-college {
+            width: 35%;
+        }
+
+        .col-action {
+            width: 15%;
+        }
+
+        .name {
+            max-width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
         .list-icon-function {
             display: flex;
             gap: 10px;
+            justify-content: center;
         }
-        
+
         .list-icon-function .item {
             width: 32px;
             height: 32px;
@@ -132,56 +284,322 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .list-icon-function .edit {
             background-color: rgba(52, 152, 219, 0.1);
             color: #3498db;
         }
-        
+
         .list-icon-function .edit:hover {
             background-color: #3498db;
             color: white;
         }
-        
-        .list-icon-function .archive-btn {
+
+        .archive-btn {
             background-color: rgba(231, 76, 60, 0.1);
             color: #e74c3c;
+            border-radius: 50%;
         }
-        
+
         .list-icon-function .archive-btn:hover {
             background-color: #e74c3c;
             color: white;
         }
 
-        /* Fix for table layout and long text */
-        .table {
-            table-layout: fixed;
+        /* Mobile cards */
+        .mobile-cards {
+            display: none;
+        }
+
+        .mobile-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+        }
+
+        .mobile-card-header {
+            padding: 16px;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .mobile-card-title {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            flex: 1;
+            min-width: 0;
+            word-wrap: break-word;
+        }
+
+        .mobile-card-body {
+            padding: 16px;
+        }
+
+        .mobile-card-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .mobile-card-label {
+            font-weight: 600;
+            color: #6b7280;
+            flex-shrink: 0;
+        }
+
+        .mobile-card-value {
+            color: #111827;
+            overflow-wrap: anywhere;
+        }
+
+        .mobile-card-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .mobile-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .mobile-btn.btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .mobile-btn.btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9, #21618c);
+            transform: translateY(-1px);
+        }
+
+        .mobile-btn.btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .mobile-btn.btn-warning:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            transform: translateY(-1px);
+        }
+
+        /* Empty states */
+        .empty-state,
+        .empty-state-table {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            color: #cbd5e1;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h4,
+        .empty-state-table h5 {
+            color: #475569;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .empty-state p,
+        .empty-state-table p {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+
+        .empty-state .btn,
+        .empty-state-table .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .empty-state .btn:hover,
+        .empty-state-table .btn:hover {
+            background: linear-gradient(135deg, #2980b9, #21618c);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        /* Pagination */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 15px 0;
+            overflow: visible !important;
+            min-height: 60px;
+        }
+
+        .pagination {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
             width: 100%;
         }
-        
-        .name {
-            max-width: 100%;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
+
+        .pagination li {
+            display: inline-block;
+            margin: 0;
         }
-        
-        /* Responsive adjustments */
+
+        .pagination .page-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background-color: white;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .pagination .page-link:hover {
+            background-color: #f3f4f6;
+            border-color: #9ca3af;
+            transform: translateY(-1px);
+        }
+
+        .pagination .active .page-link {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-color: #3498db;
+            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+        }
+
+        .pagination .disabled .page-link {
+            background-color: #f9fafb;
+            color: #9ca3af;
+            border-color: #e5e7eb;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Breakpoints */
+        @media (max-width: 991px) {
+            .col-name {
+                width: 40%;
+            }
+
+            .col-code {
+                width: 15%;
+            }
+
+            .col-college {
+                width: 30%;
+            }
+
+            .col-action {
+                width: 15%;
+            }
+        }
+
         @media (max-width: 768px) {
-            .table th:nth-child(1) { width: 30%; }
-            .table th:nth-child(2) { width: 15%; }
-            .table th:nth-child(3) { width: 25%; }
-            .table th:nth-child(4) { width: 15%; }
+            .mobile-cards {
+                display: block;
+            }
+
+            .d-md-table {
+                display: none !important;
+            }
+
+            .action-buttons {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .pagination {
+                gap: 5px;
+            }
+
+            .pagination .page-link {
+                min-width: 36px;
+                height: 36px;
+                padding: 0 8px;
+                font-size: 13px;
+            }
         }
-        
-        /* SweetAlert2 Custom Styles */
+
+        @media (max-width: 576px) {
+            .mobile-card-actions {
+                flex-direction: column;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: flex-end;
+            }
+
+            .tf-button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .pagination {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+        }
+
+        /* SweetAlert2 Custom Styles (kept from original) */
         .swal2-popup {
             width: 90vw !important;
             max-width: 600px !important;
             min-height: 350px !important;
             padding: 35px !important;
             border-radius: 16px !important;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.25) !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25) !important;
             backdrop-filter: blur(10px) !important;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.95)) !important;
         }
@@ -246,7 +664,6 @@
             transform: translateY(-1px) !important;
         }
 
-        /* Custom Icons using ::before pseudo-element */
         .swal2-popup::before {
             content: '' !important;
             display: block !important;
@@ -262,7 +679,29 @@
             animation: swalIconPulse 1s ease-in-out !important;
         }
 
-        /* Question Icon */
+        .swal2-popup.swal2-success::before {
+            content: "✓" !important;
+            color: #22c55e !important;
+            border: 4px solid #22c55e !important;
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
+        }
+
+        .swal2-popup.swal2-error::before {
+            content: "✕" !important;
+            color: #ef4444 !important;
+            border: 4px solid #ef4444 !important;
+            background: linear-gradient(135deg, #fef2f2, #fecaca) !important;
+        }
+
+        .swal2-popup.swal2-info::before {
+            content: "i" !important;
+            color: #3b82f6 !important;
+            border: 4px solid #3b82f6 !important;
+            background: linear-gradient(135deg, #eff6ff, #dbeafe) !important;
+            font-style: italic !important;
+            font-size: 36px !important;
+        }
+
         .swal2-popup.swal2-question::before {
             content: "?" !important;
             color: #8b5cf6 !important;
@@ -271,27 +710,34 @@
             font-size: 36px !important;
         }
 
-        /* Hide default SweetAlert2 icons */
+        .swal2-popup.swal2-warning::before {
+            content: "!" !important;
+            color: #f59e0b !important;
+            border: 4px solid #f59e0b !important;
+            background: linear-gradient(135deg, #fffbeb, #fef3c7) !important;
+            font-size: 36px !important;
+        }
+
         .swal2-icon {
             display: none !important;
         }
 
-        /* Animation for icons */
         @keyframes swalIconPulse {
             0% {
                 transform: scale(0.8);
                 opacity: 0.5;
             }
+
             50% {
                 transform: scale(1.05);
             }
+
             100% {
                 transform: scale(1);
                 opacity: 1;
             }
         }
 
-        /* Responsive Adjustments */
         @media (max-width: 767px) {
             .swal2-popup {
                 width: 95vw !important;
@@ -300,30 +746,30 @@
                 padding: 25px !important;
                 min-height: 300px !important;
             }
-            
+
             .swal2-title {
                 font-size: 20px !important;
                 margin-bottom: 20px !important;
             }
-            
+
             .swal2-content {
                 font-size: 14px !important;
                 margin: 20px 0 25px 0 !important;
             }
-            
+
             .swal2-actions {
                 flex-direction: column !important;
                 width: 100% !important;
                 margin-top: 25px !important;
                 gap: 10px !important;
             }
-            
+
             .swal2-confirm,
             .swal2-cancel {
                 width: 100% !important;
                 margin: 0 !important;
             }
-            
+
             .swal2-popup::before {
                 width: 70px !important;
                 height: 70px !important;
@@ -331,9 +777,103 @@
                 font-size: 28px !important;
                 margin: 15px auto 25px auto !important;
             }
-            
-            .swal2-popup.swal2-question::before {
+
+            .swal2-popup.swal2-info::before,
+            .swal2-popup.swal2-question::before,
+            .swal2-popup.swal2-warning::before {
                 font-size: 30px !important;
+            }
+        }
+
+        @media (max-width: 575px) {
+            .swal2-popup {
+                padding: 20px !important;
+                min-height: 280px !important;
+            }
+
+            .swal2-title {
+                font-size: 18px !important;
+            }
+
+            .swal2-content {
+                font-size: 13px !important;
+            }
+
+            .swal2-popup::before {
+                width: 60px !important;
+                height: 60px !important;
+                line-height: 60px !important;
+                font-size: 24px !important;
+            }
+
+            .swal2-popup.swal2-info::before,
+            .swal2-popup.swal2-question::before,
+            .swal2-popup.swal2-warning::before {
+                font-size: 26px !important;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .swal2-popup {
+                padding: 15px !important;
+                min-height: 260px !important;
+            }
+
+            .swal2-title {
+                font-size: 16px !important;
+            }
+
+            .swal2-content {
+                font-size: 12px !important;
+            }
+
+            .swal2-popup::before {
+                width: 55px !important;
+                height: 55px !important;
+                line-height: 55px !important;
+                font-size: 20px !important;
+            }
+
+            .swal2-popup.swal2-info::before,
+            .swal2-popup.swal2-question::before,
+            .swal2-popup.swal2-warning::before {
+                font-size: 22px !important;
+            }
+        }
+
+        @media (min-width: 1400px) {
+            .swal2-popup {
+                max-width: 700px !important;
+                min-height: 400px !important;
+                padding: 45px !important;
+            }
+
+            .swal2-title {
+                font-size: 28px !important;
+                margin-bottom: 30px !important;
+            }
+
+            .swal2-content {
+                font-size: 18px !important;
+                margin: 30px 0 40px 0 !important;
+            }
+
+            .swal2-actions {
+                margin-top: 40px !important;
+            }
+
+            .swal2-popup::before {
+                width: 90px !important;
+                height: 90px !important;
+                line-height: 90px !important;
+                font-size: 38px !important;
+                margin: 25px auto 35px auto !important;
+            }
+
+            .swal2-popup.swal2-info::before,
+            .swal2-popup.swal2-question::before,
+            .swal2-popup.swal2-warning::before {
+                font-size: 42px !important;
             }
         }
     </style>
@@ -343,29 +883,199 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(function() {
+            const customSwalConfig = {
+                customClass: {
+                    popup: 'enhanced-swal-popup',
+                    title: 'enhanced-swal-title',
+                    content: 'enhanced-swal-content',
+                    actions: 'enhanced-swal-actions',
+                    confirmButton: 'enhanced-swal-confirm',
+                    cancelButton: 'enhanced-swal-cancel'
+                },
+                buttonsStyling: false,
+                allowOutsideClick: false,
+                allowEscapeKey: true,
+                showCloseButton: true,
+                focusConfirm: false,
+                reverseButtons: true,
+                backdrop: true
+            };
+
+            @if (Session::has('success'))
+                Swal.fire({
+                    ...customSwalConfig,
+                    customClass: {
+                        popup: 'swal2-success'
+                    },
+                    title: 'Operation Successful!',
+                    html: `
+                        <div style="text-align: center; line-height: 1.6;">
+                            <p style="font-size: 16px; color: #22c55e; margin-bottom: 15px;">
+                                <strong>{{ Session::get('success') }}</strong>
+                            </p>
+                            <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #22c55e;">
+                                <p style="margin: 0; color: #166534; font-weight: 500;">
+                                    <i class="icon-check-circle" style="margin-right: 8px;"></i>
+                                    The operation has been completed successfully.
+                                </p>
+                            </div>
+                            <p style="color: #64748b; font-size: 14px; margin-top: 15px;">
+                                Your changes have been saved and are now active.
+                            </p>
+                        </div>
+                    `,
+                    confirmButtonText: '<i class="icon-check"></i> Great!',
+                    timer: 5000,
+                    timerProgressBar: true,
+                    showCloseButton: true
+                });
+            @endif
+
+            // Archive Course Confirmation (supports table + mobile cards)
             $('.archive-btn').on('click', function(e) {
                 e.preventDefault();
-                var courseId = $(this).data('id');
-                var form = $('#archive-form-' + courseId);
-                
+                var form = $(this).closest('form');
+                var courseName = $(this).closest('tr, .mobile-card')
+                    .find('.name, .mobile-card-title')
+                    .text()
+                    .trim();
+
                 Swal.fire({
-                    title: 'Archive Course?',
-                    text: "Are you sure you want to archive this course?",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#f59e0b',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, archive it!',
-                    cancelButtonText: 'Cancel',
+                    ...customSwalConfig,
+                    title: 'Archive Course Confirmation',
+                    html: `
+                        <div style="text-align: left; line-height: 1.6;">
+                            <p style="margin-bottom: 15px; text-align: center;">You are about to archive the following course:</p>
+                            <div style="background: linear-gradient(135deg, #fffbeb, #fef3c7); padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #f59e0b;">
+                                <strong style="color: #92400e; font-size: 16px;">${courseName}</strong>
+                            </div>
+                            <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #fcd34d;">
+                                <p style="margin: 0; color: #92400e; font-size: 14px;">
+                                    <i class="icon-info" style="margin-right: 8px;"></i>
+                                    <strong>Note:</strong> Archiving will move this course to the archived section. It can be restored later if needed.
+                                </p>
+                            </div>
+                            <p style="margin-top: 20px; color: #64748b; text-align: center;">
+                                This action is reversible. The course will remain in the system but will be hidden from the main list.
+                            </p>
+                        </div>
+                    `,
                     customClass: {
-                        popup: 'swal2-question'
-                    }
+                        popup: 'swal2-warning'
+                    },
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="icon-archive"></i> Yes, Archive It',
+                    cancelButtonText: '<i class="icon-x"></i> Cancel',
+                    focusCancel: true
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        // Show loading state
+                        Swal.fire({
+                            title: 'Archiving Course...',
+                            html: `
+                                <div style="text-align: center;">
+                                    <div style="margin: 20px 0;">
+                                        <div class="loading-spinner" style="
+                                            width: 40px;
+                                            height: 40px;
+                                            border: 4px solid #f3f4f6;
+                                            border-top: 4px solid #ef4444;
+                                            border-radius: 50%;
+                                            animation: spin 1s linear infinite;
+                                            margin: 0 auto 15px auto;
+                                        "></div>
+                                        <p style="color: #64748b; margin: 0;">Please wait while we archive the course...</p>
+                                    </div>
+                                </div>
+                                <style>
+                                    @keyframes spin {
+                                        0% { transform: rotate(0deg); }
+                                        100% { transform: rotate(360deg); }
+                                    }
+                                </style>
+                            `,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            showConfirmButton: false,
+                            showCancelButton: false
+                        });
                         form.submit();
                     }
                 });
             });
+
+            let searchTimeout;
+            $('input[name="search"]').on('input', function() {
+                clearTimeout(searchTimeout);
+                const form = $(this).closest('form');
+                const query = $(this).val().trim();
+
+                searchTimeout = setTimeout(() => {
+                    if (query.length >= 2 || query.length === 0) {
+                        form.submit();
+                    }
+                }, 500);
+            });
+
+            $('.tf-button').on('click', function() {
+                const $this = $(this);
+                const originalHtml = $this.html();
+
+                $this.html('<i class="icon-loader"></i> Loading...')
+                    .prop('disabled', true)
+                    .css('opacity', '0.7');
+
+                setTimeout(() => {
+                    $this.html(originalHtml)
+                        .prop('disabled', false)
+                        .css('opacity', '1');
+                }, 2000);
+            });
+
+            $('.table tbody tr').on('mouseenter', function() {
+                $(this).css({
+                    'background-color': '#f8fafc',
+                    'transform': 'scale(1.01)',
+                    'box-shadow': '0 2px 8px rgba(0,0,0,0.1)'
+                });
+            }).on('mouseleave', function() {
+                $(this).css({
+                    'background-color': '',
+                    'transform': 'scale(1)',
+                    'box-shadow': ''
+                });
+            });
+
+            $('.list-icon-function .item').on('mouseenter', function() {
+                $(this).css({
+                    'transform': 'translateY(-2px) scale(1.1)',
+                    'box-shadow': '0 4px 12px rgba(0,0,0,0.15)'
+                });
+            }).on('mouseleave', function() {
+                $(this).css({
+                    'transform': 'translateY(0) scale(1)',
+                    'box-shadow': ''
+                });
+            });
+
+            $('.list-icon-function .item, .tf-button, .mobile-btn').css({
+                'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            });
+
+            $('.list-icon-function .item, .mobile-btn').on('focus', function() {
+                $(this).css({
+                    'outline': '2px solid #3498db',
+                    'outline-offset': '2px'
+                });
+            }).on('blur', function() {
+                $(this).css('outline', 'none');
+            });
+
+            if ('ontouchstart' in window) {
+                $('.list-icon-function .item, .mobile-card').css('cursor', 'pointer');
+            }
         });
     </script>
 @endpush

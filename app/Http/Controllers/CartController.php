@@ -46,14 +46,14 @@ class CartController extends Controller
             return redirect()->back()->with('error', 'Product not found.');
         }
 
-        $userSex = Auth::user()->sex;
+        // $userSex = Auth::user()->sex;
 
-        if ($product->sex !== 'all' && $product->sex !== $userSex) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You cannot add this product to the cart due to sex restrictions.'
-            ], 403);
-        }
+        // if ($product->sex !== 'all' && $product->sex !== $userSex) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'You cannot add this product to the cart due to sex restrictions.'
+        //     ], 403);
+        // }
 
         $hasVariants = $product->attributeValues()->exists();
         $variantAttributes = null;

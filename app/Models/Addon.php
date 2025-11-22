@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Models\User;
@@ -9,32 +10,32 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 // use Illuminate\Database\Eloquent\SoftDeletes;
 
-    class Addon extends Model
-    {
-        use HasFactory, SoftDeletes;
-        
-        protected $table = 'addons';
-        protected $fillable = 
-        [
-            'user_id',
-            'facility_id',
-            'facility_attribute_id',
-            'name',
-            'price_type',
-            'description',
-            'base_price',
-            'is_refundable',
-            'is_available',
-            'capacity',
-            'quantity',
-            'is_based_on_quantity',
-            'billing_cycle',
-            'show'
-        ];
+class Addon extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'addons';
+    protected $fillable =
+    [
+        'user_id',
+        'facility_id',
+        'facility_attribute_id',
+        'name',
+        'price_type',
+        'description',
+        'base_price',
+        'is_refundable',
+        'is_available',
+        'capacity',
+        'quantity',
+        'is_based_on_quantity',
+        'billing_cycle',
+        'show'
+    ];
 
     public function facility()
     {
-        return $this->belongsTo(Facility::class);    
+        return $this->belongsTo(Facility::class);
     }
 
     public function user()
@@ -47,7 +48,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
         return $this->belongsTo(FacilityAttribute::class);
     }
 
-    public function reservation()
+    public function reservations()
     {
         return $this->hasMany(AddonReservation::class);
     }
@@ -57,9 +58,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
         return $this->hasMany(AddonPayment::class);
     }
 
-     public function addonTransaction()
+    public function addonTransaction()
     {
-        return $this->hasMany(addonTransaction::class);
+        return $this->hasMany(AddonTransaction::class);
     }
 
+    public function addonsReservations()
+    {
+        return $this->hasMany(AddonReservation::class);
+    }
 }

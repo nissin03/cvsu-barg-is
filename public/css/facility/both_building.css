@@ -1,4 +1,6 @@
-
+.facility-booking-container [id^="selected-addons-display-"] {
+    display: none !important;
+  } 
 .selected-addons-display {
     min-height: 50px;
     border: 1px dashed #ddd;

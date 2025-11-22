@@ -1,6 +1,101 @@
 @extends('layouts.app')
 
 @section('content')
+    <style>
+        .pt-90 {
+            padding-top: 90px !important;
+        }
+
+        .my-account .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+            padding-bottom: 13px;
+        }
+
+        .my-account .wg-box {
+            background: #fff;
+            border: 1px solid #eaeaea;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .accordion-item {
+            background-color: #fff;
+            border-radius: 5px;
+        }
+
+        .accordion-button {
+            background-color: #f8f9fa;
+        }
+
+        .accordion-body {
+            padding: 1rem;
+        }
+
+        .order-items .order-item {
+            padding: 0.5rem 0;
+        }
+
+        .order-items .order-item .text-muted {
+            font-size: 0.9rem;
+        }
+
+        .btn-outline-primary {
+            font-size: 0.875rem;
+        }
+
+        .bg-success {
+            background-color: #40c710 !important;
+        }
+
+        .bg-danger {
+            background-color: #f44032 !important;
+        }
+
+        .bg-warning {
+            background-color: #f5d700 !important;
+        }
+
+        .alert {
+            margin-bottom: 1rem;
+        }
+
+        /* Empty State Styles */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state h4 {
+            color: #6c757d;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .empty-state p {
+            color: #6c757d;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .btn-custom {
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
 
@@ -207,3 +302,24 @@
         </section>
     </main>
 @endsection
+
+<style>
+    .alert-light {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+        color: #6c757d;
+    }
+
+    .accordion-item {
+        transition: all 0.3s ease;
+    }
+
+    .accordion-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .order-item:last-child {
+        border-bottom: none !important;
+    }
+</style>

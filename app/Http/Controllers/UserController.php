@@ -14,9 +14,11 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use App\Helpers\ProfileHelper;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
+use App\Models\ProductAttributeValue;
+use Illuminate\Support\Facades\Storage;
 use Surfsidemedia\Shoppingcart\Facades\Cart;
 use Illuminate\Validation\ValidationException;
 
@@ -44,25 +46,25 @@ class UserController extends Controller
     }
 
 
-    public function canceled_order()
-    {
-        $canceledOrders = Auth::user()->orders()
-            ->where('status', 'canceled')
-            ->whereHas('transaction', function ($query) {
-                $query->where('status', 'unpaid');
-            })
-            ->latest()
-            ->paginate(10);
+    // public function canceled_order()
+    // {
+    //     $canceledOrders = Auth::user()->orders()
+    //         ->where('status', 'canceled')
+    //         ->whereHas('transaction', function ($query) {
+    //             $query->where('status', 'unpaid');
+    //         })
+    //         ->latest()
+    //         ->paginate(10);
 
-        return view('user.canceled_order', compact('canceledOrders'));
-    }
+    //     return view('user.canceled_order', compact('canceledOrders'));
+    // }
 
     public function order_details($order_id)
     {
         // $order = Order::where('user_id', Auth::user()->id)->where('id', $order_id)->first();
         $order = Order::where('user_id', Auth::user()->id)
             ->where('id', $order_id)
-            ->with(['user.college', 'user.course'])
+            ->with(['user.college', 'user.course', 'orderItems.product', 'orderItems.variant', 'transaction'])
             ->first();
         if ($order) {
             $orderItems = OrderItem::where('order_id', $order->id)->orderBy('id')->paginate(12);
@@ -103,7 +105,7 @@ class UserController extends Controller
         $colleges = College::all();
         $courses = Course::all();
 
-        return view('user.profile-edit', compact('user', 'colleges', 'courses')); // Add courses here
+        return view('user.profile-edit', compact('user', 'colleges', 'courses'));
     }
 
     public function profile_update(Request $request)
@@ -124,6 +126,8 @@ class UserController extends Controller
             $validationRules['year_level'] = 'required|string|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
             $validationRules['college_id'] = 'required|exists:colleges,id';
             $validationRules['course_id'] = 'required|exists:courses,id';
+        } else if ($role === 'employee') {
+            $validationRules['position'] = 'required|string|max:255';
         }
 
         $validatedData = $request->validate($validationRules);
@@ -140,6 +144,12 @@ class UserController extends Controller
             $user->year_level = $validatedData['year_level'];
             $user->college_id = $validatedData['college_id'];
             $user->course_id = $validatedData['course_id'];
+            $user->position = null;
+        } elseif ($role === 'employee') {
+            $user->position = $validatedData['position'];
+            $user->year_level = null;
+            $user->college_id = null;
+            $user->course_id = null;
         } else {
             $user->year_level = null;
             $user->college_id = null;
@@ -244,18 +254,20 @@ class UserController extends Controller
     public function rebook_canceled_order($orderId)
     {
         $user = Auth::user();
+
         if ($user->utype === 'USR' && ProfileHelper::isProfileIncomplete($user)) {
             return redirect()->route('user.profile', ['swal' => 1])->with([
                 'message' => 'Please complete your profile to proceed with the checkout.'
             ]);
         }
+
         $order = Order::where('id', $orderId)
             ->where('user_id', $user->id)
             ->where('status', 'canceled')
             ->whereHas('transaction', function ($query) {
                 $query->where('status', 'unpaid');
             })
-            ->with(['orderItems.product', 'transaction'])
+            ->with(['orderItems.product.attributeValues.productAttribute', 'orderItems.variant', 'transaction'])
             ->first();
 
         if (!$order) {
@@ -263,43 +275,109 @@ class UserController extends Controller
                 ->with('error', 'Order not found or not available for re-booking.');
         }
 
-        $orderAge = $order->created_at->diffInHours(now());
-        if ($orderAge > 24) {
+        // Check if order was auto-canceled (has canceled_reason and updated_by is null)
+        if (empty($order->canceled_reason) || !is_null($order->updated_by)) {
+            return redirect()->route('user.order.details', $orderId)
+                ->with('error', 'This order cannot be re-booked as it was manually canceled.');
+        }
+
+        // Check if within 24 hours of CANCELLATION (not creation)
+        if (!$order->canceled_date) {
             return redirect()->route('user.canceled-orders')
-                ->with('error', 'This order cannot be re-booked as it was placed more than 24 hours ago.');
+                ->with('error', 'This order cannot be re-booked.');
+        }
+
+        $hoursSinceCanceled = Carbon::parse($order->canceled_date)->diffInHours(now());
+        if ($hoursSinceCanceled > 24) {
+            return redirect()->route('user.order.details', $orderId)
+                ->with('error', 'The re-booking period has expired. This order was canceled more than 24 hours ago.');
         }
 
         try {
             Cart::instance('cart')->destroy();
+            $addedItems = 0;
+            $skippedItems = [];
+
             foreach ($order->orderItems as $orderItem) {
                 $product = $orderItem->product;
 
-                if (!$product || $product->quantity < $orderItem->quantity || $product->stock_status === 'outofstock') {
+                // Validate product exists and is in stock
+                if (!$product) {
+                    $skippedItems[] = "Product #{$orderItem->product_id} no longer exists";
                     continue;
                 }
 
-                if ($product->sex !== 'all' && $product->sex !== $user->sex) {
-                    continue;
+                // Check if product has variants
+                if ($orderItem->variant_id) {
+                    $variant = ProductAttributeValue::find($orderItem->variant_id);
+
+                    if (!$variant || $variant->quantity < $orderItem->quantity || $variant->stock_status === 'outofstock') {
+                        $skippedItems[] = "{$product->name} - variant out of stock";
+                        continue;
+                    }
+
+                    // Get variant attributes
+                    $variantAttributes = $variant->getAttributesArray();
+                    $attributeValues = array_values($variantAttributes);
+                    $variantNameSuffix = ' - ' . implode(', ', $attributeValues);
+
+                    Cart::instance('cart')->add([
+                        'id' => $product->id,
+                        'name' => $product->name . $variantNameSuffix,
+                        'qty' => $orderItem->quantity,
+                        'price' => $variant->price,
+                        'options' => [
+                            'product_id' => $product->id,
+                            'is_variant' => true,
+                            'variant_id' => $variant->id,
+                            'variant_quantity' => $variant->quantity,
+                            'variant_attributes' => $variantAttributes
+                        ]
+                    ])->associate('App\Models\Product');
+
+                    $addedItems++;
+                } else {
+                    // Product without variant
+                    if ($product->quantity < $orderItem->quantity || $product->stock_status === 'outofstock') {
+                        $skippedItems[] = "{$product->name} - out of stock";
+                        continue;
+                    }
+
+                    Cart::instance('cart')->add([
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'qty' => $orderItem->quantity,
+                        'price' => $product->price,
+                        'options' => [
+                            'product_id' => $product->id,
+                            'is_variant' => false,
+                            'variant_attributes' => null
+                        ]
+                    ])->associate('App\Models\Product');
+
+                    $addedItems++;
                 }
-
-
-
-                Cart::instance('cart')->add([
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'qty' => $orderItem->quantity,
-                    'price' => $product->price,
-                    'options' => [
-                        'product_id' => $product->id,
-                        'is_variant' => false,
-                        'variant_attributes' => null
-                    ]
-                ])->associate('App\Models\Product');
             }
 
-            return redirect()->route('cart.checkout')
-                ->with('success', 'Items from your canceled order have been added to cart. Please select a new pickup time slot.');
+            if ($addedItems === 0) {
+                return redirect()->route('cart.index')
+                    ->with('error', 'None of the items from this order are currently available.');
+            }
+
+            $message = "Successfully added {$addedItems} item(s) to your cart.";
+            if (count($skippedItems) > 0) {
+                $message .= " Some items were unavailable: " . implode(', ', $skippedItems);
+            }
+
+            return redirect()->route('cart.index')
+                ->with('success', $message);
         } catch (\Exception $e) {
+            Log::error('Rebook order failed', [
+                'order_id' => $orderId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+
             return redirect()->route('user.canceled-orders')
                 ->with('error', 'Failed to re-book order. Please try again.');
         }

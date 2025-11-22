@@ -126,8 +126,65 @@
             border: 1px solid #007bff;
         }
 
+        .btn-success {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+        }
+
         .text-end {
             text-align: right;
+        }
+
+        /* Rebook Box Styles */
+        .rebook-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .rebook-box .rebook-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .rebook-box .rebook-header i {
+            font-size: 2rem;
+            color: #ffc107;
+            margin-right: 15px;
+        }
+
+        .rebook-box .rebook-info {
+            flex: 1;
+        }
+
+        .rebook-box .rebook-timer {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ffc107;
+        }
+
+        .rebook-box .rebook-timer i {
+            color: #28a745;
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .rebook-box .rebook-timer.expired i {
+            color: #dc3545;
+        }
+
+        .rebook-box .rebook-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         /* Responsive */
@@ -137,6 +194,15 @@
             .order-summary .right-section {
                 width: 100%;
                 margin-bottom: 20px;
+            }
+
+            .rebook-box .rebook-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .rebook-box .rebook-actions {
+                justify-content: center;
             }
         }
     </style>
@@ -151,11 +217,14 @@
             <h2 class="page-title">Order Details</h2>
 
             <div class="row">
+                <!-- Left Side: Account Navigation -->
                 <div class="col-lg-2">
                     @include('user.account__nav')
                 </div>
 
+                <!-- Right Side: Order Details Content -->
                 <div class="col-lg-10">
+                    <!-- Order Summary Box -->
                     <div class="wg-box">
                         @if ($order->status === 'canceled' && $order->canceled_reason)
                             <div class="alert alert-danger mt-3" role="alert">
@@ -169,10 +238,12 @@
                                 @endif
                                 @if ($order->updated_by)
                                     <br>
-                                    <small class="text-muted">Updated by: {{ $order->updatedBy->name ?? 'System' }}</small>
+                                    <small class="text-muted">Updated by:
+                                        {{ $order->updatedBy->name ?? 'System' }}</small>
                                 @endif
                             </div>
                         @endif
+
                         <div class="order-summary">
                             <!-- Left Section -->
                             <div class="left-section">
@@ -188,8 +259,6 @@
                                     </p>
                                 </div>
                                 <div class="order-info">
-                                    {{-- <p><strong>Order No:</strong> <span class="badge badge-warning">{{ $order->id
-                                            }}</span> </p> --}}
                                     <p><strong>Order Date:</strong>
                                         <span class="badge bg-primary">{{ $order->created_at->format('M d, Y H:i') }}</span>
                                     </p>
@@ -221,7 +290,6 @@
                                         @endif
                                     </p>
                                 </div>
-
                             </div>
 
                             <!-- Right Section -->
@@ -239,13 +307,136 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="text-end">
-                            <a class="btn btn-custom btn-success" href="{{ route('user.orders') }}">Back to Orders</a>
-                        </div>
                     </div>
 
-                    <!-- Ordered Items -->
+                    {{-- @if ($order->status === 'canceled' && $transaction->status === 'unpaid' && is_null($order->updated_by))
+                        <!-- Rebook Box (Only show for canceled orders) -->
+                        @if ($order->status === 'canceled' && $transaction->status === 'unpaid')
+                            @php
+                                $hoursSinceCreated = $order->created_at->diffInHours(now());
+                                $canRebook = $hoursSinceCreated <= 24;
+                                $hoursRemaining = max(0, 24 - $hoursSinceCreated);
+                            @endphp
+
+                            <div class="rebook-box">
+                                <div class="rebook-header">
+                                    <i class="fas fa-redo-alt"></i>
+                                    <div class="rebook-info">
+                                        <h5 class="mb-2">Re-book This Order</h5>
+                                        <p class="mb-0 text-muted">
+                                            Your order was automatically canceled because payment was not completed within
+                                            24
+                                            hours.
+                                            You can re-book the same items if the order was placed less than 24 hours ago.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                @if ($canRebook)
+                                    <div class="rebook-timer">
+                                        <i class="fas fa-clock"></i>
+                                        <div>
+                                            <strong class="text-success">Re-booking Available</strong>
+                                            <p class="mb-0 text-muted small">
+                                                You have <strong>{{ $hoursRemaining }} hours</strong> remaining to re-book
+                                                this
+                                                order
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="rebook-actions">
+                                        <form action="{{ route('user.order.rebook', $order->id) }}" method="POST"
+                                            class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-warning btn-lg">
+                                                <i class="fas fa-redo me-2"></i>
+                                                Re-book This Order
+                                            </button>
+                                        </form>
+                                    </div>
+                                @else
+                                    <div class="rebook-timer expired">
+                                        <i class="fas fa-times-circle"></i>
+                                        <div>
+                                            <strong class="text-danger">Re-booking No Longer Available</strong>
+                                            <p class="mb-0 text-muted small">
+                                                This order was placed more than 24 hours ago and can no longer be re-booked.
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+                    @endif --}}
+
+                    @if ($order->status === 'canceled' && $transaction->status === 'unpaid' && is_null($order->updated_by))
+                        @php
+                            $hoursSinceCreated = $order->created_at->diffInHours(now());
+                            $canRebook = $hoursSinceCreated <= 24;
+                            $hoursRemaining = max(0, 24 - $hoursSinceCreated);
+                        @endphp
+
+                        <div class="rebook-box">
+                            <div class="rebook-header">
+                                <i class="fas fa-redo-alt"></i>
+                                <div class="rebook-info">
+                                    <h5 class="mb-2">Re-book This Order</h5>
+
+                                    @if ($canRebook)
+                                        <p class="mb-0 text-muted">
+                                            Your order was automatically canceled because payment was not completed within
+                                            24 hours.
+                                            You may re-book this order while the 24-hour window is still open.
+                                        </p>
+                                    @else
+                                        <p class="mb-0 text-muted">
+                                            Your order was automatically canceled because payment was not completed within
+                                            24 hours.
+                                        </p>
+                                    @endif
+                                </div>
+                            </div>
+
+                            @if ($canRebook)
+                                <!-- Rebook Still Available -->
+                                <div class="rebook-timer">
+                                    <i class="fas fa-clock"></i>
+                                    <div>
+                                        <strong class="text-success">Re-booking Available</strong>
+                                        <p class="mb-0 text-muted small">
+                                            You have <strong>{{ $hoursRemaining }} hour(s)</strong> remaining to re-book
+                                            this order.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="rebook-actions">
+                                    <form action="{{ route('user.order.rebook', $order->id) }}" method="POST"
+                                        class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-warning btn-lg">
+                                            <i class="fas fa-redo me-2"></i>
+                                            Re-book This Order
+                                        </button>
+                                    </form>
+                                </div>
+                            @else
+                                <!-- Rebook Not Available -->
+                                <div class="rebook-timer expired">
+                                    <i class="fas fa-times-circle"></i>
+                                    <div>
+                                        <strong class="text-danger">Re-booking No Longer Available</strong>
+                                        <p class="mb-0 text-muted small">
+                                            This order was placed more than 24 hours ago and can no longer be re-booked.
+                                        </p>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
+                    <!-- Reserved Items Box -->
                     <div class="wg-box">
                         <h5>Reserved Items</h5>
                         @if ($orderItems->count() > 0)
@@ -286,9 +477,9 @@
                                                     <p>No variations</p>
                                                 @endif
                                             </td>
-                                            <td>&#8369; {{ number_format($item->price, 2) }}</td>
+                                            <td>₱ {{ number_format($item->price, 2) }}</td>
                                             <td>{{ $item->quantity }}</td>
-                                            <td>&#8369; {{ number_format($item->price * $item->quantity, 2) }}</td>
+                                            <td>₱ {{ number_format($item->price * $item->quantity, 2) }}</td>
                                             <td>
                                                 <a href="{{ route('shop.product.details', ['product_slug' => $item->product->slug]) }}"
                                                     class="btn btn-custom btn-outline-primary" target="_blank">
@@ -310,13 +501,13 @@
                         @endif
                     </div>
 
-                    <!-- Transactions -->
+                    <!-- Transactions Box -->
                     <div class="wg-box">
                         <h5>Transactions</h5>
                         <table class="table-custom">
                             <tr>
                                 <th>Total</th>
-                                <td>&#8369; {{ number_format($order->total, 2) }}</td>
+                                <td>₱ {{ number_format($order->total, 2) }}</td>
                             </tr>
                             <tr>
                                 <th>Status</th>
@@ -327,9 +518,13 @@
                                         <span class="badge badge-danger">Unpaid</span>
                                     @endif
                                 </td>
-
                             </tr>
                         </table>
+                    </div>
+
+                    <!-- Back to Orders Button -->
+                    <div class="text-end">
+                        <a class="btn btn-custom btn-success" href="{{ route('user.orders') }}">Back to Orders</a>
                     </div>
                 </div>
             </div>

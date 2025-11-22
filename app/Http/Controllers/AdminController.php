@@ -364,13 +364,29 @@ class AdminController extends Controller
 
         return response()->json(['weeks' => $weeks]);
     }
-    public function categories()
+    public function categories(Request $request)
     {
-        // $categories = Category::orderBy('id', 'DESC')->paginate(10);
-        $categories = Category::whereNull('parent_id')
-            ->with('children')
-            ->orderBy('id', 'DESC')
-            ->paginate(5);
+        $search = $request->input('search');
+        $query = Category::whereNull('parent_id')->with('children');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhereHas('children', function ($childQuery) use ($search) {
+                        $childQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('slug', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $categories = $query->orderBy('id', 'DESC')->paginate(5)->withQueryString();
+        if ($request->ajax()) {
+            return response()->json([
+                'categories' => view('partials._categories-table', compact('categories'))->render(),
+                'pagination' => view('partials._categories-pagination', compact('categories'))->render()
+            ]);
+        }
+
         $pageTitle = 'Category Dashboard';
         return view('admin.categories', compact('categories', 'pageTitle'));
     }
@@ -490,8 +506,14 @@ class AdminController extends Controller
     {
         $archived = $request->query('archived', 0);
         $search = $request->input('search');
-        $sortColumn = $request->input('sort_column', 'created_at');
-        $sortDirection = $request->input('sort_direction', 'DESC');
+        $category = $request->input('category');
+        $stockStatus = $request->input('stock_status');
+        $sortBy = $request->input('sort_by', 'newest');
+
+        $categories = Category::whereNull('parent_id')
+            ->with('children')
+            ->orderBy('name')
+            ->get();
 
         $query = Product::with([
             'category' => function ($query) {
@@ -501,9 +523,10 @@ class AdminController extends Controller
             'attributeValues.productAttribute'
         ])
             ->where('archived', $archived);
-        $isNumeric = is_numeric($search);
+
 
         if ($search) {
+            $isNumeric = is_numeric($search);
             $query->where(function ($q) use ($search, $isNumeric) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
@@ -513,32 +536,68 @@ class AdminController extends Controller
                         ->orWhere('price', 'like', "%{$search}%");
                 }
             });
-            if ($isNumeric) {
-                $exactQuantityMatch = Product::where('quantity', $search)->exists();
-                if ($exactQuantityMatch) {
-                    $sortColumn = 'quantity';
-                } else {
-                    $priceMatch = Product::where('price', 'like', "%{$search}%")->exists();
-                    if ($priceMatch) {
-                        $sortColumn = 'price';
-                    }
-                }
-            } else {
-                $sortColumn = 'name';
-            }
         }
-        $query->orderBy($sortColumn, $sortDirection);
+
+        // Category filter
+        if ($category) {
+            $query->where(function ($q) use ($category) {
+                $selectedCategory = Category::find($category);
+                if ($selectedCategory) {
+                    $categoryIds = [$category];
+                    if ($selectedCategory->children->isNotEmpty()) {
+                        $categoryIds = array_merge(
+                            $categoryIds,
+                            $selectedCategory->children->pluck('id')->toArray()
+                        );
+                    }
+
+                    $q->whereIn('category_id', $categoryIds);
+                } else {
+                    $q->where('category_id', $category);
+                }
+            });
+        }
+
+        if ($stockStatus) {
+            $query->where('stock_status', $stockStatus);
+        }
+
+
+        switch ($sortBy) {
+            case 'oldest':
+                $query->orderBy('created_at', 'ASC');
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'ASC');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'DESC');
+                break;
+            case 'stock_low':
+                $query->orderBy('quantity', 'ASC');
+                break;
+            case 'stock_high':
+                $query->orderBy('quantity', 'DESC');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('created_at', 'DESC');
+                break;
+        }
 
         $products = $query->paginate(10)->withQueryString();
+        $count = $products->total();
+
 
         if ($request->ajax()) {
             return response()->json([
                 'products' => view('partials._products-table', compact('products'))->render(),
-                'pagination' => view('partials._products-pagination', compact('products'))->render()
+                'pagination' => view('partials._products-pagination', compact('products'))->render(),
+                'count' => $count
             ]);
         }
 
-        return view('admin.products', compact('products', 'archived'));
+        return view('admin.products', compact('products', 'archived', 'categories'));
     }
 
     public function product_add()
@@ -564,17 +623,28 @@ class AdminController extends Controller
             'price' => $hasVariant ? 'nullable' : 'required|numeric',
             'quantity' => $hasVariant ? 'nullable' : 'required|integer',
             'featured' => 'required',
-            'image' => 'required|mimes:png,jpg,jpeg|max:10240',
-            'sex' => 'required|in:male,female,all',
+            'image' => 'required|image|mimes:png,jpg,jpeg|max:5120',
+            'images.*' => 'nullable|image|mimes:png,jpg,jpeg|max:5120',
+            // 'sex' => 'required|in:male,female,all',
             'category_id' => 'required|integer|exists:categories,id',
             'reorder_quantity' => 'required|integer|min:0',
-            'outofstock_quantity' => 'required|integer|min:0',
+            'outofstock_quantity' => 'nullable|integer|min:0',
+            'variant_description.*' => 'nullable|string|max:1000',
         ], [
+            'image.required' => 'Main product image is required.',
+            'image.image' => 'The file must be an image.',
+            'image.mimes' => 'The image must be a file of type: png, jpg, jpeg.',
+            'image.max' => 'The image size must not exceed 5MB.',
+            'images.*.image' => 'All gallery files must be images.',
+            'images.*.mimes' => 'Gallery images must be files of type: png, jpg, jpeg.',
+            'images.*.max' => 'Each gallery image must not exceed 5MB.',
             'category_id.integer' => 'Please select a valid category.',
             'sex.in' => 'Please select a valid gender category.',
             'reorder_quantity.required' => 'Reorder Quantity is required.',
             'outofstock_quantity.required' => 'Out of Stock Quantity is required.',
         ]);
+
+        $outofstock_quantity = 0; // Default value
 
         $product = new Product();
         $product->name = $request->name;
@@ -585,10 +655,10 @@ class AdminController extends Controller
         $product->quantity = $hasVariant ? null : $request->quantity;
         $product->stock_status = $hasVariant ? 'instock' : 'outofstock';
         $product->featured = $request->featured;
-        $product->sex = $request->sex;
+        // $product->sex = $request->sex;
         $product->category_id = $request->category_id;
         $product->reorder_quantity = $request->reorder_quantity;
-        $product->outofstock_quantity = $request->outofstock_quantity;
+        $product->outofstock_quantity = $outofstock_quantity;
 
         $current_timestamp = now()->timestamp;
         if ($request->hasFile('image')) {
@@ -605,6 +675,7 @@ class AdminController extends Controller
             $allowedFileExtension = ['jpg', 'png', 'jpeg'];
             $files = $request->file('images');
             $counter = 1;
+            $gallery_arr = [];
 
             foreach ($files as $file) {
                 $gext = $file->getClientOriginalExtension();
@@ -621,7 +692,9 @@ class AdminController extends Controller
                     $counter++;
                 }
             }
-            $product->images = implode(',', $gallery_arr);
+            if (!empty($gallery_arr)) {
+                $product->images = implode(',', $gallery_arr);
+            }
         }
         $product->save();
         if ($hasVariant && is_array($request->variant_name)) {
@@ -631,6 +704,7 @@ class AdminController extends Controller
                     'product_id' => $product->id,
                     'product_attribute_id' => $request->product_attribute_id[$index],
                     'value' => $variantName,
+                    'description' => $request->variant_description[$index] ?? null,
                     'price' => $request->variant_price[$index],
                     'quantity' => $request->variant_quantity[$index],
                 ];
@@ -691,6 +765,7 @@ class AdminController extends Controller
     {
         $product = Product::findOrFail($request->input('id'));
         $hasVariant = !empty($request->variant_name) && is_array($request->variant_name);
+
         $request->validate([
             'name' => 'required',
             'short_description' => 'required',
@@ -700,35 +775,65 @@ class AdminController extends Controller
             'featured' => 'required|boolean',
             'image' => 'nullable|image|mimes:png,jpg,jpeg|max:5120',
             'images.*' => 'nullable|image|mimes:png,jpg,jpeg|max:5120',
-            'sex' => 'required|in:male,female,all',
+            // 'sex' => 'required|in:male,female,all',
             'category_id' => 'required|integer|exists:categories,id',
             'reorder_quantity' => 'required|integer|min:0',
-            'outofstock_quantity' => 'required|integer|min:0',
+            'outofstock_quantity' => 'nullable|integer|min:0',
+            'variant_description.*' => 'nullable|string|max:1000',
+        ], [
+            'image.image' => 'The file must be an image.',
+            'image.mimes' => 'The image must be a file of type: png, jpg, jpeg.',
+            'image.max' => 'The image size must not exceed 5MB.',
+            'images.*.image' => 'All gallery files must be images.',
+            'images.*.mimes' => 'Gallery images must be files of type: png, jpg, jpeg.',
+            'images.*.max' => 'Each gallery image must not exceed 5MB.',
+            'category_id.integer' => 'Please select a valid category.',
+            'reorder_quantity.required' => 'Reorder Quantity is required.',
+            'outofstock_quantity.required' => 'Out of Stock Quantity is required.',
         ]);
         $previousStockStatus = $product->stock_status;
-        $product->fill($request->except(['image', 'images', 'variant_name', 'product_attribute_id', 'variant_price', 'variant_quantity', 'existing_variant_ids', 'removed_variant_ids']));
+        $product->fill($request->except([
+            'image',
+            'images',
+            'variant_name',
+            'product_attribute_id',
+            'variant_price',
+            'variant_quantity',
+            'variant_description',
+            'existing_variant_ids',
+            'removed_variant_ids',
+            'removed_images'
+        ]));
+        // $product->fill($request->except(['image', 'images', 'variant_name', 'product_attribute_id', 'variant_price', 'variant_quantity', 'existing_variant_ids', 'removed_variant_ids']));
 
         $current_timestamp = now()->timestamp;
         if ($request->hasFile('image')) {
             if (!empty($product->image) && File::exists(public_path("uploads/products/{$product->image}"))) {
                 File::delete(public_path("uploads/products/{$product->image}"));
+                File::delete(public_path("uploads/products/thumbnails/{$product->image}"));
             }
+
             $image = $request->file('image');
             $imageName = "{$current_timestamp}.{$image->extension()}";
+
             $this->imageProcessor->process($image, $imageName, [
                 ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
                 ['path' => public_path('uploads/products/thumbnails'), 'resize' => [300, 300]],
             ]);
             $product->image = $imageName;
         }
+
         $existingImages = !empty($product->images) ? explode(',', $product->images) : [];
         $removedImages = $request->input('removed_images', []);
+
         foreach ($removedImages as $removedImage) {
             if (File::exists(public_path("uploads/products/{$removedImage}"))) {
                 File::delete(public_path("uploads/products/{$removedImage}"));
+                File::delete(public_path("uploads/products/thumbnails/{$removedImage}"));
             }
             $existingImages = array_diff($existingImages, [$removedImage]);
         }
+        $existingImages = array_values($existingImages);
         if ($request->hasFile('images')) {
             $newImages = [];
             $maxGalleryImages = 5;
@@ -750,10 +855,11 @@ class AdminController extends Controller
             }
 
             $allImages = array_merge($existingImages, $newImages);
-            $product->images = implode(',', $allImages);
+            $product->images = !empty($allImages) ? implode(',', $allImages) : null;
         } else {
-            $product->images = implode(',', $existingImages);
+            $product->images = !empty($existingImages) ? implode(',', $existingImages) : null;
         }
+
         $product->save();
 
         $removedVariantIds = $request->input('removed_variant_ids', []);
@@ -763,28 +869,28 @@ class AdminController extends Controller
 
         if ($hasVariant) {
             $existingVariantIds = $request->input('existing_variant_ids', []);
-            $attributeValues = [];
 
             foreach ($request->variant_name as $index => $name) {
                 $attributeValue = [
                     'product_id' => $product->id,
                     'product_attribute_id' => $request->product_attribute_id[$index],
                     'value' => $name,
+                    'description' => $request->variant_description[$index] ?? null,
                     'price' => $request->variant_price[$index] ?? null,
                     'quantity' => $request->variant_quantity[$index] ?? 0,
                 ];
+
                 if (isset($existingVariantIds[$index]) && !empty($existingVariantIds[$index])) {
                     $existingVariant = ProductAttributeValue::find($existingVariantIds[$index]);
                     if ($existingVariant) {
                         $existingVariant->update($attributeValue);
-                        $attributeValues[] = $attributeValue;
                     }
                 } else {
                     ProductAttributeValue::create($attributeValue);
-                    $attributeValues[] = $attributeValue;
                 }
             }
             $variantTotalQuantity = $product->attributeValues()->sum('quantity');
+
             if ($variantTotalQuantity > $product->reorder_quantity) {
                 $product->stock_status = 'instock';
             } elseif ($variantTotalQuantity <= $product->reorder_quantity && $variantTotalQuantity > $product->outofstock_quantity) {
@@ -794,6 +900,7 @@ class AdminController extends Controller
             }
         } else {
             $product->attributeValues()->delete();
+
             if ($product->quantity > $product->reorder_quantity) {
                 $product->stock_status = 'instock';
             } elseif ($product->quantity <= $product->reorder_quantity && $product->quantity > $product->outofstock_quantity) {
@@ -1044,6 +1151,12 @@ class AdminController extends Controller
             ->latest()
             ->first();
 
+        $order = Order::with(['orderItems.product', 'user', 'updatedBy'])->findOrFail($order_id);
+        // $transaction = Transaction::where('order_id', $order_id)->first();
+        $transaction = Transaction::where('order_id', $order_id)
+            ->latest()
+            ->first();
+
         return view('admin.order-details', compact('order',  'transaction'));
     }
 
@@ -1071,8 +1184,8 @@ class AdminController extends Controller
     {
         $request->validate([
             'order_id' => 'required|exists:orders,id',
+            'canceled_reason' => 'required_if:order_status,canceled|string|max:500',
             'order_status' => 'required|in:reserved,canceled',
-            'canceled_reason' => 'required_if:order_status,canceled|string|max:500'
         ]);
 
         $order = Order::with('orderItems')->findOrFail($request->order_id);
@@ -1150,8 +1263,9 @@ class AdminController extends Controller
             'transaction' => $transaction,
             'orderItems' => $orderItems
         ]);
-        return $pdf->download('receipt_order_' . $order->id . '.pdf');
+        return $pdf->stream('receipt_order_' . $order->id . '.pdf');
     }
+
 
     // Sliders Page
     public function slides()
@@ -1247,11 +1361,66 @@ class AdminController extends Controller
     }
 
     // Contact PAGE
-    public function contacts()
+    // public function contacts(Request $request)
+    // {
+    //     $contacts = Contact::with(['user', 'replies.admin'])
+    //         ->latest()
+    //         ->paginate(10);
+    //     return view('admin.contacts', compact('contacts'));
+    // }
+
+    public function contacts(Request $request)
     {
-        $contacts = Contact::with(['user', 'replies.admin'])
-            ->latest()
-            ->paginate(10);
+        $search = $request->input('search');
+        $sortBy = $request->input('sort_by', 'newest');
+        $dateFilter = $request->input('date_filter');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $query = Contact::with(['user', 'replies.admin']);
+
+        // Search Filter - by user name and email
+        if ($search) {
+            $query->whereHas('user', function ($userQuery) use ($search) {
+                $userQuery->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Date Filter
+        if ($dateFilter === 'today') {
+            $query->whereDate('created_at', today());
+        } elseif ($dateFilter === '7days') {
+            $query->where('created_at', '>=', now()->subDays(7));
+        } elseif ($dateFilter === '30days') {
+            $query->where('created_at', '>=', now()->subDays(30));
+        } elseif ($dateFilter === 'custom' && $startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        // Sort Filter
+        switch ($sortBy) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'replied':
+                $query->has('replies')->latest();
+                break;
+            default: // newest
+                $query->latest();
+                break;
+        }
+
+        $contacts = $query->paginate(10)->withQueryString();
+
+        // For AJAX requests
+        if ($request->ajax()) {
+            return response()->json([
+                'contacts' => view('partials._contacts-cards', compact('contacts'))->render(),
+                'pagination' => view('partials._contacts-pagination', compact('contacts'))->render()
+            ]);
+        }
+
         return view('admin.contacts', compact('contacts'));
     }
     public function contact_delete($id)
@@ -1325,6 +1494,7 @@ class AdminController extends Controller
             'time_slot' => $request->time_slot,
             'status' => $request->status
         ]);
+
 
 
         $validatedData = $request->validate([
@@ -1494,17 +1664,22 @@ class AdminController extends Controller
         if ($isAdmin) {
             $validationRules['form_type'] = 'required|in:admin';
             $validationRules['sex'] = 'required|in:male,female';
+            $validationRules['position'] = 'required|string|max:255';
         } else {
             $validationRules['role'] = 'required|in:student,employee,non-employee';
             $validationRules['year_level'] = 'nullable|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
             $validationRules['college_id'] = 'nullable|exists:colleges,id';
             $validationRules['course_id'] = 'nullable|exists:courses,id';
             $validationRules['form_type'] = 'nullable|in:user';
+            $validationRules['position'] = 'nullable|string|max:255';
 
             if ($request->role === 'student') {
                 $validationRules['year_level'] = 'required|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
                 $validationRules['college_id'] = 'required|exists:colleges,id';
                 $validationRules['course_id'] = 'required|exists:courses,id';
+            }
+            if ($request->role === 'employee') {
+                $validationRules['position'] = 'required|string|max:255';
             }
         }
 
@@ -1514,6 +1689,7 @@ class AdminController extends Controller
             'year_level.required' => 'Year level is required for students.',
             'college_id.required' => 'College is required for students.',
             'course_id.required' => 'Course is required for students.',
+            'position.required' => 'Position is required for employees and admins.',
         ];
 
         $validated = $request->validate($validationRules, $customMessages);
@@ -1535,6 +1711,9 @@ class AdminController extends Controller
                 $validated['year_level'] = null;
                 $validated['college_id'] = null;
                 $validated['course_id'] = null;
+            }
+            if ($validated['role'] === 'student' || $validated['role'] === 'non-employee') {
+                $validated['position'] = null;
             }
         }
 
@@ -1570,12 +1749,14 @@ class AdminController extends Controller
         $user = User::findOrFail($id);
 
         $isStudent = $user->role === 'student';
+        $isEmployee = $user->role === 'employee' || $user->utype === 'ADM';
 
         $rules = [
             'phone_number' => ['nullable', 'string', 'regex:/^9\d{9}$/'],
             'year_level'   => $isStudent ? ['required', 'in:1st Year,2nd Year,3rd Year,4th Year,5th Year'] : ['nullable'],
             'college_id'   => $isStudent ? ['required', 'exists:colleges,id'] : ['nullable'],
             'course_id'    => $isStudent ? ['required', 'exists:courses,id'] : ['nullable'],
+            'position'     => $isEmployee ? ['required', 'string', 'max:255'] : ['nullable', 'string', 'max:255'],
         ];
 
         $messages = [
@@ -1583,6 +1764,7 @@ class AdminController extends Controller
             'year_level.required' => 'Year level is required for students.',
             'college_id.required' => 'College is required for students.',
             'course_id.required' => 'Course is required for students.',
+            'position.required' => 'Position is required for employees and admins.',
         ];
         $validated = $request->validate($rules, $messages);
         $user->phone_number = $validated['phone_number'] ?? null;
@@ -1593,10 +1775,17 @@ class AdminController extends Controller
             $user->year_level = $validated['year_level'];
             $user->college_id = $validated['college_id'];
             $user->course_id  = $validated['course_id'];
+            $user->position = null;
         } else {
             $user->year_level = null;
             $user->college_id = null;
             $user->course_id  = null;
+
+            if ($isEmployee) {
+                $user->position = $validated['position'];
+            } else {
+                $user->position = null;
+            }
         }
         $user->save();
         return redirect()->route('admin.users')->with('status', 'User has been updated successfully!');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Addon;
 use App\Models\Price;
 use App\Models\Payment;
+use App\Models\Discount;
 use App\Models\Facility;
 use Illuminate\Support\Str;
 use App\Models\Availability;
@@ -60,8 +61,14 @@ class FacilityController extends Controller
     }
     public function create()
     {
-        $addons = Addon::orderBy('name')->get();
-        return view('admin.facilities.create', compact('addons'));
+        // $addons = Addon::where('is_available', true)->orderBy('name')->get();
+        $addons = Addon::where('is_available', true)
+            ->whereNull('facility_id')
+            ->orderBy('name')
+            ->get();
+
+        $discounts = Discount::where('active', 1)->orderBy('name')->get();
+        return view('admin.facilities.create', compact('discounts', 'addons'));
     }
 
     public function store(Request $request)
@@ -187,6 +194,24 @@ class FacilityController extends Controller
             $this->handleFacilityAttributes($facility, $facilityAttributes);
             $this->handlePrices($facility, $prices);
             // $this->handleAddons($facility, $request);
+
+            if (in_array($facility->facility_type, ['whole_place', 'both'])) {
+                $selectedDiscountIds = collect(explode(',', $request->input('selected_discounts', '')))
+                    ->filter()
+                    ->map(fn($id) => (int) $id)
+                    ->unique()
+                    ->values()
+                    ->all();
+                $facility->discounts()->sync($selectedDiscountIds);
+            }
+
+            $selectedAddonIds = collect(explode(',', $request->input('selected_addons', '')))
+                ->filter()
+                ->map(fn($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+            Addon::whereIn('id', $selectedAddonIds)->update(['facility_id' => $facility->id]);
 
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
@@ -348,13 +373,23 @@ class FacilityController extends Controller
     }
     public function edit($id)
     {
-        $facility = Facility::with(['facilityAttributes', 'prices'])->findOrFail($id);
+        $facility = Facility::with(['facilityAttributes', 'prices', 'discounts', 'addons'])->findOrFail($id);
+        $discounts = Discount::where('active', 1)->orderBy('name')->get();
         // $addons = Addon::all();
+        $addons = Addon::where('is_available', true)
+            ->where(function ($query) use ($facility) {
+                $query->whereNull('facility_id')
+                    ->orWhere('facility_id', $facility->id);
+            })
+            ->orderBy('name')
+            ->get();
+
         return view('admin.facilities.edit', [
             'facility' => $facility,
             'facilityAttributes' => $facility->facilityAttributes,
             'prices' => $facility->prices,
-            // 'addons' => $addons,
+            'discounts' => $discounts,
+            'addons' => $addons,
         ]);
     }
     public function update(Request $request, $id, ImageProcessor $imageProcessor)
@@ -529,6 +564,29 @@ class FacilityController extends Controller
             $facility->save();
             $this->syncFacilityAttributes($facility, $facilityAttributes);
             $this->syncPrices($facility, $prices);
+
+            if (in_array($facility->facility_type, ['whole_place', 'both'])) {
+                $selectedDiscountIds = collect(explode(',', $request->input('selected_discounts', '')))
+                    ->filter()
+                    ->map(fn($id) => (int) $id)
+                    ->unique()
+                    ->values()
+                    ->all();
+                $facility->discounts()->sync($selectedDiscountIds);
+            } else {
+                $facility->discounts()->detach();
+            }
+            $selectedAddonIds = collect(explode(',', $request->input('selected_addons', '')))
+                ->filter()
+                ->map(fn($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+
+            Addon::where('facility_id', $facility->id)->update(['facility_id' => null]);
+
+            Addon::whereIn('id', $selectedAddonIds)->update(['facility_id' => $facility->id]);
+
 
             return redirect()->route('admin.facilities.index')->with('success', 'Facility updated successfully.');
         } catch (\Exception $e) {

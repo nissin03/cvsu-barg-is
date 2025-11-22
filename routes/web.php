@@ -12,10 +12,13 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AddonController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\PrintController;
 use App\Http\Controllers\AddonsController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\PasswordController;
+use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\AdminCourseController;
 use App\Http\Controllers\DataPrivacyController;
@@ -31,6 +34,13 @@ use App\Http\Controllers\FacilityReservationController;
 Auth::routes(['verify' => true]);
 
 Route::get('/', [HomeController::class, 'index'])->name('home.index');
+
+Route::get('auth/google', [SocialAuthController::class, 'redirectToGoogle'])
+    ->name('google-auth');
+
+Route::get('auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])
+    ->name('google-auth-callback');
+
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 Route::get('/shop/{product_slug}', [ShopController::class, 'product_details'])->name('shop.product.details');
 
@@ -57,8 +67,7 @@ Route::get('/preorders/accept/{preOrder}', [CartController::class, 'acceptPreOrd
 Route::get('/preorders/cancel/{preOrder}', [CartController::class, 'cancelPreOrder'])->name('preorders.cancel');
 
 
-Route::get('auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->name('google-auth-callback');
-Route::get('auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('google-auth');
+
 
 Route::get('/contact-us', [HomeController::class, 'contact'])->name('home.contact');
 Route::post('/contact-us', [HomeController::class, 'contact_store'])->name('home.contact.store');
@@ -70,9 +79,11 @@ Route::get('/search', [HomeController::class, 'search'])->name('home.search');
 Route::middleware(['auth', 'verified', AuthUser::class])->group(function () {
     Route::get('/account-dashboard', [UserController::class, 'index'])->name('user.index');
     Route::get('/account-order', [UserController::class, 'orders'])->name('user.orders');
-    Route::get('/canceled-order', [UserController::class, 'canceled_order'])
-        ->name('user.canceled-orders');
-    Route::post('/canceled-order/{orderId}/rebook', [UserController::class, 'rebook_canceled_order'])->name('user.order.rebook');
+    // Route::get('/canceled-order', [UserController::class, 'canceled_order'])
+    //     ->name('user.canceled-orders');
+    Route::post('/user/order/{order_id}/rebook', [UserController::class, 'rebook_canceled_order'])->name('user.order.rebook');
+    // Route::get('/canceled-order', [UserController::class, 'canceled_order'])
+    //     ->name('user.canceled-orders');
     Route::get('/account-order/{order_id}/details', [UserController::class, 'order_details'])->name('user.order.details');
     Route::put('/account-order/cancel-order', [UserController::class, 'order_cancel'])->name('user.order.cancel');
 
@@ -123,8 +134,13 @@ Route::middleware(['auth', 'verified', AuthUser::class])->group(function () {
     });
 });
 
-Route::get('/password/set', [PasswordController::class, 'showSetPasswordForm'])->name('password.set');
-Route::post('/password/set', [PasswordController::class, 'setPassword']);
+// Route::get('/password/set', [PasswordController::class, 'showSetPasswordForm'])->name('password.set');
+// Route::post('/password/set', [PasswordController::class, 'setPassword']);
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/password/set', [PasswordController::class, 'showSetPasswordForm'])->name('password.set');
+    Route::post('/password/set', [PasswordController::class, 'setPassword']);
+});
 
 Route::middleware(['auth', AuthAdmin::class])
     ->prefix('admin')
@@ -180,6 +196,13 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/facility/{facilityId}/rooms', [FacilityController::class, 'getRooms'])
             ->name('facility.rooms.get');
 
+        Route::resource('discounts', DiscountController::class)
+            ->except(['show']);
+
+        Route::put('discounts/{discount}/archive', [DiscountController::class, 'archive'])->name('discounts.archive');
+        Route::get('discounts/archived', [DiscountController::class, 'archived'])->name('discounts.archived');
+        Route::put('discounts/{discount}/restore', [DiscountController::class, 'restore'])->name('discounts.restore');
+        Route::post('discounts/restore-bulk', [DiscountController::class, 'restoreBulk'])->name('discounts.restore.bulk');
 
         // Admin notification routes
         Route::prefix('notifications')->group(function () {
@@ -222,6 +245,8 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/facilities/reservations/{id}', [FacilityReservationController::class, 'show'])->name('admin.facilities.reservations.show');
         Route::patch('/facilities/reservations/{reservation}/status', [FacilityReservationController::class, 'update'])->name('admin.facilities.reservations.update');
         Route::patch('/facilities/reservations/qualification/{id}/status', [FacilityReservationController::class, 'updateQualificationApproval'])->name('admin.facilities.reservations.qualification.update');
+        Route::put('/addon-payments/{id}', [FacilityReservationController::class, 'updateAddonPayment'])
+            ->name('admin.addon-payments.update');
 
         Route::get('/slide', [AdminController::class, 'slides'])->name('admin.slides');
         Route::get('/slide/add', [AdminController::class, 'slide_add'])->name('admin.slide.add');
@@ -268,21 +293,21 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::delete('/courses/{id}/force-delete', [AdminCourseController::class, 'forceDelete'])->name('admin.courses.force-delete');
 
         // Addons
-        Route::get('addons', [\App\Http\Controllers\AddonsController::class, 'index'])->name('admin.addons');
-        Route::get('addons/create', [\App\Http\Controllers\AddonsController::class, 'create'])->name('admin.addons.create');
-        Route::post('addons', [\App\Http\Controllers\AddonsController::class, 'store'])->name('admin.addons.store');
-        Route::get('/addons/{id}/edit', [\App\Http\Controllers\AddonsController::class, 'edit'])->name('admin.addons.edit');
-        Route::put('/addons/update/{id}', [\App\Http\Controllers\AddonsController::class, 'update'])->name('admin.addons.update');
-            Route::delete('/addons/{id}', [\App\Http\Controllers\AddonsController::class, 'destroy'])->name('admin.addons.destroy');
-    
+        Route::get('addons', [AddonsController::class, 'index'])->name('admin.addons');
+        Route::get('addons/create', [AddonsController::class, 'create'])->name('admin.addons.create');
+        Route::post('addons', [AddonsController::class, 'store'])->name('admin.addons.store');
+        Route::get('/addons/{id}/edit', [AddonsController::class, 'edit'])->name('admin.addons.edit');
+        Route::put('/addons/update/{id}', [AddonsController::class, 'update'])->name('admin.addons.update');
+        Route::delete('/addons/{id}', [AddonsController::class, 'destroy'])->name('admin.addons.destroy');
+
         // Addon archive routes
-        Route::get('/addons/archive', [\App\Http\Controllers\AddonsController::class, 'archive'])->name('admin.addons.archive');
-        Route::patch('/addons/{id}/restore', [\App\Http\Controllers\AddonsController::class, 'restore'])->name('admin.addons.restore');
-        Route::delete('/addons/{id}/force-delete', [\App\Http\Controllers\AddonsController::class, 'forceDelete'])->name('admin.addons.force-delete');
+        Route::get('/addons/archive', [AddonsController::class, 'archive'])->name('admin.addons.archive');
+        Route::patch('/addons/{id}/restore', [AddonsController::class, 'restore'])->name('admin.addons.restore');
+        Route::delete('/addons/{id}/force-delete', [AddonsController::class, 'forceDelete'])->name('admin.addons.force-delete');
 
         //Validation for duplicate names in Addons
-        Route::get('/addons/get-names', [\App\Http\Controllers\AddonsController::class, 'getAddonNames'])->name('admin.addons.getNames');
-        
+        Route::get('/addons/get-names', [AddonsController::class, 'getAddonNames'])->name('admin.addons.getNames');
+
         Route::get('/search', [AdminController::class, 'searchproduct'])->name('admin.searchproduct');
 
         Route::get('/index-weekly', [AdminController::class, 'indexWeekly'])->name('admin.index-weekly');
@@ -292,6 +317,7 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/reports', [ReportController::class, 'generateReport'])->name('admin.reports');
         Route::get('/report-user', [ReportController::class, 'generateUser'])->name('admin.report-user');
         Route::get('/report-product', [ReportController::class, 'generateProduct'])->name('admin.report-product');
+        Route::get('/admin/reports/product-list', [ReportController::class, 'productList'])->name('admin.report.product-list');
         Route::get('/report-inventory', [ReportController::class, 'generateInventory'])->name('admin.report-inventory');
         Route::get('/report-statements', [ReportController::class, 'listBillingStatements'])->name('admin.report-statements');
         Route::get('/report-statement/{orderId}', [ReportController::class, 'generateBillingStatement'])->name('admin.report-statement');
@@ -300,12 +326,15 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/payment-details/{paymentId}', [ReportController::class, 'showPaymentDetails'])->name('admin.sales-report-details');
 
         Route::get('/facility-statement', [ReportController::class, 'facilitiesStatement'])->name('admin.facility-statement');
+        Route::get('/admin/facility-statement/addons', [ReportController::class, 'getAddonsData'])
+            ->name('admin.facility-statement.addons');
 
-        Route::get('/report-statements/download', [PdfController::class, 'downloadBillingStatements'])->name('admin.report-statements.download');
+        Route::post('/report-statements/download', [PdfController::class, 'downloadBillingStatements'])->name('admin.report-statements.download');
         Route::post('/downloadPdf', [PdfController::class, 'downloadPdf'])->name('admin.downloadPdf');
         Route::post('/report-user/pdf', [PdfController::class, 'downloadUserReportPdf'])->name('admin.report-user.pdf');
         Route::get('/report-inventory/pdf', [PdfController::class, 'downloadInventoryReportPdf'])->name('admin.report-inventory.pdf');
         Route::get('/report-product/download', [PdfController::class, 'downloadProduct'])->name('admin.report-product.download');
+        Route::post('/admin/reports/product-list/download', [PdfController::class, 'downloadProductList'])->name('admin.report.product-list.download');
         Route::post('/sales-report/download', [PdfController::class, 'downloadInputSales'])->name('admin.download-input-sales');
         Route::post('/user-report/download', [PdfController::class, 'downloadInputUsers'])->name('admin.download-input-users');
         Route::get('/facility-statement/download', [PdfController::class, 'facilityStatement'])->name('admin.facility-statement.download');
@@ -315,6 +344,7 @@ Route::middleware(['auth', AuthAdmin::class])
             $reportController = new ReportController();
             $periods = $reportController->getAvailablePeriods();
             $dateParams = $reportController->getDateParameters(new \Illuminate\Http\Request());
+
 
             return view('admin.reports.product-input-sales', [
                 'chartData' => null,
@@ -335,4 +365,31 @@ Route::middleware(['auth', AuthAdmin::class])
         });
 
         Route::get('/report/facilities', [AdminController::class, 'generateFacilitespayment'])->name('admin.report.facilities');
+
+
+        // Print Data
+        // Products
+        Route::get('/admin/reports/print/product', [PrintController::class, 'printProduct'])->name('admin.report-product.print');
+
+        // signature
+        // In your web.php routes file
+        Route::resource('signatures', SignatureController::class)->names([
+            'index' => 'admin.signatures.index',
+            'create' => 'admin.signatures.create',
+            'store' => 'admin.signatures.store',
+            'show' => 'admin.signatures.show',
+            'edit' => 'admin.signatures.edit',
+            'update' => 'admin.signatures.update',
+            'destroy' => 'admin.signatures.destroy'
+        ]);
+
+        // Archive routes for signatures
+        Route::get('/admin/signatures/archive', [SignatureController::class, 'archive'])
+            ->name('admin.signatures.archive');
+        Route::patch('/admin/signatures/{id}/restore', [SignatureController::class, 'restore'])
+            ->name('admin.signatures.restore');
+        Route::delete('/admin/signatures/{id}/force-delete', [SignatureController::class, 'forceDelete'])
+            ->name('admin.signatures.force-delete');
+
+        //  Route::get('signature', [SignatureController::class, 'index'])->name('admin.signatures.index');
     });
