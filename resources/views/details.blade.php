@@ -351,10 +351,17 @@
                             </a>
 
                             <a href="https://twitter.com/intent/tweet?url={{ urlencode(request()->url()) }}&text=Check out this product: {{ urlencode($product->name) }}&hashtags=Shop"
-                                class="btn btn-outline-info btn-sm" target="_blank" rel="noopener"
-                                aria-label="Share on Twitter">
-                                <i class="fab fa-twitter"></i>
+                                class="btn btn-outline-info btn-sm btn-share-x" target="_blank" rel="noopener"
+                                aria-label="Share on X">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16"
+                                    height="16">
+                                    <path fill="currentColor"
+                                        d="M389.2 48h70.6L305.5 224.2 487 464H345.2L233.7 318.6 106.5 464H35.7L200.8 275.5 26.8 48h144.3l96.4 126.4L389.2 48z" />
+                                </svg>
                             </a>
+
+
+
 
                             <button type="button" class="btn btn-outline-secondary btn-sm" id="copy-link-btn"
                                 aria-label="Copy link">
@@ -464,36 +471,16 @@
                         <div class="col product-item">
                             <div class="product-card h-100">
                                 <div class="product-image-wrapper">
-                                    <div class="swiper-container js-swiper-slider">
-                                        <div class="swiper-wrapper">
-                                            <div class="swiper-slide">
-                                                <a href="{{ route('shop.product.details', ['product_slug' => $rproduct->slug]) }}"
-                                                    class="product-link">
-                                                    <img loading="lazy"
-                                                        src="{{ asset('uploads/products') }}/{{ $rproduct->image }}"
-                                                        alt="{{ $rproduct->name }}" class="product-image"
-                                                        onerror="this.src='{{ asset('images/no-image.jpg') }}'">
-                                                </a>
-                                            </div>
-                                            @foreach (explode(',', $rproduct->images) as $gimg)
-                                                @if (trim($gimg) !== '')
-                                                    <div class="swiper-slide">
-                                                        <img loading="lazy"
-                                                            src="{{ asset('uploads/products') }}/{{ trim($gimg) }}"
-                                                            alt="{{ $rproduct->name }}" class="product-image"
-                                                            onerror="this.src='{{ asset('images/no-image.jpg') }}'">
-                                                    </div>
-                                                @endif
-                                            @endforeach
-                                        </div>
-                                        <div class="swiper-pagination slideshow-pagination"></div>
-                                        <div class="swiper-button-next"></div>
-                                        <div class="swiper-button-prev"></div>
-                                    </div>
-                                    <div class="product-overlay">
-                                        <span class="view-product">View Product</span>
-                                    </div>
+                                    <a href="{{ route('shop.product.details', ['product_slug' => $rproduct->slug]) }}"
+                                        class="product-link d-block h-100">
+                                        <img loading="lazy" src="{{ asset('uploads/products') }}/{{ $rproduct->image }}"
+                                            alt="{{ $rproduct->name }}" class="product-image"
+                                            onerror="this.src='{{ asset('images/no-image.jpg') }}'">
+                                    </a>
+
+
                                 </div>
+
 
                                 <div class="product-details"
                                     onclick="window.location.href='{{ route('shop.product.details', ['product_slug' => $rproduct->slug]) }}'">
@@ -722,6 +709,19 @@
             width: 100%;
             height: auto;
             object-fit: cover;
+        }
+
+        .social-share .btn-share-x {
+            border-color: #000;
+            color: #000;
+        }
+
+        .social-share .btn-share-x:hover,
+        .social-share .btn-share-x:focus,
+        .social-share .btn-share-x:active {
+            background-color: #000;
+            border-color: #000;
+            color: #fff;
         }
 
         .thumbnail-img.active {
