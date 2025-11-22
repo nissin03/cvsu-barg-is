@@ -144,6 +144,12 @@
         .align-items-center {
             align-items: center;
         }
+
+        .table-transaction th,
+        .table-transaction td {
+            width: 50%;
+            vertical-align: middle;
+        }
     </style>
 
     <div class="main-content-inner">
@@ -1041,28 +1047,12 @@
             </div> --}}
 
             <div class="wg-box mt-5 table-responsive">
-                <h5 class="mb-3">Transaction Summary</h5>
+                <h5 class="mb-3">Transaction Details</h5>
 
                 <table class="table table-bordered table-striped table-transaction mb-0">
                     <tbody>
-
-                        {{-- SUBTOTAL / GROSS TOTAL --}}
-                        {{-- @if ($reservation->total_price)
-                            <tr>
-                                <th style="width: 35%;">Subtotal</th>
-                                <td style="width: 65%;" class="fw-semibold">
-                                    ₱{{ number_format($reservation->total_price, 2) }}
-                                </td>
-                            </tr>
-                        @endif --}}
-
-
                         {{-- DISCOUNT SECTION --}}
                         @if ($reservation->discount_amount && $reservation->discount_amount > 0)
-                            {{-- <tr class="table-light">
-                                <th colspan="2" class="fw-bold text-primary">Discount Details</th>
-                            </tr> --}}
-
                             <tr>
                                 <th>Discount Type</th>
                                 <td>
@@ -1079,13 +1069,6 @@
                                     @endif
                                 </td>
                             </tr>
-
-                            {{-- <tr>
-                                <th>Discount Amount</th>
-                                <td class="text-success fw-bold">
-                                    ₱{{ number_format($reservation->discount_amount, 2) }}
-                                </td>
-                            </tr> --}}
 
                             @if ($reservation->discount_proof_path)
                                 <tr>

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\QualificationApproval;
 use App\Models\TransactionReservation;
 use App\Services\AvailabilityRestorationService;
+use App\Notifications\ReservationCanceledNotification;
 
 class FacilityReservationController extends Controller
 {
@@ -446,7 +447,9 @@ class FacilityReservationController extends Controller
         $reservation->load([
             'transactionReservations.availability.qualificationApprovals',
             'transactionReservations.addonTransactions.addonReservation',
-            'transactionReservations.addonTransactions.addonPayment'
+            'transactionReservations.addonTransactions.addonPayment',
+            'availability.facility',
+            'user',
         ]);
 
         $qualificationApprovals = $reservation->transactionReservations
@@ -529,6 +532,9 @@ class FacilityReservationController extends Controller
             }
 
             DB::commit();
+            if ($newStatus === 'canceled' && $oldStatus !== 'canceled') {
+                $reservation->user->notify(new ReservationCanceledNotification($reservation, false));
+            }
             return response()->json([
                 'message' => 'Status updated successfully',
                 'new_status' => $validated['status'],

@@ -79,12 +79,11 @@ Route::get('/search', [HomeController::class, 'search'])->name('home.search');
 Route::middleware(['auth', 'verified', AuthUser::class])->group(function () {
     Route::get('/account-dashboard', [UserController::class, 'index'])->name('user.index');
     Route::get('/account-order', [UserController::class, 'orders'])->name('user.orders');
-    Route::get('/canceled-order', [UserController::class, 'canceled_order'])
-        ->name('user.canceled-orders');
-    Route::post('/canceled-order/{orderId}/rebook', [UserController::class, 'rebook_canceled_order'])->name('user.order.rebook');
-    Route::get('/canceled-order', [UserController::class, 'canceled_order'])
-        ->name('user.canceled-orders');
-    Route::post('/canceled-order/{orderId}/rebook', [UserController::class, 'rebook_canceled_order'])->name('user.order.rebook');
+    // Route::get('/canceled-order', [UserController::class, 'canceled_order'])
+    //     ->name('user.canceled-orders');
+    Route::post('/user/order/{order_id}/rebook', [UserController::class, 'rebook_canceled_order'])->name('user.order.rebook');
+    // Route::get('/canceled-order', [UserController::class, 'canceled_order'])
+    //     ->name('user.canceled-orders');
     Route::get('/account-order/{order_id}/details', [UserController::class, 'order_details'])->name('user.order.details');
     Route::put('/account-order/cancel-order', [UserController::class, 'order_cancel'])->name('user.order.cancel');
 

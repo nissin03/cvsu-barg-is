@@ -4,11 +4,12 @@ namespace App\Console\Commands;
 
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\ProductAttributeValue;
-use App\Notifications\OrderCanceledNotification;
 use Illuminate\Support\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Models\ProductAttributeValue;
+use App\Notifications\OrderCanceledNotification;
 
 class CancelUnpaidOrders extends Command
 {
@@ -55,6 +56,12 @@ class CancelUnpaidOrders extends Command
                                 $variant->quantity += $item->quantity;
                                 $variant->stock_status = 'instock';
                                 $variant->save();
+
+                                Log::info("Restored variant stock", [
+                                    'variant_id' => $variant->id,
+                                    'quantity_restored' => $item->quantity,
+                                    'new_quantity' => $variant->quantity
+                                ]);
                             }
                         } else {
                             $product = Product::find($item->product_id);
@@ -62,6 +69,12 @@ class CancelUnpaidOrders extends Command
                                 $product->quantity += $item->quantity;
                                 $product->stock_status = 'instock';
                                 $product->save();
+
+                                Log::info("Restored product stock", [
+                                    'product_id' => $product->id,
+                                    'quantity_restored' => $item->quantity,
+                                    'new_quantity' => $product->quantity
+                                ]);
                             }
                         }
                     }
@@ -71,6 +84,13 @@ class CancelUnpaidOrders extends Command
                         'canceled_reason' => 'Your reservation was not claimed or paid within 24 hours after the reservation date.',
                         'updated_by' => null,
                     ]);
+
+                    if ($order->transaction) {
+                        $order->transaction->update([
+                            'status' => 'canceled'
+                        ]);
+                    }
+
                     // notify user
                     if ($order->user) {
                         $order->user->notify(new OrderCanceledNotification($order));

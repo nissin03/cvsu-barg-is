@@ -4,13 +4,14 @@ namespace App\Console\Commands;
 
 use Carbon\Carbon;
 use App\Models\Payment;
+use App\Models\AddonPayment;
 use Illuminate\Console\Command;
+use App\Models\AddonTransaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\QualificationApproval;
-use App\Models\AddonPayment;
-use App\Models\AddonTransaction;
 use App\Services\AvailabilityRestorationService;
+use App\Notifications\ReservationCanceledNotification;
 
 class CancelUnpaidReservation extends Command
 {
@@ -30,14 +31,6 @@ class CancelUnpaidReservation extends Command
         // Calculate exactly 14 days from now
         $exactlyTwoWeeksFromNow = $now->copy()->addDays(14)->toDateString();
 
-        Log::info('Running auto-cancel command', [
-            'current_date' => $now->toDateString(),
-            'target_date' => $exactlyTwoWeeksFromNow,
-            'execution_time' => $now->toDateTimeString()
-        ]);
-
-        // Find reservations where ANY of their availability dates is EXACTLY 14 days from today
-        // This targets the EARLIEST date of multi-day reservations
         $reservations = Payment::with([
             'availability.facility',
             'transactionReservations.availability',
@@ -63,23 +56,11 @@ class CancelUnpaidReservation extends Command
 
             // Only cancel if the earliest date is exactly 14 days away
             $shouldCancel = $earliestDate && Carbon::parse($earliestDate)->toDateString() === $exactlyTwoWeeksFromNow;
-
-            if (!$shouldCancel) {
-                Log::info('Skipping reservation - earliest date does not match target', [
-                    'payment_id' => $reservation->id,
-                    'earliest_date' => $earliestDate,
-                    'target_date' => $exactlyTwoWeeksFromNow
-                ]);
-            }
-
             return $shouldCancel;
         });
 
         if ($reservations->isEmpty()) {
             $this->info("No unpaid reservations found with earliest date on {$exactlyTwoWeeksFromNow}.");
-            Log::info('No reservations to cancel', [
-                'target_date' => $exactlyTwoWeeksFromNow
-            ]);
             return Command::SUCCESS;
         }
 
@@ -106,19 +87,6 @@ class CancelUnpaidReservation extends Command
                         ->max();
 
                     $reason = "Reservation automatically canceled: Payment not received. Reservation starts in {$daysUntilStart} days (on {$startDate->format('M d, Y')}). Payment was required 2 weeks before the start date.";
-
-                    Log::info('Auto-canceling unpaid reservation', [
-                        'payment_id' => $reservation->id,
-                        'user_id' => $reservation->user_id,
-                        'user_name' => $reservation->user->name ?? 'Unknown',
-                        'earliest_date' => $earliestDate,
-                        'latest_date' => $latestDate,
-                        'days_until_start' => $daysUntilStart,
-                        'reason' => $reason,
-                        'facility' => $reservation->availability->facility->name ?? 'Unknown',
-                        'total_availability_days' => $reservation->transactionReservations->count()
-                    ]);
-
                     // Restore availability capacity for ALL dates in the reservation
                     $this->availabilityService->resetReservationAvailability($reservation);
 
@@ -155,13 +123,6 @@ class CancelUnpaidReservation extends Command
                                 $addonReservation->date_to = null;
 
                                 $addonReservation->save();
-
-                                Log::info('Addon quantity restored and dates cleared', [
-                                    'addon_reservation_id' => $addonReservation->id,
-                                    'quantity_restored' => $quantityToRestore,
-                                    'new_remaining_quantity' => $addonReservation->remaining_quantity,
-                                    'dates_cleared' => true
-                                ]);
                             }
 
                             if ($addonTransaction->addonPayment) {
@@ -170,12 +131,6 @@ class CancelUnpaidReservation extends Command
                                 if (!in_array($addonPayment->status, ['forfeit', 'refunded'])) {
                                     $addonPayment->status = 'forfeit';
                                     $addonPayment->save();
-                                    Log::info('Addon payment forfeited', [
-                                        'addon_payment_id' => $addonPayment->id,
-                                        'addon_id' => $addonTransaction->addon_id,
-                                        'payment_id' => $reservation->id,
-                                        'status' => 'forfeit'
-                                    ]);
                                 }
                             }
                         }
@@ -192,6 +147,11 @@ class CancelUnpaidReservation extends Command
                             'status' => 'canceled',
                             'updated_at' => $now
                         ]);
+                    // Send notification to user
+                    try {
+                        $reservation->user->notify(new ReservationCanceledNotification($reservation, true));
+                    } catch (\Exception $notificationError) {
+                    }
 
                     $canceledCount++;
                 });
@@ -199,21 +159,11 @@ class CancelUnpaidReservation extends Command
                 $this->info("✓ Canceled Reservation #{$reservation->id} (User: {$reservation->user->name})");
             } catch (\Exception $e) {
                 $this->error("✗ Failed to cancel Reservation #{$reservation->id}: " . $e->getMessage());
-                Log::error('Auto-cancel failed', [
-                    'payment_id' => $reservation->id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
             }
         }
 
         if ($canceledCount > 0) {
             $this->info("Successfully canceled {$canceledCount} unpaid reservation(s).");
-            Log::info('Auto-cancel batch completed', [
-                'canceled_count' => $canceledCount,
-                'target_date' => $exactlyTwoWeeksFromNow,
-                'timestamp' => $now->toDateTimeString()
-            ]);
         } else {
             $this->warn("No reservations were successfully canceled.");
         }
