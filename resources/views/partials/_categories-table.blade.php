@@ -93,9 +93,9 @@
                                         method="POST">
                                         @csrf
                                         @method('DELETE')
-                                        <div class="item text-danger delete" title="Archive">
+                                        <button class="item text-danger delete" title="Archive">
                                             <i class="icon-archive"></i>
-                                        </div>
+                                        </button>
                                     </form>
                                 </div>
                             </td>
