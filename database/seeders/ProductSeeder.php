@@ -650,11 +650,13 @@ Usage: Perfect for beverages on campus',
             [
                 'name'       => 'Cap',
                 'category'   => 'Apparel > Cap',
+                'price'      => 150,
                 'attributes' => [],
             ],
             [
                 'name'       => 'Bonnet',
                 'category'   => 'Apparel > Bonnet',
+                'price'      => 150,
                 'attributes' => [],
             ],
             [
@@ -672,6 +674,7 @@ Usage: Perfect for beverages on campus',
             [
                 'name'       => 'Case of Utensils',
                 'category'   => 'Home & Kitchen > Utensils',
+                'price'      => 100,
                 'attributes' => [],
             ],
             [
@@ -736,9 +739,6 @@ Usage: Perfect for beverages on campus',
                     'Colors' => [
                         'Black' => 40,
                         'Green' => 40,
-                    ],
-                    'Types' => [
-                        'Parker' => 50,
                     ],
                 ],
             ],
