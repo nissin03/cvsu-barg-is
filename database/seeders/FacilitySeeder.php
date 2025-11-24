@@ -406,44 +406,44 @@ class FacilitySeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // DB::table('prices')->insert([
-        //     'facility_id' => $rolleHall,
-        //     'name' => 'CvSU Faculty, CvSU Employees, Senior, PWD',
-        //     'value' => 24000.00,
-        //     'price_type' => 'whole',
-        //     'is_based_on_days' => false,
-        //     'is_there_a_quantity' => false,
-        //     'date_from' => Carbon::now(),
-        //     'date_to' => Carbon::now()->addMonths(6),
-        //     'created_at' => now(),
-        //     'updated_at' => now(),
-        // ]);
+        DB::table('prices')->insert([
+            'facility_id' => $rolleHall,
+            'name' => 'CvSU Faculty, CvSU Employees, Senior, PWD',
+            'value' => 24000.00,
+            'price_type' => 'whole',
+            'is_based_on_days' => false,
+            'is_there_a_quantity' => false,
+            'date_from' => Carbon::now(),
+            'date_to' => Carbon::now()->addMonths(6),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
-        // DB::table('prices')->insert([
-        //     'facility_id' => $rolleHall,
-        //     'name' => 'CvSU Retirees, CvSU Alumni',
-        //     'value' => 21000.00,
-        //     'price_type' => 'whole',
-        //     'is_based_on_days' => false,
-        //     'is_there_a_quantity' => false,
-        //     'date_from' => Carbon::now(),
-        //     'date_to' => Carbon::now()->addMonths(6),
-        //     'created_at' => now(),
-        //     'updated_at' => now(),
-        // ]);
+        DB::table('prices')->insert([
+            'facility_id' => $rolleHall,
+            'name' => 'CvSU Retirees, CvSU Alumni',
+            'value' => 21000.00,
+            'price_type' => 'whole',
+            'is_based_on_days' => false,
+            'is_there_a_quantity' => false,
+            'date_from' => Carbon::now(),
+            'date_to' => Carbon::now()->addMonths(6),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
-        // DB::table('prices')->insert([
-        //     'facility_id' => $rolleHall,
-        //     'name' => 'Churches (Anniversary, praise and worship)',
-        //     'value' => 15000.00,
-        //     'price_type' => 'whole',
-        //     'is_based_on_days' => false,
-        //     'is_there_a_quantity' => false,
-        //     'date_from' => Carbon::now(),
-        //     'date_to' => Carbon::now()->addMonths(6),
-        //     'created_at' => now(),
-        //     'updated_at' => now(),
-        // ]);
+        DB::table('prices')->insert([
+            'facility_id' => $rolleHall,
+            'name' => 'Churches (Anniversary, praise and worship)',
+            'value' => 15000.00,
+            'price_type' => 'whole',
+            'is_based_on_days' => false,
+            'is_there_a_quantity' => false,
+            'date_from' => Carbon::now(),
+            'date_to' => Carbon::now()->addMonths(6),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         // Whole Place Facility Type - Icon
         $icon = DB::table('facilities')->insertGetId([
@@ -547,44 +547,44 @@ class FacilitySeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // DB::table('prices')->insert([
-        //     'facility_id' => $icon,
-        //     'name' => 'CvSU Faculty, CvSU Employees, Senior, PWD',
-        //     'value' => 48000.00,
-        //     'price_type' => 'whole',
-        //     'is_based_on_days' => false,
-        //     'is_there_a_quantity' => false,
-        //     'date_from' => Carbon::now(),
-        //     'date_to' => Carbon::now()->addMonths(6),
-        //     'created_at' => now(),
-        //     'updated_at' => now(),
-        // ]);
+        DB::table('prices')->insert([
+            'facility_id' => $icon,
+            'name' => 'CvSU Faculty, CvSU Employees, Senior, PWD',
+            'value' => 48000.00,
+            'price_type' => 'whole',
+            'is_based_on_days' => false,
+            'is_there_a_quantity' => false,
+            'date_from' => Carbon::now(),
+            'date_to' => Carbon::now()->addMonths(6),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
-        // DB::table('prices')->insert([
-        //     'facility_id' => $icon,
-        //     'name' => 'CvSU Retirees, CvSU Alumni',
-        //     'value' => 42000.00,
-        //     'price_type' => 'whole',
-        //     'is_based_on_days' => false,
-        //     'is_there_a_quantity' => false,
-        //     'date_from' => Carbon::now(),
-        //     'date_to' => Carbon::now()->addMonths(6),
-        //     'created_at' => now(),
-        //     'updated_at' => now(),
-        // ]);
+        DB::table('prices')->insert([
+            'facility_id' => $icon,
+            'name' => 'CvSU Retirees, CvSU Alumni',
+            'value' => 42000.00,
+            'price_type' => 'whole',
+            'is_based_on_days' => false,
+            'is_there_a_quantity' => false,
+            'date_from' => Carbon::now(),
+            'date_to' => Carbon::now()->addMonths(6),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
-        // DB::table('prices')->insert([
-        //     'facility_id' => $icon,
-        //     'name' => 'Churches (Anniversary, praise and worship)',
-        //     'value' => 30000.00,
-        //     'price_type' => 'whole',
-        //     'is_based_on_days' => false,
-        //     'is_there_a_quantity' => false,
-        //     'date_from' => Carbon::now(),
-        //     'date_to' => Carbon::now()->addMonths(6),
-        //     'created_at' => now(),
-        //     'updated_at' => now(),
-        // ]);
+        DB::table('prices')->insert([
+            'facility_id' => $icon,
+            'name' => 'Churches (Anniversary, praise and worship)',
+            'value' => 30000.00,
+            'price_type' => 'whole',
+            'is_based_on_days' => false,
+            'is_there_a_quantity' => false,
+            'date_from' => Carbon::now(),
+            'date_to' => Carbon::now()->addMonths(6),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         // Both Facility Type - Swimming Pool
         $swimmingPool = DB::table('facilities')->insertGetId([
@@ -649,27 +649,27 @@ class FacilitySeeder extends Seeder
         ]);
 
         // Swimming Pool Prices
-        // DB::table('prices')->insert([
-        //     'facility_id' => $swimmingPool,
-        //     'name' => 'CvSU Students, PWD, and Senior Citizens',
-        //     'value' => 120.00,
-        //     'price_type' => 'individual',
-        //     'is_based_on_days' => false,
-        //     'is_there_a_quantity' => true,
-        //     'created_at' => now(),
-        //     'updated_at' => now(),
-        // ]);
+        DB::table('prices')->insert([
+            'facility_id' => $swimmingPool,
+            'name' => 'CvSU Students, PWD, and Senior Citizens',
+            'value' => 120.00,
+            'price_type' => 'individual',
+            'is_based_on_days' => false,
+            'is_there_a_quantity' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
-        // DB::table('prices')->insert([
-        //     'facility_id' => $swimmingPool,
-        //     'name' => 'CvSU Employees, Retirees, and Alumni',
-        //     'value' => 105.00,
-        //     'price_type' => 'individual',
-        //     'is_based_on_days' => false,
-        //     'is_there_a_quantity' => true,
-        //     'created_at' => now(),
-        //     'updated_at' => now(),
-        // ]);
+        DB::table('prices')->insert([
+            'facility_id' => $swimmingPool,
+            'name' => 'CvSU Employees, Retirees, and Alumni',
+            'value' => 105.00,
+            'price_type' => 'individual',
+            'is_based_on_days' => false,
+            'is_there_a_quantity' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         DB::table('prices')->insert([
             'facility_id' => $swimmingPool,
