@@ -17,12 +17,6 @@ class Payment extends Model
         'canceled_at',
         'cancellation_reason',
         'updated_by',
-        'discount_id',
-        'gross_total',
-        'discount_percent',
-        'discount_amount',
-        'discount_applies_to',
-        'discount_proof_path',
     ];
 
 
@@ -80,8 +74,12 @@ class Payment extends Model
             ->orderBy('date_from');
     }
 
-    public function discount()
+    public function priceDiscounts()
     {
-        return $this->belongsTo(Discount::class);
+        return $this->hasMany(PaymentPriceDiscount::class);
     }
+    // public function discount()
+    // {
+    //     return $this->belongsTo(Discount::class);
+    // }
 }

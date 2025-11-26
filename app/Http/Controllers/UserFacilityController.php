@@ -19,6 +19,7 @@ use App\Models\AddonTransaction;
 use App\Models\FacilityAttribute;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\PaymentPriceDiscount;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use App\Models\QualificationApproval;
@@ -66,16 +67,6 @@ class UserFacilityController extends Controller
         }
 
         $facility = Facility::with('facilityAttributes', 'prices', 'addons')->where('slug', $slug)->firstOrFail();
-        // $discounts = ($facility->facility_type === 'individual')
-        //     ? collect()
-        //     : Discount::where('active', true)->orderBy('name')->get();
-        $discounts = Discount::where('active', true)
-            ->whereHas('facilities', function ($query) use ($facility) {
-                $query->where('facility_id', $facility->id);
-            })
-            ->orderBy('name')
-            ->get();
-
         $sexRestriction = $facility->facilityAttributes->pluck('sex_restriction')->filter()->first();
         $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
         $availableRoom = $facility->facilityAttributes->first(function ($attribute) {
@@ -95,7 +86,7 @@ class UserFacilityController extends Controller
             }]);
         }
 
-        return view('user.facilities.details', compact('availableRoom', 'wholeAttr', 'facility', 'sexRestriction', 'discounts'));
+        return view('user.facilities.details', compact('availableRoom', 'wholeAttr', 'facility', 'sexRestriction'));
     }
 
 
@@ -107,13 +98,9 @@ class UserFacilityController extends Controller
             'total_price' => 'required|numeric|min:0',
             'facility_type' => 'required|in:individual,whole_place,both',
             'selected_price' => 'nullable|numeric|min:0',
-            'discount_id' => 'nullable|exists:discounts,id',
         ]);
         $facility = Facility::with(['facilityAttributes', 'prices'])->find($request->facility_id);
         $userSex = Auth::user()->sex;
-
-        $discount = $this->getValidatedDiscount($request);
-
         if ($facility->facility_type === 'individual') {
             $availableRoom = $facility->facilityAttributes->first(function ($attribute) {
                 return $attribute->capacity > 0;
@@ -122,12 +109,19 @@ class UserFacilityController extends Controller
             $initialPrice   = 0;
             $addonsTotal    = 0;
             $refundableTotal = 0;
+            $requiresDiscountProof = false;
+            $discountPriceId = null;
+            $internalDiscountPriceIds = [];
 
             if ($request->has('internal_quantity')) {
                 foreach ($request->internal_quantity as $priceId => $quantity) {
                     $price = $facility->prices()->find($priceId);
                     if ($price && $quantity > 0) {
                         $initialPrice += $price->value * $quantity;
+                    }
+                    if ($price && $price->is_this_a_discount) {
+                        $requiresDiscountProof = true;
+                        $internalDiscountPriceIds[] = $priceId;
                     }
                 }
             }
@@ -146,14 +140,15 @@ class UserFacilityController extends Controller
                     $days      = $startDate->diffInDays($endDate) + 1;
                     $initialPrice += $selectedPrice * $days;
                 }
+                if ($price && $price->is_this_a_discount) {
+                    $requiresDiscountProof = true;
+                    $discountPriceId = $price->id;
+                }
             }
             [$addonsTotal, $refundableTotal] = $this->addon_reserve($request, $facility);
 
             $subtotal   = $initialPrice + $addonsTotal;
-            $discount = $this->getValidatedDiscount($request);
-            list($grossTotal, $discountAmount, $discountPercent) =
-                $this->calculateDiscount($discount, $initialPrice, $addonsTotal, $subtotal);
-            $totalPrice = $grossTotal  + $refundableTotal;
+            $totalPrice = $subtotal   + $refundableTotal;
 
             $reservationData = [
                 'facility_id' => $facility->id,
@@ -173,6 +168,9 @@ class UserFacilityController extends Controller
                 'room_capacity' => $request->room_capacity ?? null,
                 'selected_price' => $request->selected_price ?? null,
                 'price_id' => $request->price_id ?? null,
+                'requires_discount_proof' => $requiresDiscountProof,
+                'discount_price_id' => $discountPriceId,
+                'internal_discount_price_ids' => $internalDiscountPriceIds,
                 'internal_quantity' => $request->internal_quantity ?? [],
                 'price_values' => $request->price_values ?? [],
                 'price_names' => $request->price_names ?? [],
@@ -188,10 +186,6 @@ class UserFacilityController extends Controller
                 'addon_checkbox' => $request->addon_checkbox ?? [],
                 'refundable_addon_prices' => $request->refundable_addon_prices ?? [],
                 'refundable_addon_names' => $request->refundable_addon_names ?? [],
-                'gross_total' => $grossTotal,
-                'discount_id' => $discount ? $discount->id : null,
-                'discount_percent' => $discountPercent,
-                'discount_amount' => $discountAmount,
             ];
 
             Session::put('reservation_data', $reservationData);
@@ -203,6 +197,14 @@ class UserFacilityController extends Controller
             $timeEnd          = $request->time_end;
 
             $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int) $a->whole_capacity > 0);
+            $selectedPrice = $facility->prices()
+                ->where('price_type', 'whole')
+                ->where('value', $clientTypePrice)
+                ->first();
+
+            $discountPriceId = ($selectedPrice && $selectedPrice->is_this_a_discount)
+                ? $selectedPrice->id
+                : null;
 
             $hasDayBasedPricing = $facility->prices->contains('is_based_on_days', true);
             $dateFrom = \Carbon\Carbon::parse($selectedDateFrom);
@@ -326,10 +328,7 @@ class UserFacilityController extends Controller
             }
 
             $subtotal   = $initialPrice + $addonsTotal;
-            $discount = $this->getValidatedDiscount($request);
-            list($grossTotal, $discountAmount, $discountPercent) =
-                $this->calculateDiscount($discount, $initialPrice, $addonsTotal, $subtotal);
-            $totalPrice = $grossTotal + $refundableAddonsTotal;
+            $totalPrice = $subtotal + $refundableAddonsTotal;
 
             $reservationData = [
                 'facility_id'             => $facility->id,
@@ -345,6 +344,8 @@ class UserFacilityController extends Controller
                 'time_start'              => $timeStart,
                 'time_end'                => $timeEnd,
                 'price'                   => $clientTypePrice,
+                'price_id'                => $selectedPrice ? $selectedPrice->id : null,
+                'discount_price_id'       => $discountPriceId,
                 'number_of_days'          => $numberOfDays,
                 'is_based_on_days'        => $hasDayBasedPricing,
                 'initial_price'           => $initialPrice,
@@ -352,10 +353,6 @@ class UserFacilityController extends Controller
                 'addons_total'            => $addonsTotal,
                 'refundable_addons'       => $refundableAddonsData,
                 'refundable_addons_total' => $refundableAddonsTotal,
-                'gross_total' => $grossTotal,
-                'discount_id' => $discount ? $discount->id : null,
-                'discount_percent' => $discountPercent,
-                'discount_amount' => $discountAmount,
             ];
 
             Session::put('reservation_data', $reservationData);
@@ -482,6 +479,9 @@ class UserFacilityController extends Controller
                 });
 
                 $initialPrice = 0.0;
+                $requiresDiscountProof = false;
+                $discountPriceId = null;
+                $internalDiscountPriceIds = [];
 
                 if ($request->has('internal_quantity')) {
                     foreach ($request->internal_quantity as $priceId => $quantity) {
@@ -495,12 +495,17 @@ class UserFacilityController extends Controller
                             } else {
                                 $initialPrice += $price->value * (int)$quantity;
                             }
+                            if ($price->is_this_a_discount) {
+                                $requiresDiscountProof = true;
+                                $internalDiscountPriceIds[] = $priceId;
+                            }
                         }
                     }
                 }
 
                 if ($request->selected_price) {
                     $selectedPrice = (float) $request->selected_price;
+                    $price = $facility->prices()->find($request->price_id);
                     if ($request->date_from && $request->date_to) {
                         $startDate = Carbon::parse($request->date_from);
                         $endDate   = Carbon::parse($request->date_to);
@@ -509,6 +514,10 @@ class UserFacilityController extends Controller
                     } else {
                         $initialPrice += $selectedPrice;
                     }
+                    if ($price && $price->is_this_a_discount) {
+                        $requiresDiscountProof = true;
+                        $discountPriceId = $price->id;
+                    }
                 }
 
                 $sharedNs = $request->input('shared_addons', []);
@@ -516,10 +525,7 @@ class UserFacilityController extends Controller
                 $refundableTotal = $computeRefundableTotal($sharedNs);
 
                 $subtotal   = $initialPrice + $addonsTotal;
-                $discount = $this->getValidatedDiscount($request);
-                list($grossTotal, $discountAmount, $discountPercent) =
-                    $this->calculateDiscount($discount, $initialPrice, $addonsTotal, $subtotal);
-                $totalPrice = $grossTotal + $refundableTotal;
+                $totalPrice = $subtotal + $refundableTotal;
 
                 $reservationData = [
                     'facility_id'              => $facility->id,
@@ -535,6 +541,9 @@ class UserFacilityController extends Controller
                     'room_capacity' => $request->shared_room_capacity ?? null,
                     'selected_price' => $request->selected_price ?? null,
                     'price_id'       => $request->price_id ?? null,
+                    'requires_discount_proof' => $requiresDiscountProof,
+                    'discount_price_id' => $discountPriceId,
+                    'internal_discount_price_ids' => $internalDiscountPriceIds,
                     'internal_quantity' => $request->internal_quantity ?? [],
                     'price_values'      => $request->price_values ?? [],
                     'price_names'       => $request->price_names ?? [],
@@ -560,19 +569,21 @@ class UserFacilityController extends Controller
                     'refundable_total' => $refundableTotal,
                     'subtotal'        => $subtotal,
                     'total_price'     => $totalPrice,
-                    'gross_total' => $grossTotal,
-                    'discount_id' => $discount ? $discount->id : null,
-                    'discount_percent' => $discountPercent,
-                    'discount_amount' => $discountAmount,
                 ];
             } elseif ($bookingType === 'whole') {
                 $selectedRoomId = $request->input('selected_room');
                 $selectedRoom   = $facility->facilityAttributes->find($selectedRoomId);
 
                 $initialPrice = 0.0;
-
+                $discountPriceId = null;
                 if ($request->selected_whole_price) {
                     $selectedPrice = (float) $request->selected_whole_price;
+                    $wholePrice = $facility->prices()->find($request->whole_price_id);
+
+                    $discountPriceId = ($wholePrice && $wholePrice->is_this_a_discount)
+                        ? $wholePrice->id
+                        : null;
+
                     if ($request->whole_date_from && $request->whole_date_to) {
                         $startDate = Carbon::parse($request->whole_date_from);
                         $endDate   = Carbon::parse($request->whole_date_to);
@@ -588,10 +599,7 @@ class UserFacilityController extends Controller
                 $refundableTotal = $computeRefundableTotal($wholeNs);
 
                 $subtotal   = $initialPrice + $addonsTotal;
-                $discount = $this->getValidatedDiscount($request);
-                list($grossTotal, $discountAmount, $discountPercent) =
-                    $this->calculateDiscount($discount, $initialPrice, $addonsTotal, $subtotal);
-                $totalPrice = $grossTotal + $refundableTotal;
+                $totalPrice = $subtotal + $refundableTotal;
 
                 $reservationData = [
                     'facility_id'              => $facility->id,
@@ -607,7 +615,9 @@ class UserFacilityController extends Controller
                     'room_capacity'    => $request->room_capacity ?? ($selectedRoom->capacity ?? null),
                     'selected_room_id' => $selectedRoomId,
                     'selected_whole_price' => $request->selected_whole_price ?? null,
+                    // 'whole_price_id'       => $request->whole_price_id ?? null,
                     'whole_price_id'       => $request->whole_price_id ?? null,
+                    'discount_price_id' => $discountPriceId,
                     'whole_addons' => [
                         'addon_values'            => $wholeNs['addon_values']            ?? [],
                         'addon_names'             => $wholeNs['addon_names']             ?? [],
@@ -630,10 +640,6 @@ class UserFacilityController extends Controller
                     'refundable_total' => $refundableTotal,
                     'subtotal'        => $subtotal,
                     'total_price'     => $totalPrice,
-                    'gross_total' => $grossTotal,
-                    'discount_id' => $discount ? $discount->id : null,
-                    'discount_percent' => $discountPercent,
-                    'discount_amount' => $discountAmount,
                 ];
             } else {
                 return back()->withErrors(['booking_type' => 'Please select a valid booking type.']);
@@ -641,8 +647,6 @@ class UserFacilityController extends Controller
 
             Session::put('reservation_data', $reservationData);
         } elseif ($facility->facility_type === 'both' && $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty()) {
-
-
             $bookingType = $request->input('booking_type');
 
             $computeAddonsTotals = function (array $sectionAddons) {
@@ -740,7 +744,6 @@ class UserFacilityController extends Controller
                 return [$addonsTotal, $addonsBreakdown];
             };
 
-
             $computeRefundables = function (array $sectionAddons) {
                 $refundableNames  = $sectionAddons['refundable_addon_names']  ?? [];
                 $refundablePrices = $sectionAddons['refundable_addon_prices'] ?? [];
@@ -764,7 +767,7 @@ class UserFacilityController extends Controller
             };
 
             if ($bookingType === 'shared') {
-                // $userSex = auth()->check() ? auth()->user()->sex : null;
+                $userSex = auth()->check() ? auth()->user()->sex : null;  // UNCOMMENT THIS
 
                 $availableRoom = $facility->facilityAttributes->first(function ($attribute) use ($userSex) {
                     return $attribute->whole_capacity > 0 &&
@@ -772,6 +775,9 @@ class UserFacilityController extends Controller
                 });
 
                 $initialPrice = 0.0;
+                $requiresDiscountProof = false;
+                $discountPriceId = null;
+                $internalDiscountPriceIds = [];
 
                 if ($request->has('internal_quantity')) {
                     foreach ($request->internal_quantity as $priceId => $quantity) {
@@ -785,19 +791,30 @@ class UserFacilityController extends Controller
                             } else {
                                 $initialPrice += $price->value * (int)$quantity;
                             }
+                            if ($price->is_this_a_discount) {
+                                $requiresDiscountProof = true;
+                                $internalDiscountPriceIds[] = $priceId;
+                            }
                         }
                     }
                 }
 
                 if ($request->selected_price) {
                     $selectedPrice = (float)$request->selected_price;
-                    if ($request->date_from && $request->date_to) {
-                        $startDate = Carbon::parse($request->date_from);
-                        $endDate   = Carbon::parse($request->date_to);
-                        $days      = $startDate->diffInDays($endDate) + 1;
-                        $initialPrice += $selectedPrice * $days;
-                    } else {
-                        $initialPrice += $selectedPrice;
+                    $price = $facility->prices()->find($request->price_id);
+                    if ($price) {
+                        if ($request->date_from && $request->date_to) {
+                            $startDate = Carbon::parse($request->date_from);
+                            $endDate   = Carbon::parse($request->date_to);
+                            $days      = $startDate->diffInDays($endDate) + 1;
+                            $initialPrice += $selectedPrice * $days;
+                        } else {
+                            $initialPrice += $selectedPrice;
+                        }
+                        if ($price->is_this_a_discount) {
+                            $requiresDiscountProof = true;
+                            $discountPriceId = $request->price_id;
+                        }
                     }
                 }
 
@@ -806,10 +823,7 @@ class UserFacilityController extends Controller
                 [$refundableTotal, $refundableList] = $computeRefundables($sharedAddons);
 
                 $subtotal   = $initialPrice + $addonsTotal;
-                $discount = $this->getValidatedDiscount($request);
-                list($grossTotal, $discountAmount, $discountPercent) =
-                    $this->calculateDiscount($discount, $initialPrice, $addonsTotal, $subtotal);
-                $totalPrice = $grossTotal + $refundableTotal;
+                $totalPrice = $subtotal + $refundableTotal;
 
                 $reservationData = [
                     'facility_id'            => $facility->id,
@@ -822,6 +836,9 @@ class UserFacilityController extends Controller
                     'date_to'                => $request->date_to ?? null,
                     'selected_price'         => $request->selected_price ?? null,
                     'price_id'               => $request->price_id ?? null,
+                    'requires_discount_proof' => $requiresDiscountProof,
+                    'discount_price_id' => $discountPriceId,
+                    'internal_discount_price_ids' => $internalDiscountPriceIds,
                     'internal_quantity'      => $request->internal_quantity ?? [],
                     'price_values'           => $request->price_values ?? [],
                     'price_names'            => $request->price_names ?? [],
@@ -832,17 +849,24 @@ class UserFacilityController extends Controller
                     'refundable_addons'      => $refundableList,
                     'subtotal'               => $subtotal,
                     'total_price'            => $totalPrice,
-                    'gross_total' => $grossTotal,
-                    'discount_id' => $discount ? $discount->id : null,
-                    'discount_percent' => $discountPercent,
-                    'discount_amount' => $discountAmount,
                 ];
             } elseif ($bookingType === 'whole') {
                 $wholeAttr = $facility->facilityAttributes->first(fn($a) => (int)$a->whole_capacity > 0);
 
                 $initialPrice = 0.0;
+                $discountPriceId = null;
+                $requiresDiscountProof = false;
                 if ($request->whole_client_type) {
                     $selectedPrice = (float)$request->whole_client_type;
+                    // $wholePrice = $facility->prices()->find($request->whole_price_id);
+                    $wholePrice = $facility->prices()
+                        ->where('value', $request->whole_client_type)
+                        ->first();
+
+                    if ($wholePrice && $wholePrice->is_this_a_discount) {
+                        $discountPriceId = $wholePrice->id;
+                        $requiresDiscountProof = true;
+                    }
                     if ($request->whole_date_from && $request->whole_date_to) {
                         $startDate = Carbon::parse($request->whole_date_from);
                         $endDate   = Carbon::parse($request->whole_date_to);
@@ -858,10 +882,7 @@ class UserFacilityController extends Controller
                 [$refundableTotal, $refundableList] = $computeRefundables($wholeAddons);
 
                 $subtotal   = $initialPrice + $addonsTotal;
-                $discount = $this->getValidatedDiscount($request);
-                list($grossTotal, $discountAmount, $discountPercent) =
-                    $this->calculateDiscount($discount, $initialPrice, $addonsTotal, $subtotal);
-                $totalPrice = $grossTotal + $refundableTotal;
+                $totalPrice = $subtotal + $refundableTotal;
 
                 $reservationData = [
                     'facility_id'            => $facility->id,
@@ -874,7 +895,9 @@ class UserFacilityController extends Controller
                     'date_to'                => $request->whole_date_to ?? null,
                     'time_start'             => $request->whole_time_start ?? null,
                     'time_end'               => $request->whole_time_end ?? null,
-                    'whole_client_type'      => $request->whole_client_type ?? null,
+                    'whole_price_id'         => $request->whole_price_id ?? null,
+                    'discount_price_id'      => $discountPriceId,
+                    'requires_discount_proof' => $requiresDiscountProof,
                     'initial_price'          => $initialPrice,
                     'addons_total'           => $addonsTotal,
                     'addons_breakdown'       => $addonsBreakdown,
@@ -882,10 +905,6 @@ class UserFacilityController extends Controller
                     'refundable_addons'      => $refundableList,
                     'subtotal'               => $subtotal,
                     'total_price'            => $totalPrice,
-                    'gross_total' => $grossTotal,
-                    'discount_id' => $discount ? $discount->id : null,
-                    'discount_percent' => $discountPercent,
-                    'discount_amount' => $discountAmount,
                 ];
             } else {
                 return back()->withErrors(['booking_type' => 'Please select a valid booking type.']);
@@ -899,41 +918,41 @@ class UserFacilityController extends Controller
     /**
      * Calculate discount details for a reservation
      */
-    private function calculateDiscount(?Discount $discount, float $initialPrice, float $addonsTotal, float &$subtotal): array
-    {
-        $grossTotal = $subtotal;
-        $discountAmount = 0;
-        $discountPercent = 0;
+    // private function calculateDiscount(?Discount $discount, float $initialPrice, float $addonsTotal, float &$subtotal): array
+    // {
+    //     $grossTotal = $subtotal;
+    //     $discountAmount = 0;
+    //     $discountPercent = 0;
 
-        if (!$discount) {
-            return [round($grossTotal, 2), $discountAmount, $discountPercent];
-        }
+    //     if (!$discount) {
+    //         return [round($grossTotal, 2), $discountAmount, $discountPercent];
+    //     }
 
-        $pct = (float) $discount->percent;
-        if ($pct < 0 || $pct > 100) {
-            throw new \Exception('Invalid discount percentage');
-        }
+    //     $pct = (float) $discount->percent;
+    //     if ($pct < 0 || $pct > 100) {
+    //         throw new \Exception('Invalid discount percentage');
+    //     }
 
-        $discountPercent = $pct;
-        $discountAmount  = round($grossTotal * ($pct / 100), 2);
-        $grossTotal      = round($grossTotal - $discountAmount, 2);
-        $subtotal = $grossTotal;
+    //     $discountPercent = $pct;
+    //     $discountAmount  = round($grossTotal * ($pct / 100), 2);
+    //     $grossTotal      = round($grossTotal - $discountAmount, 2);
+    //     $subtotal = $grossTotal;
 
-        return [$grossTotal, $discountAmount, $discountPercent];
-    }
+    //     return [$grossTotal, $discountAmount, $discountPercent];
+    // }
 
     /**
      * Get and validate discount from request
      */
-    private function getValidatedDiscount(Request $request): ?Discount
-    {
-        if (!$request->discount_id) {
-            return null;
-        }
-        return Discount::where('id', $request->discount_id)
-            ->where('active', true)
-            ->first();
-    }
+    // private function getValidatedDiscount(Request $request): ?Discount
+    // {
+    //     if (!$request->discount_id) {
+    //         return null;
+    //     }
+    //     return Discount::where('id', $request->discount_id)
+    //         ->where('active', true)
+    //         ->first();
+    // }
 
     private function addon_reserve(Request $request, Facility $facility): array
     {
@@ -1048,11 +1067,31 @@ class UserFacilityController extends Controller
             return redirect()->route('user.facilities.index')->with('error', 'No facility found.');
         }
 
-        $appliedDiscount = null;
-        if (!empty($reservationData['discount_id'])) {
-            $appliedDiscount = Discount::find($reservationData['discount_id']);
+        // $selectedPriceId = $reservationData['whole_price_id'] ?? $reservationData['price_id'] ?? null;
+        // $requiresDiscountProof = false;
+        // if ($selectedPriceId) {
+        //     $selectedPrice = $facility->prices()->find($selectedPriceId);
+        //     if ($selectedPrice && $selectedPrice->is_this_a_discount == 1) {
+        //         $requiresDiscountProof = true;
+        //     }
+        // }
+        $requiresDiscountProof = $reservationData['requires_discount_proof'] ?? false;
+        if (!$requiresDiscountProof) {
+            $discountPriceId = $reservationData['discount_price_id'] ?? null;
+            if ($discountPriceId) {
+                $requiresDiscountProof = true;
+            }
         }
 
+        // If still not found, check internal_discount_price_ids
+        if (!$requiresDiscountProof) {
+            $internalDiscountPriceIds = $reservationData['internal_discount_price_ids'] ?? [];
+            if (!empty($internalDiscountPriceIds)) {
+                $requiresDiscountProof = true;
+            }
+        }
+
+        $selectedPriceId = $reservationData['whole_price_id'] ?? $reservationData['price_id'] ?? null;
         $facilityAttribute = null;
         $roomName = null;
         $date_from = $reservationData['date_from'] ?? null;
@@ -1061,7 +1100,6 @@ class UserFacilityController extends Controller
         $time_end = $reservationData['time_end'] ?? null;
         $quantityDetails = [];
         $selectedPriceDetails = null;
-
 
         if ($facility->facility_type === 'individual') {
             $date_from = $reservationData['date_from'] ?? null;
@@ -1285,7 +1323,9 @@ class UserFacilityController extends Controller
             'selectedPriceDetails',
             'time_start',
             'time_end',
-            'appliedDiscount'
+            // 'appliedDiscount',
+            'selectedPriceId',
+            'requiresDiscountProof'
         ));
     }
 
@@ -1354,12 +1394,15 @@ class UserFacilityController extends Controller
                     ->findOrFail($reservationData['facility_id']);
                 if ($facility->facility_type === 'individual') {
                     $attr  = FacilityAttribute::findOrFail($reservationData['facility_attribute_id']);
-                    $price = Price::where('facility_id', $facility->id)->where('price_type', 'individual')->firstOrFail();
+                    // $price = Price::where('facility_id', $facility->id)->where('price_type', 'individual')->firstOrFail();
+                    $requiresDiscountProof = $reservationData['requires_discount_proof'] ?? false;
+                    $discountPriceId = $reservationData['discount_price_id'] ?? null;
+                    $internalDiscountPriceIds = $reservationData['internal_discount_price_ids'] ?? [];
 
-                    $dateFrom = ($price->is_based_on_days && $price->date_from && $price->date_to) ? $price->date_from : $reservationData['date_from'];
-                    $dateTo   = ($price->is_based_on_days && $price->date_to) ? $price->date_to : $reservationData['date_to'];
+                    $dateFrom = $reservationData['date_from'];
+                    $dateTo = $reservationData['date_to'];
 
-                    if (!$price->is_there_a_quantity && $attr->capacity <= 0) {
+                    if ($attr->capacity <= 0) {
                         throw new \Exception('No capacity available for this room.');
                     }
 
@@ -1421,14 +1464,24 @@ class UserFacilityController extends Controller
                         'user_id'         => $user->id,
                         'status'          => 'pending',
                         'total_price'     => $reservationData['subtotal'],
-                        'gross_total' => $reservationData['gross_total'] ?? $reservationData['subtotal'],
-                        'discount_id' => $reservationData['discount_id'] ?? null,
-                        'discount_percent' => $reservationData['discount_percent'] ?? null,
-                        'discount_amount' => $reservationData['discount_amount'] ?? null,
-                        'discount_applies_to' => $reservationData['discount_applies_to'] ?? null,
-                        'discount_proof_path' => $discountProofPath,
                     ]);
 
+                    if ($requiresDiscountProof && $discountProofPath) {
+                        if ($discountPriceId) {
+                            PaymentPriceDiscount::create([
+                                'payment_id' => $payment->id,
+                                'price_id'   => $discountPriceId,
+                                'discount_proof_path' => $discountProofPath,
+                            ]);
+                        }
+                        foreach ($internalDiscountPriceIds as $priceId) {
+                            PaymentPriceDiscount::create([
+                                'payment_id' => $payment->id,
+                                'price_id'   => $priceId,
+                                'discount_proof_path' => $discountProofPath,
+                            ]);
+                        }
+                    }
                     $user->notify(new ReservationCreateNotification($payment));
 
                     PaymentDetail::create([
@@ -1440,11 +1493,16 @@ class UserFacilityController extends Controller
 
                     $transactionRows = [];
                     $trxByDate       = [];
+                    $transactionPriceId = $reservationData['price_id'] ?? null;
+                    if (!$transactionPriceId && !empty($internalDiscountPriceIds)) {
+                        $transactionPriceId = $internalDiscountPriceIds[0]; // Use first internal price as fallback
+                    }
+
                     foreach ($allAvailabilities as $availability) {
                         $trx = TransactionReservation::create([
                             'availability_id'        => $availability->id,
                             'facility_attribute_id'  => $attr->id,
-                            'price_id'               => $price->id,
+                            'price_id'               => $transactionPriceId,
                             'payment_id'             => $payment->id,
                             'quantity'               => 1,
                             'user_id'                => $user->id,
@@ -1485,6 +1543,12 @@ class UserFacilityController extends Controller
                     $facilityAttributeId = $reservationData['facility_attribute_id'] ?? ($wholeAttr ? $wholeAttr->id : null);
 
                     $price = $facility->prices()->where('price_type', 'whole')->firstOrFail();
+                    $requiresDiscountProof = $price->is_this_a_discount;
+
+                    $discountProofPath = null;
+                    if ($requiresDiscountProof && $request->hasFile('discount_proof')) {
+                        $discountProofPath = $request->file('discount_proof')->store('discount_proofs', 'public');
+                    }
                     $days = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1;
                     $baseTotalPrice = $price->is_based_on_days ? $price->value * $days : $price->value;
 
@@ -1526,13 +1590,14 @@ class UserFacilityController extends Controller
                         'user_id'         => $user->id,
                         'status'          => 'pending',
                         'total_price'     => $paymentSubtotal,
-                        'gross_total' => $reservationData['gross_total'] ?? $reservationData['subtotal'],
-                        'discount_id' => $reservationData['discount_id'] ?? null,
-                        'discount_percent' => $reservationData['discount_percent'] ?? null,
-                        'discount_amount' => $reservationData['discount_amount'] ?? null,
-                        'discount_applies_to' => $reservationData['discount_applies_to'] ?? null,
-                        'discount_proof_path' => $discountProofPath,
                     ]);
+                    if ($requiresDiscountProof && $discountProofPath) {
+                        PaymentPriceDiscount::create([
+                            'payment_id' => $payment->id,
+                            'price_id'   => $price->id,
+                            'discount_proof_path' => $discountProofPath,
+                        ]);
+                    }
 
                     PaymentDetail::create([
                         'payment_id'  => $payment->id,
@@ -1850,13 +1915,19 @@ class UserFacilityController extends Controller
                             ->where('price_type', 'individual')
                             ->firstOrFail();
 
-                        if ($price->is_based_on_days && $price->date_from && $price->date_to) {
-                            $dateFrom = $price->date_from;
-                            $dateTo = $price->date_to;
-                        } else {
-                            $dateFrom = $reservationData['date_from'];
-                            $dateTo = $reservationData['date_to'];
-                        }
+                        $requiresDiscountProof = $reservationData['requires_discount_proof'] ?? false;
+                        $discountPriceId = $reservationData['discount_price_id'] ?? null;
+                        $internalDiscountPriceIds = $reservationData['internal_discount_price_ids'] ?? [];
+
+                        // if ($price->is_based_on_days && $price->date_from && $price->date_to) {
+                        //     $dateFrom = $price->date_from;
+                        //     $dateTo = $price->date_to;
+                        // } else {
+                        //     $dateFrom = $reservationData['date_from'];
+                        //     $dateTo = $reservationData['date_to'];
+                        // }
+                        $dateFrom = $reservationData['date_from'];
+                        $dateTo = $reservationData['date_to'];
 
                         $period = CarbonPeriod::create($dateFrom, $dateTo);
                         $firstAvailability = null;
@@ -1872,7 +1943,7 @@ class UserFacilityController extends Controller
                                 ->latest()
                                 ->first();
 
-                            if ($price->is_there_a_quantity) {
+                            if (!empty($reservationData['internal_quantity'])) {
                                 $internalQuantity = array_sum($reservationData['internal_quantity']);
                                 $quantity = $internalQuantity;
 
@@ -1913,13 +1984,24 @@ class UserFacilityController extends Controller
                             'user_id' => $user->id,
                             'status' => 'pending',
                             'total_price' => $paymentSubtotal,
-                            'gross_total' => $reservationData['gross_total'] ?? $reservationData['subtotal'],
-                            'discount_id' => $reservationData['discount_id'] ?? null,
-                            'discount_percent' => $reservationData['discount_percent'] ?? null,
-                            'discount_amount' => $reservationData['discount_amount'] ?? null,
-                            'discount_applies_to' => $reservationData['discount_applies_to'] ?? null,
-                            'discount_proof_path' => $discountProofPath,
                         ]);
+
+                        if ($requiresDiscountProof && $discountProofPath) {
+                            if ($discountPriceId) {
+                                PaymentPriceDiscount::create([
+                                    'payment_id' => $payment->id,
+                                    'price_id'   => $discountPriceId,
+                                    'discount_proof_path' => $discountProofPath,
+                                ]);
+                            }
+                            foreach ($internalDiscountPriceIds as $priceId) {
+                                PaymentPriceDiscount::create([
+                                    'payment_id' => $payment->id,
+                                    'price_id'   => $priceId,
+                                    'discount_proof_path' => $discountProofPath,
+                                ]);
+                            }
+                        }
 
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
@@ -2669,14 +2751,19 @@ class UserFacilityController extends Controller
                         }
 
                         $price = $facility->prices()->where('price_type', 'individual')->firstOrFail();
+                        $requiresDiscountProof = $reservationData['requires_discount_proof'] ?? false;
+                        $discountPriceId = $reservationData['discount_price_id'] ?? null;
+                        $internalDiscountPriceIds = $reservationData['internal_discount_price_ids'] ?? [];
 
-                        if ($price->is_based_on_days) {
-                            $dateFrom = $price->date_from;
-                            $dateTo   = $price->date_to;
-                        } else {
-                            $dateFrom = $reservationData['date_from'];
-                            $dateTo   = $reservationData['date_to'];
-                        }
+                        $dateFrom = $reservationData['date_from'];
+                        $dateTo   = $reservationData['date_to'];
+                        // if ($price->is_based_on_days) {
+                        //     $dateFrom = $price->date_from;
+                        //     $dateTo   = $price->date_to;
+                        // } else {
+                        //     $dateFrom = $reservationData['date_from'];
+                        //     $dateTo   = $reservationData['date_to'];
+                        // }
 
                         $quantity = 1;
                         $period = CarbonPeriod::create($dateFrom, $dateTo);
@@ -2737,13 +2824,25 @@ class UserFacilityController extends Controller
                             'user_id' => $user->id,
                             'status' => 'pending',
                             'total_price' => $paymentSubtotal,
-                            'gross_total' => $reservationData['gross_total'] ?? $reservationData['subtotal'],
-                            'discount_id' => $reservationData['discount_id'] ?? null,
-                            'discount_percent' => $reservationData['discount_percent'] ?? null,
-                            'discount_amount' => $reservationData['discount_amount'] ?? null,
-                            'discount_applies_to' => $reservationData['discount_applies_to'] ?? null,
-                            'discount_proof_path' => $discountProofPath,
                         ]);
+
+                        if ($requiresDiscountProof && $discountProofPath) {
+                            if ($discountProofPath) {
+                                PaymentPriceDiscount::create([
+                                    'payment_id' => $payment->id,
+                                    'price_id' => $price->id,
+                                    'discount_proof_path' => $discountProofPath,
+                                ]);
+                            }
+
+                            foreach ($internalDiscountPriceIds as $priceId) {
+                                PaymentPriceDiscount::create([
+                                    'payment_id' => $payment->id,
+                                    'price_id' => $priceId,
+                                    'discount_proof_path' => $discountProofPath,
+                                ]);
+                            }
+                        }
 
                         $user->notify(new ReservationCreateNotification($payment));
 
@@ -3092,7 +3191,31 @@ class UserFacilityController extends Controller
                             throw new \Exception('No available facility for whole booking.');
                         }
 
-                        $price = $facility->prices()->where('price_type', 'whole')->firstOrFail();
+                        // $price = $facility->prices()->where('price_type', 'whole')->firstOrFail();
+
+                        // if ($price->is_based_on_days) {
+                        //     $dateFrom = $price->date_from;
+                        //     $dateTo   = $price->date_to;
+                        // } else {
+                        //     $dateFrom = $reservationData['date_from'];
+                        //     $dateTo   = $reservationData['date_to'];
+                        // }
+
+                        $selectedPriceId = $reservationData['whole_price_id'] ?? null;
+                        $price = null;
+
+                        if ($selectedPriceId) {
+                            $price = $facility->prices()->find($selectedPriceId);
+                        }
+
+                        // Fallback to any whole price if not found
+                        if (!$price) {
+                            $price = $facility->prices()->where('price_type', 'whole')->firstOrFail();
+                        }
+
+                        // ✓ Get discount proof requirements from reservation data
+                        $requiresDiscountProof = $reservationData['requires_discount_proof'] ?? false;
+                        $discountPriceId = $reservationData['discount_price_id'] ?? null;
 
                         if ($price->is_based_on_days) {
                             $dateFrom = $price->date_from;
@@ -3132,14 +3255,17 @@ class UserFacilityController extends Controller
                             'user_id' => $user->id,
                             'status' => 'pending',
                             'total_price' => $paymentSubtotal,
-                            'gross_total' => $reservationData['gross_total'] ?? $reservationData['subtotal'],
-                            'discount_id' => $reservationData['discount_id'] ?? null,
-                            'discount_percent' => $reservationData['discount_percent'] ?? null,
-                            'discount_amount' => $reservationData['discount_amount'] ?? null,
-                            'discount_applies_to' => $reservationData['discount_applies_to'] ?? null,
-                            'discount_proof_path' => $discountProofPath,
                         ]);
 
+                        if ($requiresDiscountProof && $discountProofPath) {
+                            if ($discountPriceId) {
+                                PaymentPriceDiscount::create([
+                                    'payment_id' => $payment->id,
+                                    'price_id' => $discountPriceId,
+                                    'discount_proof_path' => $discountProofPath,
+                                ]);
+                            }
+                        }
                         $user->notify(new ReservationCreateNotification($payment));
 
                         PaymentDetail::create([

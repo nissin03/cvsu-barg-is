@@ -27,4 +27,9 @@ class Discount extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    public function prices()
+    {
+        return $this->belongsToMany(Price::class, 'discount_prices');
+    }
 }

@@ -162,7 +162,7 @@
                 <div class="wg-box" id="priceBox">
 
                     @include('admin.facilities.partials.pricing-management')
-                    <x-discounts.discount-selector :discounts="$discounts" :facility="$facility" />
+                    {{-- <x-discounts.discount-selector :discounts="$discounts" :facility="$facility" /> --}}
                     <div class="cols gap10">
                         <button id="facilitySubmitBtn" class="tf-button w-full" type="submit">
                             <span class="btn-text">Edit Facility</span>
@@ -197,7 +197,7 @@
 
     <script src="{{ asset('assets/js/hideFields.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
-    <script src="{{ asset('assets/js/discount-selector.js') }}"></script>
+    {{-- <script src="{{ asset('assets/js/discount-selector.js') }}"></script> --}}
     <script src="{{ asset('assets/js/addon-selector.js') }}"></script>
 
     <script>
@@ -288,7 +288,7 @@
             setupRoomsManagement();
             setupPricingManagement();
             handleInitialUIState();
-            setupDiscountsUi();
+            // setupDiscountsUi();
             setupAddonsUi();
         }
 
@@ -333,6 +333,8 @@
                             .is_based_on_days == 1 ? '1' : '0'),
                         isThereAQuantity: price.isThereAQuantity != null ? price.isThereAQuantity : (price
                             .is_there_a_quantity == 1 ? '1' : '0'),
+                        isThisADiscount: price.isThisADiscount != null ? price.isThisADiscount : (price
+                            .is_this_a_discount == 1 ? '1' : '0'),
                         dateFrom: price.dateFrom || price.date_from || '',
                         dateTo: price.dateTo || price.date_to || ''
                     }));

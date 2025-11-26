@@ -369,8 +369,7 @@
                                                     <div class="text">Create Add-ons</div>
                                                 </a>
                                             </li>
-                                            <li class="divider mb-10"></li>
-                                            <li class="sub-menu-item">
+                                            {{-- <li class="sub-menu-item">
                                                 <a href="{{ route('discounts.index') }}">
                                                     <div class="text">Manage Discounts</div>
                                                 </a>
@@ -379,7 +378,7 @@
                                                 <a href="{{ route('discounts.create') }}">
                                                     <div class="text">Create Discount</div>
                                                 </a>
-                                            </li>
+                                            </li> --}}
                                             <li class="divider mb-10"></li>
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.facility.create') }}">

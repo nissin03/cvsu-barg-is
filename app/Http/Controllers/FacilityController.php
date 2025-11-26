@@ -193,7 +193,6 @@ class FacilityController extends Controller
             $facility = Facility::create($data);
             $this->handleFacilityAttributes($facility, $facilityAttributes);
             $this->handlePrices($facility, $prices);
-            // $this->handleAddons($facility, $request);
 
             if (in_array($facility->facility_type, ['whole_place', 'both'])) {
                 $selectedDiscountIds = collect(explode(',', $request->input('selected_discounts', '')))
@@ -360,6 +359,7 @@ class FacilityController extends Controller
                 'price_type' => $price['priceType'] ?? 'individual',
                 'is_based_on_days' => $price['isBasedOnDays'] == 1,
                 'is_there_a_quantity' => $price['isThereAQuantity'] == 1,
+                'is_this_a_discount' => $price['isThisADiscount'] == 1,
                 'date_from' => ($price['isBasedOnDays'] == 1) ? $price['dateFrom'] : null,
                 'date_to' => ($price['isBasedOnDays'] == 1) ? $price['dateTo'] : null,
                 'created_at' => now(),
@@ -565,17 +565,25 @@ class FacilityController extends Controller
             $this->syncFacilityAttributes($facility, $facilityAttributes);
             $this->syncPrices($facility, $prices);
 
-            if (in_array($facility->facility_type, ['whole_place', 'both'])) {
-                $selectedDiscountIds = collect(explode(',', $request->input('selected_discounts', '')))
-                    ->filter()
-                    ->map(fn($id) => (int) $id)
-                    ->unique()
-                    ->values()
-                    ->all();
-                $facility->discounts()->sync($selectedDiscountIds);
-            } else {
-                $facility->discounts()->detach();
-            }
+            // if ($facility->facility_type === 'whole_place') {
+            //     $selectedDiscountIds = collect(explode(',', $request->input('selected_discounts', '')))
+            //         ->filter()
+            //         ->map(fn($id) => (int) $id)
+            //         ->unique()
+            //         ->values()
+            //         ->all();
+            //     $facility->discounts()->sync($selectedDiscountIds);
+            // if (in_array($facility->facility_type, ['whole_place', 'both'])) {
+            //     $selectedDiscountIds = collect(explode(',', $request->input('selected_discounts', '')))
+            //         ->filter()
+            //         ->map(fn($id) => (int) $id)
+            //         ->unique()
+            //         ->values()
+            //         ->all();
+            //     $facility->discounts()->sync($selectedDiscountIds);
+            // } else {
+            //     $facility->discounts()->detach();
+            // }
             $selectedAddonIds = collect(explode(',', $request->input('selected_addons', '')))
                 ->filter()
                 ->map(fn($id) => (int) $id)
@@ -715,6 +723,7 @@ class FacilityController extends Controller
                 'price_type' => $price['priceType'] ?? 'individual',
                 'is_based_on_days' => $price['isBasedOnDays'] == 1,
                 'is_there_a_quantity' => $price['isThereAQuantity'] == 1,
+                'is_this_a_discount' => $price['isThisADiscount'] == 1,
                 'date_from' => $price['isBasedOnDays'] == 1 ? $price['dateFrom'] : null,
                 'date_to' => $price['isBasedOnDays'] == 1 ? $price['dateTo'] : null,
             ];

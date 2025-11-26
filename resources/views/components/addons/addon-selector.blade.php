@@ -114,12 +114,9 @@
 
     @if ($addons->isEmpty())
         <p class="addon-instruction alert alert-warning">No addons available.</p>
-        {{-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAddonModal">
+        {{-- <a href="{{ route('admin.addons') }}" class="btn btn-primary">
             <i class="icon-plus"></i> Add New Addon
-        </button> --}}
-        <a href="{{ route('admin.addons') }}" class="btn btn-primary">
-            <i class="icon-plus"></i> Add New Addon
-        </a>
+        </a> --}}
     @else
         <div class="addon-checkbox-container">
             @foreach ($addons ?? collect() as $a)

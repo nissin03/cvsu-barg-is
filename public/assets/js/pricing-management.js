@@ -102,6 +102,9 @@ function setupPricingManagement() {
                     "#priceFormTemplate .price-form-card"
                 ).clone();
                 newPriceForm.find("input, select").val("");
+                newPriceForm
+                    .find(".price-discount-checkbox")
+                    .prop("checked", false);
                 $("#priceFormContainer").append(newPriceForm);
             }
         });
@@ -111,6 +114,10 @@ function setupPricingManagement() {
             $(this).closest(".price-form-card").remove();
         } else {
             $(this).closest(".price-form-card").find("input, select").val("");
+            $(this)
+                .closest(".price-form-card")
+                .find(".price-discount-checkbox")
+                .prop("checked", false);
         }
     });
 
@@ -146,6 +153,16 @@ function renderPriceList() {
                 : price.priceType === "whole"
                 ? "bg-warning text-white"
                 : "";
+        let discountBadges = "";
+        if (price.discounts && price.discounts.length > 0) {
+            discountBadges = '<div class="mt-2">';
+            discountBadges +=
+                '<small class="text-muted d-block mb-1"><i class="fa-solid fa-tags me-1"></i>Discounts:</small>';
+            price.discounts.forEach((discount) => {
+                discountBadges += `<span class="badge bg-success me-1 mb-1">${discount.name} (${discount.percent}%)</span>`;
+            });
+            discountBadges += "</div>";
+        }
 
         const card = $(`
             <div class="card p-3 mb-3">
@@ -172,6 +189,10 @@ function renderPriceList() {
                         }">${
             price.isThereAQuantity == "1" ? "Yes" : "No"
         }</span></p>
+        <p>Is Discount?: <span class="badge ${
+            price.isThisADiscount == "1" ? "bg-success" : "bg-secondary"
+        }">${price.isThisADiscount == "1" ? "Yes" : "No"}</span></p>
+
                         ${
                             price.dateFrom && price.isBasedOnDays == "1"
                                 ? `<p><i class="fa-solid fa-calendar-alt me-2 text-info"></i> Date From: <span class="">${price.dateFrom}</span></p>`
@@ -182,6 +203,7 @@ function renderPriceList() {
                                 ? `<p><i class="fa-solid fa-calendar-check me-2 text-info"></i> Date To: <span class="">${price.dateTo}</span></p>`
                                 : ""
                         }
+                         ${discountBadges}
                     </div>
                     <div class="d-flex">
                         <button type="button" class="btn btn-lg btn-outline-warning me-2 edit-price" data-index="${index}">
@@ -213,9 +235,22 @@ function handleEditPrice() {
     $form.find(".price-name").val(price.priceName);
     $form.find(".price-value").val(price.priceValue);
     $form.find(".price-type").val(price.priceType);
+
+    $form.find(".price-discount-checkbox").prop("checked", false);
+    if (price.discounts && price.discounts.length > 0) {
+        price.discounts.forEach((discount) => {
+            $form
+                .find(`.price-discount-checkbox[value="${discount.id}"]`)
+                .prop("checked", true);
+        });
+    }
+
     $("#priceFormContainer").append($form);
     $("#isBasedOnDaysGlobal").prop("checked", price.isBasedOnDays == "1");
     $("#isThereAQuantityGlobal").prop("checked", price.isThereAQuantity == "1");
+    $form
+        .find(".is-this-a-discount")
+        .prop("checked", price.isThisADiscount == "1");
 
     if (price.isBasedOnDays == "1") {
         $("#dateFieldsContainerGlobal").show();
@@ -248,10 +283,50 @@ function resetPriceModal() {
     $("#priceFormContainer").empty();
     let $form = $("#priceFormTemplate .price-form-card").clone();
     $form.find("input, select").val("");
+    $form.find(".price-discount-checkbox").prop("checked", false);
     $("#priceFormContainer").append($form);
 
     $("#addPriceLabel").text("Add Price");
     $("#saveMultiplePricesBtn").text("Save All");
+
+    console.log(
+        "Modal reset, forms in container:",
+        $("#priceFormContainer .price-form-card").length
+    );
+}
+
+function getSelectedDiscounts($form) {
+    const selectedDiscounts = [];
+    $form.find(".price-discount-checkbox:checked").each(function () {
+        const discountId = $(this).data("discount-id") || $(this).val();
+        const discountName = $(this).data("discount-name");
+        const discountPercent = $(this).data("discount-percent");
+
+        console.log("Checkbox data:", {
+            id: discountId,
+            name: discountName,
+            percent: discountPercent,
+            rawValue: $(this).val(),
+            dataId: $(this).data("discount-id"),
+        }); // Debug each checkbox
+        if (discountId && !isNaN(parseInt(discountId))) {
+            selectedDiscounts.push({
+                id: parseInt(discountId),
+                name: discountName,
+                percent: parseFloat(discountPercent),
+            });
+        } else {
+            console.error("Invalid discount ID:", discountId);
+        }
+        // selectedDiscounts.push({
+        //     // id: $(this).val(),
+        //     id: parseInt($(this).val()),
+        //     name: $(this).data("discount-name"),
+        //     percent: $(this).data("discount-percent"),
+        // });
+    });
+    console.log("Selected discounts:", selectedDiscounts);
+    return selectedDiscounts;
 }
 
 function saveAllPrices() {
@@ -264,12 +339,25 @@ function saveAllPrices() {
     let dateFrom = $("#date_from_global").val();
     let dateTo = $("#date_to_global").val();
 
-    $("#priceFormContainer .price-form-card").each(function () {
+    console.log(
+        "Number of price forms:",
+        $("#priceFormContainer .price-form-card").length
+    );
+
+    $("#priceFormContainer .price-form-card").each(function (idx) {
         const priceName = $(this).find(".price-name").val();
         const priceValue = $(this).find(".price-value").val();
         const priceType = $(this).find(".price-type").val();
+        const isThisADiscount = $(this)
+            .find(".is-this-a-discount")
+            .is(":checked")
+            ? "1"
+            : "0";
+        const discounts = getSelectedDiscounts($(this));
+        console.log(`Form ${idx} discounts:`, discounts);
 
         if (!priceName || !priceValue || !priceType) {
+            console.log(`Form ${idx} is invalid`);
             valid = false;
             return false;
         }
@@ -280,10 +368,14 @@ function saveAllPrices() {
             priceType,
             isBasedOnDays,
             isThereAQuantity,
+            isThisADiscount,
             dateFrom: isBasedOnDays === "1" && dateFrom ? dateFrom : null,
             dateTo: isBasedOnDays === "1" && dateTo ? dateTo : null,
+            discounts: discounts,
         });
     });
+
+    console.log("Final prices to save:", newPrices);
 
     if (!valid) {
         alert("Please fill all required fields for all prices.");
@@ -305,8 +397,15 @@ function updateSinglePrice(index) {
     let isThereAQuantity = $("#isThereAQuantityGlobal").is(":checked")
         ? "1"
         : "0";
+    let isThisADiscount = $form.find(".is-this-a-discount").is(":checked")
+        ? "1"
+        : "0";
+
     let dateFrom = $("#date_from_global").val();
     let dateTo = $("#date_to_global").val();
+
+    const discounts = getSelectedDiscounts($form);
+    console.log("Updating price with discounts:", discounts);
 
     if (!priceName || !priceValue || !priceType) {
         alert("Please fill all required fields.");
@@ -314,13 +413,16 @@ function updateSinglePrice(index) {
     }
 
     prices[index] = {
+        id: prices[index].id || null,
         priceName,
         priceValue,
         priceType,
         isBasedOnDays,
         isThereAQuantity,
+        isThisADiscount,
         dateFrom: isBasedOnDays === "1" && dateFrom ? dateFrom : null,
         dateTo: isBasedOnDays === "1" && dateTo ? dateTo : null,
+        discounts: discounts,
     };
 
     renderPriceList();
