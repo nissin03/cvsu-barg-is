@@ -160,59 +160,36 @@
                         <input type="hidden" name="facility_type" value="{{ $facility->facility_type }}">
                         <input type="hidden" name="selected_price" id="selected_price">
 
-                        <<<<<<< HEAD @if (isset($discounts) && $discounts->count() > 0)
-                            <div class="mb-3">
-                                <label for="discount_id" class="form-label fw-semibold">Discount (optional)</label>
-                                <select name="discount_id" id="discount_id" class="form-select">
-                                    <option value="">-- No discount --</option>
-                                    @foreach ($discounts as $discount)
-                                        <option value="{{ $discount->id }}" data-percent="{{ $discount->percent }}"
-                                            data-applies-to="{{ $discount->applies_to }}"
-                                            data-requires-proof="{{ $discount->requires_proof ? '1' : '0' }}">
-                                            {{ $discount->name }}
-                                            ({{ rtrim(rtrim(number_format($discount->percent, 2, '.', ''), '0'), '.') }}%)
-                                            @if ($discount->applies_to === 'venue_only')
-                                                - Venue Only
-                                            @endif
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            @endif
+                        @if ($facility->facility_type === 'individual')
+                            <input type="hidden" name="facility_attribute_id" value="{{ $availableRoom->id ?? '' }}">
+                        @elseif($facility->facility_type == 'whole_place')
+                            <input type="hidden" name="facility_attribute_id" value="{{ $wholeAttr?->id ?? '' }}">
+                        @endif
 
-                            =======
-                            >>>>>>> 56b920b (Discount Admin and User Side)
-                            @if ($facility->facility_type === 'individual')
-                                <input type="hidden" name="facility_attribute_id"
-                                    value="{{ $availableRoom->id ?? '' }}">
-                            @elseif($facility->facility_type == 'whole_place')
-                                <input type="hidden" name="facility_attribute_id" value="{{ $wholeAttr?->id ?? '' }}">
-                            @endif
+                        @if ($facility->facility_type == 'whole_place')
+                            @include('components.facility_whole_place')
+                        @endif
 
-                            @if ($facility->facility_type == 'whole_place')
-                                @include('components.facility_whole_place')
-                            @endif
+                        @if ($facility->facility_type === 'individual')
+                            @include('components.facility_individual')
+                        @endif
 
-                            @if ($facility->facility_type === 'individual')
-                                @include('components.facility_individual')
-                            @endif
+                        @if (
+                            $facility->facility_type === 'both' &&
+                                $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty())
+                            @include('components.facility_both_rooms')
+                        @endif
 
-                            @if (
-                                $facility->facility_type === 'both' &&
-                                    $facility->facilityAttributes->whereNotNull('room_name')->whereNotNull('capacity')->isNotEmpty())
-                                @include('components.facility_both_rooms')
-                            @endif
+                        @if (
+                            $facility->facility_type === 'both' &&
+                                $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty())
+                            @include('components.facility_both_building')
+                        @endif
 
-                            @if (
-                                $facility->facility_type === 'both' &&
-                                    $facility->facilityAttributes->whereNull('room_name')->whereNull('capacity')->isNotEmpty())
-                                @include('components.facility_both_building')
-                            @endif
-
-                            <button type="submit" class="btn btn-shop btn-addtocart" id="reserve-btn"
-                                style="padding: 15px 30px; font-size: 18px">
-                                Reserve
-                            </button>
+                        <button type="submit" class="btn btn-shop btn-addtocart" id="reserve-btn"
+                            style="padding: 15px 30px; font-size: 18px">
+                            Reserve
+                        </button>
                     </form>
                 </div>
             </div>

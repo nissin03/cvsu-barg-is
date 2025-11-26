@@ -157,7 +157,7 @@
             background-color: #f8f9fa;
             padding: 15px;
             border-radius: 4px;
-            border-left: 4px solid #28a745;
+            border-left: 4px solid #007bff;
             margin: 15px 0;
         }
 
@@ -175,7 +175,7 @@
         }
 
         .qualification-approved {
-            background-color: #28a745;
+            background-color: #007bff;
             color: #fff;
         }
 
@@ -183,6 +183,38 @@
             background-color: #dc3545;
             color: #fff;
         }
+
+        .discount-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+            margin: 15px 0;
+        }
+
+        .discount-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .discount-pending {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .discount-approved {
+            background-color: #28a745;
+            color: #fff;
+        }
+
+        .discount-rejected {
+            background-color: #dc3545;
+            color: #fff;
+        }
+
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -581,6 +613,36 @@
                                 </div>
                             @endif
 
+                            @if ($payment->priceDiscounts->count() > 0)
+                                <div class="wg-box">
+                                    <h5>Discount Proof</h5>
+                                    <div class="discount-section">
+                                        @foreach ($payment->priceDiscounts as $ppd)
+                                            <div class="row mb-2">
+                                                <div class="col-md-6">
+                                                    <p><strong>Price:</strong> {{ $ppd->price->name ?? 'N/A' }}</p>
+                                                    <p><strong>Submitted:</strong>
+                                                        {{ $ppd->created_at->format('M d, Y H:i') }}</p>
+                                                    @if ($ppd->updated_at != $ppd->created_at)
+                                                        <p><strong>Last Updated:</strong>
+                                                            {{ $ppd->updated_at->format('M d, Y H:i') }}</p>
+                                                    @endif
+                                                </div>
+                                                <div class="col-md-6">
+                                                    @if ($ppd->discount_proof_path)
+                                                        <p><strong>Document:</strong>
+                                                            <a href="{{ asset('storage/' . $ppd->discount_proof_path) }}"
+                                                                target="_blank" class="btn btn-custom btn-outline-primary">
+                                                                View Document
+                                                            </a>
+                                                        </p>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
                             <!-- Payment Summary -->
                             <div class="wg-box">
                                 <h5>Payment Summary</h5>
@@ -592,40 +654,6 @@
                                                 &#8369;{{ number_format($payment->gross_total ?? $payment->total_price, 2) }}
                                             </td>
                                         </tr>
-
-                                        <tr style="background-color: #f5f5f5;">
-                                            <td><strong>Gross Total</strong></td>
-                                            <td style="text-align: right;">
-                                                <strong>&#8369;{{ number_format($payment->gross_total ?? $payment->total_price, 2) }}</strong>
-                                            </td>
-                                        </tr>
-
-                                        @if ($payment->discount_amount && $payment->discount_amount > 0)
-                                            <tr>
-                                                <td>
-                                                    <strong>Discount Applied</strong>
-                                                    @if ($payment->discount)
-                                                        <br><small class="text-muted">{{ $payment->discount->name }}
-                                                            ({{ $payment->discount_percent }}%)</small>
-                                                    @elseif($payment->discount_percent)
-                                                        <br><small
-                                                            class="text-muted">({{ $payment->discount_percent }}%)</small>
-                                                    @endif
-                                                </td>
-                                                <td style="text-align: right; color: #28a745; font-weight: 600;">
-                                                    -&#8369;{{ number_format($payment->discount_amount, 2) }}
-                                                </td>
-                                            </tr>
-                                        @endif
-
-                                        @if ($payment->discount_amount)
-                                            <tr style="background-color: #f5f5f5;">
-                                                <td><strong>Subtotal</strong></td>
-                                                <td style="text-align: right;">
-                                                    <strong>&#8369;{{ number_format($payment->gross_total - $payment->discount_amount, 2) }}</strong>
-                                                </td>
-                                            </tr>
-                                        @endif
 
                                         {{-- Refundable Add-Ons Section --}}
                                         @php

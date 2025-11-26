@@ -3909,7 +3909,7 @@ class UserFacilityController extends Controller
             'availability.facility',
             'availability.facilityAttribute',
             'paymentDetails.facility',
-            'discount',
+            'priceDiscounts.price',
             'user',
             'updatedBy'
         ])

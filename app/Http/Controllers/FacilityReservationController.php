@@ -183,6 +183,7 @@ class FacilityReservationController extends Controller
             'transactionReservations.addonTransactions.addonReservation',
             'transactionReservations.addonTransactions.addonPayment.addon',
             'transactionReservations.addonTransactions.addonPayment.reservation',
+            'priceDiscounts.price',
             'updatedBy' => function ($q) {
                 $q->where('utype', 'ADM');
             }
@@ -196,6 +197,7 @@ class FacilityReservationController extends Controller
             )->orderBy('date_from')->get();
 
             $reservation->grouped_availabilities = $relatedAvailabilities;
+
 
             $qualificationApprovals = QualificationApproval::whereIn('availability_id', $relatedAvailabilities->pluck('id'))
                 ->with('user')
@@ -226,6 +228,9 @@ class FacilityReservationController extends Controller
             $reservation->refundable_addon_transactions = $refundableAddonTransactions;
             $reservation->non_refundable_addon_transactions = $nonRefundableAddonTransactions;
             $reservation->refundable_addon_payments = $refundableAddonPayments;
+            $priceDiscounts = $reservation->priceDiscounts()->with('price')->get();
+            $reservation->price_discounts = $priceDiscounts;
+
 
             $allAddons = $reservation->refundable_addon_transactions
                 ->merge($reservation->non_refundable_addon_transactions);
