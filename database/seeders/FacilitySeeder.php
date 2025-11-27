@@ -98,6 +98,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'individual',
             'is_based_on_days' => true,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => false,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -190,6 +191,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'individual',
             'is_based_on_days' => true,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => false,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -258,6 +260,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'individual',
             'is_based_on_days' => false,
             'is_there_a_quantity' => true,
+            'is_this_a_discount' => false,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -271,6 +274,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'individual',
             'is_based_on_days' => false,
             'is_there_a_quantity' => true,
+            'is_this_a_discount' => false,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -284,6 +288,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => false,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -297,6 +302,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => false,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -366,7 +372,7 @@ class FacilitySeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // Rolle Hall Prices
+        // Rolle Hall Prices - Regular price is_this_a_discount = false, others = true, CvSU Student Organizations = 0
         DB::table('prices')->insert([
             'facility_id' => $rolleHall,
             'name' => 'Regular Price',
@@ -374,6 +380,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => false,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -383,10 +390,11 @@ class FacilitySeeder extends Seeder
         DB::table('prices')->insert([
             'facility_id' => $rolleHall,
             'name' => 'CvSU Student Organizations',
-            'value' => 2500.00,
+            'value' => 1500.00,
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => true,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -400,6 +408,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => true,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -413,6 +422,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => true,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -426,6 +436,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => true,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -439,6 +450,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => true,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -507,7 +519,7 @@ class FacilitySeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // Icon Prices
+        // Icon Prices - Regular price is_this_a_discount = false, others = true, CvSU Student Organizations = 0
         DB::table('prices')->insert([
             'facility_id' => $icon,
             'name' => 'Regular Price',
@@ -515,6 +527,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => false,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -524,10 +537,11 @@ class FacilitySeeder extends Seeder
         DB::table('prices')->insert([
             'facility_id' => $icon,
             'name' => 'CvSU Student Organizations',
-            'value' => 3500.00,
+            'value' => 1500.00,
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => true,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -541,6 +555,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => true,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -554,6 +569,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => true,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -567,6 +583,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => true,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -580,6 +597,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => true,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
             'created_at' => now(),
@@ -648,7 +666,19 @@ class FacilitySeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // Swimming Pool Prices
+        // Swimming Pool Prices - Add Regular price with is_this_a_discount = false, others = true
+        DB::table('prices')->insert([
+            'facility_id' => $swimmingPool,
+            'name' => 'Regular Price',
+            'value' => 150.00,
+            'price_type' => 'individual',
+            'is_based_on_days' => false,
+            'is_there_a_quantity' => true,
+            'is_this_a_discount' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         DB::table('prices')->insert([
             'facility_id' => $swimmingPool,
             'name' => 'CvSU Students, PWD, and Senior Citizens',
@@ -656,6 +686,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'individual',
             'is_based_on_days' => false,
             'is_there_a_quantity' => true,
+            'is_this_a_discount' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -667,6 +698,7 @@ class FacilitySeeder extends Seeder
             'price_type' => 'individual',
             'is_based_on_days' => false,
             'is_there_a_quantity' => true,
+            'is_this_a_discount' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -678,17 +710,19 @@ class FacilitySeeder extends Seeder
             'price_type' => 'individual',
             'is_based_on_days' => false,
             'is_there_a_quantity' => true,
+            'is_this_a_discount' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         DB::table('prices')->insert([
             'facility_id' => $swimmingPool,
-            'name' => 'Exclusive Price. (Free access to the Olympic and kiddie pool, and Free access to the tables and cottages)',
+            'name' => 'Exclusive Price',
             'value' => 15000.00,
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,
+            'is_this_a_discount' => false,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

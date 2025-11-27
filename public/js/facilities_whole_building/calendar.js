@@ -27,7 +27,7 @@ function initializeCalendar() {
         tomorrow.setDate(tomorrow.getDate() + 7);
     }
     
-    const tomorrowFormatted = tomorrow.toISOString().split('T')[0];
+    const tomorrowFormatted = formatDateToPH(tomorrow);
     
     let maxDate = null;
     let maxDateFormatted = null;
@@ -35,11 +35,11 @@ function initializeCalendar() {
     if (userType === 'USR') {
         maxDate = new Date(today);
         maxDate.setMonth(maxDate.getMonth() + 3);
-        maxDateFormatted = maxDate.toISOString().split('T')[0];
+        maxDateFormatted = formatDateToPH(maxDate);
     } else if (userType === 'ADM') {
         maxDate = new Date(today);
         maxDate.setFullYear(maxDate.getFullYear() + 1);
-        maxDateFormatted = maxDate.toISOString().split('T')[0];
+        maxDateFormatted = formatDateToPH(maxDate);
     }
     
     window.calendarSelectedDates = [];
@@ -361,4 +361,11 @@ function updateDateDisplay() {
         if (endDisplay) endDisplay.textContent = 'Click on calendar to select';
         if (modalEnd) modalEnd.textContent = 'Not selected';
     }
+}
+
+function formatDateToPH(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }

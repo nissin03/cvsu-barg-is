@@ -19,7 +19,7 @@ class CalendarValidation {
             this.tomorrow.setDate(this.tomorrow.getDate() + 7);
         }
         
-        this.tomorrowFormatted = this.tomorrow.toISOString().split('T')[0];
+        this.tomorrowFormatted = this.formatDateToPH(this.tomorrow);
         
         this.maxDate = null;
         this.maxDateFormatted = null;
@@ -27,11 +27,11 @@ class CalendarValidation {
         if (userType === 'USR') {
             this.maxDate = new Date(this.today);
             this.maxDate.setMonth(this.maxDate.getMonth() + 3);
-            this.maxDateFormatted = this.maxDate.toISOString().split('T')[0];
+            this.maxDateFormatted = this.formatDateToPH(this.maxDate);
         } else if (userType === 'ADM') {
             this.maxDate = new Date(this.today);
             this.maxDate.setFullYear(this.maxDate.getFullYear() + 1);
-            this.maxDateFormatted = this.maxDate.toISOString().split('T')[0];
+            this.maxDateFormatted = this.formatDateToPH(this.maxDate);
         }
         
         this.initializeDateInputs();
@@ -441,5 +441,12 @@ class CalendarValidation {
                 if (endDisplay) endDisplay.textContent = this.formatDateForDisplay(endDate);
             });
         }
+    }
+
+    formatDateToPH(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 }
