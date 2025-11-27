@@ -160,26 +160,6 @@
                         <input type="hidden" name="facility_type" value="{{ $facility->facility_type }}">
                         <input type="hidden" name="selected_price" id="selected_price">
 
-                        @if (isset($discounts) && $discounts->count() > 0)
-                            <div class="mb-3">
-                                <label for="discount_id" class="form-label fw-semibold">Discount (optional)</label>
-                                <select name="discount_id" id="discount_id" class="form-select">
-                                    <option value="">-- No discount --</option>
-                                    @foreach ($discounts as $discount)
-                                        <option value="{{ $discount->id }}" data-percent="{{ $discount->percent }}"
-                                            data-applies-to="{{ $discount->applies_to }}"
-                                            data-requires-proof="{{ $discount->requires_proof ? '1' : '0' }}">
-                                            {{ $discount->name }}
-                                            ({{ rtrim(rtrim(number_format($discount->percent, 2, '.', ''), '0'), '.') }}%)
-                                            @if ($discount->applies_to === 'venue_only')
-                                                - Venue Only
-                                            @endif
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        @endif
-
                         @if ($facility->facility_type === 'individual')
                             <input type="hidden" name="facility_attribute_id" value="{{ $availableRoom->id ?? '' }}">
                         @elseif($facility->facility_type == 'whole_place')
@@ -421,6 +401,43 @@
             return true;
         }
 
+        document.addEventListener("DOMContentLoaded", function() {
+            const clientTypeSelect = document.getElementById("client_type");
+            const wholeClientTypeSelect = document.getElementById("whole_client_type");
+            const priceIdSelect = document.getElementById("price_id");
+            const wholePriceIdSelect = document.getElementById("whole_price_id");
+
+            function handleDiscountNote(selectElement, noteId) {
+                if (!selectElement) return;
+
+                const discountNote = document.getElementById(noteId || "discount-note");
+                if (!discountNote) return;
+
+                selectElement.addEventListener("change", function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const isDiscount = selectedOption.getAttribute("data-discount") === "1";
+
+                    if (isDiscount) {
+                        discountNote.style.display = "block";
+                    } else {
+                        discountNote.style.display = "none";
+                    }
+                });
+                if (selectElement.value) {
+                    const selectedOption = selectElement.options[selectElement.selectedIndex];
+                    const isDiscount = selectedOption.getAttribute("data-discount") === "1";
+                    discountNote.style.display = isDiscount ? "block" : "none";
+                }
+            }
+            handleDiscountNote(clientTypeSelect, "discount-note");
+            handleDiscountNote(wholeClientTypeSelect, "discount-note");
+            handleDiscountNote(priceIdSelect, "discount-note");
+            handleDiscountNote(wholePriceIdSelect, "discount-note");
+        });
+    </script>
+
+    <script>
+        // image modal and swipers
         document.addEventListener('DOMContentLoaded', function() {
             const addonDescModal = document.getElementById('addonDescModal');
             const discountSelect = document.getElementById('discount_id');

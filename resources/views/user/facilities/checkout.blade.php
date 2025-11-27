@@ -313,21 +313,6 @@
                                         @endif
                                     @endif
 
-                                    @if (!empty($reservationData['discount_id']))
-                                        {{-- <tr class="table-info">
-                                            <th><strong>Gross Total (Before Discount)</strong></th>
-                                            <td><strong>₱{{ number_format($reservationData['gross_total'], 2) }}</strong>
-                                            </td>
-                                        </tr> --}}
-
-                                        {{-- Discount Information --}}
-                                        <tr class="table-success">
-                                            <td class="text-success">
-                                                <strong>-₱{{ number_format($reservationData['discount_amount'], 2) }}</strong>
-                                            </td>
-                                        </tr>
-                                    @endif
-
                                     <tr class="row-total">
                                         <th class="col-label">Subtotal</th>
                                         <td class="col-amount">₱{{ number_format($subtotal, 2) }}</td>
@@ -534,33 +519,6 @@
                                             @endif
                                         @endif
                                     @endif
-
-                                    @if (!empty($reservationData['discount_id']))
-                                        {{-- <tr class="table-info">
-                                            <th><strong>Gross Total (Before Discount)</strong></th>
-                                            <td><strong>₱{{ number_format($reservationData['gross_total'], 2) }}</strong>
-                                            </td>
-                                        </tr> --}}
-
-                                        {{-- Discount Information --}}
-                                        <tr class="table-success">
-                                            <th>
-                                                <strong>Discount Applied</strong>
-                                                @if ($appliedDiscount)
-                                                    <br><small class="text-muted">{{ $appliedDiscount->name }}
-                                                        ({{ rtrim(rtrim(number_format($appliedDiscount->percent, 2, '.', ''), '0'), '.') }}%)
-                                                        @if ($appliedDiscount->applies_to === 'venue_only')
-                                                            - Venue Only
-                                                        @endif
-                                                    </small>
-                                                @endif
-                                            </th>
-                                            <td class="text-success">
-                                                <strong>-₱{{ number_format($reservationData['discount_amount'], 2) }}</strong>
-                                            </td>
-                                        </tr>
-                                    @endif
-
                                     <tr class="row-total">
                                         <th class="col-label">Subtotal</th>
                                         <td class="col-amount">₱{{ number_format($subtotal, 2) }}</td>
@@ -741,32 +699,6 @@
                                         <tr class="table-active">
                                             <th><strong>Add-ons Total</strong></th>
                                             <td><strong>₱{{ number_format($addonsTotal, 2) }}</strong></td>
-                                        </tr>
-                                    @endif
-
-                                    @if (!empty($reservationData['discount_id']))
-                                        {{-- <tr class="table-info">
-                                            <th><strong>Gross Total (Before Discount)</strong></th>
-                                            <td><strong>₱{{ number_format($reservationData['gross_total'], 2) }}</strong>
-                                            </td>
-                                        </tr> --}}
-
-                                        {{-- Discount Information --}}
-                                        <tr class="table-success">
-                                            <th>
-                                                <strong>Discount Applied</strong>
-                                                @if ($appliedDiscount)
-                                                    <br><small class="text-muted">{{ $appliedDiscount->name }}
-                                                        ({{ rtrim(rtrim(number_format($appliedDiscount->percent, 2, '.', ''), '0'), '.') }}%)
-                                                        @if ($appliedDiscount->applies_to === 'venue_only')
-                                                            - Venue Only
-                                                        @endif
-                                                    </small>
-                                                @endif
-                                            </th>
-                                            <td class="text-success">
-                                                <strong>-₱{{ number_format($reservationData['discount_amount'], 2) }}</strong>
-                                            </td>
                                         </tr>
                                     @endif
 
@@ -1010,32 +942,6 @@
                                                 </tr>
                                             @endif
                                         @endif
-                                    @endif
-
-                                    @if (!empty($reservationData['discount_id']))
-                                        {{-- <tr class="table-info">
-                                            <th><strong>Gross Total (Before Discount)</strong></th>
-                                            <td><strong>₱{{ number_format($reservationData['gross_total'], 2) }}</strong>
-                                            </td>
-                                        </tr> --}}
-
-                                        {{-- Discount Information --}}
-                                        <tr class="table-success">
-                                            <th>
-                                                <strong>Discount Applied</strong>
-                                                @if ($appliedDiscount)
-                                                    <br><small class="text-muted">{{ $appliedDiscount->name }}
-                                                        ({{ rtrim(rtrim(number_format($appliedDiscount->percent, 2, '.', ''), '0'), '.') }}%)
-                                                        @if ($appliedDiscount->applies_to === 'venue_only')
-                                                            - Venue Only
-                                                        @endif
-                                                    </small>
-                                                @endif
-                                            </th>
-                                            <td class="text-success">
-                                                <strong>-₱{{ number_format($reservationData['discount_amount'], 2) }}</strong>
-                                            </td>
-                                        </tr>
                                     @endif
 
                                     <tr class="table-active">
@@ -1408,28 +1314,90 @@
                                     @enderror
                                 </div>
 
-                                @if (!empty($reservationData['discount_id']) && $appliedDiscount && $appliedDiscount->requires_proof)
-                                    <div class="file-upload-wrapper mt-3" id="discount-proof-wrapper">
+                                {{-- <pre>
+                                    {{ print_r($reservationData, true) }}
+                                    </pre> --}}
+                                {{-- @if ($requiresDiscountProof)
+                                    <div class="booking-section">
+                                        <div class="section-header">
+                                            <i class="fas fa-file-upload"></i>
+                                            <span><strong>Discount Proof Required:</strong></span>
+                                        </div>
+                                        <div class="section-content">
+                                            <div class="alert alert-info">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                The selected price requires discount proof verification.
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="discount_proof">Upload Discount Proof <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="file"
+                                                    class="form-control @error('discount_proof') is-invalid @enderror"
+                                                    id="discount_proof" name="discount_proof" accept="image/*,.pdf"
+                                                    required>
+                                                <small class="form-text text-muted">
+                                                    Accepted formats: JPG, PNG, PDF (Max: 5MB)
+                                                </small>
+                                                @error('discount_proof')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif --}}
+
+
+                            </div>
+                        </div>
+                        @if ($requiresDiscountProof)
+                            <div class="requirements-card">
+                                <div class="requirements-header">
+                                    Discount Proof Required
+                                </div>
+
+                                <div class="requirements-body">
+
+                                    @if ($discountProofPath ?? false)
+                                        @php
+                                            $fileExtension = strtolower(
+                                                pathinfo($discountProofPath, PATHINFO_EXTENSION),
+                                            );
+                                            $isImageProof = in_array($fileExtension, ['jpg', 'jpeg', 'png']);
+                                        @endphp
+
+                                        <a href="{{ asset('/storage/discounts/' . $discountProofPath) }}" download
+                                            class="download-btn">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                fill="currentColor">
+                                                <path fill-rule="evenodd"
+                                                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            Download Submitted Proof
+                                        </a>
+                                    @endif
+
+                                    <div class="file-upload-wrapper">
                                         <label for="discount_proof" class="file-upload-label">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="file-upload-icon"
                                                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                             </svg>
                                             <span class="file-upload-text">
-                                                <span class="file-upload-title">Upload Discount Proof/ID <span
-                                                        class="text-danger">*</span></span>
-                                                <span class="file-upload-subtitle">JPG, PNG, or PDF (Max 10MB) - Required
-                                                    for discount</span>
+                                                <span class="file-upload-title">Upload Discount Proof</span>
+                                                <span class="file-upload-subtitle">JPG, PNG, or PDF (Max
+                                                    5MB)</span>
                                             </span>
                                             <input type="file" id="discount_proof" name="discount_proof"
-                                                class="file-upload-input" accept="image/*,application/pdf" required>
+                                                class="file-upload-input @error('discount_proof') is-invalid @enderror"
+                                                accept=".jpg,.jpeg,.png,.pdf" required>
                                         </label>
-                                        <div class="file-upload-preview" id="discount-proof-preview"
-                                            style="display:none;">
-                                            <span class="file-upload-name" id="discount-proof-name">No file
+
+                                        <div class="file-upload-preview" id="discount-file-preview">
+                                            <span class="file-upload-name" id="discount-file-name">No file
                                                 selected</span>
-                                            <button type="button" class="file-upload-clear" id="clear-discount-proof"
+                                            <button type="button" class="file-upload-clear" id="clear-discount-file"
                                                 aria-label="Remove file">
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                                                     fill="currentColor">
@@ -1439,20 +1407,21 @@
                                                 </svg>
                                             </button>
                                         </div>
+
                                         @error('discount_proof')
                                             <div class="file-upload-error">{{ $message }}</div>
                                         @enderror
                                     </div>
-                                @endif
 
-
-
+                                </div>
                             </div>
-                        </div>
+                        @endif
 
                         <button type="submit" class="submit-btn">
                             Confirm Reservation
                         </button>
+
+
                     </form>
                 </div>
             </div>
@@ -1521,23 +1490,83 @@
 
 
             const discountProofInput = document.getElementById('discount_proof');
+
+            // if (discountProofInput) {
+            //     const discountProofName = document.getElementById('discount-proof-name');
+            //     const clearDiscountProofButton = document.getElementById('clear-discount-proof');
+            //     const discountProofPreview = document.getElementById('discount-proof-preview');
+
+            //     discountProofInput.addEventListener('change', function(e) {
+            //         if (e.target.files.length > 0) {
+            //             const file = e.target.files[0];
+            //             const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+
+            //             if (!validTypes.includes(file.type)) {
+            //                 Swal.fire({
+            //                     icon: 'error',
+            //                     title: 'Invalid File Type',
+            //                     text: 'Please upload only JPG, PNG, or PDF files',
+            //                     confirmButtonColor: '#3b82f6',
+            //                     confirmButtonText: 'OK'
+            //                 }).then(() => {
+            //                     this.value = '';
+            //                     discountProofName.textContent = 'No file selected';
+            //                     discountProofPreview.style.display = 'none';
+            //                 });
+            //                 return;
+            //             }
+
+            //             if (file.size > 10 * 1024 * 1024) {
+            //                 Swal.fire({
+            //                     icon: 'error',
+            //                     title: 'File too large',
+            //                     text: 'File size exceeds 10MB limit',
+            //                     confirmButtonColor: '#3b82f6',
+            //                     confirmButtonText: 'OK'
+            //                 }).then(() => {
+            //                     this.value = '';
+            //                     discountProofName.textContent = 'No file selected';
+            //                     discountProofPreview.style.display = 'none';
+            //                 });
+            //                 return;
+            //             }
+
+            //             discountProofName.textContent = file.name;
+            //             discountProofPreview.classList.remove('d-none');
+            //             discountProofPreview.style.display = 'flex';
+            //         }
+            //     });
+
+            //     clearDiscountProofButton.addEventListener('click', function() {
+            //         discountProofInput.value = '';
+            //         discountProofName.textContent = 'No file selected';
+            //         discountProofPreview.style.display = 'none';
+            //     });
+            // }
             if (discountProofInput) {
-                const discountProofName = document.getElementById('discount-proof-name');
-                const clearDiscountProofButton = document.getElementById('clear-discount-proof');
-                const discountProofPreview = document.getElementById('discount-proof-preview');
+                const discountProofName = document.getElementById('discount-file-name');
+                const clearDiscountProofButton = document.getElementById('clear-discount-file');
+                const discountProofPreview = document.getElementById('discount-file-preview');
+
+                discountProofPreview.style.display = 'none';
 
                 discountProofInput.addEventListener('change', function(e) {
                     if (e.target.files.length > 0) {
+
                         const file = e.target.files[0];
-                        const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+                        const validTypes = [
+                            'application/pdf',
+                            'image/jpeg',
+                            'image/jpg',
+                            'image/png'
+                        ];
 
                         if (!validTypes.includes(file.type)) {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Invalid File Type',
                                 text: 'Please upload only JPG, PNG, or PDF files',
-                                confirmButtonColor: '#3b82f6',
-                                confirmButtonText: 'OK'
+                                confirmButtonColor: '#3b82f6'
                             }).then(() => {
                                 this.value = '';
                                 discountProofName.textContent = 'No file selected';
@@ -1546,13 +1575,12 @@
                             return;
                         }
 
-                        if (file.size > 10 * 1024 * 1024) {
+                        if (file.size > 5 * 1024 * 1024) {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'File too large',
-                                text: 'File size exceeds 10MB limit',
-                                confirmButtonColor: '#3b82f6',
-                                confirmButtonText: 'OK'
+                                text: 'File size exceeds 5MB limit',
+                                confirmButtonColor: '#3b82f6'
                             }).then(() => {
                                 this.value = '';
                                 discountProofName.textContent = 'No file selected';
@@ -1572,6 +1600,7 @@
                     discountProofPreview.style.display = 'none';
                 });
             }
+
 
             document.querySelector('form[name="checkout-form"]').addEventListener('submit', function(e) {
                 if (fileInput.files.length > 0) {

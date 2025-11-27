@@ -215,12 +215,27 @@
                                                         value="{{ $price->value }}">
                                                     <input type="hidden" name="price_names[{{ $price->id }}]"
                                                         value="{{ $price->name }}">
+                                                    <input type="hidden"
+                                                        name="price_is_discount[{{ $price->id }}]"
+                                                        data-is-discount="{{ $price->is_this_a_discount ? '1' : '0' }}"
+                                                        value="{{ $price->is_this_a_discount ? '1' : '0' }}">
+
                                                     <div class="price-quantity-card mb-4">
                                                         <div
                                                             class="price-header d-flex justify-content-between align-items-center mb-3">
-                                                            <h5 class="price-title m-0">{{ $price->name }}</h5>
+                                                            <h5 class="price-title m-0">
+                                                                {{ $price->name }}
+                                                                @if ($price->is_this_a_discount)
+                                                                    <span class="badge bg-warning text-dark ms-2">
+                                                                        <i class="fa fa-info-circle"></i> Requires
+                                                                        Proof
+                                                                    </span>
+                                                                @endif
+                                                            </h5>
                                                             <span
-                                                                class="price-value badge bg-primary-light text-primary fs-5 fw-bold">₱{{ number_format($price->value, 2) }}</span>
+                                                                class="price-value badge bg-primary-light text-primary fs-5 fw-bold">
+                                                                ₱{{ number_format($price->value, 2) }}
+                                                            </span>
                                                         </div>
                                                         <div class="quantity-control">
                                                             <label for="internal_quantity-{{ $price->id }}"
@@ -233,6 +248,8 @@
                                                                 value="{{ old('internal_quantity.' . $price->id) }}"
                                                                 min="0" max="{{ $wholeAttr->whole_capacity }}"
                                                                 step="1" oninput="validateQuantityInput(this)"
+                                                                data-price-id="{{ $price->id }}"
+                                                                data-is-discount="{{ $price->is_this_a_discount ? '1' : '0' }}"
                                                                 placeholder="Enter quantity">
                                                             @error('internal_quantity.' . $price->id)
                                                                 <div class="invalid-feedback">
@@ -240,10 +257,23 @@
                                                                 </div>
                                                             @enderror
                                                         </div>
+
+                                                        @if ($price->is_this_a_discount)
+                                                            <p class="text-danger mt-2 mb-0 small">
+                                                                <i class="fas fa-info-circle me-1"></i>
+                                                                This requires a proof of id for verification
+                                                            </p>
+                                                        @endif
                                                     </div>
                                                 @endif
                                             @endforeach
                                         </div>
+
+                                        {{-- <p id="quantity-discount-note" class="text-danger mt-2"
+                                            style="display:none;">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            One or more selected prices require valid discount proof.
+                                        </p> --}}
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary"
@@ -351,30 +381,6 @@
                         </div>
                     </div>
                 @endif
-
-                <div class="mb-3">
-                    <div class="booking-section">
-                        <div class="section-header">
-                            <i class="fa fa-user-tag"></i>
-                            <span><strong>Client Type:</strong></span>
-                        </div>
-                        <div class="section-content">
-                            <select name="price_id" id="price_id"
-                                class="form-select @error('price_id') is-invalid @enderror"
-                                onchange="updateTotalPrice()">
-                                <option value="">Select Price</option>
-                                @foreach ($facility->prices->where('price_type', 'individual') as $price)
-                                    @if (!$price->is_there_a_quantity)
-                                        <option value="{{ $price->id }}" data-value="{{ $price->value }}">
-                                            {{ $price->name }} - &#8369;{{ number_format($price->value, 2) }}
-                                        </option>
-                                    @endif
-                                @endforeach
-                            </select>
-                            <input type="hidden" id="selected_price_value" name="selected_price" value="">
-                        </div>
-                    </div>
-                </div>
             @endif
 
             @include('components.facility_both_addons', ['section' => 'shared', 'facility' => $facility])
@@ -496,6 +502,8 @@
                 </div>
             @endif
 
+            {{-- facility_both_building.blade.php --}}
+            {{-- bookType === whole --}}
             <div class="booking-section">
                 <div class="section-header">
                     <i class="fa fa-user-tag"></i>
@@ -506,11 +514,16 @@
                         onchange="updateWholeTotalPrice()">
                         <option value="" disabled selected>Select a client type</option>
                         @foreach ($facility->prices->where('price_type', 'whole') as $price)
-                            <option value="{{ $price->value }}" data-name="{{ $price->name }}">
+                            <option value="{{ $price->value }}" data-name="{{ $price->name }}"
+                                data-discount="{{ $price->is_this_a_discount ? '1' : '0' }}">
                                 {{ $price->name }} (₱{{ number_format($price->value, 2) }})
                             </option>
                         @endforeach
                     </select>
+                    <p id="discount-note" class="text-danger mt-2" style="display: none">
+                        <i class="fas fa-info-circle me-1"></i>
+                        This requires a proof of id for verification
+                    </p>
                 </div>
             </div>
 

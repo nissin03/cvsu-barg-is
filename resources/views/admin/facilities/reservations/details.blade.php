@@ -1195,6 +1195,38 @@
                 </div>
             @endif
 
+            @if ($reservation->price_discounts && $reservation->price_discounts->count() > 0)
+                <div class="wg-box mt-5">
+                    <h4 class="fw-bold mb-4">Discount Proofs</h4>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 100%;">File</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($reservation->price_discounts as $pd)
+                                    <tr>
+                                        <td>
+                                            @if ($pd->discount_proof_path)
+                                                <a href="{{ asset('storage/' . $pd->discount_proof_path) }}"
+                                                    target="_blank" class="btn btn-info btn-lg text-white">
+                                                    <i class="icon-download"></i> View Document
+                                                </a>
+                                            @else
+                                                <span class="text-muted">No file uploaded</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
             @php
                 $statusTransitions = [
                     'pending' => ['reserved', 'completed', 'canceled'],

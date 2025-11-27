@@ -479,6 +479,11 @@ class AdminController extends Controller
     public function category_archive($id)
     {
         $category = Category::findOrFail($id);
+        if ($category->children()->count() > 0) {
+            $category->children()->each(function ($child) {
+                $child->delete();
+            });
+        }
         $category->delete();
         return redirect()->route('admin.categories')->with('status', 'Category has been archived successfully!');
     }
@@ -487,12 +492,23 @@ class AdminController extends Controller
     {
         $archivedCategories = Category::onlyTrashed()
             ->whereNull('parent_id')
-            ->with('children')
+            ->with('archivedChildren')
             ->orderBy('id', 'DESC')
             ->paginate(5);
 
+        $orphanedChildren = Category::onlyTrashed()
+            ->whereNotNull('parent_id')
+            ->whereHas('parent', function ($query) {
+                $query->withTrashed()->whereNull('deleted_at');
+            })
+            ->orderBy('id', 'DESC')
+            ->get();
+
         $pageTitle = 'Archived Categories';
-        return view('admin.archived-categories', compact('archivedCategories', 'pageTitle'));
+        return view(
+            'admin.archived-categories',
+            compact('archivedCategories', 'pageTitle', 'orphanedChildren')
+        );
     }
 
     public function restore_categories($id)

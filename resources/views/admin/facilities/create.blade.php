@@ -152,7 +152,7 @@
                 <div class="wg-box" id="priceBox">
 
                     @include('admin.facilities.partials.pricing-management')
-                    <x-discounts.discount-selector :discounts="$discounts" />
+                    {{-- <x-discounts.discount-selector :discounts="$discounts" /> --}}
 
 
                     <div class="cols gap10">
@@ -178,7 +178,7 @@
 
     <script src="{{ asset('assets/js/hideFields.js') }}"></script>
     <script src="{{ asset('assets/js/imagefile.js') }}"></script>
-    <script src="{{ asset('assets/js/discount-selector.js') }}"></script>
+    {{-- <script src="{{ asset('assets/js/discount-selector.js') }}"></script> --}}
     <script src="{{ asset('assets/js/addon-selector.js') }}"></script>
 
     <script>
@@ -213,7 +213,7 @@
             setupFormValidation();
             setupRoomsManagement();
             setupPricingManagement();
-            setupDiscountsUi();
+            // setupDiscountsUi();
             setupAddonsUi();
         }
 
