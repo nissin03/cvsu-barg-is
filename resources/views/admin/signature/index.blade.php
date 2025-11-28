@@ -1,14 +1,6 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div id="loading-indicator" class="loading-indicator">
-        <div class="loading-spinner">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-    </div>
-
     <div class="main-content-inner">
         <div class="main-content-wrap">
             <div class="flex items-center flex-wrap justify-between gap20 mb-27">
@@ -19,7 +11,9 @@
                             <div class="text-tiny">Dashboard</div>
                         </a>
                     </li>
-                    <li><i class="icon-chevron-right"></i></li>
+                    <li>
+                        <i class="icon-chevron-right"></i>
+                    </li>
                     <li>
                         <div class="text-tiny">Signatures</div>
                     </li>
@@ -183,14 +177,16 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="action-buttons mb-3">
-                    <a class="tf-button w-auto" href="{{ route('admin.signatures.create') }}">
-                        <i class="icon-plus"></i> Add New Signature
-                    </a>
-                    <a class="tf-button w-auto" href="{{ route('admin.signatures.archive') }}">
-                        <i class="icon-archive"></i> Archived Signatures
-                    </a>
+                <div class="flex items-center justify-between gap10 flex-wrap mb-3">
+
+                    <div class="action-buttons">
+                        <a class="tf-button w-auto" href="{{ route('admin.signatures.create') }}">
+                            <i class="icon-plus"></i>Add New Signature
+                        </a>
+                        <a class="tf-button w-auto" href="{{ route('admin.signatures.archive') }}">
+                            <i class="icon-archive"></i> Archived Signatures
+                        </a>
+                    </div>
                 </div>
 
                 <div class="table-all-user g-table">
@@ -222,7 +218,7 @@
                                                 method="POST" class="d-inline archive-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-warning archive mobile-btn">
+                                                <button type="submit" class="btn btn-sm btn-danger archive mobile-btn">
                                                     <i class="icon-archive"></i> Archive
                                                 </button>
                                             </form>
@@ -243,7 +239,6 @@
                             @endforelse
                         </div>
 
-                        <!-- Desktop Table View -->
                         <table class="table table-striped table-bordered d-none d-md-table">
                             <thead class="thead-light">
                                 <tr>
@@ -257,15 +252,79 @@
                                     <th scope="col" class="col-action">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="js-signatures-partial-target">
-                                @include('partials._signatures-table', [
-                                    'signatures' => $signatures,
-                                ])
+                            <tbody>
+                                @forelse ($signatures as $signature)
+                                    <tr>
+                                        <td class="label-cell">
+                                            {{ $signature->label }}
+                                        </td>
+                                        <td class="name-cell">
+                                            <div class="name text-truncate" title="{{ $signature->name }}">
+                                                <strong>{{ $signature->name }}</strong>
+                                            </div>
+                                        </td>
+                                        <td class="position-cell">
+                                            {{ $signature->position }}
+                                        </td>
+                                        <td class="category-cell">
+                                            <span
+                                                class="badge {{ $signature->category == 'facility' ? 'badge-info' : 'badge-warning' }}">
+                                                {{ ucfirst($signature->category) }}
+                                            </span>
+                                        </td>
+                                        <td class="report-type-cell">
+                                            <span class="badge bg-dark text-center">
+                                                {{ ucfirst($signature->report_type) }}
+                                            </span>
+                                        </td>
+                                        <td class="order-cell">
+                                            #{{ $signature->order_by }}
+                                        </td>
+                                        <td class="status-cell">
+                                            <span
+                                                class="badge {{ $signature->is_active ? 'badge-success' : 'badge-secondary' }}">
+                                                {{ $signature->is_active ? 'Active' : 'Inactive' }}
+                                            </span>
+                                        </td>
+                                        <td class="action-cell">
+                                            <div class="list-icon-function">
+                                                <a href="{{ route('admin.signatures.edit', $signature->id) }}"
+                                                    title="Edit Signature">
+                                                    <div class="item edit">
+                                                        <i class="icon-edit-3"></i>
+                                                    </div>
+                                                </a>
+                                                <form action="{{ route('admin.signatures.destroy', $signature->id) }}"
+                                                    method="POST" class="d-inline archive-form">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="item text-warning archive"
+                                                        style="border: none; background: none;" title="Archive Signature">
+                                                        <i class="icon-archive"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="text-center empty-state-table">
+                                            <div class="empty-icon">
+                                                <i class="icon-file-text"></i>
+                                            </div>
+                                            <h5>No Signatures Found</h5>
+                                            <p>Start by creating your first signature.</p>
+                                            <a href="{{ route('admin.signatures.create') }}" class="btn btn-primary">
+                                                <i class="icon-plus"></i> Add New Signature
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
                     <div class="divider"></div>
-                    <div class="pagination-container" id="js-signatures-partial-target-pagination">
+                    <div class="pagination-container">
                         {{ $signatures->appends(request()->query())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
@@ -276,26 +335,6 @@
 
 @push('styles')
     <style>
-        /* Loading Indicator */
-        .loading-indicator {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.7);
-            z-index: 9999;
-        }
-
-        .loading-spinner {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        /* Base Layout */
         .main-content-inner {
             padding: 15px;
         }
@@ -315,66 +354,7 @@
             margin-bottom: 1.5rem;
         }
 
-        /* Filter Styles */
-        .filter-select {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #dee2e6;
-            min-width: 150px;
-            background: #fff;
-            transition: border-color 0.2s;
-        }
-
-        .filter-select:focus {
-            border-color: #80bdff;
-            outline: 0;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
-        }
-
-        /* Filter Tags */
-        .filter-tag-enhanced {
-            background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 2rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease;
-        }
-
-        .filter-tag-enhanced:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .filter-tag-enhanced .btn-close {
-            background-color: #fff;
-            color: #dc3545;
-            border-radius: 50%;
-            width: 1.4rem;
-            height: 1.4rem;
-            padding: 0;
-            opacity: 0.8;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            border: none;
-        }
-
-        .filter-tag-enhanced .btn-close:hover {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-
-        /* Search Input */
-        .search-input,
-        .form-search input {
+        .search-input {
             width: 100%;
             min-width: 200px;
             padding: 8px 12px;
@@ -384,21 +364,18 @@
             transition: border-color 0.3s ease;
         }
 
-        .search-input:focus,
-        .form-search input:focus {
+        .search-input:focus {
             outline: none;
             border-color: #3498db;
             box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
         }
 
-        /* Action Buttons */
         .action-buttons {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
         }
 
-        /* Badge Styles */
         .badge {
             display: inline-block;
             padding: 4px 10px;
@@ -407,6 +384,7 @@
             color: #fff;
             border-radius: 4px;
             line-height: 1.2;
+            vertical-align: middle;
         }
 
         .badge-success {
@@ -425,19 +403,18 @@
             background: linear-gradient(135deg, #f59e0b, #d97706);
         }
 
-        /* Table Styles */
+        .badge-purple {
+            background: linear-gradient(135deg, #6a11cb, #a4508b);
+        }
+
         .table {
             table-layout: fixed;
             width: 100%;
             margin-bottom: 0;
         }
 
-        .col-label {
-            width: 12%;
-        }
-
         .col-name {
-            width: 18%;
+            width: 20%;
         }
 
         .col-position {
@@ -445,11 +422,15 @@
         }
 
         .col-category {
-            width: 10%;
+            width: 12%;
         }
 
         .col-report-type {
-            width: 12%;
+            width: 15%;
+        }
+
+        .col-label {
+            width: 15%;
         }
 
         .col-order {
@@ -507,19 +488,18 @@
             box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
         }
 
-        .list-icon-function .archive {
-            background-color: rgba(245, 158, 11, 0.1);
-            color: #f59e0b;
+        .list-icon-function .delete {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
         }
 
-        .list-icon-function .archive:hover {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
+        .list-icon-function .delete:hover {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
 
-        /* Mobile Card Styles */
         .mobile-cards {
             display: none;
         }
@@ -557,6 +537,7 @@
             color: #1e293b;
             flex: 1;
             min-width: 0;
+            word-wrap: break-word;
         }
 
         .mobile-card-body {
@@ -600,12 +581,21 @@
             color: white;
         }
 
+        .mobile-btn.btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9, #21618c);
+            transform: translateY(-1px);
+        }
+
         .mobile-btn.btn-warning {
             background: linear-gradient(135deg, #f59e0b, #d97706);
             color: white;
         }
 
-        /* Empty State */
+        .mobile-btn.btn-warning:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            transform: translateY(-1px);
+        }
+
         .empty-state,
         .empty-state-table {
             text-align: center;
@@ -619,17 +609,284 @@
             margin-bottom: 16px;
         }
 
-        /* Pagination */
+        .empty-state h4,
+        .empty-state-table h5 {
+            color: #475569;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .empty-state p,
+        .empty-state-table p {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+
+        .empty-state .btn,
+        .empty-state-table .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .empty-state .btn:hover,
+        .empty-state-table .btn:hover {
+            background: linear-gradient(135deg, #2980b9, #21618c);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
         .pagination-container {
             display: flex;
             justify-content: center;
+            align-items: center;
+            width: 100%;
             padding: 15px 0;
+            overflow: visible !important;
             min-height: 60px;
         }
 
-        /* SweetAlert Styles */
+        .pagination {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            width: 100%;
+        }
+
+        .pagination li {
+            display: inline-block;
+            margin: 0;
+        }
+
+        .pagination .page-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background-color: white;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .pagination .page-link:hover {
+            background-color: #f3f4f6;
+            border-color: #9ca3af;
+            transform: translateY(-1px);
+        }
+
+        .pagination .active .page-link {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-color: #3498db;
+            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+        }
+
+        .pagination .disabled .page-link {
+            background-color: #f9fafb;
+            color: #9ca3af;
+            border-color: #e5e7eb;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .pagination-info {
+            width: 100%;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        /* Filter Styles */
+        .filter-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            min-width: 150px;
+            background: #fff;
+            transition: border-color 0.2s;
+        }
+
+        .filter-select:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+        }
+
+        .filter-tag-enhanced {
+            background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .filter-tag-enhanced:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .filter-tag-enhanced .btn-close {
+            background-color: #fff;
+            color: #dc3545;
+            border-radius: 50%;
+            width: 1.4rem;
+            height: 1.4rem;
+            padding: 0;
+            opacity: 0.8;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+        }
+
+        .filter-tag-enhanced .btn-close:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* SweetAlert2 Enhanced Styles */
         .swal2-popup {
+            width: 90vw !important;
+            max-width: 600px !important;
+            min-height: 350px !important;
+            padding: 35px !important;
             border-radius: 16px !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25) !important;
+            backdrop-filter: blur(10px) !important;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.95)) !important;
+        }
+
+        .swal2-title {
+            font-size: 24px !important;
+            font-weight: 700 !important;
+            margin: 0 0 25px 0 !important;
+            text-align: center !important;
+            line-height: 1.3 !important;
+            color: #1e293b !important;
+        }
+
+        .swal2-content {
+            font-size: 16px !important;
+            line-height: 1.6 !important;
+            margin: 25px 0 35px 0 !important;
+            text-align: center !important;
+            color: #475569 !important;
+        }
+
+        .swal2-actions {
+            margin: 35px 0 0 0 !important;
+            gap: 15px !important;
+            justify-content: center !important;
+        }
+
+        .swal2-confirm,
+        .swal2-cancel {
+            font-size: 15px !important;
+            font-weight: 600 !important;
+            padding: 12px 30px !important;
+            min-width: 120px !important;
+            height: 45px !important;
+            border-radius: 8px !important;
+            border: none !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .swal2-confirm {
+            background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+            color: white !important;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3) !important;
+        }
+
+        .swal2-confirm:hover {
+            background: linear-gradient(135deg, #d97706, #b45309) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4) !important;
+        }
+
+        .swal2-cancel {
+            background: #f8fafc !important;
+            color: #64748b !important;
+            border: 2px solid #cbd5e1 !important;
+        }
+
+        .swal2-cancel:hover {
+            background: #e2e8f0 !important;
+            border-color: #94a3b8 !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .swal2-popup::before {
+            content: '' !important;
+            display: block !important;
+            text-align: center !important;
+            margin: 20px auto 30px auto !important;
+            width: 80px !important;
+            height: 80px !important;
+            line-height: 80px !important;
+            border-radius: 50% !important;
+            font-size: 32px !important;
+            font-weight: 900 !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            animation: swalIconPulse 1s ease-in-out !important;
+        }
+
+        .swal2-popup.swal2-success::before {
+            content: "✓" !important;
+            color: #22c55e !important;
+            border: 4px solid #22c55e !important;
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
+        }
+
+        .swal2-popup.swal2-error::before {
+            content: "✕" !important;
+            color: #ef4444 !important;
+            border: 4px solid #ef4444 !important;
+            background: linear-gradient(135deg, #fef2f2, #fecaca) !important;
+        }
+
+        .swal2-popup.swal2-info::before {
+            content: "i" !important;
+            color: #3b82f6 !important;
+            border: 4px solid #3b82f6 !important;
+            background: linear-gradient(135deg, #eff6ff, #dbeafe) !important;
+            font-style: italic !important;
+            font-size: 36px !important;
+        }
+
+        .swal2-popup.swal2-question::before {
+            content: "?" !important;
+            color: #8b5cf6 !important;
+            border: 4px solid #8b5cf6 !important;
+            background: linear-gradient(135deg, #faf5ff, #ede9fe) !important;
+            font-size: 36px !important;
         }
 
         .swal2-popup.swal2-warning::before {
@@ -637,21 +894,63 @@
             color: #f59e0b !important;
             border: 4px solid #f59e0b !important;
             background: linear-gradient(135deg, #fffbeb, #fef3c7) !important;
-            width: 70px !important;
-            height: 70px !important;
-            line-height: 70px !important;
-            border-radius: 50% !important;
-            font-size: 32px !important;
-            font-weight: 900 !important;
-            display: block !important;
-            margin: 20px auto 25px auto !important;
+            font-size: 36px !important;
         }
 
         .swal2-icon {
             display: none !important;
         }
 
-        /* Responsive */
+        @keyframes swalIconPulse {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .col-name {
+                width: 18%;
+            }
+
+            .col-position {
+                width: 14%;
+            }
+
+            .col-category {
+                width: 12%;
+            }
+
+            .col-report-type {
+                width: 14%;
+            }
+
+            .col-label {
+                width: 14%;
+            }
+
+            .col-order {
+                width: 8%;
+            }
+
+            .col-status {
+                width: 10%;
+            }
+
+            .col-action {
+                width: 10%;
+            }
+        }
+
         @media (max-width: 768px) {
             .mobile-cards {
                 display: block;
@@ -666,9 +965,66 @@
                 justify-content: flex-end;
             }
 
+            .pagination {
+                gap: 5px;
+            }
+
+            .pagination .page-link {
+                min-width: 36px;
+                height: 36px;
+                padding: 0 8px;
+                font-size: 13px;
+            }
+
             .filter-tag-enhanced {
                 font-size: 0.8rem;
                 padding: 0.4rem 0.8rem;
+            }
+
+            /* Mobile SweetAlert2 adjustments */
+            .swal2-popup {
+                width: 95vw !important;
+                max-width: none !important;
+                margin: 10px !important;
+                padding: 25px !important;
+                min-height: 300px !important;
+            }
+
+            .swal2-title {
+                font-size: 20px !important;
+                margin-bottom: 20px !important;
+            }
+
+            .swal2-content {
+                font-size: 14px !important;
+                margin: 20px 0 25px 0 !important;
+            }
+
+            .swal2-actions {
+                flex-direction: column !important;
+                width: 100% !important;
+                margin-top: 25px !important;
+                gap: 10px !important;
+            }
+
+            .swal2-confirm,
+            .swal2-cancel {
+                width: 100% !important;
+                margin: 0 !important;
+            }
+
+            .swal2-popup::before {
+                width: 70px !important;
+                height: 70px !important;
+                line-height: 70px !important;
+                font-size: 28px !important;
+                margin: 15px auto 25px auto !important;
+            }
+
+            .swal2-popup.swal2-info::before,
+            .swal2-popup.swal2-question::before,
+            .swal2-popup.swal2-warning::before {
+                font-size: 30px !important;
             }
         }
 
@@ -681,6 +1037,77 @@
                 flex-direction: column;
                 align-items: flex-end;
             }
+
+            .tf-button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .pagination {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .pagination-info {
+                order: -1;
+                margin-bottom: 10px;
+            }
+
+            /* Small mobile SweetAlert2 adjustments */
+            .swal2-popup {
+                padding: 20px !important;
+                min-height: 280px !important;
+            }
+
+            .swal2-title {
+                font-size: 18px !important;
+            }
+
+            .swal2-content {
+                font-size: 13px !important;
+            }
+
+            .swal2-popup::before {
+                width: 60px !important;
+                height: 60px !important;
+                line-height: 60px !important;
+                font-size: 24px !important;
+            }
+
+            .swal2-popup.swal2-info::before,
+            .swal2-popup.swal2-question::before,
+            .swal2-popup.swal2-warning::before {
+                font-size: 26px !important;
+            }
+        }
+
+        @media print {
+
+            .action-buttons,
+            .wg-filter,
+            .list-icon-function,
+            .mobile-card-actions {
+                display: none !important;
+            }
+
+            .table {
+                display: table !important;
+            }
+
+            .mobile-cards {
+                display: none !important;
+            }
+
+            .wg-box,
+            .mobile-card {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+            }
+
+            .pagination {
+                display: none !important;
+            }
         }
     </style>
 @endpush
@@ -690,6 +1117,55 @@
         $(document).ready(function() {
             let lastScrollPosition = 0;
             let searchTimeout = null;
+
+            // SweetAlert2 Configuration
+            const customSwalConfig = {
+                customClass: {
+                    popup: 'enhanced-swal-popup',
+                    title: 'enhanced-swal-title',
+                    content: 'enhanced-swal-content',
+                    actions: 'enhanced-swal-actions',
+                    confirmButton: 'enhanced-swal-confirm',
+                    cancelButton: 'enhanced-swal-cancel'
+                },
+                buttonsStyling: false,
+                allowOutsideClick: false,
+                allowEscapeKey: true,
+                showCloseButton: true,
+                focusConfirm: false,
+                reverseButtons: true,
+                backdrop: true
+            };
+
+            @if (Session::has('success'))
+                Swal.fire({
+                    ...customSwalConfig,
+                    customClass: {
+                        popup: 'swal2-success'
+                    },
+                    title: 'Operation Successful!',
+                    html: `
+                        <div style="text-align: center; line-height: 1.6;">
+                            <p style="font-size: 16px; color: #22c55e; margin-bottom: 15px;">
+                                <strong>{{ Session::get('success') }}</strong>
+                            </p>
+                            <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #22c55e;">
+                                <p style="margin: 0; color: #166534; font-weight: 500;">
+                                    <i class="icon-check-circle" style="margin-right: 8px;"></i>
+                                    The operation has been completed successfully.
+                                </p>
+                            </div>
+                            <p style="color: #64748b; font-size: 14px; margin-top: 15px;">
+                                Your changes have been saved and are now active.
+                            </p>
+                        </div>
+                    `,
+                    confirmButtonText: '<i class="icon-check"></i> Great!',
+                    timer: 5000,
+                    timerProgressBar: true,
+                    showCloseButton: true
+                });
+            @endif
 
             // Filter toggle functionality
             $('#filterToggle').on('click', function() {
@@ -716,7 +1192,6 @@
             function performFilter() {
                 lastScrollPosition = $(window).scrollTop();
 
-                // added to make the search functionality focus.
                 const searchInput = $('#signature-search');
                 const searchValue = searchInput.val();
                 const cursorPosition = searchInput[0].selectionStart;
@@ -748,16 +1223,16 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     },
                     success: function(response) {
-                        $('#js-signatures-partial-target').html(response.signatures);
-                        $('#js-signatures-mobile-target').html(response.mobile);
-                        $('#js-signatures-partial-target-pagination').html(response.pagination);
+                        $('tbody').html(response.signatures);
+                        $('.mobile-cards').html(response.mobile);
+                        $('.pagination-container').html(response.pagination);
                         showLoadingState(false);
                         window.history.pushState({}, '', url);
                         initPaginationEvents();
                         initArchiveButtons();
                         updateActiveFiltersDisplay();
                         $(window).scrollTop(lastScrollPosition);
-                        // added to make the search functionality focus.
+
                         if (wasSearchFocused) {
                             const newSearchInput = $('#signature-search');
                             newSearchInput.focus();
@@ -771,7 +1246,7 @@
                         console.error('Error:', error);
                         showLoadingState(false);
                         showNotification('An error occurred. Please try again.', 'error');
-                        // added to make the search functionality focus.
+
                         if (wasSearchFocused) {
                             $('#signature-search').focus();
                         }
@@ -781,17 +1256,11 @@
 
             function showLoadingState(isLoading) {
                 if (isLoading) {
-                    $('#loading-indicator').show();
                     $('.filter-select').prop('disabled', true);
                     $('#applyFilters').prop('disabled', true).html(
                         '<span class="spinner-border spinner-border-sm me-1"></span>Loading...'
                     );
-                    // $('.filter-select, #signature-search').prop('disabled', true);
-                    // $('#applyFilters').prop('disabled', true).html(
-                    //     '<span class="spinner-border spinner-border-sm me-1"></span>Loading...'
-                    // );
                 } else {
-                    $('#loading-indicator').hide();
                     $('.filter-select, #signature-search').prop('disabled', false);
                     $('#applyFilters').prop('disabled', false).html(
                         '<i class="icon-filter me-1"></i> Apply Filters'
@@ -813,10 +1282,9 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         },
                         success: function(response) {
-                            $('#js-signatures-partial-target').html(response.signatures);
-                            $('#js-signatures-mobile-target').html(response.mobile);
-                            $('#js-signatures-partial-target-pagination').html(response
-                                .pagination);
+                            $('tbody').html(response.signatures);
+                            $('.mobile-cards').html(response.mobile);
+                            $('.pagination-container').html(response.pagination);
                             showLoadingState(false);
                             window.history.pushState({}, '', url);
                             initPaginationEvents();
@@ -906,46 +1374,79 @@
                 $('#filterTags').append(tag);
             }
 
-            // Event bindings
-            $('#applyFilters').on('click', performFilter);
-            $('#category, #report_type, #status, #sort_by').on('change', performFilter);
-
-            $('#clearAllFilters, #resetFilters').on('click', function() {
-                $('#signature-search, #category, #report_type, #status').val('');
-                $('#sort_by').val('order');
-                performFilter();
-            });
-
+            // Enhanced Archive Signature Confirmation
             function initArchiveButtons() {
                 $('.archive').off('click').on('click', function(e) {
                     e.preventDefault();
                     var form = $(this).closest('form');
-                    var signatureName = $(this).closest('tr, .mobile-card')
-                        .find('.name, .mobile-card-title').text().trim();
+                    var signatureName = $(this).closest('tr, .mobile-card').find(
+                            '.name, .mobile-card-title')
+                        .text()
+                        .trim();
 
                     Swal.fire({
-                        title: 'Archive Signature?',
+                        ...customSwalConfig,
+                        title: 'Archive Signature Confirmation',
                         html: `
                             <div style="text-align: left; line-height: 1.6;">
-                                <p style="text-align: center;">You are about to archive:</p>
-                                <div style="background: linear-gradient(135deg, #fffbeb, #fef3c7);
-                                    padding: 15px; border-radius: 10px; margin: 15px 0;
-                                    border-left: 4px solid #f59e0b;">
-                                    <strong style="color: #92400e;">${signatureName}</strong>
+                                <p style="margin-bottom: 15px; text-align: center;">You are about to archive the following signature:</p>
+                                <div style="background: linear-gradient(135deg, #fffbeb, #fef3c7); padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #f59e0b;">
+                                    <strong style="color: #92400e; font-size: 16px;">${signatureName}</strong>
                                 </div>
-                                <p style="color: #64748b; text-align: center; font-size: 14px;">
-                                    This can be restored from the archived section.
+                                <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #fcd34d;">
+                                    <p style="margin: 0; color: #92400e; font-size: 14px;">
+                                        <i class="icon-info" style="margin-right: 8px;"></i>
+                                        <strong>Note:</strong> Archiving will move this signature to the archived section. It can be restored later if needed.
+                                    </p>
+                                </div>
+                                <p style="margin-top: 20px; color: #64748b; text-align: center;">
+                                    This action is reversible. The signature will remain in the system but will be hidden from the main list.
                                 </p>
                             </div>
                         `,
-                        icon: 'warning',
+                        customClass: {
+                            popup: 'swal2-warning'
+                        },
                         showCancelButton: true,
-                        confirmButtonColor: '#f59e0b',
+                        confirmButtonColor: '#ef4444',
                         cancelButtonColor: '#6c757d',
-                        confirmButtonText: '<i class="icon-archive"></i> Yes, Archive',
-                        cancelButtonText: 'Cancel'
+                        confirmButtonText: '<i class="icon-trash-2"></i> Yes, Archive It',
+                        cancelButtonText: '<i class="icon-x"></i> Cancel',
+                        focusCancel: true
                     }).then((result) => {
-                        if (result.isConfirmed) form.submit();
+                        if (result.isConfirmed) {
+                            // Show loading state
+                            Swal.fire({
+                                title: 'Archiving Signature...',
+                                html: `
+                                    <div style="text-align: center;">
+                                        <div style="margin: 20px 0;">
+                                            <div class="loading-spinner" style="
+                                                width: 40px;
+                                                height: 40px;
+                                                border: 4px solid #f3f4f6;
+                                                border-top: 4px solid #ef4444;
+                                                border-radius: 50%;
+                                                animation: spin 1s linear infinite;
+                                                margin: 0 auto 15px auto;
+                                            "></div>
+                                            <p style="color: #64748b; margin: 0;">Please wait while we archive the signature...</p>
+                                        </div>
+                                    </div>
+                                    <style>
+                                        @keyframes spin {
+                                            0% { transform: rotate(0deg); }
+                                            100% { transform: rotate(360deg); }
+                                        }
+                                    </style>
+                                `,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                showConfirmButton: false,
+                                showCancelButton: false
+                            });
+                            form.submit();
+                        }
                     });
                 });
             }
@@ -966,44 +1467,142 @@
                 }), duration);
             }
 
-            // Keyboard shortcuts
+            // Event bindings
+            $('#applyFilters').on('click', performFilter);
+            $('#category, #report_type, #status, #sort_by').on('change', performFilter);
+
+            $('#clearAllFilters, #resetFilters').on('click', function() {
+                $('#signature-search, #category, #report_type, #status').val('');
+                $('#sort_by').val('order');
+                performFilter();
+            });
+
+            // Original functionality from the first code
+            let originalSearchTimeout;
+            $('input[name="search"]').on('input', function() {
+                clearTimeout(originalSearchTimeout);
+                const form = $(this).closest('form');
+                const query = $(this).val().trim();
+
+                originalSearchTimeout = setTimeout(() => {
+                    if (query.length >= 2 || query.length === 0) {
+                        form.submit();
+                    }
+                }, 500);
+            });
+
+            $('.search-input').on('focus', function() {
+                $(this).css({
+                    'border-color': '#3498db',
+                    'box-shadow': '0 0 0 3px rgba(52, 152, 219, 0.15)',
+                    'transform': 'translateY(-1px)'
+                });
+            }).on('blur', function() {
+                $(this).css({
+                    'border-color': '#ddd',
+                    'box-shadow': 'none',
+                    'transform': 'translateY(0)'
+                });
+            });
+
+            $('.tf-button').on('click', function() {
+                const $this = $(this);
+                const originalHtml = $this.html();
+
+                $this.html('<i class="icon-loader"></i> Loading...')
+                    .prop('disabled', true)
+                    .css('opacity', '0.7');
+
+                setTimeout(() => {
+                    $this.html(originalHtml)
+                        .prop('disabled', false)
+                        .css('opacity', '1');
+                }, 2000);
+            });
+
+            $('.mobile-card').on('touchstart mouseenter', function() {
+                $(this).css('transform', 'translateY(-3px)');
+            }).on('touchend mouseleave', function() {
+                $(this).css('transform', 'translateY(0)');
+            });
+
             $(document).on('keydown', function(e) {
-                if ((e.ctrlKey || e.metaKey) && e.keyCode === 13) {
-                    e.preventDefault();
-                    performFilter();
-                }
-                if (e.keyCode === 27) {
-                    $('#clearAllFilters').click();
-                }
-                if ((e.ctrlKey || e.metaKey) && e.keyCode === 70) {
-                    e.preventDefault();
-                    $('#filterToggle').click();
-                    setTimeout(() => $('#signature-search').focus(), 100);
-                }
                 if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                     e.preventDefault();
-                    $('#signature-search').focus();
+                    $('.search-input').focus();
                 }
+
                 if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
                     e.preventDefault();
                     window.location.href = "{{ route('admin.signatures.create') }}";
                 }
             });
 
+            $('.table tbody tr').on('mouseenter', function() {
+                $(this).css({
+                    'background-color': '#f8fafc',
+                    'transform': 'scale(1.01)',
+                    'box-shadow': '0 2px 8px rgba(0,0,0,0.1)'
+                });
+            }).on('mouseleave', function() {
+                $(this).css({
+                    'background-color': '',
+                    'transform': 'scale(1)',
+                    'box-shadow': ''
+                });
+            });
+
+            $('.list-icon-function .item').on('mouseenter', function() {
+                $(this).css({
+                    'transform': 'translateY(-2px) scale(1.1)',
+                    'box-shadow': '0 4px 12px rgba(0,0,0,0.15)'
+                });
+            }).on('mouseleave', function() {
+                $(this).css({
+                    'transform': 'translateY(0) scale(1)',
+                    'box-shadow': ''
+                });
+            });
+
+            function handleResize() {
+                const windowWidth = $(window).width();
+
+                if (windowWidth <= 768) {
+                    $('.table').hide();
+                    $('.mobile-cards').show();
+                } else {
+                    $('.table').show();
+                    $('.mobile-cards').hide();
+                }
+
+                $('.pagination-container').css('display', 'flex');
+            }
+
+            $(window).on('resize', handleResize);
+            handleResize();
+
+            $('.mobile-btn, .list-icon-function .item, .tf-button').css({
+                'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            });
+
+            $('.mobile-btn, .list-icon-function .item').on('focus', function() {
+                $(this).css({
+                    'outline': '2px solid #3498db',
+                    'outline-offset': '2px'
+                });
+            }).on('blur', function() {
+                $(this).css('outline', 'none');
+            });
+
+            if ('ontouchstart' in window) {
+                $('.mobile-card').css('cursor', 'pointer');
+                $('.list-icon-function .item').css('cursor', 'pointer');
+            }
+
             // Initialize
             initPaginationEvents();
             initArchiveButtons();
             updateActiveFiltersDisplay();
-
-            @if (Session::has('success'))
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: '{{ Session::get('success') }}',
-                    timer: 3000,
-                    showConfirmButton: false
-                });
-            @endif
         });
     </script>
 @endpush
