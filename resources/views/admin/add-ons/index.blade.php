@@ -1,4 +1,5 @@
 @extends('layouts.admin')
+
 @section('content')
     <div id="loading-indicator" class="loading-indicator">
         <div class="loading-spinner">
@@ -18,7 +19,9 @@
                             <div class="text-tiny">Dashboard</div>
                         </a>
                     </li>
-                    <li><i class="icon-chevron-right"></i></li>
+                    <li>
+                        <i class="icon-chevron-right"></i>
+                    </li>
                     <li>
                         <div class="text-tiny">Add-ons</div>
                     </li>
@@ -34,30 +37,28 @@
                                     placeholder="Search addons by name, description, facility..." name="search"
                                     tabindex="2" value="{{ request('search') }}" aria-required="true">
                             </fieldset>
-                            <button type="submit" style="display: none"></button>
+                            <button type="submit" style="display:none"></button>
                         </form>
                     </div>
 
                     <div class="filter-toggle-section d-flex align-items-center gap-3">
-                        <span class="badge bg-primary fs-6 py-2 px-3" id="activeFiltersCount" style="display: none;">0
+                        <span class="badge bg-primary fs-6 py-2 px-3" id="activeFiltersCount" style="display:none;">0
                             filters</span>
                         <button class="btn btn-outline-primary btn-lg position-relative" id="filterToggle" type="button">
                             <i class="icon-filter me-1"></i> Filters
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                                id="filterBadge" style="display: none;">0</span>
+                                id="filterBadge" style="display:none;">0</span>
                         </button>
-                        <button class="btn btn-outline-secondary" id="clearAllFilters" style="display: none;">
+                        <button class="btn btn-outline-secondary" id="clearAllFilters" style="display:none;">
                             <i class="icon-x-circle me-1"></i> Clear All
                         </button>
                     </div>
                 </div>
 
-                <!-- Filter Container -->
                 <div class="collapse mb-4" id="filterContainer">
                     <div class="card border-0 shadow-sm">
                         <div class="card-body p-4">
                             <div class="row g-3 mb-4">
-                                <!-- Facility Filter -->
                                 <div class="col-md-6 col-lg-4">
                                     <div class="filter-group">
                                         <label class="text-muted small mb-2 d-block">Facility</label>
@@ -73,7 +74,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Price Type Filter -->
                                 <div class="col-md-6 col-lg-4">
                                     <div class="filter-group">
                                         <label class="text-muted small mb-2 d-block">Price Type</label>
@@ -91,14 +91,11 @@
                                             <option value="per_item"
                                                 {{ request('price_type') == 'per_item' ? 'selected' : '' }}>Per Item
                                             </option>
-                                            <option value="per_hour"
-                                                {{ request('price_type') == 'per_hour' ? 'selected' : '' }}>Per Hour
-                                            </option>
+
                                         </select>
                                     </div>
                                 </div>
 
-                                <!-- Availability Filter -->
                                 <div class="col-md-6 col-lg-4">
                                     <div class="filter-group">
                                         <label class="text-muted small mb-2 d-block">Availability</label>
@@ -114,7 +111,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Refundable Filter -->
                                 <div class="col-md-6 col-lg-4">
                                     <div class="filter-group">
                                         <label class="text-muted small mb-2 d-block">Refundable</label>
@@ -128,7 +124,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Billing Cycle Filter -->
                                 <div class="col-md-6 col-lg-4">
                                     <div class="filter-group">
                                         <label class="text-muted small mb-2 d-block">Billing Cycle</label>
@@ -144,7 +139,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Sort By -->
                                 <div class="col-md-6 col-lg-4">
                                     <div class="filter-group">
                                         <label class="text-muted small mb-2 d-block">Sort By</label>
@@ -183,8 +177,7 @@
                     </div>
                 </div>
 
-                <!-- Active Filters Display -->
-                <div class="active-filters-row mb-4" id="activeFiltersRow" style="display: none;">
+                <div class="active-filters-row mb-4" id="activeFiltersRow" style="display:none;">
                     <div class="card border-0 bg-light">
                         <div class="card-body py-2">
                             <div class="d-flex align-items-center gap-3 flex-wrap">
@@ -195,10 +188,9 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="action-buttons mb-3">
                     <a class="tf-button w-auto" href="{{ route('admin.addons.create') }}">
-                        <i class="icon-plus"></i> Add New Add-on
+                        <i class="icon-plus"></i>Add New Add-on
                     </a>
                     <a class="tf-button w-auto" href="{{ route('admin.addons.archive') }}">
                         <i class="icon-archive"></i> Archived Add-ons
@@ -207,12 +199,61 @@
 
                 <div class="table-all-user g-table">
                     <div class="table-responsive">
-                        <!-- Mobile Card View -->
                         <div class="mobile-cards d-block d-md-none" id="js-addons-mobile-target">
-                            @include('partials._addons-mobile', ['addons' => $addons])
+                            @forelse ($addons as $addon)
+                                <div class="mobile-card">
+                                    <div class="mobile-card-header">
+                                        <h5 class="mobile-card-title">{{ $addon->name }}</h5>
+                                        <span
+                                            class="badge {{ $addon->is_available ? 'badge-success' : 'badge-secondary' }}">
+                                            {{ $addon->is_available ? 'Available' : 'Unavailable' }}
+                                        </span>
+                                    </div>
+                                    <div class="mobile-card-body">
+                                        <div class="mobile-card-details">
+                                            <p><strong>Price:</strong> ₱{{ number_format($addon->base_price, 2) }}
+                                                ({{ ucfirst(str_replace('_', ' ', $addon->price_type)) }})
+                                            </p>
+                                            <p><strong>Type:</strong>
+                                                {{ $addon->is_based_on_quantity ? 'Quantity-based' : 'Flat rate' }}</p>
+                                            <p><strong>Refundable:</strong> {{ $addon->is_refundable ? 'Yes' : 'No' }}</p>
+                                            <p><strong>Show:</strong>
+                                                <span
+                                                    class="badge {{ $addon->show == 'staff' ? 'badge-purple' : 'badge-info' }}">
+                                                    {{ ucfirst($addon->show) }}
+                                                </span>
+                                            </p>
+                                        </div>
+                                        <div class="mobile-card-actions">
+                                            <a href="{{ route('admin.addons.edit', $addon->id) }}"
+                                                class="btn btn-sm btn-primary mobile-btn">
+                                                <i class="icon-edit-3"></i> Edit
+                                            </a>
+                                            <form action="{{ route('admin.addons.destroy', $addon->id) }}" method="POST"
+                                                class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-warning delete mobile-btn">
+                                                    <i class="icon-archive"></i> Archive
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="icon-package"></i>
+                                    </div>
+                                    <h4>No Addons Found</h4>
+                                    <p>Start by creating your first addon.</p>
+                                    <a href="{{ route('admin.addons.create') }}" class="btn btn-primary">
+                                        <i class="icon-plus"></i> Add New Addon
+                                    </a>
+                                </div>
+                            @endforelse
                         </div>
 
-                        <!-- Desktop Table View -->
                         <table class="table table-striped table-bordered d-none d-md-table">
                             <thead class="thead-light">
                                 <tr>
@@ -227,12 +268,91 @@
                                 </tr>
                             </thead>
                             <tbody id="js-addons-partial-target">
-                                @include('partials._addons-table', ['addons' => $addons])
+                                @forelse ($addons as $addon)
+                                    <tr>
+                                        <td class="name-cell">
+                                            <div class="name text-truncate" title="{{ $addon->name }}">
+                                                <strong>{{ $addon->name }}</strong>
+                                            </div>
+                                            @if ($addon->description)
+                                                <div class="text-tiny text-muted text-truncate"
+                                                    title="{{ $addon->description }}">
+                                                    {{ Str::limit($addon->description, 50) }}
+                                                </div>
+                                            @endif
+                                        </td>
+                                        <td class="facility-cell">
+                                            @if ($addon->facility)
+                                                <span class="text-primary">{{ $addon->facility->name }}</span>
+                                                <div class="text-tiny text-muted">ID: {{ $addon->facility->id }}</div>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="price-cell">
+                                            ₱ {{ number_format($addon->base_price, 2) }}
+                                        </td>
+                                        <td class="type-cell">
+                                            {{ ucfirst(str_replace('_', ' ', $addon->price_type)) }}
+                                        </td>
+                                        <td class="quantity-cell">
+                                            <span
+                                                class="badge {{ $addon->is_based_on_quantity ? 'badge-info' : 'badge-secondary' }}">
+                                                {{ $addon->is_based_on_quantity ? 'Yes' : 'No' }}
+                                            </span>
+                                        </td>
+                                        <td class="status-cell">
+                                            <span
+                                                class="badge {{ $addon->is_available ? 'badge-success' : 'badge-secondary' }}">
+                                                {{ $addon->is_available ? 'Available' : 'Unavailable' }}
+                                            </span>
+                                        </td>
+                                        <td class="refundable-cell">
+                                            <span
+                                                class="badge {{ $addon->is_refundable ? 'badge-warning' : 'badge-secondary' }}">
+                                                {{ $addon->is_refundable ? 'Yes' : 'No' }}
+                                            </span>
+                                        </td>
+                                        <td class="action-cell">
+                                            <div class="list-icon-function">
+                                                <a href="{{ route('admin.addons.edit', $addon->id) }}"
+                                                    title="Edit Addon">
+                                                    <div class="item edit">
+                                                        <i class="icon-edit-3"></i>
+                                                    </div>
+                                                </a>
+                                                <form action="{{ route('admin.addons.destroy', $addon->id) }}"
+                                                    method="POST" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="item text-danger delete"
+                                                        style="border:none;background:none;" title="Delete Addon">
+                                                        <i class="icon-archive"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="text-center empty-state-table">
+                                            <div class="empty-icon">
+                                                <i class="icon-package"></i>
+                                            </div>
+                                            <h5>No Addons Found</h5>
+                                            <p>Start by creating your first addon.</p>
+                                            <a href="{{ route('admin.addons.create') }}" class="btn btn-primary">
+                                                <i class="icon-plus"></i> Add New Addon
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
                     <div class="divider"></div>
-                    <div class="pagination-container" id="js-addons-partial-target-pagination">
+                    <div class="pagination-container" id="js-addons-partial-target-pagination"
+                        style="padding:15px 0;overflow:visible;min-height:60px;">
                         {{ $addons->appends(request()->query())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
@@ -243,7 +363,6 @@
 
 @push('styles')
     <style>
-        /* Loading Indicator */
         .loading-indicator {
             display: none;
             position: fixed;
@@ -262,7 +381,6 @@
             transform: translate(-50%, -50%);
         }
 
-        /* Base Responsive Layout */
         .main-content-inner {
             padding: 15px;
         }
@@ -282,7 +400,6 @@
             margin-bottom: 1.5rem;
         }
 
-        /* Filter Styles */
         .filter-select {
             padding: 8px 12px;
             border-radius: 6px;
@@ -298,7 +415,6 @@
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
         }
 
-        /* Filter Tags */
         .filter-tag-enhanced {
             background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
             color: white;
@@ -341,7 +457,6 @@
             transform: scale(1.1);
         }
 
-        /* Search Input */
         .search-input,
         .form-search input {
             width: 100%;
@@ -360,14 +475,12 @@
             box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
         }
 
-        /* Action Buttons */
         .action-buttons {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
         }
 
-        /* Badge Styles */
         .badge {
             display: inline-block;
             padding: 4px 10px;
@@ -376,6 +489,7 @@
             color: #fff;
             border-radius: 4px;
             line-height: 1.2;
+            vertical-align: middle;
         }
 
         .badge-success {
@@ -394,7 +508,10 @@
             background: linear-gradient(135deg, #f59e0b, #d97706);
         }
 
-        /* Table Styles */
+        .badge-purple {
+            background: linear-gradient(135deg, #6a11cb, #a4508b);
+        }
+
         .table {
             table-layout: fixed;
             width: 100%;
@@ -402,7 +519,7 @@
         }
 
         .col-name {
-            width: 22%;
+            width: 25%;
         }
 
         .col-facility {
@@ -430,7 +547,7 @@
         }
 
         .col-action {
-            width: 13%;
+            width: 20%;
         }
 
         .name {
@@ -488,7 +605,6 @@
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
 
-        /* Mobile Card Styles */
         .mobile-cards {
             display: none;
         }
@@ -526,6 +642,7 @@
             color: #1e293b;
             flex: 1;
             min-width: 0;
+            word-wrap: break-word;
         }
 
         .mobile-card-body {
@@ -574,7 +691,11 @@
             color: white;
         }
 
-        /* Empty State */
+        .mobile-btn.btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
         .empty-state,
         .empty-state-table {
             text-align: center;
@@ -588,16 +709,143 @@
             margin-bottom: 16px;
         }
 
-        /* Pagination */
+        .empty-state h4,
+        .empty-state-table h5 {
+            color: #475569;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .empty-state p,
+        .empty-state-table p {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+
+        .empty-state .btn,
+        .empty-state-table .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .empty-state .btn:hover,
+        .empty-state-table .btn:hover {
+            background: linear-gradient(135deg, #2980b9, #21618c);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
         .pagination-container {
             display: flex;
             justify-content: center;
+            align-items: center;
+            width: 100%;
             padding: 15px 0;
+            overflow: visible !important;
             min-height: 60px;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
+        .pagination {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            width: 100%;
+        }
+
+        .pagination li {
+            display: inline-block;
+            margin: 0;
+        }
+
+        .pagination .page-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background-color: white;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .pagination .page-link:hover {
+            background-color: #f3f4f6;
+            border-color: #9ca3af;
+            transform: translateY(-1px);
+        }
+
+        .pagination .active .page-link {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-color: #3498db;
+            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+        }
+
+        .pagination .disabled .page-link {
+            background-color: #f9fafb;
+            color: #9ca3af;
+            border-color: #e5e7eb;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .pagination-info {
+            width: 100%;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        @media (max-width:991px) {
+            .col-name {
+                width: 20%;
+            }
+
+            .col-price {
+                width: 10%;
+            }
+
+            .col-type {
+                width: 15%;
+            }
+
+            .col-quantity {
+                width: 10%;
+            }
+
+            .col-status {
+                width: 10%;
+            }
+
+            .col-refundable {
+                width: 10%;
+            }
+
+            .col-action {
+                width: 15%;
+            }
+        }
+
+        @media (max-width:768px) {
             .mobile-cards {
                 display: block;
             }
@@ -611,13 +859,24 @@
                 justify-content: flex-end;
             }
 
+            .pagination {
+                gap: 5px;
+            }
+
+            .pagination .page-link {
+                min-width: 36px;
+                height: 36px;
+                padding: 0 8px;
+                font-size: 13px;
+            }
+
             .filter-tag-enhanced {
                 font-size: 0.8rem;
                 padding: 0.4rem 0.8rem;
             }
         }
 
-        @media (max-width: 576px) {
+        @media (max-width:576px) {
             .mobile-card-actions {
                 flex-direction: column;
             }
@@ -625,6 +884,333 @@
             .action-buttons {
                 flex-direction: column;
                 align-items: flex-end;
+            }
+
+            .pagination {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .pagination-info {
+                order: -1;
+                margin-bottom: 10px;
+            }
+        }
+
+        @media print {
+
+            .action-buttons,
+            .wg-filter,
+            .list-icon-function,
+            .mobile-card-actions {
+                display: none !important;
+            }
+
+            .table {
+                display: table !important;
+            }
+
+            .mobile-cards {
+                display: none !important;
+            }
+
+            .wg-box,
+            .mobile-card {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+            }
+
+            .pagination {
+                display: none !important;
+            }
+        }
+    </style>
+@endpush
+
+@push('styles')
+    <style>
+        .swal2-popup {
+            width: 90vw !important;
+            max-width: 600px !important;
+            min-height: 350px !important;
+            padding: 35px !important;
+            border-radius: 16px !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25) !important;
+            backdrop-filter: blur(10px) !important;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.95)) !important;
+        }
+
+        .swal2-title {
+            font-size: 24px !important;
+            font-weight: 700 !important;
+            margin: 0 0 25px 0 !important;
+            text-align: center !important;
+            line-height: 1.3 !important;
+            color: #1e293b !important;
+        }
+
+        .swal2-content {
+            font-size: 16px !important;
+            line-height: 1.6 !important;
+            margin: 25px 0 35px 0 !important;
+            text-align: center !important;
+            color: #475569 !important;
+        }
+
+        .swal2-actions {
+            margin: 35px 0 0 0 !important;
+            gap: 15px !important;
+            justify-content: center !important;
+        }
+
+        .swal2-confirm,
+        .swal2-cancel {
+            font-size: 15px !important;
+            font-weight: 600 !important;
+            padding: 12px 30px !important;
+            min-width: 120px !important;
+            height: 45px !important;
+            border-radius: 8px !important;
+            border: none !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .swal2-confirm {
+            background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+            color: white !important;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3) !important;
+        }
+
+        .swal2-confirm:hover {
+            background: linear-gradient(135deg, #d97706, #b45309) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4) !important;
+        }
+
+        .swal2-cancel {
+            background: #f8fafc !important;
+            color: #64748b !important;
+            border: 2px solid #cbd5e1 !important;
+        }
+
+        .swal2-cancel:hover {
+            background: #e2e8f0 !important;
+            border-color: #94a3b8 !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .swal2-popup::before {
+            content: '' !important;
+            display: block !important;
+            text-align: center !important;
+            margin: 20px auto 30px auto !important;
+            width: 80px !important;
+            height: 80px !important;
+            line-height: 80px !important;
+            border-radius: 50% !important;
+            font-size: 32px !important;
+            font-weight: 900 !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            animation: swalIconPulse 1s ease-in-out !important;
+        }
+
+        .swal2-popup.swal2-success::before {
+            content: "✓" !important;
+            color: #22c55e !important;
+            border: 4px solid #22c55e !important;
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
+        }
+
+        .swal2-popup.swal2-error::before {
+            content: "✕" !important;
+            color: #ef4444 !important;
+            border: 4px solid #ef4444 !important;
+            background: linear-gradient(135deg, #fef2f2, #fecaca) !important;
+        }
+
+        .swal2-popup.swal2-info::before {
+            content: "i" !important;
+            color: #3b82f6 !important;
+            border: 4px solid #3b82f6 !important;
+            background: linear-gradient(135deg, #eff6ff, #dbeafe) !important;
+            font-style: italic !important;
+            font-size: 36px !important;
+        }
+
+        .swal2-popup.swal2-question::before {
+            content: "?" !important;
+            color: #8b5cf6 !important;
+            border: 4px solid #8b5cf6 !important;
+            background: linear-gradient(135deg, #faf5ff, #ede9fe) !important;
+            font-size: 36px !important;
+        }
+
+        .swal2-popup.swal2-warning::before {
+            content: "!" !important;
+            color: #f59e0b !important;
+            border: 4px solid #f59e0b !important;
+            background: linear-gradient(135deg, #fffbeb, #fef3c7) !important;
+            font-size: 36px !important;
+        }
+
+        .swal2-icon {
+            display: none !important;
+        }
+
+        @keyframes swalIconPulse {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width:767px) {
+            .swal2-popup {
+                width: 95vw !important;
+                max-width: none !important;
+                margin: 10px !important;
+                padding: 25px !important;
+                min-height: 300px !important;
+            }
+
+            .swal2-title {
+                font-size: 20px !important;
+                margin-bottom: 20px !important;
+            }
+
+            .swal2-content {
+                font-size: 14px !important;
+                margin: 20px 0 25px 0 !important;
+            }
+
+            .swal2-actions {
+                flex-direction: column !important;
+                width: 100% !important;
+                margin-top: 25px !important;
+                gap: 10px !important;
+            }
+
+            .swal2-confirm,
+            .swal2-cancel {
+                width: 100% !important;
+                margin: 0 !important;
+            }
+
+            .swal2-popup::before {
+                width: 70px !important;
+                height: 70px !important;
+                line-height: 70px !important;
+                font-size: 28px !important;
+                margin: 15px auto 25px auto !important;
+            }
+
+            .swal2-popup.swal2-info::before,
+            .swal2-popup.swal2-question::before,
+            .swal2-popup.swal2-warning::before {
+                font-size: 30px !important;
+            }
+        }
+
+        @media (max-width:575px) {
+            .swal2-popup {
+                padding: 20px !important;
+                min-height: 280px !important;
+            }
+
+            .swal2-title {
+                font-size: 18px !important;
+            }
+
+            .swal2-content {
+                font-size: 13px !important;
+            }
+
+            .swal2-popup::before {
+                width: 60px !important;
+                height: 60px !important;
+                line-height: 60px !important;
+                font-size: 24px !important;
+            }
+
+            .swal2-popup.swal2-info::before,
+            .swal2-popup.swal2-question::before,
+            .swal2-popup.swal2-warning::before {
+                font-size: 26px !important;
+            }
+        }
+
+        @media (max-width:400px) {
+            .swal2-popup {
+                padding: 15px !important;
+                min-height: 260px !important;
+            }
+
+            .swal2-title {
+                font-size: 16px !important;
+            }
+
+            .swal2-content {
+                font-size: 12px !important;
+            }
+
+            .swal2-popup::before {
+                width: 55px !important;
+                height: 55px !important;
+                line-height: 55px !important;
+                font-size: 20px !important;
+            }
+
+            .swal2-popup.swal2-info::before,
+            .swal2-popup.swal2-question::before,
+            .swal2-popup.swal2-warning::before {
+                font-size: 22px !important;
+            }
+        }
+
+        @media (min-width:1400px) {
+            .swal2-popup {
+                max-width: 700px !important;
+                min-height: 400px !important;
+                padding: 45px !important;
+            }
+
+            .swal2-title {
+                font-size: 28px !important;
+                margin-bottom: 30px !important;
+            }
+
+            .swal2-content {
+                font-size: 18px !important;
+                margin: 30px 0 40px 0 !important;
+            }
+
+            .swal2-actions {
+                margin-top: 40px !important;
+            }
+
+            .swal2-popup::before {
+                width: 90px !important;
+                height: 90px !important;
+                line-height: 90px !important;
+                font-size: 38px !important;
+                margin: 25px auto 35px auto !important;
+            }
+
+            .swal2-popup.swal2-info::before,
+            .swal2-popup.swal2-question::before,
+            .swal2-popup.swal2-warning::before {
+                font-size: 42px !important;
             }
         }
     </style>
@@ -636,7 +1222,6 @@
             let lastScrollPosition = 0;
             let searchTimeout = null;
 
-            // Filter toggle functionality
             $('#filterToggle').on('click', function() {
                 const container = $('#filterContainer');
                 const icon = $(this).find('i');
@@ -650,7 +1235,6 @@
                 }
             });
 
-            // Search with debounce
             $('#addon-search').on('input', function() {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(function() {
@@ -701,8 +1285,7 @@
                         $(window).scrollTop(lastScrollPosition);
                         showNotification(`Found ${response.count} add-on(s)`, 'info', 2000);
                     },
-                    error: function(xhr, status, error) {
-                        console.error('Error:', error);
+                    error: function() {
                         showLoadingState(false);
                         showNotification('An error occurred. Please try again.', 'error');
                     }
@@ -714,12 +1297,14 @@
                     $('#loading-indicator').show();
                     $('.filter-select, #addon-search').prop('disabled', true);
                     $('#applyFilters').prop('disabled', true).html(
-                        '<span class="spinner-border spinner-border-sm me-1"></span>Loading...');
+                        '<span class="spinner-border spinner-border-sm me-1"></span>Loading...'
+                    );
                 } else {
                     $('#loading-indicator').hide();
                     $('.filter-select, #addon-search').prop('disabled', false);
                     $('#applyFilters').prop('disabled', false).html(
-                        '<i class="icon-filter me-1"></i> Apply Filters');
+                        '<i class="icon-filter me-1"></i> Apply Filters'
+                    );
                 }
             }
 
@@ -801,8 +1386,9 @@
                     const val = urlParams.get(f.param);
                     if (val && val !== f.skip) {
                         count++;
-                        const text = f.format ? f.format(val) : (f.selector ? $(
-                            `${f.selector} option:selected`).text() : val);
+                        const text = f.format ?
+                            f.format(val) :
+                            (f.selector ? $(`${f.selector} option:selected`).text() : val);
                         addFilterTag(`${f.label}: ${text}`, f.param);
                     }
                 });
@@ -837,7 +1423,6 @@
                 filterTags.append(tag);
             }
 
-            // Event bindings
             $('#applyFilters').on('click', performFilter);
             $('#facility, #price_type, #availability, #refundable, #billing_cycle, #sort_by').on('change',
                 performFilter);
@@ -872,21 +1457,26 @@
             }
 
             function showNotification(message, type = 'info', duration = 4000) {
-                const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' :
+                const alertClass =
+                    type === 'success' ?
+                    'alert-success' :
+                    type === 'error' ?
+                    'alert-danger' :
                     'alert-info';
+
                 const notification = $(`
                     <div class="alert ${alertClass} alert-dismissible fade show position-fixed" style="top:20px;right:20px;z-index:9999;min-width:300px;">
                         ${message}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 `);
+
                 $('body').append(notification);
                 setTimeout(() => notification.fadeOut(function() {
                     $(this).remove();
                 }), duration);
             }
 
-            // Keyboard shortcuts
             $(document).on('keydown', function(e) {
                 if ((e.ctrlKey || e.metaKey) && e.keyCode === 13) {
                     e.preventDefault();
@@ -902,7 +1492,6 @@
                 }
             });
 
-            // Initialize
             initPaginationEvents();
             initArchiveButtons();
             updateActiveFiltersDisplay();
@@ -916,6 +1505,253 @@
                     showConfirmButton: false
                 });
             @endif
+        });
+    </script>
+@endpush
+
+@push('scripts')
+    <script>
+        $(function() {
+            const customSwalConfig = {
+                customClass: {
+                    popup: 'enhanced-swal-popup',
+                    title: 'enhanced-swal-title',
+                    content: 'enhanced-swal-content',
+                    actions: 'enhanced-swal-actions',
+                    confirmButton: 'enhanced-swal-confirm',
+                    cancelButton: 'enhanced-swal-cancel'
+                },
+                buttonsStyling: false,
+                allowOutsideClick: false,
+                allowEscapeKey: true,
+                showCloseButton: true,
+                focusConfirm: false,
+                reverseButtons: true,
+                backdrop: true
+            };
+
+            @if (Session::has('success'))
+                Swal.fire({
+                    ...customSwalConfig,
+                    customClass: {
+                        popup: 'swal2-success'
+                    },
+                    title: 'Operation Successful!',
+                    html: `
+                        <div style="text-align: center; line-height: 1.6;">
+                            <p style="font-size: 16px; color: #22c55e; margin-bottom: 15px;">
+                                <strong>{{ Session::get('success') }}</strong>
+                            </p>
+                            <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #22c55e;">
+                                <p style="margin: 0; color: #166534; font-weight: 500;">
+                                    <i class="icon-check-circle" style="margin-right: 8px;"></i>
+                                    The operation has been completed successfully.
+                                </p>
+                            </div>
+                            <p style="color: #64748b; font-size: 14px; margin-top: 15px;">
+                                Your changes have been saved and are now active.
+                            </p>
+                        </div>
+                    `,
+                    confirmButtonText: '<i class="icon-check"></i> Great!',
+                    timer: 5000,
+                    timerProgressBar: true,
+                    showCloseButton: true
+                });
+            @endif
+
+            $('.delete').on('click', function(e) {
+                e.preventDefault();
+                var form = $(this).closest('form');
+                var addonName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title').text()
+                    .trim();
+
+                Swal.fire({
+                    ...customSwalConfig,
+                    title: 'Archive Add-on Confirmation',
+                    html: `
+                          <div style="text-align: left; line-height: 1.6;">
+                                <p style="margin-bottom: 15px; text-align: center;">You are about to archive the following college:</p>
+                                <div style="background: linear-gradient(135deg, #fffbeb, #fef3c7); padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #f59e0b;">
+                                    <strong style="color: #92400e; font-size: 16px;">${addonName}</strong>
+                                </div>
+
+                             <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #fcd34d;">
+                                    <p style="margin: 0; color: #92400e; font-size: 14px;">
+                                        <i class="icon-info" style="margin-right: 8px;"></i>
+                                        <strong>Note:</strong> Archiving will move this Add-on to the archived section. It can be restored later if needed.
+                                    </p>
+                                </div>
+                                <p style="margin-top: 20px; color: #64748b; text-align: center;">
+                                    This action is reversible. The Add-on will remain in the system but will be hidden from the main list.
+                                </p>
+                            </div>
+                    `,
+                    customClass: {
+                        popup: 'swal2-warning'
+                    },
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '<i class="icon-trash-2"></i> Yes, Archive It',
+                    cancelButtonText: '<i class="icon-x"></i> Cancel',
+                    focusCancel: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'Deleting Addon...',
+                            html: `
+                                <div style="text-align: center;">
+                                    <div style="margin: 20px 0;">
+                                        <div class="loading-spinner" style="
+                                            width: 40px;
+                                            height: 40px;
+                                            border: 4px solid #f3f4f6;
+                                            border-top: 4px solid #ef4444;
+                                            border-radius: 50%;
+                                            animation: spin 1s linear infinite;
+                                            margin: 0 auto 15px auto;
+                                        "></div>
+                                        <p style="color: #64748b; margin: 0;">Please wait while we delete the addon...</p>
+                                    </div>
+                                </div>
+                                <style>
+                                    @keyframes spin {
+                                        0% { transform: rotate(0deg); }
+                                        100% { transform: rotate(360deg); }
+                                    }
+                                </style>
+                            `,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            showConfirmButton: false,
+                            showCancelButton: false
+                        });
+                        form.submit();
+                    }
+                });
+            });
+
+            let searchTimeout;
+            $('input[name="search"]').on('input', function() {
+                clearTimeout(searchTimeout);
+                const form = $(this).closest('form');
+                const query = $(this).val().trim();
+
+                searchTimeout = setTimeout(() => {
+                    if (query.length >= 2 || query.length === 0) {
+                        form.submit();
+                    }
+                }, 500);
+            });
+
+            $('.search-input').on('focus', function() {
+                $(this).css({
+                    borderColor: '#3498db',
+                    boxShadow: '0 0 0 3px rgba(52, 152, 219, 0.15)',
+                    transform: 'translateY(-1px)'
+                });
+            }).on('blur', function() {
+                $(this).css({
+                    borderColor: '#ddd',
+                    boxShadow: 'none',
+                    transform: 'translateY(0)'
+                });
+            });
+
+            $('.add-button').on('click', function() {
+                const $this = $(this);
+                const originalHtml = $this.html();
+
+                $this.html('<i class="icon-loader"></i> Loading...')
+                    .prop('disabled', true)
+                    .css('opacity', '0.7');
+
+                setTimeout(() => {
+                    $this.html(originalHtml)
+                        .prop('disabled', false)
+                        .css('opacity', '1');
+                }, 2000);
+            });
+
+            $('.mobile-card').on('touchstart mouseenter', function() {
+                $(this).css('transform', 'translateY(-3px)');
+            }).on('touchend mouseleave', function() {
+                $(this).css('transform', 'translateY(0)');
+            });
+
+            $(document).on('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    $('.search-input').focus();
+                }
+
+                if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                    e.preventDefault();
+                    window.location.href = "{{ route('admin.addons.create') }}";
+                }
+            });
+
+            $('.table tbody tr').on('mouseenter', function() {
+                $(this).css({
+                    backgroundColor: '#f8fafc',
+                    transform: 'scale(1.01)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                });
+            }).on('mouseleave', function() {
+                $(this).css({
+                    backgroundColor: '',
+                    transform: 'scale(1)',
+                    boxShadow: ''
+                });
+            });
+
+            $('.list-icon-function .item').on('mouseenter', function() {
+                $(this).css({
+                    transform: 'translateY(-2px) scale(1.1)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                });
+            }).on('mouseleave', function() {
+                $(this).css({
+                    transform: 'translateY(0) scale(1)',
+                    boxShadow: ''
+                });
+            });
+
+            function handleResize() {
+                const windowWidth = $(window).width();
+
+                if (windowWidth <= 768) {
+                    $('.table').hide();
+                    $('.mobile-cards').show();
+                } else {
+                    $('.table').show();
+                    $('.mobile-cards').hide();
+                }
+
+                $('.pagination-container').css('display', 'flex');
+            }
+
+            $(window).on('resize', handleResize);
+            handleResize();
+
+            $('.mobile-btn, .list-icon-function .item, .add-button').css({
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            });
+
+            $('.mobile-btn, .list-icon-function .item').on('focus', function() {
+                $(this).css({
+                    outline: '2px solid #3498db',
+                    outlineOffset: '2px'
+                });
+            }).on('blur', function() {
+                $(this).css('outline', 'none');
+            });
+
+            if ('ontouchstart' in window) {
+                $('.mobile-card').css('cursor', 'pointer');
+                $('.list-icon-function .item').css('cursor', 'pointer');
+            }
         });
     </script>
 @endpush
