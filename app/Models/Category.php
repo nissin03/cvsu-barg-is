@@ -24,8 +24,21 @@ class Category extends Model
     {
         return $this->hasMany(Category::class, 'parent_id');
     }
+
+    public function archivedChildren()
+    {
+        return $this->hasMany(Category::class, 'parent_id')->onlyTrashed();
+    }
     protected static function booted()
     {
+        static::deleting(function ($category) {
+            if ($category->children()->count() > 0) {
+                $category->children()->each(function ($child) {
+                    $child->delete();
+                });
+            }
+        });
+
         static::restoring(function ($category) {
             $category->children()->withTrashed()->get()->each->restore();
         });

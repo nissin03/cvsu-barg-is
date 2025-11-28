@@ -3,170 +3,319 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Faker\Factory as Faker;
+use App\Models\College;
+use App\Models\Course;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Carbon\Carbon;
 
 class UserSeeder extends Seeder
 {
+    private $filipinoFirstNames = [
+        'male' => [
+            'Juan',
+            'Luis',
+            'Carlos',
+            'Miguel',
+            'Antonio',
+            'Jose',
+            'Francisco',
+            'Ramon',
+            'Fernando',
+            'Eduardo',
+            'Ricardo',
+            'Alberto',
+            'Roberto',
+            'Daniel',
+            'Mark',
+            'John',
+            'Michael',
+            'Christian',
+            'Kevin',
+            'James',
+            'Paul',
+            'Andrew',
+            'Matthew',
+            'Gabriel',
+            'Rafael',
+            'Dominic',
+            'Vincent',
+            'Julius',
+            'Armando',
+            'Emmanuel'
+        ],
+        'female' => [
+            'Maria',
+            'Ana',
+            'Carmen',
+            'Teresa',
+            'Rosa',
+            'Lourdes',
+            'Cristina',
+            'Elena',
+            'Isabel',
+            'Gabriela',
+            'Andrea',
+            'Michelle',
+            'Jennifer',
+            'Sarah',
+            'Angela',
+            'Patricia',
+            'Mary',
+            'Christine',
+            'Stephanie',
+            'Diana',
+            'Beatrice',
+            'Clara',
+            'Felicia',
+            'Gloria',
+            'Hazel',
+            'Irene',
+            'Jasmine',
+            'Katherine',
+            'Liza',
+            'Monica'
+        ]
+    ];
+
+    private $filipinoLastNames = [
+        'dela Cruz',
+        'Garcia',
+        'Reyes',
+        'Ramos',
+        'Mendoza',
+        'Santos',
+        'Flores',
+        'Gonzales',
+        'Bautista',
+        'Villanueva',
+        'Fernandez',
+        'Cruz',
+        'de Guzman',
+        'Lopez',
+        'Perez',
+        'Castillo',
+        'Francisco',
+        'Rivera',
+        'Aquino',
+        'Castro',
+        'de Leon',
+        'Estrada',
+        'Gutierrez',
+        'Mercado',
+        'Ocampo',
+        'Silva',
+        'Torres',
+        'Valdez',
+        'Romero',
+        'Alvarez',
+        'Chavez',
+        'Domingo',
+        'Espiritu',
+        'Hernandez',
+        'Ignacio',
+        'Jimenez',
+        'Navarro',
+        'Ortega',
+        'Pascual',
+        'Quinto'
+    ];
+
+    private $filipinoMiddleInitials = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'];
+
+    /**
+     * Generate a realistic Filipino name
+     */
+    private function generateFilipinoName($sex): string
+    {
+        $firstName = $this->filipinoFirstNames[$sex][array_rand($this->filipinoFirstNames[$sex])];
+        $lastName = $this->filipinoLastNames[array_rand($this->filipinoLastNames)];
+        $middleInitial = $this->filipinoMiddleInitials[array_rand($this->filipinoMiddleInitials)];
+
+        return $firstName . ' ' . $middleInitial . '. ' . $lastName;
+    }
+
+    private array $employeePositions = [
+        'Director',
+        'Administrator',
+        'Bookkeeper',
+        'Administrative Aide',
+        'Clerk',
+        'Registrar Staff',
+        'Guidance Staff',
+        'Librarian',
+        'Instructor I',
+        'Instructor II',
+        'Assistant Professor',
+        'Associate Professor',
+        'Professor I'
+    ];
+
+    private function getRandomEmployeePosition(): string
+    {
+        return $this->employeePositions[array_rand($this->employeePositions)];
+    }
+
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $faker = Faker::create();
-
-        $departments = ['CEIT', 'GSOLC', 'CAFENR', 'CAS', 'CCJ', 'CEMDS', 'CED', 'CON', 'CVMBS'];
-        $yearLevels = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
-        $roles = ['student', 'employee', 'non-employee'];
-        $courses = [
-            'CEIT' => ['BS Agricultural and Biosystems Engineering', 'BS Architecture', 'BS Civil Engineering', 'BS Computer Science', 'BS Information Technology'],
-            'GSOLC' => ['PhD in Agriculture', 'PhD in Management', 'Master of Arts in Education', 'MS Agriculture'],
-            'CAFENR' => ['BS Agriculture', 'BS Environmental Science', 'BS Food Technology'],
-            'CAS' => ['BA Political Science', 'BS Psychology', 'BS Biology'],
-            'CCJ' => ['BS Criminology'],
-            'CEMDS' => ['BS Accountancy', 'BS Business Management'],
-            'CED' => ['Bachelor of Elementary Education', 'Bachelor of Secondary Education'],
-            'CON' => ['BS Nursing'],
-            'CVMBS' => ['Doctor of Veterinary Medicine']
-        ];
+        $colleges = College::all();
+        $courses = Course::all();
 
         // Create Admin User
-        $createdAt = $faker->dateTimeBetween('2025-01-01', '2025-12-31');
         User::create([
-            'name'              => 'Admin User',
-            'email'             => 'admin@cvsu.edu.ph',
+            'name' => 'John Doe',
+            'email' => 'admin@cvsu.edu.ph',
             'email_verified_at' => now(),
-            'password'          => Hash::make('password123'),
-            'utype'             => 'ADM',
-            'password_set'      => true,
-            'role'              => 'employee',
-            'sex'               => 'male',
-            'phone_number'      => '9' . $faker->numerify('#########'),
-            'created_at'        => $createdAt,
-            'updated_at'        => $createdAt,
+            'password' => Hash::make('password123'),
+            'password_set' => true,
+            'utype' => 'ADM',
+            'role' => 'employee',
+            'position' => 'Bookkeeper',
+            'sex' => 'male',
+            'phone_number' => '09123456789',
+            'college_id' => null,
+            'course_id' => null,
+            'isDefault' => false,
         ]);
 
-        // Student
-        $createdAt = $faker->dateTimeBetween('2025-01-01', '2025-12-31');
+        // Create Regular User (Student)
         User::create([
-            'name'              => 'User',
-            'email'             => 'user@cvsu.edu.ph',
+            'name' => 'john C. doe',
+            'email' => 'user@cvsu.edu.ph',
             'email_verified_at' => now(),
-            'password'          => Hash::make('password123'),
-            'utype'             => 'USR',
-            'password_set'      => true,
-            'role'              => 'employee',
-            'sex'               => 'male',
-            'phone_number'      => '9' . $faker->numerify('#########'),
-            'created_at'        => $createdAt,
-            'updated_at'        => $createdAt,
+            'password' => Hash::make('password123'),
+            'password_set' => true,
+            'utype' => 'USR',
+            'role' => 'student',
+            'position' => null,
+            'sex' => 'male',
+            'phone_number' => '09123456780',
+            'year_level' => '3rd Year',
+            'college_id' => $colleges->random()->id,
+            'course_id' => $courses->random()->id,
+            'isDefault' => false,
         ]);
-
-
-        // Create additional Admin Users
-        for ($i = 1; $i <= 4; $i++) {
-            $createdAt = $faker->dateTimeBetween('2025-01-01', '2025-12-31');
-            User::create([
-                'name'              => 'Admin User ' . $i,
-                'email'             => 'admin' . $i . '@cvsu.edu.ph',
-                'email_verified_at' => now(),
-                'password'          => Hash::make('password123'),
-                'utype'             => 'ADM',
-                'password_set'      => true,
-                'role'              => 'employee',
-                'sex'               => $faker->randomElement(['male']),
-                'phone_number'      => '9' . $faker->numerify('#########'),
-                'created_at'        => $createdAt,
-                'updated_at'        => $createdAt,
-            ]);
-        }
 
         // Create Director User
-        $createdAt = $faker->dateTimeBetween('2025-01-01', '2025-12-31');
         User::create([
-            'name'              => 'Director User',
-            'email'             => 'director@cvsu.edu.ph',
+            'name' => 'Director User',
+            'email' => 'director@cvsu.edu.ph',
             'email_verified_at' => now(),
-            'password'          => Hash::make('password123'),
-            'utype'             => 'DIR',
-            'password_set'      => true,
-            'role'              => 'employee',
-            'sex'               => $faker->randomElement(['male', 'female']),
-            'phone_number'      => '9' . $faker->numerify('#########'),
-            'created_at'        => $createdAt,
-            'updated_at'        => $createdAt,
+            'password' => Hash::make('password123'),
+            'password_set' => true,
+            'utype' => 'DIR',
+            'role' => 'employee',
+            'position' => 'Director',
+            'sex' => 'male',
+            'phone_number' => '09123456781',
+            'college_id' => null,
+            'course_id' => null,
+            'isDefault' => false,
         ]);
 
-        // Create Students (60 users)
+        // Create additional Admin Users (2-5)
+        for ($i = 2; $i <= 5; $i++) {
+            $sex = ($i % 2 == 0) ? 'male' : 'female';
+            User::create([
+                'name' => $this->generateFilipinoName($sex),
+                'email' => 'admin' . $i . '@cvsu.edu.ph',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password123'),
+                'password_set' => true,
+                'utype' => 'ADM',
+                'role' => 'employee',
+                'position' => $this->getRandomEmployeePosition(),
+                'sex' => $sex,
+                'phone_number' => '09' . rand(100000000, 999999999),
+                'college_id' => null,
+                'course_id' => null,
+                'isDefault' => false,
+            ]);
+        }
+
+        // Create Students (100 users)
         for ($i = 1; $i <= 100; $i++) {
-            $createdAt = $faker->dateTimeBetween('2025-01-01', Carbon::now());
-            $department = $faker->randomElement($departments);
-            $course = $faker->randomElement($courses[$department]);
+            $sex = ($i % 2 == 0) ? 'male' : 'female';
+            $college = $colleges->random();
+            $collegeCourses = $courses->where('college_id', $college->id);
+
+            // Generate student email with realistic format
+            $nameParts = explode(' ', $this->generateFilipinoName($sex));
+            $firstName = strtolower($nameParts[0]);
+            $lastName = strtolower(end($nameParts));
+            $studentEmail = $firstName . '.' . $lastName . '.student' . $i . '@cvsu.edu.ph';
+
             User::create([
-                'name'              => $faker->name,
-                'email'             => "student{$i}@cvsu.edu.ph",
+                'name' => $this->generateFilipinoName($sex),
+                'email' => $studentEmail,
                 'email_verified_at' => now(),
-                'password'          => Hash::make('password123'),
-                'utype'             => 'USR',
-                'password_set'      => false,
-                'phone_number'      => '9' . $faker->numerify('#########'),
-                'year_level'        => $faker->randomElement($yearLevels),
-                'department'        => $department,
-                'course'            => $course,
-                'profile_image'     => null,
-                'role'              => 'student',
-                'sex'               => $faker->randomElement(['male', 'female']),
-                'created_at'        => $createdAt,
-                'updated_at'        => $createdAt,
+                'password' => Hash::make('password123'),
+                'password_set' => false,
+                'utype' => 'USR',
+                'role' => 'student',
+                'position' => null,
+                'sex' => $sex,
+                'phone_number' => '09' . rand(100000000, 999999999),
+                'year_level' => ['1st Year', '2nd Year', '3rd Year', '4th Year'][rand(0, 3)],
+                'college_id' => $college->id,
+                'course_id' => $collegeCourses->isNotEmpty() ? $collegeCourses->random()->id : null,
+                'isDefault' => false,
             ]);
         }
 
-        // Create Employees 
+        // Create Employees (20 users)
         for ($i = 1; $i <= 20; $i++) {
-            $createdAt = $faker->dateTimeBetween('2025-01-01', Carbon::now());
+            $sex = ($i % 2 == 0) ? 'male' : 'female';
+            $name = $this->generateFilipinoName($sex);
+            $nameParts = explode(' ', $name);
+            $firstName = strtolower($nameParts[0]);
+            $lastName = strtolower(end($nameParts));
+            $employeeEmail = $firstName . '.' . $lastName . '.emp' . $i . '@cvsu.edu.ph';
             User::create([
-                'name'              => $faker->name,
-                'email'             => "employee{$i}@cvsu.edu.ph",
+                'name' => $name,
+                'email' => $employeeEmail,
                 'email_verified_at' => now(),
-                'password'          => Hash::make('password123'),
-                'utype'             => 'USR',
-                'password_set'      => false,
-                'phone_number'      => '9' . $faker->numerify('#########'),
-                'role'              => 'employee',
-                'sex'               => $faker->randomElement(['male', 'female']),
-                'created_at'        => $createdAt,
-                'updated_at'        => $createdAt,
-                // Student-specific fields are null for employees
-                'year_level'        => null,
-                'department'        => null,
-                'course'            => null,
-                'profile_image'     => null,
+                'password' => Hash::make('password123'),
+                'password_set' => false,
+                'utype' => 'USR',
+                'role' => 'employee',
+                'position' => $this->getRandomEmployeePosition(),
+                'sex' => $sex,
+                'phone_number' => '09' . rand(100000000, 999999999),
+                'year_level' => null,
+                'college_id' => null,
+                'course_id' => null,
+                'isDefault' => false,
             ]);
         }
 
-        // Create Non-employees
+        // Create Non-employees (20 users)
         for ($i = 1; $i <= 20; $i++) {
-            $createdAt = $faker->dateTimeBetween('2025-01-01', Carbon::now());
+            $sex = ($i % 2 == 0) ? 'male' : 'female';
+            $name = $this->generateFilipinoName($sex);
+            $nameParts = explode(' ', $name);
+            $firstName = strtolower($nameParts[0]);
+            $lastName = strtolower(end($nameParts));
+            $nonEmployeeEmail = $firstName . '.' . $lastName . '.guest' . $i . '@gmail.com';
+
             User::create([
-                'name'              => $faker->name,
-                'email'             => "nonemployee{$i}@cvsu.edu.ph",
+                'name' => $name,
+                'email' => $nonEmployeeEmail,
                 'email_verified_at' => now(),
-                'password'          => Hash::make('password123'),
-                'utype'             => 'USR',
-                'password_set'      => false,
-                'phone_number'      => '9' . $faker->numerify('#########'),
-                'role'              => 'non-employee',
-                'sex'               => $faker->randomElement(['male', 'female']),
-                'created_at'        => $createdAt,
-                'updated_at'        => $createdAt,
-                // Student-specific fields are null for non-employees
-                'year_level'        => null,
-                'department'        => null,
-                'course'            => null,
-                'profile_image'     => null,
+                'password' => Hash::make('password123'),
+                'password_set' => false,
+                'utype' => 'USR',
+                'role' => 'non-employee',
+                'position' => null,
+                'sex' => $sex,
+                'phone_number' => '09' . rand(100000000, 999999999),
+                'year_level' => null,
+                'college_id' => null,
+                'course_id' => null,
+                'isDefault' => false,
             ]);
         }
     }

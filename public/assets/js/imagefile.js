@@ -94,6 +94,11 @@ function removeGalleryImage(button, inputId) {
     }
     $(button).parent(".gitems").remove();
 
+    if (imagePath) {
+        $("#gallery-container").append(
+            `<input type="hidden" name="remove_images[]" value="${imagePath}">`
+        );
+    }
     const remainingImages = $("#gallery-container .gitems").length;
     if (remainingImages === 0) {
         $(`#${inputId}`).val("");

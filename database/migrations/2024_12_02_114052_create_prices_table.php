@@ -17,13 +17,13 @@ return new class extends Migration
             $table->string('name')->nullable()->default('Price');
             $table->decimal('value', 8, 2);
             $table->enum('price_type', ['individual', 'whole']);
-           
+
             $table->boolean('is_based_on_days')->default(false);
             $table->boolean('is_there_a_quantity')->default(false);
+            $table->boolean('is_this_a_discount')->default(false);
             $table->date('date_from')->nullable();
             $table->date('date_to')->nullable();
             $table->timestamps();
-
         });
     }
 

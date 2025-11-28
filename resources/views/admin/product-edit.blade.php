@@ -167,7 +167,7 @@
                         <span class="alert alert-danger text-center">{{ $message }} </span>
                     @enderror
 
-                    <div class="gap22 cols">
+                    {{-- <div class="gap22 cols">
                         <fieldset class="sex">
                             <div class="body-title mb-10">Gender Category <span class="tf-color-1">*</span></div>
                             <div class="select">
@@ -187,7 +187,7 @@
 
                     @error('sex')
                         <span class="alert alert-danger text-center">{{ $message }} </span>
-                    @enderror
+                    @enderror --}}
 
                     <fieldset class="shortdescription">
                         <div class="body-title mb-10">Short Description <span class="tf-color-1">*</span></div>
@@ -223,14 +223,12 @@
                                 <div class="item" id="imgpreview">
                                     <img src="{{ asset('uploads/products') }}/{{ $product->image }}" id="preview-img"
                                         class="effect8" alt="{{ $product->name }}">
-                                    <button type="button" class="remove-upload" id="remove-upload"
-                                        onclick="removeUpload('imgpreview')">Remove</button>
+                                    <button type="button" class="remove-upload" onclick="removeMainImage()">Remove</button>
                                 </div>
                             @else
                                 <div class="item" id="imgpreview" style="display:none">
                                     <img src="" id="preview-img" class="effect8" alt="">
-                                    <button type="button" class="remove-upload" id="remove-upload"
-                                        onclick="removeUpload('imgpreview')">Remove</button>
+                                    <button type="button" class="remove-upload" onclick="removeMainImage()">Remove</button>
                                 </div>
                             @endif
                             <div id="upload-file" class="item up-load">
@@ -247,8 +245,9 @@
                         </div>
                     </fieldset>
                     @error('image')
-                        <span class="alert alert-danger text-center">{{ $message }} </span>
+                        <span class="alert alert-danger text-center d-block mt-2">{{ $message }}</span>
                     @enderror
+
                     <fieldset>
                         <div class="body-title mb-10">Upload Gallery Images (Max 5 images)</div>
                         <div class="upload-image mb-16" id="gallery-container">
@@ -260,10 +259,9 @@
                                     });
                                 @endphp
                                 @foreach ($existingImages as $img)
-                                    <div class="item gitems">
+                                    <div class="item gitems" data-image="{{ trim($img) }}">
                                         <img src="{{ asset('uploads/products/' . trim($img)) }}" class="effect8"
                                             alt="Gallery Image" style="width: 100px; height: 100px; object-fit: cover;" />
-                                        <input type="hidden" name="existing_images[]" value="{{ trim($img) }}">
                                         <button type="button" class="remove-upload"
                                             onclick="removeGalleryImage(this, '{{ trim($img) }}')">Remove</button>
                                     </div>
@@ -282,9 +280,13 @@
                         </div>
                     </fieldset>
                     @error('images')
-                        <span class="alert alert-danger text-center">{{ $message }} </span>
+                        <span class="alert alert-danger text-center d-block mt-2">{{ $message }}</span>
                     @enderror
-                    <div id="gallery-error" class="error-message"></div>
+                    @error('images.*')
+                        <span class="alert alert-danger text-center d-block mt-2">{{ $message }}</span>
+                    @enderror
+                    <div id="gallery-error" class="alert alert-danger text-center mt-2" style="display:none;"></div>
+
 
 
                     <div class="main-fields" id="main-fields" style="{{ $hasVariant ? 'display: none;' : '' }}">
@@ -322,22 +324,22 @@
                                 <input type="number" name="reorder_quantity" value="{{ $product->reorder_quantity }}"
                                     required>
                             </div>
-                            <div class="field">
+                            {{-- <div class="field">
                                 <label>Out of Stock Quantity</label>
                                 <input type="number" name="outofstock_quantity"
                                     value="{{ $product->outofstock_quantity }}" required>
-                            </div>
+                            </div> --}}
                         </div>
                     </fieldset>
-                    @error('instock_quantity')
+                    {{-- @error('instock_quantity')
                         <span class="alert alert-danger">{{ $message }} </span>
-                    @enderror
+                    @enderror --}}
                     @error('reorder_quantity')
                         <span class="alert alert-danger">{{ $message }} </span>
                     @enderror
-                    @error('outofstock_quantity')
+                    {{-- @error('outofstock_quantity')
                         <span class="alert alert-danger">{{ $message }} </span>
-                    @enderror
+                    @enderror --}}
 
 
                     <fieldset class="name">
@@ -385,11 +387,10 @@
                     @enderror
 
                     <!-- Button to Add Variant -->
-                  
+
                 </div>
 
                 <div class="wg-box">
-                    <!-- Variant Fields Container for multiple variants -->
                     <div id="variant-fields-container" style="{{ $hasVariant ? 'display: block;' : 'display: none;' }}">
                         @foreach ($product->attributeValues as $variant)
                             <div class="variant-fields" data-variant-index="{{ $loop->index }}"
@@ -403,11 +404,15 @@
                                         value="{{ $variant->value }}" placeholder="Variant Name">
                                 </fieldset>
                                 <fieldset class="name">
+                                    <div class="body-title mb-10">Variant Description (Optional):</div>
+                                    <textarea class="mb-10" name="variant_description[]" placeholder="Enter variant description (optional)"
+                                        rows="3">{{ $variant->description }}</textarea>
+                                </fieldset>
+                                <fieldset class="name">
                                     <div class="body-title mb-10">Variant Price:</div>
                                     <input type="text" name="variant_price[]" class="form-control"
                                         value="{{ $variant->price }}" placeholder="Variant Price">
                                 </fieldset>
-
                                 <fieldset class="name">
                                     <div class="body-title mb-10">Variant Quantity:</div>
                                     <input type="number" name="variant_quantity[]" class="form-control"
@@ -418,6 +423,7 @@
                             </div>
                         @endforeach
                     </div>
+
                     <div class="cols gap10">
                         <button class="tf-button w-full" type="submit">Edit Product</button>
                     </div>
@@ -436,94 +442,143 @@
 @push('scripts')
     <script>
         $(function() {
+            $('form').on('keydown', function(e) {
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
             $("#myFile").on("change", function(e) {
-                const [file] = this.files;
-                if (file) {
-                    $("#imgpreview img").attr('src', URL.createObjectURL(file));
-                    $("#imgpreview").show();
-                    $("#imgpreview .remove-upload").show();
+                e.preventDefault();
+                e.stopPropagation();
+                const photofile = this.files[0];
+                if (photofile) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        $("#preview-img").attr('src', event.target.result);
+                        $("#imgpreview").show();
+                    };
+                    reader.readAsDataURL(photofile);
                 }
             });
 
+            // Gallery images preview
             $("#gFile").on("change", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
                 const maxImages = 5;
                 const existingImages = $('.gitems').length;
-                const newFiles = this.files;
+                const newFiles = Array.from(this.files);
                 const totalImages = existingImages + newFiles.length;
 
                 if (totalImages > maxImages) {
                     alert(
-                        `You can only upload a maximum of ${maxImages} images. You already have ${existingImages} images and trying to add ${newFiles.length} more.`
+                        `You can only upload a maximum of ${maxImages} images. You already have ${existingImages} images.`
                     );
                     this.value = '';
                     return;
                 }
 
-                $("#galUpload").removeClass('up-load');
-                let imgCount = 0;
-
-                $.each(newFiles, function(key, val) {
-                    if (val.size > 5 * 1024 * 1024) { // 5MB check
-                        alert(`File ${val.name} exceeds 5MB limit!`);
-                        return false;
+                newFiles.forEach((file, index) => {
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert(`File ${file.name} exceeds 5MB limit!`);
+                        return;
                     }
 
-                    imgCount++;
-                    const fileName = val.name;
-                    $('#galUpload').before(`
-                        <div class="item gitems">
-                            <img src="${URL.createObjectURL(val)}" class="effect8" alt="Gallery Image" style="width: 100px; height: 100px; object-fit: cover;" />
-                            <p class="file-name-overlay">${fileName}</p>
-                            <button type="button" class="remove-upload" onclick="removeGalleryImage(this)">Remove</button>
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const newImageHtml = `
+                        <div class="item gitems gitems-new">
+                            <img src="${event.target.result}" class="effect8" alt="Gallery Image"
+                                style="width: 100px; height: 100px; object-fit: cover;" />
+                            <p class="file-name-overlay">${file.name}</p>
+                            <button type="button" class="remove-upload" onclick="removeNewGalleryImage(this)">Remove</button>
                         </div>
-                    `);
+                    `;
+                        $('#galUpload').before(newImageHtml);
+                    };
+                    reader.readAsDataURL(file);
                 });
 
-                if (totalImages >= maxImages) {
-                    $('#galUpload').hide();
+                // Hide upload button if limit reached
+                setTimeout(() => {
+                    if ($('.gitems').length >= maxImages) {
+                        $('#galUpload').hide();
+                    }
+                }, 100);
+            });
+
+            // Handle variant checkbox
+            $("#use-variants-checkbox").on("change", function() {
+                const variantsContainer = $('#variant-fields-container');
+                const mainFields = $('#main-fields');
+
+                if (this.checked) {
+                    variantsContainer.show();
+                    mainFields.hide();
+                    $('input[name="price"]').removeAttr('required');
+                    $('input[name="quantity"]').removeAttr('required');
                 } else {
-                    $('#galUpload').show();
+                    variantsContainer.hide();
+                    mainFields.show();
+                    $('input[name="price"]').attr('required', 'required');
+                    $('input[name="quantity"]').attr('required', 'required');
                 }
             });
 
+            // Slug generation
             $("input[name='name']").on("input", function() {
                 $("input[name='slug']").val(StringToSlug($(this).val()));
             });
-
-            $("#use-variants-checkbox").on("change", function() {
-                const variantsContainer = document.getElementById('variant-fields-container');
-                if (this.checked) {
-                    variantsContainer.style.display = 'block';
-                } else {
-                    variantsContainer.style.display = 'none';
-                }
-            });
         });
 
-        function removeUpload(previewId, inputId) {
-            $('#' + previewId).hide();
-            $('#' + previewId + ' img').attr('src', '');
-            $('#' + previewId + ' p.file-name-overlay').remove();
-            $('#' + previewId + ' button').off();
-            $('#' + previewId + ' button').css('display', 'none');
-            $('#' + inputId).val('');
+        // Remove main image
+        function removeMainImage() {
+            $('#imgpreview').hide();
+            $('#preview-img').attr('src', '');
+            $('#myFile').val('');
         }
 
-        function removeGalleryImage(button, existingImage = null) {
+        // Remove existing gallery image
+        function removeGalleryImage(button, existingImage) {
             const galleryItem = $(button).closest('.gitems');
 
-            if (existingImage) {
-                // Add hidden input for removed existing image
-                $('<input>').attr({
-                    type: 'hidden',
-                    name: 'removed_images[]',
-                    value: existingImage
-                }).appendTo('form');
-            }
+            // Add hidden input for removed existing image
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'removed_images[]',
+                value: existingImage
+            }).appendTo('form');
 
             galleryItem.remove();
 
-            // Show upload button if we're below the limit
+            // Show upload button if below limit
+            if ($('.gitems').length < 5) {
+                $('#galUpload').show();
+            }
+        }
+
+        // Remove newly added gallery image (not yet saved)
+        function removeNewGalleryImage(button) {
+            const galleryItem = $(button).closest('.gitems-new');
+            const fileName = galleryItem.find('.file-name-overlay').text();
+
+            // Remove from file input
+            const fileInput = document.getElementById('gFile');
+            const dt = new DataTransfer();
+            const files = fileInput.files;
+
+            for (let i = 0; i < files.length; i++) {
+                if (files[i].name !== fileName) {
+                    dt.items.add(files[i]);
+                }
+            }
+            fileInput.files = dt.files;
+
+            galleryItem.remove();
+
+            // Show upload button if below limit
             if ($('.gitems').length < 5) {
                 $('#galUpload').show();
             }
@@ -533,23 +588,6 @@
             return Text.toLowerCase()
                 .replace(/[^\w ]+/g, "")
                 .replace(/ +/g, "-");
-        }
-
-        function previewImage(event) {
-            const file = event.target.files[0];
-            const imgPreview = document.getElementById('imgpreview');
-            const previewImg = document.getElementById('preview-img');
-            const removeBtn = document.getElementById('remove-btn');
-
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    imgPreview.style.display = 'block';
-                    removeBtn.style.display = 'inline-block'; // Show the remove button
-                }
-                reader.readAsDataURL(file);
-            }
         }
 
         $(document).ready(function() {
@@ -572,30 +610,35 @@
                 variantDiv.className = 'variant-fields';
                 variantDiv.setAttribute('data-variant-index', variantCounter);
                 variantDiv.innerHTML = `
-                    <div class="variant-header flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold">Variant ${variantCounter}</h3>
-                        <button type="button" class="remove-variant-btn btn btn-danger btn-sm" 
-                                data-variant-index="${variantCounter}">
-                            <i class="fas fa-times"></i> Remove
-                        </button>
-                    </div>
-                    <div>
-                        <input type="hidden" name="product_attribute_id[]" value="${selectedAttributeId}">
-                        <fieldset class="name">
-                            <div class="body-title mb-10 my-4">Variant for: ${selectedAttributeName}</div>
-                            <input type="text" name="variant_name[]" placeholder="Variant Name" required>
-                        </fieldset>
-                        <fieldset class="name">
-                            <div class="body-title mb-10 my-4">Variant Price <span class="tf-color-1">*</span></div>
-                            <input class="mb-10" type="text" placeholder="Enter price" name="variant_price[]"
-                                tabindex="0" aria-required="true" required>
-                        </fieldset>
-                        <fieldset class="name">
-                            <div class="body-title mb-10 my-4">Variant Quantity:</div>
-                            <input type="number" name="variant_quantity[]" placeholder="Variant Quantity" required>
-                        </fieldset>
-                    </div>
-                `;
+                <div class="variant-header flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Variant ${variantCounter}</h3>
+                    <button type="button" class="remove-variant-btn btn btn-danger btn-sm"
+                            data-variant-index="${variantCounter}">
+                        <i class="fas fa-times"></i> Remove
+                    </button>
+                </div>
+                <div>
+                    <input type="hidden" name="product_attribute_id[]" value="${selectedAttributeId}">
+                    <fieldset class="name">
+                        <div class="body-title mb-10 my-4">Variant for: ${selectedAttributeName}</div>
+                        <input type="text" name="variant_name[]" placeholder="Variant Name" required>
+                    </fieldset>
+                    <fieldset class="name">
+                        <div class="body-title mb-10 my-4">Variant Description (Optional)</div>
+                        <textarea class="mb-10 form-control" name="variant_description[]" tabindex="0"
+                            placeholder="Enter variant description (optional)" rows="3"></textarea>
+                    </fieldset>
+                    <fieldset class="name">
+                        <div class="body-title mb-10 my-4">Variant Price <span class="tf-color-1">*</span></div>
+                        <input class="mb-10" type="text" placeholder="Enter price" name="variant_price[]"
+                            tabindex="0" aria-required="true" required>
+                    </fieldset>
+                    <fieldset class="name">
+                        <div class="body-title mb-10 my-4">Variant Quantity:</div>
+                        <input type="number" name="variant_quantity[]" placeholder="Variant Quantity" required>
+                    </fieldset>
+                </div>
+            `;
                 variantsContainer.appendChild(variantDiv);
 
                 const removeBtn = variantDiv.querySelector('.remove-variant-btn');
@@ -642,18 +685,5 @@
 
             addVariantBtn.addEventListener('click', createVariantFields);
         });
-
-        // document.getElementById('remove-btn').addEventListener('click', function() {
-        //     const imgPreview = document.getElementById('imgpreview');
-        //     const previewImg = document.getElementById('preview-img');
-        //     const removeBtn = document.getElementById('remove-btn');
-        //     const fileInput = document.getElementById('myFile');
-
-        //     // Hide the preview and remove the selected file
-        //     imgPreview.style.display = 'none';
-        //     previewImg.src = '';
-        //     fileInput.value = ''; // Clear the file input
-        //     removeBtn.style.display = 'none'; // Hide the remove button
-        // });
     </script>
 @endpush

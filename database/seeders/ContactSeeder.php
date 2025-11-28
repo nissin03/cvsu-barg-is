@@ -24,15 +24,13 @@ class ContactSeeder extends Seeder
         }
 
         $totalContacts = 100;
+
         for ($i = 0; $i < $totalContacts; $i++) {
-            $user = $users->random(); 
+            $user = $users->random();
 
             Contact::create([
-                'name' => $faker->name,
-                'email' => $faker->safeEmail,
-                'phone' => $faker->phoneNumber,
-                'message' => $faker->paragraph,
                 'user_id' => $user->id,
+                'message' => $faker->paragraph,
             ]);
         }
     }

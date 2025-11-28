@@ -13,6 +13,7 @@ class ProductAttributeValue extends Model
         'product_id',
         'product_attribute_id',
         'value',
+        'description',
         'price',
         'quantity',
         'stock_status'
@@ -30,18 +31,16 @@ class ProductAttributeValue extends Model
         }
         return ['Unknown' => $this->value];
     }
-  
-    
+
+
     public function productAttribute()
     {
         return $this->belongsTo(ProductAttribute::class, 'product_attribute_id');
     }
- 
+
 
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
-   
-
 }

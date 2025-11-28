@@ -7,7 +7,9 @@ use Dompdf\Options;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Slide;
+use App\Models\Course;
 use App\Models\Rental;
+use App\Models\College;
 use App\Models\Contact;
 use App\Models\Product;
 use App\Models\Category;
@@ -17,9 +19,8 @@ use App\Models\Reservation;
 use App\Models\Transaction;
 use Illuminate\Support\Str;
 use App\Mail\ReplyToContact;
+use App\Models\ContactReply;
 use Illuminate\Http\Request;
-use App\Models\DormitoryRoom;
-use App\Models\ContactReplies;
 use Illuminate\Support\Carbon;
 use App\Helpers\TimeSlotHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -36,6 +37,7 @@ use App\Models\ProductAttributeValue;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Notification;
 use Intervention\Image\Laravel\Facades\Image;
+use App\Notifications\OrderCanceledNotification;
 
 
 class AdminController extends Controller
@@ -50,13 +52,15 @@ class AdminController extends Controller
     {
         $currentYear = Carbon::now()->year;
         $yearRange = range($currentYear, $currentYear - 10);
-
-        // Get low stock products
         $products = $this->getLowStockProducts();
         $dashboardData = [$this->getDashboardSummary($currentYear)];
 
-        // Get recent orders
-        $orders = Order::orderBy('created_at', 'DESC')->take(10)->get();
+        $orders = Order::with(
+            'user.course.college'
+        )
+            ->latest()
+            ->take(10)
+            ->get();
 
         $pageTitle = 'Admin Dashboard';
 
@@ -360,13 +364,29 @@ class AdminController extends Controller
 
         return response()->json(['weeks' => $weeks]);
     }
-    public function categories()
+    public function categories(Request $request)
     {
-        // $categories = Category::orderBy('id', 'DESC')->paginate(10);
-        $categories = Category::whereNull('parent_id')
-            ->with('children')
-            ->orderBy('id', 'DESC')
-            ->paginate(5);
+        $search = $request->input('search');
+        $query = Category::whereNull('parent_id')->with('children');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhereHas('children', function ($childQuery) use ($search) {
+                        $childQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('slug', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $categories = $query->orderBy('id', 'DESC')->paginate(5)->withQueryString();
+        if ($request->ajax()) {
+            return response()->json([
+                'categories' => view('partials._categories-table', compact('categories'))->render(),
+                'pagination' => view('partials._categories-pagination', compact('categories'))->render()
+            ]);
+        }
+
         $pageTitle = 'Category Dashboard';
         return view('admin.categories', compact('categories', 'pageTitle'));
     }
@@ -459,6 +479,11 @@ class AdminController extends Controller
     public function category_archive($id)
     {
         $category = Category::findOrFail($id);
+        if ($category->children()->count() > 0) {
+            $category->children()->each(function ($child) {
+                $child->delete();
+            });
+        }
         $category->delete();
         return redirect()->route('admin.categories')->with('status', 'Category has been archived successfully!');
     }
@@ -467,12 +492,23 @@ class AdminController extends Controller
     {
         $archivedCategories = Category::onlyTrashed()
             ->whereNull('parent_id')
-            ->with('children')
+            ->with('archivedChildren')
             ->orderBy('id', 'DESC')
             ->paginate(5);
 
+        $orphanedChildren = Category::onlyTrashed()
+            ->whereNotNull('parent_id')
+            ->whereHas('parent', function ($query) {
+                $query->withTrashed()->whereNull('deleted_at');
+            })
+            ->orderBy('id', 'DESC')
+            ->get();
+
         $pageTitle = 'Archived Categories';
-        return view('admin.archived-categories', compact('archivedCategories', 'pageTitle'));
+        return view(
+            'admin.archived-categories',
+            compact('archivedCategories', 'pageTitle', 'orphanedChildren')
+        );
     }
 
     public function restore_categories($id)
@@ -486,8 +522,14 @@ class AdminController extends Controller
     {
         $archived = $request->query('archived', 0);
         $search = $request->input('search');
-        $sortColumn = $request->input('sort_column', 'created_at');
-        $sortDirection = $request->input('sort_direction', 'DESC');
+        $category = $request->input('category');
+        $stockStatus = $request->input('stock_status');
+        $sortBy = $request->input('sort_by', 'newest');
+
+        $categories = Category::whereNull('parent_id')
+            ->with('children')
+            ->orderBy('name')
+            ->get();
 
         $query = Product::with([
             'category' => function ($query) {
@@ -497,9 +539,10 @@ class AdminController extends Controller
             'attributeValues.productAttribute'
         ])
             ->where('archived', $archived);
-        $isNumeric = is_numeric($search);
+
 
         if ($search) {
+            $isNumeric = is_numeric($search);
             $query->where(function ($q) use ($search, $isNumeric) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
@@ -509,32 +552,68 @@ class AdminController extends Controller
                         ->orWhere('price', 'like', "%{$search}%");
                 }
             });
-            if ($isNumeric) {
-                $exactQuantityMatch = Product::where('quantity', $search)->exists();
-                if ($exactQuantityMatch) {
-                    $sortColumn = 'quantity';
-                } else {
-                    $priceMatch = Product::where('price', 'like', "%{$search}%")->exists();
-                    if ($priceMatch) {
-                        $sortColumn = 'price';
-                    }
-                }
-            } else {
-                $sortColumn = 'name';
-            }
         }
-        $query->orderBy($sortColumn, $sortDirection);
+
+        // Category filter
+        if ($category) {
+            $query->where(function ($q) use ($category) {
+                $selectedCategory = Category::find($category);
+                if ($selectedCategory) {
+                    $categoryIds = [$category];
+                    if ($selectedCategory->children->isNotEmpty()) {
+                        $categoryIds = array_merge(
+                            $categoryIds,
+                            $selectedCategory->children->pluck('id')->toArray()
+                        );
+                    }
+
+                    $q->whereIn('category_id', $categoryIds);
+                } else {
+                    $q->where('category_id', $category);
+                }
+            });
+        }
+
+        if ($stockStatus) {
+            $query->where('stock_status', $stockStatus);
+        }
+
+
+        switch ($sortBy) {
+            case 'oldest':
+                $query->orderBy('created_at', 'ASC');
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'ASC');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'DESC');
+                break;
+            case 'stock_low':
+                $query->orderBy('quantity', 'ASC');
+                break;
+            case 'stock_high':
+                $query->orderBy('quantity', 'DESC');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('created_at', 'DESC');
+                break;
+        }
 
         $products = $query->paginate(10)->withQueryString();
+        $count = $products->total();
+
 
         if ($request->ajax()) {
             return response()->json([
                 'products' => view('partials._products-table', compact('products'))->render(),
-                'pagination' => view('partials._products-pagination', compact('products'))->render()
+                'pagination' => view('partials._products-pagination', compact('products'))->render(),
+                'count' => $count
             ]);
         }
 
-        return view('admin.products', compact('products', 'archived'));
+        return view('admin.products', compact('products', 'archived', 'categories'));
     }
 
     public function product_add()
@@ -560,17 +639,28 @@ class AdminController extends Controller
             'price' => $hasVariant ? 'nullable' : 'required|numeric',
             'quantity' => $hasVariant ? 'nullable' : 'required|integer',
             'featured' => 'required',
-            'image' => 'required|mimes:png,jpg,jpeg|max:10240',
-            'sex' => 'required|in:male,female,all',
+            'image' => 'required|image|mimes:png,jpg,jpeg|max:5120',
+            'images.*' => 'nullable|image|mimes:png,jpg,jpeg|max:5120',
+            // 'sex' => 'required|in:male,female,all',
             'category_id' => 'required|integer|exists:categories,id',
             'reorder_quantity' => 'required|integer|min:0',
-            'outofstock_quantity' => 'required|integer|min:0',
+            'outofstock_quantity' => 'nullable|integer|min:0',
+            'variant_description.*' => 'nullable|string|max:1000',
         ], [
+            'image.required' => 'Main product image is required.',
+            'image.image' => 'The file must be an image.',
+            'image.mimes' => 'The image must be a file of type: png, jpg, jpeg.',
+            'image.max' => 'The image size must not exceed 5MB.',
+            'images.*.image' => 'All gallery files must be images.',
+            'images.*.mimes' => 'Gallery images must be files of type: png, jpg, jpeg.',
+            'images.*.max' => 'Each gallery image must not exceed 5MB.',
             'category_id.integer' => 'Please select a valid category.',
             'sex.in' => 'Please select a valid gender category.',
             'reorder_quantity.required' => 'Reorder Quantity is required.',
             'outofstock_quantity.required' => 'Out of Stock Quantity is required.',
         ]);
+
+        $outofstock_quantity = 0; // Default value
 
         $product = new Product();
         $product->name = $request->name;
@@ -581,10 +671,10 @@ class AdminController extends Controller
         $product->quantity = $hasVariant ? null : $request->quantity;
         $product->stock_status = $hasVariant ? 'instock' : 'outofstock';
         $product->featured = $request->featured;
-        $product->sex = $request->sex;
+        // $product->sex = $request->sex;
         $product->category_id = $request->category_id;
         $product->reorder_quantity = $request->reorder_quantity;
-        $product->outofstock_quantity = $request->outofstock_quantity;
+        $product->outofstock_quantity = $outofstock_quantity;
 
         $current_timestamp = now()->timestamp;
         if ($request->hasFile('image')) {
@@ -601,6 +691,7 @@ class AdminController extends Controller
             $allowedFileExtension = ['jpg', 'png', 'jpeg'];
             $files = $request->file('images');
             $counter = 1;
+            $gallery_arr = [];
 
             foreach ($files as $file) {
                 $gext = $file->getClientOriginalExtension();
@@ -617,7 +708,9 @@ class AdminController extends Controller
                     $counter++;
                 }
             }
-            $product->images = implode(',', $gallery_arr);
+            if (!empty($gallery_arr)) {
+                $product->images = implode(',', $gallery_arr);
+            }
         }
         $product->save();
         if ($hasVariant && is_array($request->variant_name)) {
@@ -627,6 +720,7 @@ class AdminController extends Controller
                     'product_id' => $product->id,
                     'product_attribute_id' => $request->product_attribute_id[$index],
                     'value' => $variantName,
+                    'description' => $request->variant_description[$index] ?? null,
                     'price' => $request->variant_price[$index],
                     'quantity' => $request->variant_quantity[$index],
                 ];
@@ -687,6 +781,7 @@ class AdminController extends Controller
     {
         $product = Product::findOrFail($request->input('id'));
         $hasVariant = !empty($request->variant_name) && is_array($request->variant_name);
+
         $request->validate([
             'name' => 'required',
             'short_description' => 'required',
@@ -696,35 +791,65 @@ class AdminController extends Controller
             'featured' => 'required|boolean',
             'image' => 'nullable|image|mimes:png,jpg,jpeg|max:5120',
             'images.*' => 'nullable|image|mimes:png,jpg,jpeg|max:5120',
-            'sex' => 'required|in:male,female,all',
+            // 'sex' => 'required|in:male,female,all',
             'category_id' => 'required|integer|exists:categories,id',
             'reorder_quantity' => 'required|integer|min:0',
-            'outofstock_quantity' => 'required|integer|min:0',
+            'outofstock_quantity' => 'nullable|integer|min:0',
+            'variant_description.*' => 'nullable|string|max:1000',
+        ], [
+            'image.image' => 'The file must be an image.',
+            'image.mimes' => 'The image must be a file of type: png, jpg, jpeg.',
+            'image.max' => 'The image size must not exceed 5MB.',
+            'images.*.image' => 'All gallery files must be images.',
+            'images.*.mimes' => 'Gallery images must be files of type: png, jpg, jpeg.',
+            'images.*.max' => 'Each gallery image must not exceed 5MB.',
+            'category_id.integer' => 'Please select a valid category.',
+            'reorder_quantity.required' => 'Reorder Quantity is required.',
+            'outofstock_quantity.required' => 'Out of Stock Quantity is required.',
         ]);
         $previousStockStatus = $product->stock_status;
-        $product->fill($request->except(['image', 'images', 'variant_name', 'product_attribute_id', 'variant_price', 'variant_quantity', 'existing_variant_ids', 'removed_variant_ids']));
+        $product->fill($request->except([
+            'image',
+            'images',
+            'variant_name',
+            'product_attribute_id',
+            'variant_price',
+            'variant_quantity',
+            'variant_description',
+            'existing_variant_ids',
+            'removed_variant_ids',
+            'removed_images'
+        ]));
+        // $product->fill($request->except(['image', 'images', 'variant_name', 'product_attribute_id', 'variant_price', 'variant_quantity', 'existing_variant_ids', 'removed_variant_ids']));
 
         $current_timestamp = now()->timestamp;
         if ($request->hasFile('image')) {
             if (!empty($product->image) && File::exists(public_path("uploads/products/{$product->image}"))) {
                 File::delete(public_path("uploads/products/{$product->image}"));
+                File::delete(public_path("uploads/products/thumbnails/{$product->image}"));
             }
+
             $image = $request->file('image');
             $imageName = "{$current_timestamp}.{$image->extension()}";
+
             $this->imageProcessor->process($image, $imageName, [
                 ['path' => public_path('uploads/products'), 'cover' => [689, 689, 'center']],
                 ['path' => public_path('uploads/products/thumbnails'), 'resize' => [300, 300]],
             ]);
             $product->image = $imageName;
         }
+
         $existingImages = !empty($product->images) ? explode(',', $product->images) : [];
         $removedImages = $request->input('removed_images', []);
+
         foreach ($removedImages as $removedImage) {
             if (File::exists(public_path("uploads/products/{$removedImage}"))) {
                 File::delete(public_path("uploads/products/{$removedImage}"));
+                File::delete(public_path("uploads/products/thumbnails/{$removedImage}"));
             }
             $existingImages = array_diff($existingImages, [$removedImage]);
         }
+        $existingImages = array_values($existingImages);
         if ($request->hasFile('images')) {
             $newImages = [];
             $maxGalleryImages = 5;
@@ -746,10 +871,11 @@ class AdminController extends Controller
             }
 
             $allImages = array_merge($existingImages, $newImages);
-            $product->images = implode(',', $allImages);
+            $product->images = !empty($allImages) ? implode(',', $allImages) : null;
         } else {
-            $product->images = implode(',', $existingImages);
+            $product->images = !empty($existingImages) ? implode(',', $existingImages) : null;
         }
+
         $product->save();
 
         $removedVariantIds = $request->input('removed_variant_ids', []);
@@ -759,28 +885,28 @@ class AdminController extends Controller
 
         if ($hasVariant) {
             $existingVariantIds = $request->input('existing_variant_ids', []);
-            $attributeValues = [];
 
             foreach ($request->variant_name as $index => $name) {
                 $attributeValue = [
                     'product_id' => $product->id,
                     'product_attribute_id' => $request->product_attribute_id[$index],
                     'value' => $name,
+                    'description' => $request->variant_description[$index] ?? null,
                     'price' => $request->variant_price[$index] ?? null,
                     'quantity' => $request->variant_quantity[$index] ?? 0,
                 ];
+
                 if (isset($existingVariantIds[$index]) && !empty($existingVariantIds[$index])) {
                     $existingVariant = ProductAttributeValue::find($existingVariantIds[$index]);
                     if ($existingVariant) {
                         $existingVariant->update($attributeValue);
-                        $attributeValues[] = $attributeValue;
                     }
                 } else {
                     ProductAttributeValue::create($attributeValue);
-                    $attributeValues[] = $attributeValue;
                 }
             }
             $variantTotalQuantity = $product->attributeValues()->sum('quantity');
+
             if ($variantTotalQuantity > $product->reorder_quantity) {
                 $product->stock_status = 'instock';
             } elseif ($variantTotalQuantity <= $product->reorder_quantity && $variantTotalQuantity > $product->outofstock_quantity) {
@@ -790,6 +916,7 @@ class AdminController extends Controller
             }
         } else {
             $product->attributeValues()->delete();
+
             if ($product->quantity > $product->reorder_quantity) {
                 $product->stock_status = 'instock';
             } elseif ($product->quantity <= $product->reorder_quantity && $product->quantity > $product->outofstock_quantity) {
@@ -803,8 +930,14 @@ class AdminController extends Controller
 
         if ($product->stock_status === 'instock' && $previousStockStatus !== 'instock') {
             $users = User::where('utype', 'USR')->get();
-            Notification::send($users, new StockUpdate($product, "Good news! The product {$product->name} is now back in stock."));
+
+            foreach ($users as $user) {
+                $user->notify(
+                    new StockUpdate($product, "Good news! The product {$product->name} is now back in stock.")
+                );
+            }
         }
+
         return redirect()->route('admin.products')->with('status', 'Product has been updated successfully!');
     }
 
@@ -813,7 +946,7 @@ class AdminController extends Controller
     {
         $product = Product::findOrFail($id);
         $product->archived = 1;
-        $product->archived_at = \Carbon\Carbon::now();
+        $product->archived_at = Carbon::now();
         $product->save();
         return redirect()->route('admin.products')->with('status', 'Product archived successfully!');
     }
@@ -892,30 +1025,128 @@ class AdminController extends Controller
 
     public function orders(Request $request)
     {
-        $status = $request->input('status');
-        $timeSlot = $request->input('time_slot');
-        $search = $request->input('search');
         $timeSlots = TimeSlotHelper::time();
+        $query = Order::with([
+            'user.course.college',
+            'orderItems.product',
+            'orderItems.variant'
+        ]);
 
-        $query = Order::with('user');
+        if ($request->filled('search')) {
+            $search = trim($request->search);
 
-        $query->when($status, fn($q) => $q->where('status', $status))
-            ->when($timeSlot, fn($q) => $q->where('time_slot', $timeSlot))
-            ->when($search, function ($q) use ($search) {
-                $q->where(function ($subQuery) use ($search) {
-                    $subQuery->where('id', $search)
-                        ->orWhereHas('user', function ($userQuery) use ($search) {
-                            $userQuery->where('name', 'LIKE', "%{$search}%")
-                                ->orWhere('email', 'LIKE', "%{$search}%");
-                        });
-                });
+            $query->where(function ($q) use ($search) {
+                $q->where('id', $search)
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('email', 'LIKE', "%{$search}%");
+                    })
+                    ->orWhereHas('orderItems.product', function ($productQuery) use ($search) {
+                        $productQuery->where('name', 'LIKE', "%{$search}%");
+                    })
+                    ->orWhere(function ($transQuery) use ($search) {
+                        $searchLower = strtolower($search);
+                        if (in_array($searchLower, ['paid', 'unpaid'])) {
+                            if ($searchLower === 'paid') {
+                                $transQuery->whereHas('transaction', function ($tq) {
+                                    $tq->where('status', 'paid');
+                                });
+                            } else {
+                                $transQuery->whereDoesntHave('transaction')
+                                    ->orWhereDoesntHave('transaction', function ($tq) {
+                                        $tq->where('status', 'paid');
+                                    });
+                            }
+                        }
+                    });
             });
+        }
 
-        $orders = $query
-            ->orderByRaw("FIELD(status, 'reserved', 'canceled', 'pickedup')")
-            ->latest()
-            ->paginate(12)
-            ->withQueryString();
+        if ($request->filled('order_status')) {
+            $query->where('status', $request->order_status);
+        }
+
+        if ($request->filled('time_slot_range')) {
+            $query->where('time_slot', $request->time_slot_range);
+        }
+
+        if ($request->filled('transaction_status')) {
+            if ($request->transaction_status === 'paid') {
+                $query->whereHas('transaction', function ($q) {
+                    $q->where('status', 'paid');
+                });
+            } elseif ($request->transaction_status === 'unpaid') {
+                $query->whereDoesntHave('transaction')
+                    ->orWhereDoesntHave('transaction', function ($q) {
+                        $q->where('status', 'paid');
+                    });
+            }
+        }
+
+        $dateType = $request->input('date_type', 'created_at');
+        $validDateTypes = ['created_at', 'reservation_date', 'picked_up_date', 'canceled_date'];
+
+        if (!in_array($dateType, $validDateTypes)) {
+            $dateType = 'created_at';
+        }
+
+        if ($request->filled('date_from')) {
+            $dateFrom = Carbon::parse($request->date_from)->startOfDay();
+
+            if ($dateType === 'created_at') {
+                $query->where('created_at', '>=', $dateFrom);
+            } elseif ($dateType === 'reservation_date') {
+                $query->where('reservation_date', '>=', $dateFrom);
+            } elseif ($dateType === 'picked_up_date') {
+                $query->where('picked_up_date', '>=', $dateFrom);
+            } elseif ($dateType === 'canceled_date') {
+                $query->where('canceled_date', '>=', $dateFrom);
+            }
+        }
+
+        if ($request->filled('date_to')) {
+            $dateTo = Carbon::parse($request->date_to)->endOfDay();
+
+            if ($dateType === 'created_at') {
+                $query->where('created_at', '<=', $dateTo);
+            } elseif ($dateType === 'reservation_date') {
+                $query->where('reservation_date', '<=', $dateTo);
+            } elseif ($dateType === 'picked_up_date') {
+                $query->where('picked_up_date', '<=', $dateTo);
+            } elseif ($dateType === 'canceled_date') {
+                $query->where('canceled_date', '<=', $dateTo);
+            }
+        }
+
+        $sortBy = $request->input('sort_by', 'newest');
+        switch ($sortBy) {
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'amount_high':
+                $query->orderBy('total', 'desc');
+                break;
+            case 'amount_low':
+                $query->orderBy('total', 'asc');
+                break;
+            case 'reservation_date':
+                $query->orderBy('reservation_date', 'desc');
+                break;
+            case 'newest':
+            default:
+
+                $query->orderByRaw("FIELD(status, 'reserved', 'canceled', 'pickedup')")
+                    ->latest();
+                break;
+        }
+
+        $orders = $query->paginate(12)->withQueryString();
+        $orders->getCollection()->transform(function ($order) {
+            $paidTransaction = $order->transaction()->where('status', 'paid')->first();
+            $order->transaction_status = $paidTransaction ? 'paid' : 'unpaid';
+            $order->items_count = $order->orderItems->sum('quantity');
+            return $order;
+        });
 
         if ($request->ajax()) {
             return response()->json([
@@ -928,41 +1159,20 @@ class AdminController extends Controller
         return view('admin.orders', compact('orders', 'timeSlots'));
     }
 
-    // This route handles the filter functionality
-    public function filterOrders(Request $request)
-    {
-        $status = $request->input('status');
-        $timeSlot = $request->input('time_slot');
-
-        $query = Order::query();
-
-        if ($status) {
-            $query->where('status', $status);
-        }
-
-        if ($timeSlot) {
-            $query->where('time_slot', $timeSlot);
-        }
-
-        $orders = $query->orderBy('created_at', 'DESC')->paginate(12)->withQueryString();
-
-        if ($request->ajax()) {
-            return response()->json([
-                'orders' => view('partials._orders-table', compact('orders'))->render(),
-                'pagination' => view('partials._orders-pagination', compact('orders'))->render(),
-                'count' => $orders->total()
-            ]);
-        }
-
-        return redirect()->route('admin.orders', compact('orders'));
-    }
-
     public function order_details($order_id)
     {
-        // $order = Order::find($order_id);
-        $order = Order::with('orderItems.product')->findOrFail($order_id);
-        // $orderItems = OrderItem::where('order_id', $order_id)->orderBy('id')->paginate(12);
-        $transaction = Transaction::where('order_id', $order_id)->first();
+        $order = Order::with(['orderItems.product', 'user', 'updatedBy'])->findOrFail($order_id);
+        // $transaction = Transaction::where('order_id', $order_id)->first();
+        $transaction = Transaction::where('order_id', $order_id)
+            ->latest()
+            ->first();
+
+        $order = Order::with(['orderItems.product', 'user', 'updatedBy'])->findOrFail($order_id);
+        // $transaction = Transaction::where('order_id', $order_id)->first();
+        $transaction = Transaction::where('order_id', $order_id)
+            ->latest()
+            ->first();
+
         return view('admin.order-details', compact('order',  'transaction'));
     }
 
@@ -990,7 +1200,8 @@ class AdminController extends Controller
     {
         $request->validate([
             'order_id' => 'required|exists:orders,id',
-            'order_status' => 'required|in:reserved,canceled'
+            'canceled_reason' => 'required_if:order_status,canceled|string|max:500',
+            'order_status' => 'required|in:reserved,canceled',
         ]);
 
         $order = Order::with('orderItems')->findOrFail($request->order_id);
@@ -999,12 +1210,18 @@ class AdminController extends Controller
         if ($request->order_status === 'canceled' && $originalStatus !== 'canceled') {
             $this->restoreQuantity($order);
             $order->canceled_date = Carbon::now();
+            $order->canceled_reason = $request->canceled_reason;
+            $order->updated_by = Auth::user()->id;
+
+            // Send notification to user
+            $order->user->notify(new OrderCanceledNotification($order));
         }
 
         $order->status = $request->order_status;
         $order->save();
         return back()->with('status', 'Status updated successfully!');
     }
+
     public function completePayment(Request $request, $order_id)
     {
         return DB::transaction(function () use ($request, $order_id) {
@@ -1020,16 +1237,25 @@ class AdminController extends Controller
                 }]
             ]);
             $change = $request->amount_paid - $order->total;
-            $transaction = Transaction::create([
-                'order_id' => $order->id,
-                'amount_paid' => $request->amount_paid,
-                'change' => $change,
-                'status' => 'paid',
-            ]);
+            $transaction = $order->transaction;
+
+            $transaction = Transaction::updateOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'amount_paid' => $request->amount_paid,
+                    'change' => $change,
+                    'status' => 'paid',
+                    'processed_by' => Auth::id(),
+                    'processed_at' => now()
+                ]
+            );
+
             $order->update([
                 'status' => 'pickedup',
                 'picked_up_date' => now(),
+                'updated_by' => Auth::id(),
             ]);
+
             return response()->json([
                 'message' => 'Payment completed successfully!',
                 'order_id' => $order->id,
@@ -1038,7 +1264,7 @@ class AdminController extends Controller
         });
     }
 
-    public function downloadReceipt(Request $request, Order $order)
+    public function downloadReceipt(Order $order)
     {
         $order->load(['orderItems.product', 'user']);
         $transaction = Transaction::where('order_id', $order->id)
@@ -1053,8 +1279,10 @@ class AdminController extends Controller
             'transaction' => $transaction,
             'orderItems' => $orderItems
         ]);
-        return $pdf->download('receipt_order_' . $order->id . '.pdf');
+        return $pdf->stream('receipt_order_' . $order->id . '.pdf');
     }
+
+
     // Sliders Page
     public function slides()
     {
@@ -1149,149 +1377,102 @@ class AdminController extends Controller
     }
 
     // Contact PAGE
-    public function contacts()
+    // public function contacts(Request $request)
+    // {
+    //     $contacts = Contact::with(['user', 'replies.admin'])
+    //         ->latest()
+    //         ->paginate(10);
+    //     return view('admin.contacts', compact('contacts'));
+    // }
+
+    public function contacts(Request $request)
     {
-        $contacts = Contact::orderBy('created_at', 'DESC')->paginate(10);
+        $search = $request->input('search');
+        $sortBy = $request->input('sort_by', 'newest');
+        $dateFilter = $request->input('date_filter');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $query = Contact::with(['user', 'replies.admin']);
+
+        // Search Filter - by user name and email
+        if ($search) {
+            $query->whereHas('user', function ($userQuery) use ($search) {
+                $userQuery->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Date Filter
+        if ($dateFilter === 'today') {
+            $query->whereDate('created_at', today());
+        } elseif ($dateFilter === '7days') {
+            $query->where('created_at', '>=', now()->subDays(7));
+        } elseif ($dateFilter === '30days') {
+            $query->where('created_at', '>=', now()->subDays(30));
+        } elseif ($dateFilter === 'custom' && $startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        // Sort Filter
+        switch ($sortBy) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'replied':
+                $query->has('replies')->latest();
+                break;
+            default: // newest
+                $query->latest();
+                break;
+        }
+
+        $contacts = $query->paginate(10)->withQueryString();
+
+        // For AJAX requests
+        if ($request->ajax()) {
+            return response()->json([
+                'contacts' => view('partials._contacts-cards', compact('contacts'))->render(),
+                'pagination' => view('partials._contacts-pagination', compact('contacts'))->render()
+            ]);
+        }
+
         return view('admin.contacts', compact('contacts'));
     }
     public function contact_delete($id)
     {
         $contact = Contact::find($id);
         $contact->delete();
-        return redirect()->route(route: 'admin.contacts')->with('status', 'Contact has been deleted successfully !');
+        return redirect()
+            ->route('admin.contacts')
+            ->with('status', 'Contact has been deleted successfully!');
     }
 
     public function contact_reply(Request $request, $id)
     {
-        // Find the contact record by its ID
-        $contact = Contact::find($id);
-        if (!$contact) {
-            // Handle the case where the contact doesn't exist
-            return redirect()->route('admin.contacts')->with('error', 'Contact not found.');
-        }
+        $contact = Contact::findOrFail($id);
 
-        // Validate the reply message input
+        if (Auth::user()->utype !== 'ADM') {
+            abort(403, 'Only admins can reply to contacts.');
+        }
         $validated = $request->validate([
-            'replyMessage' => 'required|string',
+            'replyMessage' => 'required|string|max:5000',
         ]);
 
-        // Save the admin's reply to the database
-        $reply = new ContactReplies();
-        $reply->contact_id = $contact->id;
-        $reply->admin_reply = $request->input('replyMessage');
-        $reply->admin_id = Auth::id();
-        $reply->save();
-
-
-        Mail::to($contact->email)->send(new ReplyToContact($contact, $request->input('replyMessage')));
-
-
-        return redirect()->route('admin.contacts')->with('status', 'Reply sent successfully!');
-    }
-
-
-
-    public function markAsRead($id)
-    {
-        $notification = Auth::user()->notifications()->findOrFail($id);
-        $notification->markAsRead();
-
-        return response()->json([
-            'status' => 'success',
-            'unreadCount' => Auth::user()->unreadNotifications->count(),
+        $reply = ContactReply::create([
+            'contact_id' => $contact->id,
+            'admin_id' => Auth::id(),
+            'admin_reply' => $validated['replyMessage']
         ]);
+
+        Mail::to($contact->user?->email)->send(
+            new ReplyToContact($contact, $validated['replyMessage'])
+        );
+
+        return redirect()
+            ->route('admin.contacts')
+            ->with('status', 'Reply sent successfully!');
     }
-
-
-    public function markMultipleAsRead(Request $request)
-    {
-        $notificationIds = $request->input('notification_ids');
-        if (!$notificationIds || empty($notificationIds)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No notification IDs provided.',
-            ], 400);
-        }
-
-        $notifications = Auth::user()->notifications()->whereIn('id', $notificationIds)->get();
-
-        if ($notifications->isEmpty()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No matching notifications found.',
-            ], 404);
-        }
-
-        foreach ($notifications as $notification) {
-            $notification->markAsRead();
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'unreadCount' => Auth::user()->unreadNotifications->count(),
-        ]);
-    }
-
-    public function unreadCount()
-    {
-        return response()->json([
-            'unreadCount' => Auth::user()->unreadNotifications->count(),
-        ]);
-    }
-
-
-    public function latest()
-    {
-        $user = Auth::user();
-
-        $notifications = $user->notifications()
-            ->orderBy('created_at', 'desc')
-            ->take(10) // Fetch the latest 10 notifications
-            ->get();
-
-        $formattedNotifications = $notifications->map(function ($notification) {
-            return [
-                'id' => $notification->id,
-                'message' => $notification->data['message'] ?? 'No message available',
-                'icon' => match ($notification->type) {
-                    'App\\Notifications\\LowStockNotification' => 'fa-solid fa-box',
-                    'App\\Notifications\\ContactReceivedMessage' => 'fas fa-envelope',
-                    default => 'fas fa-bell',
-                },
-                'redirect_route' => match ($notification->type) {
-                    'App\\Notifications\\LowStockNotification' => route('admin.products'),
-                    'App\\Notifications\\ContactReceivedMessage' => route('admin.contacts'),
-                    default => '#',
-                },
-                'created_at' => $notification->created_at->diffForHumans(),
-                'read_at' => $notification->read_at,
-            ];
-        });
-
-        return response()->json([
-            'unreadCount' => $user->unreadNotifications->count(),
-            'notifications' => $formattedNotifications,
-        ]);
-    }
-
-
-
-
-    // Delete multiple notifications
-    public function deleteMultipleNotifications(Request $request)
-    {
-        $notificationIds = $request->input('notification_ids');
-        Auth::user()->notifications()->whereIn('id', $notificationIds)->delete();
-
-        return response()->json([
-            'status' => 'success',
-        ]);
-    }
-
-    // Reports Page
-   
-
-
 
     public function filter(Request $request)
     {
@@ -1313,166 +1494,6 @@ class AdminController extends Controller
         return response()->json($users);
     }
 
-
-    public function searchproduct(Request $request)
-    {
-        $query = strtolower($request->input('query'));
-
-        // Check if the query matches certain keywords and redirect accordingly
-
-        //product
-        if (str_contains(strtolower($query), 'add product')) {
-            return redirect()->route('admin.product.add');
-        } elseif (str_contains(strtolower($query), 'products view')) {
-            return redirect()->route('admin.products');
-        } elseif (str_contains(strtolower($query), 'add product attributes')) {
-            return redirect()->route('admin.product-attribute-add');
-        } elseif (str_contains(strtolower($query), 'view product attributes')) {
-            return redirect()->route('admin.product-attributes');
-        } elseif (str_contains(strtolower($query), 'addcategory')) {
-            return redirect()->route('admin.category.add');
-        } elseif (str_contains(strtolower($query), 'categories')) {
-            return redirect()->route('admin.categories');
-        } elseif (str_contains(strtolower($query), 'users')) {
-            return redirect()->route('admin.users');
-        } elseif (str_contains(strtolower($query), 'order')) {
-            return redirect()->route('admin.orders');
-
-            //product report
-
-        } elseif (str_contains(strtolower($query), 'product report')) {
-            return redirect()->route('admin.report-product');
-        } elseif (str_contains(strtolower($query), 'sales products')) {
-            return redirect()->route('admin.reports');
-        } elseif (str_contains(strtolower($query), 'user report')) {
-            return redirect()->route('admin.report-user');
-        } elseif (str_contains(strtolower($query), 'inventory')) {
-            return redirect()->route('admin.report-inventory');
-        } elseif (str_contains(strtolower($query), 'statements')) {
-            return redirect()->route('admin.report-statements');
-
-
-            //rentals
-        } elseif (str_contains(strtolower($query), 'add rental')) {
-            return redirect()->route('admin.rental.add');
-        } elseif (str_contains(strtolower($query), 'rentals view')) {
-            return redirect()->route('admin.rentals');
-        } elseif (str_contains(strtolower($query), 'rental reservation')) {
-            return redirect()->route('admin.reservation');
-
-
-            //rental report
-
-        } elseif (str_contains(strtolower($query), 'sales rental')) {
-            return redirect()->route('admin.rentals_reports');
-        } elseif (str_contains(strtolower($query), 'messages')) {
-            return redirect()->route('admin.contacts');
-        } elseif (str_contains(strtolower($query), 'slides')) {
-            return redirect()->route('admin.slides');
-        } elseif (str_contains(strtolower($query), 'Reservation Reports')) {
-            return redirect()->route('admin.rentalsReportsName');
-        }
-
-        // Add more conditions as needed
-        return back()->with('error', 'No matching results found.');
-    }
-
-    public function updateStatus(Request $request,  Reservation $reservation)
-    {
-
-        $reservation->update([
-            'payment_status' => $request->input('payment_status'),
-            'rent_status' => $request->input('rent_status'),
-        ]);
-
-
-        // Validate the incoming request
-        $request->validate([
-            'reservation_id' => 'required|exists:reservations,id',
-            'rent_status' => 'required|in:pending,reserved,completed,canceled',
-        ]);
-
-        try {
-            // Find the reservation by ID
-            $reservation = Reservation::findOrFail($request->reservation_id);
-
-            // Update the status
-            $reservation->rent_status = $request->rent_status;
-            $reservation->save();
-
-            // Return success response
-            return response()->json([
-                'success' => true,
-                'message' => 'Reservation status updated successfully!',
-            ]);
-        } catch (\Exception $e) {
-            // Return error response
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while updating the reservation status.',
-            ], 500);
-        }
-    }
-
-    public function filterReservations(Request $request)
-    {
-        $query = Reservation::query();
-
-        // Filter by Rent Status
-        if ($request->filled('rent_status')) {
-            $query->where('rent_status', $request->rent_status);
-        }
-
-        // Filter by Payment Status
-        if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
-        }
-
-        // Filter by Rental Type
-        if ($request->filled('rental_type')) {
-            $query->whereHas('rental', function ($q) use ($request) {
-                $q->where('name', $request->rental_type);
-            });
-        }
-
-        $reservations = $query->get();
-
-        // If it's an AJAX request, return JSON
-        if ($request->ajax()) {
-            return response()->json([
-                'html' => view('reservations.filtered', compact('reservations'))->render()
-            ]);
-        }
-
-        // If not AJAX, return regular view
-        return view('reservations.index', compact('reservations'));
-    }
-
-
-    public function updatePaymentStatus(Request $request)
-    {
-        // Validate the incoming request
-        $request->validate([
-            'id' => 'required|exists:reservations,id',  // Ensure reservation exists
-            'payment_status' => 'required|string',     // Ensure valid payment status
-        ]);
-
-        // Find the reservation by its ID
-        $reservation = Reservation::find($request->id);
-
-        if ($reservation) {
-            // Update the payment status
-            $reservation->payment_status = $request->payment_status;
-            $reservation->save();
-
-            // Return a success response
-            return response()->json(['success' => true, 'message' => 'Payment status updated successfully.']);
-        }
-
-        // If the reservation is not found, return an error response
-        return response()->json(['success' => false, 'message' => 'Reservation not found.']);
-    }
-
     public function search(Request $request)
     {
         $query = $request->input('query');
@@ -1483,29 +1504,6 @@ class AdminController extends Controller
         return response()->json($results);
     }
 
-
-
-
-    // public function filterOrders(Request $request)
-    // {
-    //     $query = Order::query();
-
-    //     // Apply filters
-    //     if ($request->has('time_slot') && $request->time_slot != '') {
-    //         $query->where('time_slot', $request->time_slot);
-    //     }
-
-    //     if ($request->has('status') && $request->status != '') {
-    //         $query->where('status', $request->status);
-    //     }
-
-    //     // Fetch the filtered orders with the count of order items
-    //     $orders = $query->withCount('orderItems')->get();
-
-    //     return response()->json($orders); // Send the filtered orders as JSON response
-    // }
-
-
     public function order_filter(Request $request)
     {
         Log::info('Received filter request', [
@@ -1513,7 +1511,8 @@ class AdminController extends Controller
             'status' => $request->status
         ]);
 
-        // Validate filters
+
+
         $validatedData = $request->validate([
             'time_slot' => 'nullable|string',
             'status' => 'nullable|string|in:reserved,pickedup,canceled'
@@ -1552,63 +1551,122 @@ class AdminController extends Controller
         }
     }
 
-    public function users_edit($id)
+
+    public function getCoursesByCollege($collegeId)
     {
-        $user = User::findOrFail($id);
-        return view('admin.user-edit', compact('user'));
+        // $courses = Course::where('college_id', $collegeId)->orderBy('name')->get();
+        $courses = Course::where('college_id', $collegeId)
+            ->select('id', 'code', 'name')
+            ->orderBy('name')
+            ->get();
+        return response()->json($courses);
     }
-
-
-    public function users_update(Request $request, $id)
-    {
-        $request->validate([
-            'phone_number' => 'nullable',
-            'year_level' => 'nullable',
-            'department' => 'nullable',
-            'course' => 'nullable',
-        ]);
-        $user = User::findOrFail($id);
-        $user->phone_number = $request->phone_number;
-        $user->year_level = $request->year_level;
-        $user->department = $request->department;
-        $user->course = $request->course;
-
-        $user->save();
-        return redirect()->route('admin.users')->with('status', 'User has been updated successfully!');
-    }
-
-    public function users_add()
-    {
-        return view("admin.user-add");
-    }
-
     public function users(Request $request)
     {
-        $query = User::query();
+        $query = User::with(['college', 'course']);
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('email', 'like', '%' . $searchTerm . '%')
+                    ->orWhereHas('college', function ($collegeQuery) use ($searchTerm) {
+                        $collegeQuery->where('code', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('name', 'like', '%' . $searchTerm . '%');
+                    })
+                    ->orWhereHas('course', function ($courseQuery) use ($searchTerm) {
+                        $courseQuery->where('code', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('name', 'like', '%' . $searchTerm . '%');
+                    });
+            });
+        }
 
         if ($request->filled('year_level')) {
             $query->where('year_level', $request->year_level);
         }
 
-        if ($request->filled('department')) {
-            $query->where('department', $request->department);
+
+        if ($request->filled('college_id')) {
+            $query->where('college_id', $request->college_id);
         }
 
-        if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+        // Course filter
+        if ($request->filled('course_id')) {
+            $query->where('course_id', $request->course_id);
+        }
+
+        // Email filter - filter by email domain
+        if ($request->filled('email_filter')) {
+            $emailDomain = $request->email_filter;
+            $query->where('email', 'like', '%@' . $emailDomain);
+        }
+
+        // Sorting
+        $sortBy = $request->get('sort_by', 'newest');
+        switch ($sortBy) {
+            case 'newest':
+                $query->orderBy('created_at', 'desc');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
+                break;
+            default:
+                $query->orderBy('created_at', 'desc');
         }
 
         $users = $query->paginate(10);
+        $colleges = College::orderBy('name')->get();
+        $courses = Course::with('college')->orderBy('name')->get();
+
         if ($request->ajax()) {
+            $formattedUsers = $users->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone_number' => $user->phone_number,
+                    'year_level' => $user->year_level,
+                    'college' => $user->college ? [
+                        'id' => $user->college->id,
+                        'code' => $user->college->code,
+                        'name' => $user->college->name
+                    ] : null,
+                    'course' => $user->course ? [
+                        'id' => $user->course->id,
+                        'code' => $user->course->code,
+                        'name' => $user->course->name
+                    ] : null,
+                ];
+            });
+
             return response()->json([
-                'users' => $users->items(),
-                'links' => (string) $users->links('pagination::bootstrap-5'),
+                'users' => view('partials._users-table', ['users' => $users])->render(),
+                'pagination' => view('partials._users-pagination', ['users' => $users])->render(),
+                'count' => $users->total(),
             ]);
         }
 
-        return view('admin.users', compact('users'));
+        return view('admin.users', compact('users', 'colleges', 'courses'));
     }
 
+    public function coursesByCollege($collegeId)
+    {
+        $courses = Course::where('college_id', $collegeId)->get();
+        return response()->json($courses);
+    }
+
+    public function users_add()
+    {
+        $colleges = College::all();
+        $courses = Course::all();
+
+        return view("admin.user-add", compact('colleges', 'courses'));
+    }
 
     public function users_store(Request $request)
     {
@@ -1617,50 +1675,67 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|ends_with:@cvsu.edu.ph',
             'phone_number' => 'nullable|string|regex:/^9\d{9}$/',
-            'sex' => 'required|in:male,female',
         ];
+
         if ($isAdmin) {
             $validationRules['form_type'] = 'required|in:admin';
+            $validationRules['sex'] = 'required|in:male,female';
+            $validationRules['position'] = 'required|string|max:255';
         } else {
             $validationRules['role'] = 'required|in:student,employee,non-employee';
             $validationRules['year_level'] = 'nullable|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
-            $validationRules['department'] = 'nullable|in:CEIT,GSOLC,CAFENR,CAS,CCJ,CEMDS,CED,CON,CVMBS';
-            $validationRules['course'] = 'nullable|string|max:255';
+            $validationRules['college_id'] = 'nullable|exists:colleges,id';
+            $validationRules['course_id'] = 'nullable|exists:courses,id';
             $validationRules['form_type'] = 'nullable|in:user';
+            $validationRules['position'] = 'nullable|string|max:255';
+
             if ($request->role === 'student') {
                 $validationRules['year_level'] = 'required|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
-                $validationRules['department'] = 'required|in:CEIT,GSOLC,CAFENR,CAS,CCJ,CEMDS,CED,CON,CVMBS';
-                $validationRules['course'] = 'required|string|max:255';
+                $validationRules['college_id'] = 'required|exists:colleges,id';
+                $validationRules['course_id'] = 'required|exists:courses,id';
+            }
+            if ($request->role === 'employee') {
+                $validationRules['position'] = 'required|string|max:255';
             }
         }
+
         $customMessages = [
             'email.ends_with' => 'The email must be a @cvsu.edu.ph email address.',
             'phone_number.regex' => 'Phone number must start with 9 and be exactly 10 digits.',
             'year_level.required' => 'Year level is required for students.',
-            'department.required' => 'Department is required for students.',
-            'course.required' => 'Course is required for students.',
+            'college_id.required' => 'College is required for students.',
+            'course_id.required' => 'Course is required for students.',
+            'position.required' => 'Position is required for employees and admins.',
         ];
+
         $validated = $request->validate($validationRules, $customMessages);
+
         if ($isAdmin) {
             $validated['password'] = Hash::make('cvsu-barg-password');
             $validated['utype'] = 'ADM';
             $validated['role'] = 'employee';
             $validated['password_set'] = true;
+            $validated['sex'] = $validated['sex'] ?? 'male';
         } else {
             $validated['password'] = Hash::make($request->password ?? 'defaultpassword');
             $validated['utype'] = 'USR';
             $validated['password_set'] = false;
-        }
-        unset($validated['form_type']);
+            $validated['sex'] = 'male'; // Default for users
 
-        if (!$isAdmin && in_array($validated['role'], ['employee', 'non-employee'])) {
-            $validated['year_level'] = null;
-            $validated['course'] = null;
+            // Only set student-specific fields for students
+            if ($validated['role'] !== 'student') {
+                $validated['year_level'] = null;
+                $validated['college_id'] = null;
+                $validated['course_id'] = null;
+            }
+            if ($validated['role'] === 'student' || $validated['role'] === 'non-employee') {
+                $validated['position'] = null;
+            }
         }
+
         $validated['email_verified_at'] = now();
-
-        $validated['sex'] = $validated['sex'] ?? 'male';
         $validated['isDefault'] = false;
+
         try {
             $user = User::create($validated);
             $message = $isAdmin
@@ -1672,6 +1747,64 @@ class AdminController extends Controller
             \Log::error('User creation failed: ' . $e->getMessage());
             return back()->withInput()->withErrors(['error' => 'Failed to create user. Please try again.']);
         }
+    }
+
+    public function users_edit($id)
+    {
+        $user = User::findOrFail($id);
+        $colleges = College::all();
+        $courses = Course::all();
+
+        return view('admin.user-edit', compact('user', 'colleges', 'courses'));
+    }
+
+    public function users_update(Request $request, $id)
+    {
+
+        // dd($request->all());
+        $user = User::findOrFail($id);
+
+        $isStudent = $user->role === 'student';
+        $isEmployee = $user->role === 'employee' || $user->utype === 'ADM';
+
+        $rules = [
+            'phone_number' => ['nullable', 'string', 'regex:/^9\d{9}$/'],
+            'year_level'   => $isStudent ? ['required', 'in:1st Year,2nd Year,3rd Year,4th Year,5th Year'] : ['nullable'],
+            'college_id'   => $isStudent ? ['required', 'exists:colleges,id'] : ['nullable'],
+            'course_id'    => $isStudent ? ['required', 'exists:courses,id'] : ['nullable'],
+            'position'     => $isEmployee ? ['required', 'string', 'max:255'] : ['nullable', 'string', 'max:255'],
+        ];
+
+        $messages = [
+            'phone_number.regex' => 'Phone number must start with 9 and be exactly 10 digits.',
+            'year_level.required' => 'Year level is required for students.',
+            'college_id.required' => 'College is required for students.',
+            'course_id.required' => 'Course is required for students.',
+            'position.required' => 'Position is required for employees and admins.',
+        ];
+        $validated = $request->validate($rules, $messages);
+        $user->phone_number = $validated['phone_number'] ?? null;
+
+        $user->phone_number = $request->phone_number;
+
+        if ($isStudent) {
+            $user->year_level = $validated['year_level'];
+            $user->college_id = $validated['college_id'];
+            $user->course_id  = $validated['course_id'];
+            $user->position = null;
+        } else {
+            $user->year_level = null;
+            $user->college_id = null;
+            $user->course_id  = null;
+
+            if ($isEmployee) {
+                $user->position = $validated['position'];
+            } else {
+                $user->position = null;
+            }
+        }
+        $user->save();
+        return redirect()->route('admin.users')->with('status', 'User has been updated successfully!');
     }
 
     public function searchProducts(Request $request)
@@ -1734,198 +1867,6 @@ class AdminController extends Controller
 
         return response()->json($products);
     }
-    public function reservations(Request $request)
-    {
-        // Initial query for reservations with related models
-        $query = Reservation::with('rental', 'user', 'dormitoryRoom')
-            ->orderBy('created_at', 'DESC');
-
-        // Search functionality
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->whereHas('user', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone_number', 'like', "%{$search}%");
-            })->orWhereHas('rental', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
-            });
-        }
-
-        // Fetch reservations with pagination
-        $reservations = $query->paginate(10)->withQueryString();
-
-        // List of rental names that need specific payment statuses
-        $rentalNames = ['Male Dormitory', 'Female Dormitory', 'International House II'];
-
-        // Get rental IDs that match these names
-        $filteredRentals = Rental::whereIn('name', $rentalNames)->pluck('id')->toArray();
-
-        // Get available dormitory rooms for the filtered rentals
-        $availableRooms = DormitoryRoom::whereIn('rental_id', $filteredRentals)
-            ->withCount([
-                'reservations' => function ($query) {
-                    $query->where('rent_status', 'reserved');
-                }
-            ])
-            ->get()
-            ->filter(function ($room) {
-                return $room->reservations_count < $room->room_capacity;
-            })
-            ->groupBy('rental_id');
-
-        // Filter reservations to only include those with rental IDs from the filtered rentals
-        $reservations = $reservations->filter(function ($reservation) use ($filteredRentals) {
-            return in_array($reservation->rental_id, $filteredRentals);
-        });
-
-        // Return the view with the filtered data
-        return view("admin.reservation", compact('reservations', 'availableRooms'));
-    }
-
-    public function reservationHistory($reservation_id)
-    {
-        // Fetch the reservation record with related user and admin information
-        $reservation = Reservation::with(['user', 'updatedBy'])->find($reservation_id);
-
-        if (!$reservation) {
-            return redirect()->route('admin.reservation')->with('error', 'Reservation not found.');
-        }
-
-        // Create a history array with admin and user data
-        $history = [
-            [
-                'user_name' => $reservation->user->name,
-                'user_email' => $reservation->user->email,
-                'admin_email' => $reservation->updatedBy ? $reservation->updatedBy->email : 'N/A', // Admin email
-                'payment_status' => $reservation->payment_status,
-                'rent_status' => $reservation->rent_status,
-                'updated_at' => $reservation->updated_at->format('Y-m-d H:i:s')
-            ]
-        ];
-
-        return view('admin.reservation-history', compact('reservation', 'history'));
-    }
-
-    public function event_items($reservation_id)
-    {
-        $reservation = Reservation::with('rental', 'user', 'dormitoryRoom')->find($reservation_id);
-        if (!$reservation) {
-            return redirect()->route('admin.reservations')->with('error', 'Reservation not found.');
-        }
-
-        $reservedDates = [];
-        if (in_array($reservation->rental->name, ['Male Dormitory', 'Female Dormitory', 'International House II'])) {
-            $reservedDates = Reservation::where('rental_id', $reservation->rental_id)
-                ->where('rent_status', 'reserved')
-                ->pluck('reservation_date')
-                ->toArray();
-        }
-
-
-        return view('admin.reservation-events', compact('reservation', 'reservedDates'));
-    }
-
-    public function updateReservationStatus(Request $request, $reservation_id)
-    {
-        $request->validate([
-            'payment_status' => 'required|in:pending,advance/deposit complete,1st month complete,2nd month complete,3rd month complete,4th month complete,5th month complete,6th month complete,full payment complete,canceled',
-            'rent_status' => 'required|in:pending,reserved,completed,canceled',
-        ]);
-
-        $reservation = Reservation::with('dormitoryRoom', 'user', 'rental')->find($reservation_id);
-
-        if (!$reservation) {
-            return redirect()->route('admin.reservation')->with('error', 'Reservation not found.');
-        }
-
-        $rentalName = $reservation->rental->name;
-
-        // Automatically mark as "completed" if the reservation_date equals the end_date
-        if ($reservation->reservation_date && $reservation->end_date) {
-            $reservationDate = \Carbon\Carbon::parse($reservation->reservation_date);
-            $endDate = \Carbon\Carbon::parse($reservation->end_date);
-
-            if ($reservationDate->isSameDay($endDate)) {
-                $reservation->rent_status = 'completed';
-                $reservation->save();
-            }
-        }
-
-        if ($reservation->ih_start_date && $reservation->ih_end_date) {
-            $ihStartDate = \Carbon\Carbon::parse($reservation->ih_start_date);
-            $ihEndDate = \Carbon\Carbon::parse($reservation->ih_end_date);
-
-            if ($ihStartDate->isSameDay($ihEndDate)) {
-                $reservation->rent_status = 'completed';
-                $reservation->save();
-            }
-        }
-        if ($request->input('rent_status') === 'reserved') {
-            // Check for existing reserved status on the same reservation_date
-            $existingReservation = Reservation::where('reservation_date', $reservation->reservation_date)
-                ->where('rent_status', 'reserved')
-                ->where('rental_id', $reservation->rental_id) // Same rental_id if necessary
-                ->first();
-
-            if ($existingReservation) {
-                // Prevent update if there's already a reserved reservation for the same date
-                return redirect()->route('admin.reservation')
-                    ->with('error', 'This date is already reserved for another reservation.');
-            }
-
-            if (in_array($rentalName, ['Male Dormitory', 'Female Dormitory', 'International House II'])) {
-                $rooms = DormitoryRoom::where('rental_id', $reservation->rental_id)
-                    ->orderBy('room_number')
-                    ->get();
-
-                $roomAssigned = false;
-
-                foreach ($rooms as $room) {
-                    $reservedCount = Reservation::where('dormitory_room_id', $room->id)
-                        ->where('rent_status', 'reserved')
-                        ->count();
-
-                    if ($reservedCount < $room->room_capacity) {
-                        $reservation->dormitory_room_id = $room->id;
-                        $roomAssigned = true;
-                        break;
-                    }
-                }
-
-                if (!$roomAssigned) {
-                    return redirect()->route('admin.reservation')
-                        ->with('error', 'No available rooms with sufficient capacity.');
-                }
-            }
-        } elseif ($reservation->rent_status === 'reserved' && $request->input('rent_status') !== 'reserved') {
-            // Free up the room if the rent status is being changed from 'reserved' to something else
-            $reservation->dormitory_room_id = null;
-        }
-
-        $historyEntry = [
-            'user_name' => $reservation->user->name,
-            'user_email' => $reservation->user->email,
-            'admin_email' => Auth::user()->email,
-            'payment_status' => $request->input('payment_status'),
-            'rent_status' => $request->input('rent_status'),
-            'updated_at' => now()->format('Y-m-d H:i:s'),
-        ];
-
-        $history = $reservation->history ? json_decode($reservation->history, true) : [];
-        array_unshift($history, $historyEntry);
-
-        $reservation->history = json_encode($history);
-        $reservation->payment_status = $request->input('payment_status');
-        $reservation->rent_status = $request->input('rent_status');
-        $reservation->updated_by = Auth::id();
-
-        $reservation->save();
-
-        return redirect()->route('admin.reservation-events', ['reservation_id' => $reservation_id])
-            ->with('success', 'Status updated successfully.');
-    }
-
 
     // Rentals Reports
 

@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 use App\Models\Category;
-use File;
+use Illuminate\Support\Str;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
 
 class CategorySeeder extends Seeder
 {
@@ -133,5 +133,4 @@ class CategorySeeder extends Seeder
         // Return the image name only
         return $imageName; // Just return the image name (e.g., semi_golf_umbrella_manual.jpg)
     }
-
 }

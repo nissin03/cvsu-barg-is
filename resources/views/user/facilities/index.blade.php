@@ -373,6 +373,65 @@
             border-left: 4px solid #4facfe;
         }
 
+        /* Pricing Collapsible Styles */
+        .pricing-container {
+            position: relative;
+        }
+
+        .pricing-visible {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem 0.5rem;
+            align-items: center;
+        }
+
+        .pricing-hidden {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem 0.5rem;
+            margin-top: 0.5rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, margin-top 0.3s ease-out;
+        }
+
+        .pricing-hidden.expanded {
+            max-height: 200px;
+            margin-top: 0.5rem;
+        }
+
+        .pricing-toggle {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            padding: 0.4rem 0.8rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-left: 0.25rem;
+            white-space: nowrap;
+        }
+
+        .pricing-toggle:hover {
+            background: rgba(102, 126, 234, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .pricing-toggle svg {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.3s ease;
+        }
+
+        .pricing-toggle.expanded svg {
+            transform: rotate(180deg);
+        }
+
         /* Mobile Responsive Design */
         @media (max-width: 768px) {
             .facility-grid {
@@ -415,6 +474,11 @@
             .capacity-item {
                 padding: 0.375rem 0.75rem;
                 font-size: 0.8rem;
+            }
+
+            .pricing-toggle {
+                padding: 0.35rem 0.7rem;
+                font-size: 0.75rem;
             }
         }
 
@@ -480,6 +544,11 @@
             outline: 2px solid white;
             outline-offset: 2px;
         }
+
+        .pricing-toggle:focus-visible {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
+        }
     </style>
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
@@ -538,10 +607,36 @@
                                             <div class="detail-content">
                                                 <div class="detail-label">Pricing</div>
                                                 <div class="detail-value">
-                                                    @foreach ($facility->prices as $price)
-                                                        <span class="price-tag">{{ $price->name }}:
-                                                            ₱{{ number_format($price->value, 2) }}</span>
-                                                    @endforeach
+                                                    <div class="pricing-container">
+                                                        <div class="pricing-visible">
+                                                            @foreach ($facility->prices->take(2) as $price)
+                                                                <span class="price-tag">{{ $price->name }}:
+                                                                    ₱{{ number_format($price->value, 2) }}</span>
+                                                            @endforeach
+                                                            @if ($facility->prices->count() > 2)
+                                                                <button class="pricing-toggle"
+                                                                    onclick="event.stopPropagation(); togglePricing(this)"
+                                                                    aria-label="Show more pricing options">
+                                                                    <span
+                                                                        class="toggle-text">+{{ $facility->prices->count() - 2 }}
+                                                                        more</span>
+                                                                    <svg fill="none" stroke="currentColor"
+                                                                        viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                                            stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                                    </svg>
+                                                                </button>
+                                                            @endif
+                                                        </div>
+                                                        @if ($facility->prices->count() > 2)
+                                                            <div class="pricing-hidden">
+                                                                @foreach ($facility->prices->skip(2) as $price)
+                                                                    <span class="price-tag">{{ $price->name }}:
+                                                                        ₱{{ number_format($price->value, 2) }}</span>
+                                                                @endforeach
+                                                            </div>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -679,7 +774,7 @@
                 title: '{{ session('title', 'Success!') }}',
                 text: "{{ session('success') }}",
                 position: 'top-end',
-                showConfirmButton: false, 
+                showConfirmButton: false,
                 timer: 3000,
                 timerProgressBar: true,
                 background: '#f8f9fa',
@@ -708,17 +803,37 @@
             });
         @endif
 
-        @if (session('error'))
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: "{{ session('error') }}",
-                showConfirmButton: false,
-                timer: 3000,
-                toast: true,
-                position: 'top-end'
-            });
-        @endif
+        // @if (session('error'))
+        //     Swal.fire({
+        //         icon: 'error',
+        //         title: 'Oops...',
+        //         text: "{{ session('error') }}",
+        //         showConfirmButton: false,
+        //         timer: 3000,
+        //         toast: true,
+        //         position: 'top-end'
+        //     });
+        // @endif
+
+        function togglePricing(button) {
+            const hiddenPricing = button.closest('.pricing-container').querySelector('.pricing-hidden');
+            const toggleText = button.querySelector('.toggle-text');
+            const isExpanded = hiddenPricing.classList.contains('expanded');
+
+            if (isExpanded) {
+                hiddenPricing.classList.remove('expanded');
+                button.classList.remove('expanded');
+                const totalCount = parseInt(button.getAttribute('data-total-count')) || 0;
+                const visibleCount = 2;
+                toggleText.textContent = `+${totalCount - visibleCount} more`;
+                button.setAttribute('aria-label', 'Show more pricing options');
+            } else {
+                hiddenPricing.classList.add('expanded');
+                button.classList.add('expanded');
+                toggleText.textContent = 'Show less';
+                button.setAttribute('aria-label', 'Show fewer pricing options');
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             const images = document.querySelectorAll('.facility-image img');
@@ -737,6 +852,24 @@
                     }
                 });
             });
+
+            const pricingToggles = document.querySelectorAll('.pricing-toggle');
+            pricingToggles.forEach(toggle => {
+                const container = toggle.closest('.pricing-container');
+                const allPriceTags = container.querySelectorAll('.price-tag');
+                toggle.setAttribute('data-total-count', allPriceTags.length);
+            });
+
+            // pricingToggles.forEach(toggle => {
+            //     toggle.addEventListener('keydown', function(e) {
+            //         if (e.key === 'Enter' || e.key === ' ') {
+            //             e.preventDefault();
+            //             e.stopPropagation();
+            //             togglePricing(this);
+            //         }
+            //     });
+            // });
+
         });
     </script>
 @endpush

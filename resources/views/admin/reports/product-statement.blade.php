@@ -51,23 +51,23 @@
                                 <table class="table table-bordered">
                                     <thead class="table-light">
                                         <tr>
-                                            <th class="text-center fs-5">Order No</th>
+                                            {{-- <th class="text-center fs-5">Order No</th> --}}
                                             <th class="text-center fs-5">Name</th>
                                             <th class="text-center fs-5">Email</th>
                                             <th class="text-center fs-5">Phone</th>
-                                            <th class="text-center fs-5">Reservation Date</th>
+                                            {{-- <th class="text-center fs-5">Reservation Date</th> --}}
                                             <th class="text-center fs-5">Status</th>
-                                            <th class="text-center fs-5">Order Date</th>
+                                            {{-- <th class="text-center fs-5">Order Date</th> --}}
                                             <th class="text-center fs-5">Total Items</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td class="text-center fs-5">{{ $order->id }}</td>
+                                            {{-- <td class="text-center fs-5">{{ $order->id }}</td> --}}
                                             <td class="text-center fs-5">{{ $order->user->name }}</td>
                                             <td class="text-center fs-5">{{ $order->user->email }}</td>
                                             <td class="text-center fs-5">{{ $order->user->phone_number }}</td>
-                                            <td class="text-center fs-5">{{ $order->reservation_date }}</td>
+                                            {{-- <td class="text-center fs-5">{{ $order->reservation_date }}</td> --}}
                                             <td class="text-center">
                                                 @if ($order->status == 'pickedup')
                                                     <span class="badge bg-success fs-5">Picked Up</span>
@@ -77,7 +77,7 @@
                                                     <span class="badge bg-warning fs-5">Reserved</span>
                                                 @endif
                                             </td>
-                                            <td class="text-center fs-5">{{ $order->created_at->format('F d, Y') }}</td>
+                                            {{-- <td class="text-center fs-5">{{ $order->created_at->format('F d, Y') }}</td> --}}
                                             <td class="text-center fs-5">{{ $order->orderItems->count() }}</td>
                                         </tr>
                                     </tbody>
@@ -107,8 +107,8 @@
                                             <tr>
                                                 <td class="text-center fs-5">{{ $item->product->name }}</td>
                                                 <td class="text-center fs-5">{{ $item->quantity }}</td>
-                                                <td class="text-center fs-5">${{ number_format($item->price, 2) }}</td>
-                                                <td class="text-center fs-5">${{ number_format($item->price * $item->quantity, 2) }}</td>
+                                                <td class="text-center fs-5">₱{{ number_format($item->price, 2) }}</td>
+                                                <td class="text-center fs-5">₱{{ number_format($item->price * $item->quantity, 2) }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -134,7 +134,7 @@
                                                 </tr> --}}
                                                 <tr>
                                                     <td class="text-end fs-4"><strong>Total:</strong></td>
-                                                    <td class="text-end fs-4">${{ number_format($order->total, 2) }}</td>
+                                                    <td class="text-end fs-4">₱{{ number_format($order->total, 2) }}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -151,7 +151,7 @@
 @endsection
 
 @push('styles')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
 <style>
     .card {
         border: none;

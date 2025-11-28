@@ -2,7 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Price;
+use App\Models\Facility;
+use App\Models\Availability;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use App\Models\FacilityAttribute;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 
 class CheckoutController extends Controller
 {
@@ -11,7 +20,7 @@ class CheckoutController extends Controller
      */
     public function index()
     {
-        
+
         if (!Auth::check()) {
             return redirect()->route('login');
         }
@@ -49,7 +58,7 @@ class CheckoutController extends Controller
         } elseif ($facility->facility_type === 'whole_place') {
             $date_to = $reservationData['date_to'] ?? null;
             // $facilityAttribute = null;
-            // $roomName = null; 
+            // $roomName = null;
             // $date_from = null;
             // $date_to = null;
 
@@ -57,9 +66,9 @@ class CheckoutController extends Controller
             $minDate = Carbon::today()->addDays(3)->startOfDay();
 
             $existingReservation = Availability::where('facility_id', $facility->id)
-            ->where('date_to', $date_to)
-            ->whereNull('facility_attribute_id') // Ensures it's a whole_place reservation
-            ->first();
+                ->where('date_to', $date_to)
+                ->whereNull('facility_attribute_id') // Ensures it's a whole_place reservation
+                ->first();
         }
 
 
@@ -84,7 +93,7 @@ class CheckoutController extends Controller
      */
     public function store(Request $request)
     {
-        
+
         Log::info('Starting reservation process', ['request_data' => $request->all()]);
         $reservationData = Session::get('reservation_data');
         // dd(Session($reservationData));
@@ -92,20 +101,20 @@ class CheckoutController extends Controller
         if (!$reservationData) {
             return redirect()->route('user.facilities.index')->with('error', 'No reservation data found.');
         }
-        
+
         $facilityType = $reservationData['facility_type'] ?? null;
 
-        
+
         $rules = [
             'qualification' => 'nullable|file|max:10240|mimes:pdf,doc,docx',
         ];
-        
+
         // if ($facilityType === 'individual') {
         //     $rules['facility_attribute_id'] = 'required|exists:facility_attributes,id';
         // } elseif ($facilityType === 'whole_place') {
         //     // No validation for 'facility_attribute_id'
         //     $rules['date_from'] = 'required|date|after_or_equal:' . Carbon::today()->addDays(3)->toDateString();
-        
+
         // }
 
         if ($facilityType === 'individual') {
@@ -116,7 +125,7 @@ class CheckoutController extends Controller
             $rules['date_from'] = 'required|date|after_or_equal:' . Carbon::today()->addDays(3)->toDateString();
         }
 
-        
+
         $validatedData = $request->validate($rules);
 
         // dd(session('reservation_data'));
@@ -218,7 +227,7 @@ class CheckoutController extends Controller
                     // $selectedDate = $request->input('date_from');
                     $selectedDate = $reservationData['date_from']; // Both dates are the same
                     $dateTo = $selectedDate;
-                   
+
 
                     $selectedDateCarbon = Carbon::parse($selectedDate)->startOfDay();
                     $minDate = Carbon::today()->addDays(3)->startOfDay();
@@ -234,9 +243,9 @@ class CheckoutController extends Controller
                         ->where('date_to', $selectedDate)
                         ->whereNull('facility_attribute_id') // Ensures it's a whole_place reservation
                         ->first();
-                        if ($existingReservation) {
-                            throw new \Exception('The selected date is already booked for this facility.');
-                        }
+                    if ($existingReservation) {
+                        throw new \Exception('The selected date is already booked for this facility.');
+                    }
 
                     $qualificationPath = null;
                     if ($request->hasFile('qualification')) {
@@ -263,7 +272,7 @@ class CheckoutController extends Controller
 
                     $qualificationData = [
                         'availability_id' => $availability_id,
-                        'user_id' => Auth::id
+                        'user_id' => Auth::id(),
                     ];
                     $this->createQualification($qualificationData);
                 }
@@ -307,8 +316,6 @@ class CheckoutController extends Controller
         // ]);
 
         return $newAvailability->id;
-
-        
     }
 
     /**

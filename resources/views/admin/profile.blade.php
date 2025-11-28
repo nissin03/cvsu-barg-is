@@ -185,6 +185,15 @@
                             @method('PUT')
                             <hr class="my-4">
                             <div class="form-group">
+                                <label for="position" class="form-label">Position</label>
+                                <input type="text" class="form-control @error('position') is-invalid @enderror"
+                                    id="position" name="position" value="{{ old('position', auth()->user()->position) }}">
+                                @error('position')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
                                 <label for="current_password" class="form-label">Current Password</label>
                                 <input type="password" class="form-control @error('current_password') is-invalid @enderror"
                                     id="current_password" name="current_password" required>

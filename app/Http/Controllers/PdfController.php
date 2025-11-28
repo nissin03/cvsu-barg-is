@@ -2,26 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Validator;
-use App\Models\Product;
+use Carbon\Carbon;
 use Dompdf\Dompdf;
 use Dompdf\Options;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use App\Models\Order;
 use App\Models\User;
+use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Product;
+use App\Models\Category;
+use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class PdfController extends Controller
 {
     public function downloadBillingStatements(Request $request)
     {
+        ini_set('memory_limit', '1024M');
+        ini_set('max_execution_time', 300);
+        ini_set('pcre.backtrack_limit', 1000000);
+        ini_set('pcre.recursion_limit', 1000000);
+
         $validator = Validator::make($request->all(), [
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
-            'today' => 'nullable|boolean',
+            'status' => 'nullable|in:reserved,pickedup,canceled',
+            'category' => 'nullable|exists:categories,id',
         ]);
 
         if ($validator->fails()) {
@@ -30,13 +37,10 @@ class PdfController extends Controller
                 ->withInput();
         }
 
-        if ($request->has('today') && $request->input('today') == '1') {
-            $startDate = Carbon::today()->toDateString();
-            $endDate = Carbon::today()->toDateString();
-        } else {
-            $startDate = $request->input('start_date');
-            $endDate = $request->input('end_date');
-        }
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $status = $request->input('status');
+        $category = $request->input('category');
 
         if ($startDate && $endDate && Carbon::parse($endDate)->lt(Carbon::parse($startDate))) {
             return redirect()->route('admin.report-statements')
@@ -44,25 +48,65 @@ class PdfController extends Controller
                 ->withInput();
         }
 
-        $ordersQuery = Order::with('user');
+        $ordersQuery = Order::query();
+
+        if ($status) {
+            $ordersQuery->where('status', $status);
+        }
+
+        if ($category) {
+            $ordersQuery->whereHas('orderItems.product', function ($query) use ($category) {
+                $query->where('category_id', $category);
+            });
+        }
 
         if ($startDate && $endDate) {
             $start = Carbon::parse($startDate)->startOfDay();
             $end = Carbon::parse($endDate)->endOfDay();
-
-            $ordersQuery->whereBetween('created_at', [$start, $end]);
+            $ordersQuery->whereBetween('reservation_date', [$start, $end]);
+        } elseif ($startDate) {
+            $start = Carbon::parse($startDate)->startOfDay();
+            $ordersQuery->where('reservation_date', '>=', $start);
+        } elseif ($endDate) {
+            $end = Carbon::parse($endDate)->endOfDay();
+            $ordersQuery->where('reservation_date', '<=', $end);
         }
 
-        $orders = $ordersQuery->orderBy('created_at', 'desc')->get();
+        $orderIds = $ordersQuery->orderBy('reservation_date', 'desc')->pluck('id');
+
+        $orders = Order::with([
+            'user:id,name',
+            'orderItems' => function ($query) use ($category) {
+                $query->select('id', 'order_id', 'product_id', 'variant_id', 'quantity', 'price')
+                    ->with([
+                        'product:id,name,category_id',
+                        'product.category:id,name',
+                        'variant:id,value'
+                    ]);
+                if ($category) {
+                    $query->whereHas('product', function ($q) use ($category) {
+                        $q->where('category_id', $category);
+                    });
+                }
+            }
+        ])->whereIn('id', $orderIds)->get();
+
+        $categoryName = null;
+        if ($category) {
+            $categoryModel = Category::find($category);
+            $categoryName = $categoryModel ? $categoryModel->name : 'Unknown Category';
+        }
 
         $pdf = PDF::loadView('admin.pdf.pdf-billing', [
             'orders' => $orders,
             'startDate' => $startDate,
-            'endDate' => $endDate
-        ])
-            ->setPaper('A4', 'portrait');
+            'endDate' => $endDate,
+            'status' => $status,
+            'category' => $category,
+            'categoryName' => $categoryName
+        ])->setPaper('A4', 'portrait');
 
-        return $pdf->download('billing_statements.pdf');
+        return $pdf->stream('billing_statements.pdf');
     }
 
     public function downloadPdf(Request $request)
@@ -88,7 +132,8 @@ class PdfController extends Controller
         $pdf = PDF::loadView('admin.pdf.pdf-reports', $data)
             ->setPaper('A4', 'portrait');
 
-        return $pdf->download('sales_report.pdf');
+        // Stream the PDF with inline display (opens in browser)
+        return $pdf->stream('sales_report.pdf', ['Attachment' => false]);
     }
 
     public function downloadProduct(Request $request)
@@ -142,8 +187,61 @@ class PdfController extends Controller
         $dompdf->loadHtml($html);
         $dompdf->render();
 
-        return $dompdf->stream('product-report.pdf');
+        // Set proper headers for streaming
+        return response($dompdf->output(), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="product-report.pdf"')
+            ->header('Cache-Control', 'public, must-revalidate, max-age=0')
+            ->header('Pragma', 'public')
+            ->header('Expires', 'Sat, 26 Jul 1997 05:00:00 GMT')
+            ->header('Last-Modified', gmdate('D, d M Y H:i:s') . ' GMT');
     }
+
+    public function downloadProductList(Request $request)
+    {
+        ini_set('memory_limit', '1024M');
+        ini_set('max_execution_time', 300);
+        ini_set('pcre.backtrack_limit', 1000000);
+        ini_set('pcre.recursion_limit', 1000000);
+
+        $validator = Validator::make($request->all(), [
+            'category' => 'nullable|exists:categories,id',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('admin.report.product-list')
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $category = $request->input('category');
+
+        $query = Product::with([
+            'category',
+            'attributeValues'
+        ])->where('archived', 0);
+
+        if ($category) {
+            $query->where('category_id', $category);
+        }
+
+        $products = $query->orderBy('name')->get();
+
+        $categoryName = null;
+        if ($category) {
+            $categoryModel = Category::find($category);
+            $categoryName = $categoryModel ? $categoryModel->name : 'Unknown Category';
+        }
+
+        $pdf = PDF::loadView('admin.pdf.pdf-product-list', [
+            'products' => $products,
+            'category' => $category,
+            'categoryName' => $categoryName
+        ])->setPaper('A4', 'portrait');
+
+        return $pdf->stream('product_list.pdf');
+    }
+
 
     public function getMonthlyRegisteredUsers($month, $year)
     {
@@ -262,7 +360,7 @@ class PdfController extends Controller
         $pdf = PDF::loadView('admin.pdf.pdf-user', $pdfData)
             ->setPaper('a4', 'portrait');
 
-        return $pdf->download('user_report_' . $selectedYear . '_' . $selectedMonth . '.pdf');
+        return $pdf->stream('user_report_' . $selectedYear . '_' . $selectedMonth . '.pdf');
     }
 
     public function downloadInventoryReportPdf(Request $request)
@@ -306,6 +404,7 @@ class PdfController extends Controller
         $products = $productsQuery->get();
 
         $stockStatus = $request->input('stock_status');
+        $statusLabel = null; // Add this variable
 
         if ($stockStatus) {
             $products = $products->filter(function ($product) use ($stockStatus) {
@@ -323,9 +422,23 @@ class PdfController extends Controller
 
                 return true;
             });
+
+            // Set the status label based on the filter
+            switch ($stockStatus) {
+                case 'instock':
+                    $statusLabel = 'In Stock';
+                    break;
+                case 'outofstock':
+                    $statusLabel = 'Low Stock';
+                    break;
+                case 'reorder':
+                    $statusLabel = 'Reorder Level';
+                    break;
+            }
         }
 
-        $pdfView = view('admin.pdf.pdf-inventory-report', compact('products', 'startDate', 'endDate'))->render();
+        // Pass the statusLabel to the view
+        $pdfView = view('admin.pdf.pdf-inventory-report', compact('products', 'startDate', 'endDate', 'statusLabel'))->render();
 
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
@@ -334,11 +447,11 @@ class PdfController extends Controller
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($pdfView);
 
-        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->setPaper('A4', 'portrait');
 
         $dompdf->render();
 
-        return $dompdf->stream('inventory_report.pdf', ['Attachment' => true]);
+        return $dompdf->stream('inventory_report.pdf', ['Attachment' => false]);
     }
 
     public function downloadInputSales(Request $request)
@@ -394,7 +507,8 @@ class PdfController extends Controller
         $pdf->setPaper('A4', 'portrait');
         $pdf->render();
 
-        return $pdf->stream('sales-report.pdf');
+        // Stream the PDF with inline display (opens in browser)
+        return $pdf->stream('sales-report.pdf', ['Attachment' => false]);
     }
 
     public function downloadInputUsers(Request $request)
@@ -444,21 +558,33 @@ class PdfController extends Controller
         $pdf->setPaper('A4', 'portrait');
         $pdf->render();
 
-        return $pdf->stream('user-report.pdf');
+        // Stream with inline display
+        return $pdf->stream('user-report.pdf', ['Attachment' => false]);
     }
 
     public function facilityStatement(Request $request)
     {
+        ini_set('memory_limit', '1024M');
+        ini_set('max_execution_time', 300);
+        ini_set('pcre.backtrack_limit', 1000000);
+        ini_set('pcre.recursion_limit', 1000000);
+
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         $status = $request->input('status');
+        $facilityId = $request->input('facility_id');
 
-        $paymentsQuery = Payment::with(['user', 'availability.facility', 'availability.facilityAttribute']);
+        $paymentsQuery = Payment::with([
+            'user',
+            'availability.facility',
+            'availability.facilityAttribute',
+            'transactionReservations.availability'
+        ]);
 
         if ($dateFrom && $dateTo) {
             $start = Carbon::parse($dateFrom)->startOfDay();
             $end = Carbon::parse($dateTo)->endOfDay();
-            $paymentsQuery->whereHas('availability', function($query) use ($start, $end) {
+            $paymentsQuery->whereHas('availability', function ($query) use ($start, $end) {
                 $query->whereBetween('date_from', [$start, $end])
                     ->orWhereBetween('date_to', [$start, $end]);
             });
@@ -468,24 +594,87 @@ class PdfController extends Controller
             $paymentsQuery->where('status', $status);
         }
 
+        if ($facilityId) {
+            $paymentsQuery->whereHas('availability', function ($query) use ($facilityId) {
+                $query->where('facility_id', $facilityId);
+            });
+        }
+
         $payments = $paymentsQuery->orderBy('created_at', 'desc')->get();
+
+        $payments = $payments->map(function ($payment) {
+            $allDates = $payment->transactionReservations
+                ->pluck('availability')
+                ->filter()
+                ->flatMap(function ($availability) {
+                    $dates = [];
+                    if ($availability->date_from && $availability->date_to) {
+                        if ($availability->date_from == $availability->date_to) {
+                            $dates[] = $availability->date_from;
+                        } else {
+                            $dates[] = $availability->date_from;
+                            $dates[] = $availability->date_to;
+                        }
+                    }
+                    return $dates;
+                })
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values();
+
+            if ($allDates->count() > 0) {
+                $payment->date_from = $allDates->first();
+                $payment->date_to = $allDates->last();
+            } else {
+                $payment->date_from = $payment->availability->date_from ?? null;
+                $payment->date_to = $payment->availability->date_to ?? null;
+            }
+
+            return $payment;
+        });
+
+        if ($dateFrom) {
+            $payments = $payments->filter(function ($payment) use ($dateFrom) {
+                return $payment->date_to && $payment->date_to >= $dateFrom;
+            });
+        }
+
+        if ($dateTo) {
+            $payments = $payments->filter(function ($payment) use ($dateTo) {
+                return $payment->date_from && $payment->date_from <= $dateTo;
+            });
+        }
 
         $formattedDateFrom = $dateFrom ? Carbon::parse($dateFrom)->format('F j, Y') : 'N/A';
         $formattedDateTo = $dateTo ? Carbon::parse($dateTo)->format('F j, Y') : 'N/A';
 
+        $selectedFacility = null;
+        $showAllFacilities = !$facilityId;
+
+        if ($facilityId) {
+            $selectedFacility = \App\Models\Facility::find($facilityId);
+        }
+
         $pdf = PDF::loadView('admin.pdf.pdf-facility-billing', [
             'payments' => $payments,
             'dateFrom' => $formattedDateFrom,
-            'dateTo' => $formattedDateTo
+            'dateTo' => $formattedDateTo,
+            'selectedFacility' => $selectedFacility,
+            'showAllFacilities' => $showAllFacilities
         ])->setPaper('A4', 'portrait');
 
         $filename = 'facility_billing_statements_';
         $filename .= $dateFrom ? Carbon::parse($dateFrom)->format('Y-m-d') : 'all';
         $filename .= '_to_';
         $filename .= $dateTo ? Carbon::parse($dateTo)->format('Y-m-d') : 'all';
+
+        if ($selectedFacility) {
+            $filename .= '_' . \Illuminate\Support\Str::slug($selectedFacility->name);
+        }
+
         $filename .= '.pdf';
 
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
-
 }

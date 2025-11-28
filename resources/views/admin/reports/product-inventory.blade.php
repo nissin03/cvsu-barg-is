@@ -1,315 +1,499 @@
 @extends('layouts.admin')
+
 @section('content')
-<div class="main-content-inner">
-    <div class="main-content-wrap">
-        <div class="d-flex align-items-center justify-content-between mb-4">
-            {{-- <h2 class="fw-bold text-dark mb-0">Reports</h2> --}}
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0 bg-transparent p-0">
-                    <li class="breadcrumb-item">
-                        <a href="{{route('admin.index')}}" class="text-muted text-decoration-none">
-                            <small>Dashboard</small>
-                        </a>
-                    </li>
-                    <li class="breadcrumb-item active" aria-current="page">
-                        <small class="text-muted">Inventory Report</small>
-                    </li>
-                </ol>
-            </nav>
+    <div class="container-fluid px-4 py-4">
+        {{-- Page Header --}}
+        <div class="d-flex justify-content-between align-items-center mb-4 mt-5">
+            <div>
+                <h1 class="h3 mb-1 text-dark fw-semibold">Inventory Report</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0 small text-muted">
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('admin.index') }}" class="text-decoration-none text-muted">Dashboard</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">Inventory Report</li>
+                    </ol>
+                </nav>
+            </div>
         </div>
 
-        <div class="bg-white rounded-3 shadow-sm border-0 overflow-hidden">
-            @if ($errors->any())
-                <div class="alert alert-danger border-0 rounded-0 m-3">
-                    <ul class="mb-0 ps-3">
-                        @foreach ($errors->all() as $error)
-                            <li class="text-danger">{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+        {{-- Validation Errors --}}
+        @if ($errors->any())
+            <div class="alert alert-danger border-0 rounded-3 shadow-sm mb-4">
+                <ul class="mb-0 ps-3">
+                    @foreach ($errors->all() as $error)
+                        <li class="text-danger">{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-            <div class="bg-light bg-gradient border-bottom p-5">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                    <h4 class="mb-0 fw-semibold text-dark">Inventory Report</h4>
-                    
-                    <div class="d-flex flex-wrap align-items-center gap-3">
-                        <form action="{{ route('admin.report-inventory') }}" method="GET" id="filterForm" class="d-flex flex-wrap align-items-center gap-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <label for="stock_status" class="form-label mb-0 fw-semibold text-dark fs-4">Status:</label>
-                                <select name="stock_status" id="stock_status" class="form-select fs-5 py-3 px-4 border-light-subtle rounded" style="width: 140px;">
-                                    <option value="">All Items</option>
-                                    <option value="instock" {{ request('stock_status') == 'instock' ? 'selected' : '' }}>In Stock</option>
-                                    <option value="outofstock" {{ request('stock_status') == 'outofstock' ? 'selected' : '' }}>Out of Stock</option>
-                                    <option value="reorder" {{ request('stock_status') == 'reorder' ? 'selected' : '' }}>Reorder Level</option>
-                                </select>
-                            </div>
-                
-                            <button type="submit" class="btn btn-dark btn-lg flex-fill" style="min-width: 120px;">
-                                <i class="fas fa-filter me-1"></i>Filter
-                            </button>
-                        </form>
-                
-                        <form action="{{ route('admin.report-inventory.pdf') }}" method="GET" class="d-flex align-items-center">
-                            <input type="hidden" name="start_date" id="download_start_date" value="{{ old('start_date', request('start_date')) }}">
-                            <input type="hidden" name="end_date" id="download_end_date" value="{{ old('end_date', request('end_date')) }}">
-                            <input type="hidden" name="today" value="{{ request('today') ? '1' : '' }}">
-                            <input type="hidden" name="stock_status" id="download_stock_status" value="{{ request('stock_status') }}">
-                
-                            <button type="submit" class="btn btn-outline-dark btn-lg flex-fill" style="min-width: 120px;">
-                                <i class="fas fa-file-pdf me-1"></i>PDF
-                            </button>
-                        </form>
-                    </div>
+        {{-- Filter Card --}}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <div class="d-flex align-items-center">
+                    <h6 class="mb-0 fw-semibold text-gray-800">Filter Inventory</h6>
                 </div>
             </div>
-            
-            <div class="wg-table table-all-user p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0 table-lg" style="table-layout: auto;">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="text-center fw-semibold text-dark py-4 border-0 fs-5">Product Name</th>
-                                <th class="text-center fw-semibold text-dark py-4 border-0 fs-5">Category</th>
-                                <th class="text-center fw-semibold text-dark py-4 border-0 fs-5">Price</th>
-                                <th class="text-center fw-semibold text-dark py-4 border-0 fs-5">Stock Status</th>
-                                <th class="text-center fw-semibold text-dark py-4 border-0 fs-5">Current Stock</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($products as $product)
-                            <tr class="border-bottom">
-                                <td class="text-center py-4 text-dark fs-4 fw-medium">{{ $product->name }}</td>
-                                <td class="text-center py-4 text-muted fs-4">{{ $product->category->name }}</td>
-                                <td class="text-center py-4 fw-semibold text-dark fs-4">
-                                    @if($product->attributeValues->isNotEmpty())
-                                        ₱{{ number_format($product->attributeValues->first()->price, 2) }}
-                                    @else
-                                        ₱{{ number_format($product->price, 2) }}
-                                    @endif
-                                </td>
-                                <td class="text-center py-4">
+            <div class="card-body p-4">
+                <form method="GET" action="{{ route('admin.report-inventory') }}" id="filterForm" class="filter-form">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-lg-4 col-md-6">
+                            <label for="stock_status" class="form-label text-gray-700 fw-medium mb-2">Status</label>
+                            <select name="stock_status" id="stock_status"
+                                class="form-select form-control-lg border-gray-300" style="border-radius: 8px;">
+                                <option value="">All Items</option>
+                                <option value="instock" {{ request('stock_status') == 'instock' ? 'selected' : '' }}>In
+                                    Stock</option>
+                                <option value="outofstock" {{ request('stock_status') == 'outofstock' ? 'selected' : '' }}>
+                                    Out of Stock</option>
+                                <option value="reorder" {{ request('stock_status') == 'reorder' ? 'selected' : '' }}>Reorder
+                                    Level</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-4 col-md-6 d-flex align-items-end gap-2">
+                            <a href="{{ route('admin.report-inventory') }}"
+                                class="btn btn-outline-secondary btn-lg px-4 fw-medium" style="border-radius: 8px;">
+                                <i class="fas fa-refresh me-2"></i>Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+        {{-- Inventory Table Card --}}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <h6 class="mb-0 fw-semibold text-gray-800">Inventory Report Overview</h6>
+                            <small class="text-muted">Product categories and current stock status</small>
+                        </div>
+                    </div>
+
+                    {{-- Print Form (kept backend logic intact) --}}
+                    <form action="{{ route('admin.report-inventory.pdf') }}" method="GET" target="_blank">
+                        <input type="hidden" name="stock_status" id="download_stock_status"
+                            value="{{ request('stock_status') }}">
+                        <button type="submit" class="btn btn-outline-dark fs-5 py-3 px-4 w-auto"
+                            style="border-radius: 8px;">
+                            <i class="fas fa-file-pdf me-1"></i>PRINT
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                @if ($products->isEmpty())
+                    <div class="text-center py-5">
+                        <div class="d-flex flex-column align-items-center">
+                            <div class="bg-gray-100 rounded-circle d-flex align-items-center justify-content-center mb-3"
+                                style="width: 60px; height: 60px;">
+                                <i class="fas fa-box-open text-gray-400" style="font-size: 1.5rem;"></i>
+                            </div>
+                            <h6 class="text-gray-600 mb-1" style="font-size: 1.5rem;">No Products Found</h6>
+                            <p class="text-gray-500 mb-3 small" style="font-size: 1.25rem;">
+                                There are no products matching your current filter criteria.
+                            </p>
+                            <a href="{{ route('admin.report-inventory') }}" class="btn btn-dark btn-lg px-4"
+                                style="border-radius: 8px;">
+                                <i class="fas fa-refresh me-2"></i>Reset Filters
+                            </a>
+                        </div>
+                    </div>
+                @else
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="dataTable" width="100%" cellspacing="0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">
+                                        Product Name</th>
+                                    <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">
+                                        Category</th>
+                                    {{-- <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">Price</th> --}}
+                                    <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">
+                                        Stock Status</th>
+                                    <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">
+                                        Current Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($products as $product)
                                     @php
                                         $currentStock = $product->attributeValues->isNotEmpty()
                                             ? $product->attributeValues->sum('quantity')
                                             : $product->current_stock;
                                     @endphp
-                                    @if($currentStock <= $product->outofstock_quantity)
-                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-4 py-3 rounded-pill fs-5">Out of Stock</span>
-                                    @elseif($currentStock <= $product->reorder_quantity)
-                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-4 py-3 rounded-pill fs-5">Reorder Level</span>
-                                    @else
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-4 py-3 rounded-pill fs-5">In Stock</span>
-                                    @endif
-                                </td>
-                                <td class="text-center py-4 fw-bold text-dark fs-4">{{ number_format($currentStock) }}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                    <tr class="border-bottom">
+                                        <td class="py-4 px-4 text-center" data-label="Product Name">
+                                            <span class="product-name">{{ $product->name }}</span>
+                                        </td>
+                                        <td class="py-4 px-4 text-center" data-label="Category">
+                                            <span class="category-name text-muted">
+                                                {{ $product->category->name }}
+                                            </span>
+                                        </td>
+                                        {{-- 
+                                        <td class="py-4 px-4 text-center" data-label="Price">
+                                            <div class="price-info">
+                                                @if ($product->attributeValues->isNotEmpty())
+                                                    ₱{{ number_format($product->attributeValues->first()->price, 2) }}
+                                                @else
+                                                    ₱{{ number_format($product->price, 2) }}
+                                                @endif
+                                            </div>
+                                        </td>
+                                        --}}
+                                        <td class="py-4 px-4 text-center" data-label="Stock Status">
+                                            @if ($currentStock <= $product->outofstock_quantity)
+                                                <span class="badge badge-outofstock">
+                                                    Out of Stock
+                                                </span>
+                                            @elseif ($currentStock <= $product->reorder_quantity)
+                                                <span class="badge badge-reorder">
+                                                    Reorder Level
+                                                </span>
+                                            @else
+                                                <span class="badge badge-instock">
+                                                    In Stock
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="py-4 px-4 text-center" data-label="Current Stock">
+                                            <span class="stock-quantity">
+                                                {{ number_format($currentStock) }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
 
-            <div class="border-top bg-light bg-gradient p-3">
-                <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-                    {{ $products->appends(request()->input())->links('pagination::bootstrap-5') }}
-                </div>
+                    {{-- Pagination --}}
+                    @if ($products->count() > 0)
+                        <div class="card-footer bg-white border-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div class="text-muted">
+                                    Showing {{ $products->firstItem() }} to {{ $products->lastItem() }} of
+                                    {{ $products->total() }} entries
+                                </div>
+                                <div>
+                                    {{ $products->appends(request()->input())->links('pagination::bootstrap-5') }}
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                @endif
             </div>
         </div>
     </div>
-</div>
 @endsection
 
 @push('styles')
-<style>
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    .table th, .table td {
-        padding: 20px;
-        text-align: left;
-        vertical-align: middle;
-    }
-    
-    .table td {
-        white-space: nowrap;
-    }
-    
-    .table-hover tbody tr:hover {
-        background-color: rgba(0, 0, 0, 0.02);
-        transition: background-color 0.15s ease-in-out;
-    }
-    
-    .badge {
-        font-weight: 500;
-        font-size: 0.9rem;
-        letter-spacing: 0.025em;
-    }
-    
-    .bg-danger-subtle {
-        background-color: rgba(220, 53, 69, 0.1) !important;
-    }
-    
-    .bg-warning-subtle {
-        background-color: rgba(255, 193, 7, 0.1) !important;
-    }
-    
-    .bg-success-subtle {
-        background-color: rgba(25, 135, 84, 0.1) !important;
-    }
-    
-    .text-danger {
-        color: #dc3545 !important;
-    }
-    
-    .text-warning {
-        color: #fd7e14 !important;
-    }
-    
-    .text-success {
-        color: #198754 !important;
-    }
-    
-    .border-danger-subtle {
-        border-color: rgba(220, 53, 69, 0.2) !important;
-    }
-    
-    .border-warning-subtle {
-        border-color: rgba(255, 193, 7, 0.2) !important;
-    }
-    
-    .border-success-subtle {
-        border-color: rgba(25, 135, 84, 0.2) !important;
-    }
-    
-    .btn {
-        font-weight: 500;
-        transition: all 0.15s ease-in-out;
-    }
-    
-    .btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
-    }
-    
-    .form-select {
-        transition: all 0.15s ease-in-out;
-    }
-    
-    .form-select:focus {
-        border-color: #86b7fe;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
-    
-    .breadcrumb-item + .breadcrumb-item::before {
-        content: "›";
-        color: #6c757d;
-    }
-    
-    .checkbox-container {
-        display: inline-block;
-        position: relative;
-        padding-left: 0;
-        cursor: pointer;
-        user-select: none;
-    }
-    
-    .checkbox-container input {
-        position: absolute;
-        opacity: 0;
-        cursor: pointer;
-    }
-    
-    .checkmark {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 70px;
-        height: 38px;
-        background-color: #fff;
-        border: 1px solid #ced4da;
-        border-radius: 6px;
-        color: #495057;
-        transition: all 0.15s ease-in-out;
-    }
-    
-    .checkbox-container input:checked ~ .checkmark {
-        background-color: #e9ecef;
-        border-color: #adb5bd;
-    }
-    
-    .readonly-input {
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        cursor: not-allowed;
-    }
-    
-    .shadow-sm {
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
-    }
-    
-    .rounded-3 {
-        border-radius: 0.5rem !important;
-    }
-    
-    .bg-gradient {
-        background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0)) !important;
-    }
-</style>
+    <style>
+        :root {
+            --bs-gray-50: #f8fafc;
+            --bs-gray-100: #f1f5f9;
+            --bs-gray-300: #cbd5e1;
+            --bs-gray-400: #94a3b8;
+            --bs-gray-500: #64748b;
+            --bs-gray-600: #475569;
+            --bs-gray-700: #334155;
+            --bs-gray-800: #1e293b;
+            --bs-gray-900: #0f172a;
+        }
+
+        .text-gray-900 {
+            color: var(--bs-gray-900) !important;
+        }
+
+        .text-gray-800 {
+            color: var(--bs-gray-800) !important;
+        }
+
+        .text-gray-700 {
+            color: var(--bs-gray-700) !important;
+        }
+
+        .text-gray-600 {
+            color: var(--bs-gray-600) !important;
+        }
+
+        .text-gray-500 {
+            color: var(--bs-gray-500) !important;
+        }
+
+        .text-gray-400 {
+            color: var(--bs-gray-400) !important;
+        }
+
+        .bg-gray-50 {
+            background-color: var(--bs-gray-50) !important;
+        }
+
+        .bg-gray-100 {
+            background-color: var(--bs-gray-100) !important;
+        }
+
+        .border-gray-300 {
+            border-color: var(--bs-gray-300) !important;
+        }
+
+        .card {
+            border-radius: 12px !important;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .card-header {
+            border-radius: 12px 12px 0 0 !important;
+        }
+
+        .form-control,
+        .form-select {
+            font-size: 0.95rem;
+            padding: 0.75rem 1rem;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid var(--bs-gray-300);
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn {
+            font-size: 0.9rem;
+            padding: 0.5rem 1.25rem;
+            transition: all 0.2s ease-in-out;
+            border-radius: 8px !important;
+            font-weight: 500;
+        }
+
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: var(--bs-gray-50);
+        }
+
+        .table th {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .table td {
+            vertical-align: middle;
+            border-color: #e2e8f0;
+            font-size: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .table-responsive {
+            position: relative;
+            z-index: 0;
+        }
+
+        .table {
+            position: relative;
+            z-index: 0;
+        }
+
+        .table> :not(caption)>*>* {
+            padding: 1rem 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Inventory-specific typography */
+        .product-name {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--bs-gray-900);
+        }
+
+        .category-name {
+            font-size: 1.1rem;
+        }
+
+        .stock-quantity {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--bs-gray-800);
+        }
+
+        /* Badges for stock statuses */
+        .badge {
+            font-size: 1rem;
+            padding: 0.4em 0.8em;
+            border-radius: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            min-width: 110px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .badge-instock {
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-reorder {
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+            color: white;
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-outofstock {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+        }
+
+        @media (max-width: 1200px) {
+            .table-responsive {
+                overflow-x: auto;
+                position: relative;
+                z-index: 0;
+            }
+
+            .table {
+                min-width: 900px;
+                position: relative;
+                z-index: 0;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .table {
+                min-width: 800px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .card-body {
+                padding: 1.5rem !important;
+            }
+
+            .btn-lg {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+
+            .table-responsive {
+                font-size: 0.875rem;
+                overflow-x: auto;
+                position: relative;
+                z-index: 0;
+            }
+
+            .table {
+                min-width: 700px;
+                position: relative;
+                z-index: 0;
+            }
+
+            .table td {
+                font-size: 1.25rem;
+            }
+
+            .product-name {
+                font-size: 1.25rem;
+            }
+
+            .stock-quantity {
+                font-size: 1.25rem;
+            }
+
+            .badge {
+                font-size: 0.875rem;
+                min-width: 90px;
+                padding: 0.3em 0.6em;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .table {
+                min-width: 650px;
+            }
+
+            .card-header .d-flex {
+                flex-direction: column;
+                align-items: flex-start !important;
+            }
+
+            .card-header .d-flex>div:first-child {
+                margin-bottom: 1rem;
+            }
+
+            .card-header form {
+                align-self: flex-start;
+                width: 100%;
+                margin-top: 0.5rem;
+            }
+
+            .filter-form .row {
+                flex-direction: column;
+            }
+
+            .filter-form .col-lg-4 {
+                margin-bottom: 1rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .table {
+                min-width: 600px;
+            }
+
+            .table> :not(caption)>*>* {
+                padding: 0.75rem 1rem;
+            }
+        }
+    </style>
 @endpush
 
 @push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const todayCheckbox = document.getElementById('today');
-        const startDateContainer = document.getElementById('start_date_container');
-        const endDateContainer = document.getElementById('end_date_container');
-        const downloadStartDate = document.getElementById('download_start_date');
-        const downloadEndDate = document.getElementById('download_end_date');
-        const stockStatusSelect = document.getElementById('stock_status');
-        const downloadStockStatus = document.getElementById('download_stock_status');
-        
-        function updateDateInputs() {
-            if (todayCheckbox && todayCheckbox.checked) {
-                if (startDateContainer) {
-                    startDateContainer.innerHTML = '<input type="text" name="start_date_display" value="Today" class="form-control readonly-input" readonly>';
-                }
-                if (endDateContainer) {
-                    endDateContainer.innerHTML = '<input type="text" name="end_date_display" value="Today" class="form-control readonly-input" readonly>';
-                }
-                const today = new Date().toISOString().split('T')[0];
-                if (downloadStartDate) downloadStartDate.value = today;
-                if (downloadEndDate) downloadEndDate.value = today;
-            } else {
-                const startDateValue = '{{ old('start_date', request('start_date')) }}';
-                const endDateValue = '{{ old('end_date', request('end_date')) }}';
-                if (startDateContainer) {
-                    startDateContainer.innerHTML = '<input type="date" name="start_date" id="start_date" value="' + startDateValue + '" class="form-control">';
-                }
-                if (endDateContainer) {
-                    endDateContainer.innerHTML = '<input type="date" name="end_date" id="end_date" value="' + endDateValue + '" class="form-control">';
-                }
-                if (downloadStartDate) downloadStartDate.value = startDateValue;
-                if (downloadEndDate) downloadEndDate.value = endDateValue;
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const stockStatus = document.getElementById('stock_status');
+            if (stockStatus) {
+                stockStatus.addEventListener('change', function() {
+                    document.getElementById('filterForm').submit();
+                });
             }
-        }
-        
-        if (todayCheckbox) {
-            todayCheckbox.addEventListener('change', function () {
-                updateDateInputs();
-            });
-        }
-        
-        if (stockStatusSelect && downloadStockStatus) {
-            stockStatusSelect.addEventListener('change', function () {
-                downloadStockStatus.value = this.value;
-            });
-            downloadStockStatus.value = stockStatusSelect.value;
-        }
-        
-        updateDateInputs();
-    });
-</script>
+
+            const downloadStockStatus = document.getElementById('download_stock_status');
+            if (downloadStockStatus) {
+                downloadStockStatus.value = stockStatus.value;
+            }
+        });
+    </script>
 @endpush

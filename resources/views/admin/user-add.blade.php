@@ -86,7 +86,7 @@
                     @enderror
 
                     <!-- Year Level -->
-                    <fieldset class="year_level">
+                    <fieldset class="year_level" id="yearLevelFieldset">
                         <div class="body-title mb-10">Year Level</div>
                         <div class="select">
                             <select name="year_level" id="yearLevel">
@@ -101,33 +101,38 @@
                         <span class="alert alert-danger text-center">{{ $message }}</span>
                     @enderror
 
-                    <!-- Department -->
-                    <fieldset class="department">
-                        <div class="body-title mb-10">Department</div>
+                    <!-- Colleges -->
+                    <fieldset class="college" id="collegeFieldset">
+                        <div class="body-title mb-10">College</div>
                         <div class="select">
-                            <select name="department" id="department">
-                                <option value="" disabled selected>Select Department</option>
-                                @foreach (['CEIT', 'GSOLC', 'CAFENR', 'CAS', 'CCJ', 'CEMDS', 'CED', 'CON', 'CVMBS'] as $dept)
-                                    <option value="{{ $dept }}">{{ $dept }}</option>
+                            <select name="college_id" id="college_id">
+                                <option value="" disabled selected>Select College</option>
+                                @foreach ($colleges as $college)
+                                    <option value="{{ $college->id }}">{{ $college->code }} - {{ $college->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
                     </fieldset>
-                    @error('department')
+                    @error('college_id')
                         <span class="alert alert-danger text-center">{{ $message }}</span>
                     @enderror
 
                     <!-- Course -->
-                    <fieldset class="course">
+                    <fieldset class="course" id="courseFieldset">
                         <div class="body-title mb-10">Course</div>
                         <div class="select">
-                            <select name="course" id="course">
+                            <select name="course_id" id="course_id">
                                 <option value="" disabled selected>Select Course</option>
-                                <!-- Course options will be populated dynamically based on department -->
+                                @foreach ($courses as $course)
+                                    <option value="{{ $course->id }}" data-college="{{ $course->college_id }}">
+                                        {{ $course->code }} - {{ $course->name }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
                     </fieldset>
-                    @error('course')
+                    @error('course_id')
                         <span class="alert alert-danger text-center">{{ $message }}</span>
                     @enderror
 
@@ -161,7 +166,7 @@
                 action="{{ route('admin.users.store') }}" id="admin-form" style="display: none;">
                 @csrf
                 <input type="hidden" name="form_type" value="admin">
-                <input type="hidden" name="role" value="admin">
+                <input type="hidden" name="role" value="employee">
                 <input type="hidden" name="password" value="cvsu-barg-password">
 
                 <div class="wg-box">
@@ -196,7 +201,6 @@
                         @enderror
                     </fieldset>
 
-
                     <fieldset class="email">
                         <div class="body-title mb-10">Email <span class="tf-color-1">*</span></div>
                         <input class="mb-10" type="email" placeholder="Enter admin email" name="email" required>
@@ -225,6 +229,16 @@
                     @error('phone_number')
                         <span class="alert alert-danger text-center">{{ $message }}</span>
                     @enderror
+
+                    <fieldset class="position">
+                        <div class="body-title mb-10">Position <span class="tf-color-1">*</span></div>
+                        <input class="mb-10" type="text" placeholder="Enter admin position" name="position"
+                            required>
+                    </fieldset>
+                    @error('position')
+                        <span class="alert alert-danger text-center">{{ $message }}</span>
+                    @enderror
+
 
                     <div class="bot">
                         <button type="button" class="tf-button style-3 w208" id="back-to-selection-admin">
@@ -342,6 +356,17 @@
                 width: 100% !important;
             }
         }
+
+        .tf-button:disabled {
+            background: linear-gradient(135deg, #cccccc 0%, #999999 100%) !important;
+            cursor: not-allowed !important;
+            opacity: 0.6 !important;
+        }
+
+        .tf-button:disabled:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
     </style>
 @endsection
 
@@ -361,13 +386,24 @@
 
             // User form specific elements
             const emailInput = document.querySelector('#user-form input[name="email"]');
-            const departmentSelect = document.getElementById('department');
-            const courseSelect = document.getElementById('course');
+            const nameInput = document.querySelector('#user-form input[name="name"]');
+            const phoneInput = document.querySelector('#user-form input[name="phone_number"]');
             const roleSelect = document.getElementById('roleSelect');
             const yearLevelSelect = document.getElementById('yearLevel');
+            const yearLevelFieldset = document.getElementById('yearLevelFieldset');
+            const collegeFieldset = document.getElementById('collegeFieldset');
+            const courseFieldset = document.getElementById('courseFieldset');
+            const collegeSelect = document.getElementById('college_id');
+            const courseSelect = document.getElementById('course_id');
+            const saveUserBtn = userForm.querySelector('button[type="submit"]');
 
             // Admin form specific elements
             const adminEmailInput = document.querySelector('#admin-form input[name="email"]');
+            const adminNameInput = document.querySelector('#admin-form input[name="name"]');
+            const adminPhoneInput = document.querySelector('#admin-form input[name="phone_number"]');
+            const adminSexInputs = document.querySelectorAll('#admin-form input[name="sex"]');
+            const saveAdminBtn = adminForm.querySelector('button[type="submit"]');
+            const adminPositionInput = document.querySelector('#admin-form input[name="position"]');
 
             // Show user form
             selectUserBtn.addEventListener('click', function() {
@@ -376,6 +412,7 @@
                 adminForm.style.display = 'none';
                 pageTitle.textContent = 'Add User';
                 breadcrumbTitle.textContent = 'Add User';
+                validateUserForm();
             });
 
             // Show admin form
@@ -385,6 +422,7 @@
                 adminForm.style.display = 'block';
                 pageTitle.textContent = 'Add Admin';
                 breadcrumbTitle.textContent = 'Add Admin';
+                validateAdminForm();
             });
 
             // Back to selection from user form
@@ -396,6 +434,7 @@
                 breadcrumbTitle.textContent = 'Add User';
                 // Reset user form
                 userForm.reset();
+                resetStudentFields();
             });
 
             // Back to selection from admin form
@@ -433,49 +472,57 @@
                 });
             }
 
-            const courses = {
-                CEIT: ['BS Agricultural and Biosystems Engineering', 'BS Architecture', 'BS Civil Engineering',
-                    'BS Computer Science', 'BS Information Technology'
-                ],
-                GSOLC: ['PhD in Agriculture', 'PhD in Management', 'Master of Arts in Education',
-                    'MS Agriculture'
-                ],
-                CAFENR: ['BS Agriculture', 'BS Environmental Science', 'BS Food Technology'],
-                CAS: ['BA Political Science', 'BS Psychology', 'BS Biology'],
-                CCJ: ['BS Criminology'],
-                CEMDS: ['BS Accountancy', 'BS Business Management'],
-                CED: ['Bachelor of Elementary Education', 'Bachelor of Secondary Education'],
-                CON: ['BS Nursing'],
-                CVMBS: ['Doctor of Veterinary Medicine']
-            };
-
-            if (departmentSelect && courseSelect) {
-                departmentSelect.addEventListener('change', function() {
-                    const selectedDepartment = this.value;
-                    courseSelect.innerHTML = '<option value="" disabled selected>Select Course</option>';
-                    if (courses[selectedDepartment]) {
-                        courses[selectedDepartment].forEach(function(course) {
-                            const option = document.createElement('option');
-                            option.value = course;
-                            option.textContent = course;
-                            courseSelect.appendChild(option);
-                        });
+            // Role change handler
+            if (roleSelect) {
+                roleSelect.addEventListener('change', function() {
+                    if (this.value === 'student') {
+                        yearLevelFieldset.style.display = 'block';
+                        collegeFieldset.style.display = 'block';
+                        courseFieldset.style.display = 'block';
+                        yearLevelSelect.required = true;
+                        collegeSelect.required = true;
+                        courseSelect.required = true;
+                    } else {
+                        yearLevelFieldset.style.display = 'none';
+                        collegeFieldset.style.display = 'none';
+                        courseFieldset.style.display = 'none';
+                        yearLevelSelect.required = false;
+                        collegeSelect.required = false;
+                        courseSelect.required = false;
+                        yearLevelSelect.value = '';
+                        collegeSelect.value = '';
+                        courseSelect.value = '';
                     }
+                    validateUserForm();
                 });
+
+                // Trigger change event on page load
+                roleSelect.dispatchEvent(new Event('change'));
             }
 
-            // Disable Year Level and Course for Employees and Non-Employees
-            if (roleSelect && yearLevelSelect && courseSelect) {
-                roleSelect.addEventListener('change', function() {
-                    if (this.value === 'employee' || this.value === 'non-employee') {
-                        yearLevelSelect.value = '';
-                        yearLevelSelect.disabled = true;
+            // College change handler - filter courses
+            if (collegeSelect && courseSelect) {
+                collegeSelect.addEventListener('change', function() {
+                    const collegeId = this.value;
+                    const courseOptions = courseSelect.querySelectorAll('option');
+
+                    // Show all options initially
+                    courseOptions.forEach(option => {
+                        option.style.display = 'block';
+                    });
+
+                    // Hide options that don't belong to the selected college
+                    if (collegeId) {
+                        courseOptions.forEach(option => {
+                            if (option.value && option.dataset.college !== collegeId) {
+                                option.style.display = 'none';
+                            }
+                        });
+
+                        // Reset course selection
                         courseSelect.value = '';
-                        courseSelect.disabled = true;
-                    } else {
-                        yearLevelSelect.disabled = false;
-                        courseSelect.disabled = false;
                     }
+                    validateUserForm();
                 });
             }
 
@@ -494,8 +541,157 @@
                     }
 
                     this.value = value;
+
+                    // Validate form after phone input
+                    if (this.closest('#user-form')) {
+                        validateUserForm();
+                    } else if (this.closest('#admin-form')) {
+                        validateAdminForm();
+                    }
                 });
             });
+
+            // Add event listeners for form validation
+            if (nameInput) {
+                nameInput.addEventListener('input', validateUserForm);
+            }
+
+            if (emailInput) {
+                emailInput.addEventListener('input', validateUserForm);
+            }
+
+            if (yearLevelSelect) {
+                yearLevelSelect.addEventListener('change', validateUserForm);
+            }
+
+            if (collegeSelect) {
+                collegeSelect.addEventListener('change', validateUserForm);
+            }
+
+            if (courseSelect) {
+                courseSelect.addEventListener('change', validateUserForm);
+            }
+
+            // Admin form validation listeners
+            if (adminNameInput) {
+                adminNameInput.addEventListener('input', validateAdminForm);
+            }
+
+            if (adminEmailInput) {
+                adminEmailInput.addEventListener('input', validateAdminForm);
+            }
+
+            if (adminSexInputs) {
+                adminSexInputs.forEach(input => {
+                    input.addEventListener('change', validateAdminForm);
+                });
+            }
+
+            function validateUserForm() {
+                if (!saveUserBtn) return;
+
+                const name = nameInput ? nameInput.value.trim() : '';
+                const email = emailInput ? emailInput.value.trim() : '';
+                const phone = phoneInput ? phoneInput.value.trim() : '';
+                const role = roleSelect ? roleSelect.value : '';
+                const yearLevel = yearLevelSelect ? yearLevelSelect.value : '';
+                const college = collegeSelect ? collegeSelect.value : '';
+                const course = courseSelect ? courseSelect.value : '';
+
+                let isValid = true;
+
+                // Basic validation for all roles
+                if (!name || !email) {
+                    isValid = false;
+                }
+
+                // Phone validation (must be exactly 10 digits if provided)
+                if (phone && phone.length !== 10) {
+                    isValid = false;
+                }
+
+                // Additional validation for students
+                if (role === 'student') {
+                    if (!yearLevel || !college || !course) {
+                        isValid = false;
+                    }
+                }
+
+                saveUserBtn.disabled = !isValid;
+
+                // Update button style based on validation
+                if (isValid) {
+                    saveUserBtn.classList.remove('disabled');
+                    saveUserBtn.style.opacity = '1';
+                    saveUserBtn.style.cursor = 'pointer';
+                } else {
+                    saveUserBtn.classList.add('disabled');
+                    saveUserBtn.style.opacity = '0.6';
+                    saveUserBtn.style.cursor = 'not-allowed';
+                }
+
+                return isValid;
+            }
+
+            function validateAdminForm() {
+                if (!saveAdminBtn) return;
+
+                const name = adminNameInput ? adminNameInput.value.trim() : '';
+                const email = adminEmailInput ? adminEmailInput.value.trim() : '';
+                const phone = adminPhoneInput ? adminPhoneInput.value.trim() : '';
+                const position = adminPositionInput ? adminPositionInput.value.trim() : '';
+
+                // Check if at least one sex option is selected
+                let sexSelected = false;
+                if (adminSexInputs) {
+                    sexSelected = Array.from(adminSexInputs).some(input => input.checked);
+                }
+
+                let isValid = true;
+
+                // Basic validation for admin
+                if (!name || !email || !sexSelected || !position) {
+                    isValid = false;
+                }
+
+                // Phone validation (must be exactly 10 digits if provided)
+                if (phone && phone.length !== 10) {
+                    isValid = false;
+                }
+
+                if (adminPositionInput) {
+                    adminPositionInput.addEventListener('input', validateAdminForm);
+                }
+                saveAdminBtn.disabled = !isValid;
+
+                // Update button style based on validation
+                if (isValid) {
+                    saveAdminBtn.classList.remove('disabled');
+                    saveAdminBtn.style.opacity = '1';
+                    saveAdminBtn.style.cursor = 'pointer';
+                } else {
+                    saveAdminBtn.classList.add('disabled');
+                    saveAdminBtn.style.opacity = '0.6';
+                    saveAdminBtn.style.cursor = 'not-allowed';
+                }
+
+                return isValid;
+            }
+
+            function resetStudentFields() {
+                if (yearLevelSelect) yearLevelSelect.value = '';
+                if (collegeSelect) collegeSelect.value = '';
+                if (courseSelect) courseSelect.value = '';
+                if (yearLevelSelect) yearLevelSelect.required = false;
+                if (collegeSelect) collegeSelect.required = false;
+                if (courseSelect) courseSelect.required = false;
+
+                validateUserForm();
+            }
+
+            // Initial validation
+            validateUserForm();
+            validateAdminForm();
         });
     </script>
 @endpush

@@ -36,7 +36,6 @@ class Facility extends Model
     {
         return $this->hasMany(Price::class);
     }
-
     public function availabilities()
     {
         return $this->hasMany(Availability::class);
@@ -63,5 +62,18 @@ class Facility extends Model
 
     //     return $price ? $price->value : 0;
     // }
+    // public function addons()
+    // {
+    //     return $this->morphToMany(Addon::class, 'addonable');
+    // }
 
+    public function addons()
+    {
+        return $this->hasMany(Addon::class);
+    }
+
+    public function discounts()
+    {
+        return $this->belongsToMany(Discount::class, 'discount_facility', 'facility_id', 'discount_id');
+    }
 }

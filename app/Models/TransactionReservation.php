@@ -14,15 +14,16 @@ class TransactionReservation extends Model
         'facility_attribute_id',
         'payment_id',
         'price_id',
+
         'quantity',
         'user_id',
         'status',
     ];
 
-    public function facility()
-    {
-        return $this->belongsTo(Facility::class);
-    }
+    // public function facility()
+    // {
+    //     return $this->belongsTo(Facility::class);
+    // }
     public function availability()
     {
         return $this->belongsTo(Availability::class);
@@ -46,5 +47,10 @@ class TransactionReservation extends Model
     public function payment()
     {
         return $this->belongsTo(Payment::class);
+    }
+
+    public function addonTransactions()
+    {
+        return $this->hasMany(AddonTransaction::class, 'transaction_reservation_id');
     }
 }

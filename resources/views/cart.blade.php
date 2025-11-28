@@ -142,10 +142,12 @@
                                         </td>
                                         <td>
                                             <form action="{{ route('cart.item.remove', ['rowId' => $item->rowId]) }}"
-                                                method="post">
+                                                method="post" class="remove-item-form">
                                                 @csrf
                                                 @method('DELETE')
-                                                <a href="javascript:void(0)" class="remove-cart btn-action">
+                                                <a href="javascript:void(0)" class="remove-cart btn-action"
+                                                    data-row-id="{{ $item->rowId }}"
+                                                    data-item-name="{{ $item->name }}">
                                                     <svg width="10" height="10" viewBox="0 0 10 10" fill="#767676"
                                                         xmlns="http://www.w3.org/2000/svg">
                                                         <path
@@ -168,10 +170,10 @@
                     <button class="btn btn-black">
                         <a href="{{ route('shop.index') }}" class="text-white">Continue Shopping</a>
                     </button>
-                    <form action="{{ route('cart.empty') }}" method="post">
+                    <form action="{{ route('cart.empty') }}" method="post" id="clear-cart-form">
                         @csrf
                         @method('DELETE')
-                        <button class="btn btn-black text-uppercase" type="submit">CLEAR CART</button>
+                        <button class="btn btn-black text-uppercase" type="button" id="clear-cart-btn">CLEAR CART</button>
                     </form>
                 </div>
                 <div class="cart-total-container">
@@ -195,10 +197,51 @@
 @endsection
 
 @push('scripts')
+    <!-- Include SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         $(document).ready(function() {
-            $(".remove-cart").on("click", function() {
-                $(this).closest('form').submit();
+            // Handle remove item click with SweetAlert confirmation
+            $(".remove-cart").on("click", function(e) {
+                e.preventDefault();
+                const form = $(this).closest('form');
+                const itemName = $(this).data('item-name');
+
+                Swal.fire({
+                    title: 'Remove Item',
+                    text: `Are you sure you want to remove "${itemName}" from your cart?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, remove it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+
+            // Handle clear cart with confirmation
+            $("#clear-cart-btn").on("click", function(e) {
+                e.preventDefault();
+
+                Swal.fire({
+                    title: 'Clear Cart',
+                    text: 'Are you sure you want to remove all items from your cart?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, clear cart!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $("#clear-cart-form").submit();
+                    }
+                });
             });
         });
 
@@ -207,8 +250,6 @@
             const variantForms = document.querySelectorAll('.variant-form');
             const decreaseBtns = document.querySelectorAll('.cart-qty-control__reduce');
             const increaseBtns = document.querySelectorAll('.cart-qty-control__increase');
-
-
 
             variantSelects.forEach(select => {
                 select.addEventListener('change', function() {
@@ -233,6 +274,37 @@
             });
 
             function updateCart(rowId, action) {
+                // Get current quantity
+                const currentQty = parseInt(document.querySelector(`#cart-item-${rowId} .qty-control__number`)
+                    .value);
+                const itemName = document.querySelector(`#cart-item-${rowId} .shopping-cart__product-item p`)
+                    .textContent.trim();
+
+                // If decreasing and current quantity is 1, show confirmation
+                if (action === 'decrease' && currentQty === 1) {
+                    Swal.fire({
+                        title: 'Remove Item',
+                        text: `This will remove "${itemName}" from your cart. Are you sure?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, remove it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Proceed with the decrease which will remove the item
+                            performCartUpdate(rowId, action);
+                        }
+                    });
+                    return;
+                }
+
+                // For other cases, proceed normally
+                performCartUpdate(rowId, action);
+            }
+
+            function performCartUpdate(rowId, action) {
                 fetch(`/cart/qty/${action}/${rowId}`, {
                         method: 'PUT',
                         headers: {
@@ -244,17 +316,46 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            document.querySelector(`#cart-item-${rowId} .qty-control__number`).value = data
-                                .newQty;
-                            document.querySelector(`#cart-item-${rowId} .item-total`).textContent =
-                                `₱${data.itemTotal}`;
+                            // If item was removed (quantity became 0), remove the row from DOM
+                            if (data.newQty === 0 || data.removed) {
+                                const row = document.querySelector(`#cart-item-${rowId}`);
+                                if (row) {
+                                    row.remove();
+                                }
+                                // Check if cart is empty and reload page
+                                const remainingItems = document.querySelectorAll('.cart-table tbody tr');
+                                if (remainingItems.length === 0) {
+                                    location.reload();
+                                }
+                            } else {
+                                // Update the quantity and totals
+                                document.querySelector(`#cart-item-${rowId} .qty-control__number`).value = data
+                                    .newQty;
+                                document.querySelector(`#cart-item-${rowId} .item-total`).textContent =
+                                    `₱${data.itemTotal}`;
+                            }
 
+                            // Update cart total
                             document.querySelector('#total').textContent = `₱${data.total}`;
                         } else {
-                            alert(data.error);
+                            // Show error message
+                            Swal.fire({
+                                title: 'Error',
+                                text: data.error || 'An error occurred while updating the cart.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
                         }
                     })
-                    .catch(error => console.error('Error:', error));
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'An error occurred while updating the cart.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    });
             }
 
             decreaseBtns.forEach(btn => {
