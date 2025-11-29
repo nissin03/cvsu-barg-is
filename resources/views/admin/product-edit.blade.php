@@ -85,6 +85,64 @@
             cursor: pointer;
             border-radius: 4px;
         }
+
+        /* Scrollable container for variants */
+        .variant-scroll-container {
+            max-height: 500px;
+            /* Adjust based on your needs */
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 10px;
+        }
+
+        /* Custom scrollbar styling */
+        .variant-scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .variant-scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .variant-scroll-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .variant-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Variant card styling */
+        .variant-fields {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fff;
+            position: relative;
+        }
+
+        .variant-fields:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Variant header */
+        .variant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .variant-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
     </style>
     <!-- main-content-wrap -->
     <div class="main-content-inner">
@@ -391,7 +449,8 @@
                 </div>
 
                 <div class="wg-box">
-                    <div id="variant-fields-container" style="{{ $hasVariant ? 'display: block;' : 'display: none;' }}">
+                    <div id="variant-fields-container" style="{{ $hasVariant ? 'display: block;' : 'display: none;' }}"
+                        class="variant-scroll-container">
                         @foreach ($product->attributeValues as $variant)
                             <div class="variant-fields" data-variant-index="{{ $loop->index }}"
                                 data-existing-variant-id="{{ $variant->id }}">
