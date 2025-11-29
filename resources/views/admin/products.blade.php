@@ -743,6 +743,11 @@
             function performFilter() {
                 lastScrollPosition = $(window).scrollTop();
 
+                const searchInput = $('#product-search');
+                const searchValue = searchInput.val();
+                const cursorPosition = searchInput[0].selectionStart;
+                const wasSearchFocused = searchInput.is(':focus')
+
                 // Get all filter values
                 const search = $('#product-search').val();
                 const category = $('#category').val();
@@ -790,6 +795,13 @@
                         initRowClicks();
                         updateActiveFiltersDisplay();
                         $(window).scrollTop(lastScrollPosition);
+                        if (wasSearchFocused) {
+                            const newSearchInput = $('#product-search');
+                            newSearchInput.focus();
+                            if (newSearchInput[0].setSelectionRange) {
+                                newSearchInput[0].setSelectionRange(cursorPosition, cursorPosition);
+                            }
+                        }
                         showNotification(`Found ${response.count} product(s)`, 'info', 2000);
                     },
                     error: function(xhr, status, error) {
@@ -798,6 +810,9 @@
                         showNotification(
                             'An error occurred while filtering products. Please try again.', 'error'
                         );
+                        if (wasSearchFocused) {
+                            $('#product-search').focus();
+                        }
                     }
                 });
             }
@@ -805,9 +820,10 @@
             function showLoadingState(isLoading) {
                 if (isLoading) {
                     $('#loading-indicator').show();
-                    $('.filter-select, .filter-input, #product-search').prop('disabled', true);
+                    $('.filter-select').prop('disabled', true);
                     $('#applyFilters').prop('disabled', true).html(
-                        '<span class="spinner-border spinner-border-sm me-1"></span>Loading...');
+                        '<span class="spinner-border spinner-border-sm me-1"></span>Loading...'
+                    );
                 } else {
                     $('#loading-indicator').hide();
                     $('.filter-select, .filter-input, #product-search').prop('disabled', false);

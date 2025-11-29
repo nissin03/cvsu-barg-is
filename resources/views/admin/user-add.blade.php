@@ -85,6 +85,15 @@
                         <span class="alert alert-danger text-center">{{ $message }}</span>
                     @enderror
 
+                    <fieldset class="position" id="positionFieldset" style="display: none;">
+                        <div class="body-title mb-10">Position <span class="tf-color-1">*</span></div>
+                        <input class="mb-10" type="text" placeholder="Enter position" name="position"
+                            id="positionInput">
+                    </fieldset>
+                    @error('position')
+                        <span class="alert alert-danger text-center">{{ $message }}</span>
+                    @enderror
+
                     <!-- Year Level -->
                     <fieldset class="year_level" id="yearLevelFieldset">
                         <div class="body-title mb-10">Year Level</div>
@@ -393,8 +402,10 @@
             const yearLevelFieldset = document.getElementById('yearLevelFieldset');
             const collegeFieldset = document.getElementById('collegeFieldset');
             const courseFieldset = document.getElementById('courseFieldset');
+            const positionFieldset = document.getElementById('positionFieldset');
             const collegeSelect = document.getElementById('college_id');
             const courseSelect = document.getElementById('course_id');
+            const positionInput = document.getElementById('positionInput');
             const saveUserBtn = userForm.querySelector('button[type="submit"]');
 
             // Admin form specific elements
@@ -471,27 +482,52 @@
                     }
                 });
             }
-
             // Role change handler
             if (roleSelect) {
                 roleSelect.addEventListener('change', function() {
+                    const positionFieldset = document.getElementById('positionFieldset');
+                    const positionInput = document.getElementById('positionInput');
+
                     if (this.value === 'student') {
                         yearLevelFieldset.style.display = 'block';
                         collegeFieldset.style.display = 'block';
                         courseFieldset.style.display = 'block';
+                        positionFieldset.style.display = 'none';
+
                         yearLevelSelect.required = true;
                         collegeSelect.required = true;
                         courseSelect.required = true;
-                    } else {
+                        positionInput.required = false;
+                        positionInput.value = '';
+                    } else if (this.value === 'employee') {
                         yearLevelFieldset.style.display = 'none';
                         collegeFieldset.style.display = 'none';
                         courseFieldset.style.display = 'none';
+                        positionFieldset.style.display = 'block';
+
                         yearLevelSelect.required = false;
                         collegeSelect.required = false;
                         courseSelect.required = false;
+                        positionInput.required = true;
+
                         yearLevelSelect.value = '';
                         collegeSelect.value = '';
                         courseSelect.value = '';
+                    } else { // non-employee
+                        yearLevelFieldset.style.display = 'none';
+                        collegeFieldset.style.display = 'none';
+                        courseFieldset.style.display = 'none';
+                        positionFieldset.style.display = 'none';
+
+                        yearLevelSelect.required = false;
+                        collegeSelect.required = false;
+                        courseSelect.required = false;
+                        positionInput.required = false;
+
+                        yearLevelSelect.value = '';
+                        collegeSelect.value = '';
+                        courseSelect.value = '';
+                        positionInput.value = '';
                     }
                     validateUserForm();
                 });
@@ -572,6 +608,10 @@
                 courseSelect.addEventListener('change', validateUserForm);
             }
 
+            if (positionInput) {
+                positionInput.addEventListener('input', validateUserForm);
+            }
+
             // Admin form validation listeners
             if (adminNameInput) {
                 adminNameInput.addEventListener('input', validateAdminForm);
@@ -587,6 +627,11 @@
                 });
             }
 
+            if (adminPositionInput) {
+                adminPositionInput.addEventListener('input', validateAdminForm);
+            }
+
+
             function validateUserForm() {
                 if (!saveUserBtn) return;
 
@@ -597,6 +642,8 @@
                 const yearLevel = yearLevelSelect ? yearLevelSelect.value : '';
                 const college = collegeSelect ? collegeSelect.value : '';
                 const course = courseSelect ? courseSelect.value : '';
+                const position = positionInput ? positionInput.value.trim() : '';
+
 
                 let isValid = true;
 
@@ -613,6 +660,13 @@
                 // Additional validation for students
                 if (role === 'student') {
                     if (!yearLevel || !college || !course) {
+                        isValid = false;
+                    }
+                }
+
+                // Additional validation for employees
+                if (role === 'employee') {
+                    if (!position) {
                         isValid = false;
                     }
                 }
@@ -682,9 +736,11 @@
                 if (yearLevelSelect) yearLevelSelect.value = '';
                 if (collegeSelect) collegeSelect.value = '';
                 if (courseSelect) courseSelect.value = '';
+                if (positionInput) positionInput.value = '';
                 if (yearLevelSelect) yearLevelSelect.required = false;
                 if (collegeSelect) collegeSelect.required = false;
                 if (courseSelect) courseSelect.required = false;
+                if (positionInput) positionInput.required = false;
 
                 validateUserForm();
             }

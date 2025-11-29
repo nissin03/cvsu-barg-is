@@ -408,6 +408,7 @@ class AdminController extends Controller
         ], [
             'name.required' => 'The category name is required.',
             'image.required' => 'The category image is required.',
+            'image.max' => 'Please upload an image that is 2MB or smaller.',
             'slug.unique' => 'The slug must be unique. This slug is already taken.',
             'parent_id.exists' => 'The selected parent category does not exist.',
         ]);

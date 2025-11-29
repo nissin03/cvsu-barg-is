@@ -29,15 +29,19 @@
             </div>
 
             <div class="wg-box">
-                <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
+                <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-4">
                     <div class="wg-filter flex-grow">
                         <form class="form-search" onsubmit="return false;">
                             <fieldset class="name">
                                 <input type="text" id="addon-search"
                                     placeholder="Search addons by name, description, facility..." name="search"
-                                    tabindex="2" value="{{ request('search') }}" aria-required="true">
+                                    aria-required="true" value="{{ request('search') }}">
                             </fieldset>
-                            <button type="submit" style="display:none"></button>
+                            <div class="button-submit">
+                                <button type="button" style="display:none;">
+                                    <i class="icon-search"></i>
+                                </button>
+                            </div>
                         </form>
                     </div>
 
@@ -45,7 +49,8 @@
                         <span class="badge bg-primary fs-6 py-2 px-3" id="activeFiltersCount" style="display:none;">0
                             filters</span>
                         <button class="btn btn-outline-primary btn-lg position-relative" id="filterToggle" type="button">
-                            <i class="icon-filter me-1"></i> Filters
+                            <i class="icon-filter me-1"></i>
+                            Filters
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                                 id="filterBadge" style="display:none;">0</span>
                         </button>
@@ -55,6 +60,7 @@
                     </div>
                 </div>
 
+                <!-- Filter Container -->
                 <div class="collapse mb-4" id="filterContainer">
                     <div class="card border-0 shadow-sm">
                         <div class="card-body p-4">
@@ -91,7 +97,6 @@
                                             <option value="per_item"
                                                 {{ request('price_type') == 'per_item' ? 'selected' : '' }}>Per Item
                                             </option>
-
                                         </select>
                                     </div>
                                 </div>
@@ -165,8 +170,8 @@
                                 </div>
                             </div>
 
-                            <div class="d-flex align-items-center mt-4">
-                                <button class="btn btn-primary btn-lg me-4" id="applyFilters">
+                            <div class="d-flex align-items-center mt-4 gap-3">
+                                <button class="btn btn-primary btn-lg" id="applyFilters">
                                     <i class="icon-filter me-1"></i> Apply Filters
                                 </button>
                                 <button class="btn btn-outline-secondary btn-lg" id="resetFilters">
@@ -177,6 +182,7 @@
                     </div>
                 </div>
 
+                <!-- Active Filters Display -->
                 <div class="active-filters-row mb-4" id="activeFiltersRow" style="display:none;">
                     <div class="card border-0 bg-light">
                         <div class="card-body py-2">
@@ -188,70 +194,25 @@
                     </div>
                 </div>
 
-                <div class="action-buttons mb-3">
-                    <a class="tf-button w-auto" href="{{ route('admin.addons.create') }}">
-                        <i class="icon-plus"></i>Add New Add-on
-                    </a>
-                    <a class="tf-button w-auto" href="{{ route('admin.addons.archive') }}">
-                        <i class="icon-archive"></i> Archived Add-ons
-                    </a>
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a class="tf-button w-auto" href="{{ route('admin.addons.create') }}">
+                            <i class="icon-plus"></i>Add New Add-on
+                        </a>
+                        <a class="tf-button w-auto" href="{{ route('admin.addons.archive') }}">
+                            <i class="icon-archive"></i> Archived Add-ons
+                        </a>
+                    </div>
                 </div>
 
+                @if (Session::has('status'))
+                    <p class="alert alert-success">{{ Session::get('status') }}</p>
+                @endif
                 <div class="table-all-user g-table">
                     <div class="table-responsive">
                         <div class="mobile-cards d-block d-md-none" id="js-addons-mobile-target">
-                            @forelse ($addons as $addon)
-                                <div class="mobile-card">
-                                    <div class="mobile-card-header">
-                                        <h5 class="mobile-card-title">{{ $addon->name }}</h5>
-                                        <span
-                                            class="badge {{ $addon->is_available ? 'badge-success' : 'badge-secondary' }}">
-                                            {{ $addon->is_available ? 'Available' : 'Unavailable' }}
-                                        </span>
-                                    </div>
-                                    <div class="mobile-card-body">
-                                        <div class="mobile-card-details">
-                                            <p><strong>Price:</strong> ₱{{ number_format($addon->base_price, 2) }}
-                                                ({{ ucfirst(str_replace('_', ' ', $addon->price_type)) }})
-                                            </p>
-                                            <p><strong>Type:</strong>
-                                                {{ $addon->is_based_on_quantity ? 'Quantity-based' : 'Flat rate' }}</p>
-                                            <p><strong>Refundable:</strong> {{ $addon->is_refundable ? 'Yes' : 'No' }}</p>
-                                            <p><strong>Show:</strong>
-                                                <span
-                                                    class="badge {{ $addon->show == 'staff' ? 'badge-purple' : 'badge-info' }}">
-                                                    {{ ucfirst($addon->show) }}
-                                                </span>
-                                            </p>
-                                        </div>
-                                        <div class="mobile-card-actions">
-                                            <a href="{{ route('admin.addons.edit', $addon->id) }}"
-                                                class="btn btn-sm btn-primary mobile-btn">
-                                                <i class="icon-edit-3"></i> Edit
-                                            </a>
-                                            <form action="{{ route('admin.addons.destroy', $addon->id) }}" method="POST"
-                                                class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-warning delete mobile-btn">
-                                                    <i class="icon-archive"></i> Archive
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="empty-state">
-                                    <div class="empty-icon">
-                                        <i class="icon-package"></i>
-                                    </div>
-                                    <h4>No Addons Found</h4>
-                                    <p>Start by creating your first addon.</p>
-                                    <a href="{{ route('admin.addons.create') }}" class="btn btn-primary">
-                                        <i class="icon-plus"></i> Add New Addon
-                                    </a>
-                                </div>
-                            @endforelse
+                            @include('partials._addons-mobile', ['addons' => $addons])
                         </div>
 
                         <table class="table table-striped table-bordered d-none d-md-table">
@@ -268,92 +229,14 @@
                                 </tr>
                             </thead>
                             <tbody id="js-addons-partial-target">
-                                @forelse ($addons as $addon)
-                                    <tr>
-                                        <td class="name-cell">
-                                            <div class="name text-truncate" title="{{ $addon->name }}">
-                                                <strong>{{ $addon->name }}</strong>
-                                            </div>
-                                            @if ($addon->description)
-                                                <div class="text-tiny text-muted text-truncate"
-                                                    title="{{ $addon->description }}">
-                                                    {{ Str::limit($addon->description, 50) }}
-                                                </div>
-                                            @endif
-                                        </td>
-                                        <td class="facility-cell">
-                                            @if ($addon->facility)
-                                                <span class="text-primary">{{ $addon->facility->name }}</span>
-                                                <div class="text-tiny text-muted">ID: {{ $addon->facility->id }}</div>
-                                            @else
-                                                <span class="text-muted">—</span>
-                                            @endif
-                                        </td>
-                                        <td class="price-cell">
-                                            ₱ {{ number_format($addon->base_price, 2) }}
-                                        </td>
-                                        <td class="type-cell">
-                                            {{ ucfirst(str_replace('_', ' ', $addon->price_type)) }}
-                                        </td>
-                                        <td class="quantity-cell">
-                                            <span
-                                                class="badge {{ $addon->is_based_on_quantity ? 'badge-info' : 'badge-secondary' }}">
-                                                {{ $addon->is_based_on_quantity ? 'Yes' : 'No' }}
-                                            </span>
-                                        </td>
-                                        <td class="status-cell">
-                                            <span
-                                                class="badge {{ $addon->is_available ? 'badge-success' : 'badge-secondary' }}">
-                                                {{ $addon->is_available ? 'Available' : 'Unavailable' }}
-                                            </span>
-                                        </td>
-                                        <td class="refundable-cell">
-                                            <span
-                                                class="badge {{ $addon->is_refundable ? 'badge-warning' : 'badge-secondary' }}">
-                                                {{ $addon->is_refundable ? 'Yes' : 'No' }}
-                                            </span>
-                                        </td>
-                                        <td class="action-cell">
-                                            <div class="list-icon-function">
-                                                <a href="{{ route('admin.addons.edit', $addon->id) }}"
-                                                    title="Edit Addon">
-                                                    <div class="item edit">
-                                                        <i class="icon-edit-3"></i>
-                                                    </div>
-                                                </a>
-                                                <form action="{{ route('admin.addons.destroy', $addon->id) }}"
-                                                    method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="item text-danger delete"
-                                                        style="border:none;background:none;" title="Delete Addon">
-                                                        <i class="icon-archive"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="8" class="text-center empty-state-table">
-                                            <div class="empty-icon">
-                                                <i class="icon-package"></i>
-                                            </div>
-                                            <h5>No Addons Found</h5>
-                                            <p>Start by creating your first addon.</p>
-                                            <a href="{{ route('admin.addons.create') }}" class="btn btn-primary">
-                                                <i class="icon-plus"></i> Add New Addon
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforelse
+                                @include('partials._addons-table', ['addons' => $addons])
                             </tbody>
                         </table>
                     </div>
                     <div class="divider"></div>
                     <div class="pagination-container" id="js-addons-partial-target-pagination"
                         style="padding:15px 0;overflow:visible;min-height:60px;">
-                        {{ $addons->appends(request()->query())->links('pagination::bootstrap-5') }}
+                        @include('partials._addons-pagination', ['addons' => $addons])
                     </div>
                 </div>
             </div>
@@ -1276,6 +1159,7 @@
                     },
                     success: function(response) {
                         $('#js-addons-partial-target').html(response.addons);
+                        $('#js-addons-mobile-target').html(response.mobile);
                         $('#js-addons-partial-target-pagination').html(response.pagination);
                         showLoadingState(false);
                         window.history.pushState({}, '', url);
@@ -1283,7 +1167,7 @@
                         initArchiveButtons();
                         updateActiveFiltersDisplay();
                         $(window).scrollTop(lastScrollPosition);
-                        showNotification(`Found ${response.count} add-on(s)`, 'info', 2000);
+                        showNotification('Found ' + response.count + ' add-on(s)', 'info', 2000);
                     },
                     error: function() {
                         showLoadingState(false);
@@ -1323,6 +1207,7 @@
                         },
                         success: function(response) {
                             $('#js-addons-partial-target').html(response.addons);
+                            $('#js-addons-mobile-target').html(response.mobile);
                             $('#js-addons-partial-target-pagination').html(response.pagination);
                             showLoadingState(false);
                             window.history.pushState({}, '', url);
@@ -1341,109 +1226,133 @@
             function updateActiveFiltersDisplay() {
                 let count = 0;
                 const filterTags = $('#filterTags');
+                const activeFiltersRow = $('#activeFiltersRow');
+                const activeFiltersCount = $('#activeFiltersCount');
+                const clearAllButton = $('#clearAllFilters');
+                const filterBadge = $('#filterBadge');
+
                 filterTags.empty();
                 const urlParams = new URLSearchParams(window.location.search);
 
-                const filters = [{
-                        param: 'search',
-                        label: 'Search',
-                        format: v => `"${v}"`
-                    },
-                    {
-                        param: 'facility',
-                        label: 'Facility',
-                        selector: '#facility'
-                    },
-                    {
-                        param: 'price_type',
-                        label: 'Price Type',
-                        selector: '#price_type'
-                    },
-                    {
-                        param: 'availability',
-                        label: 'Status',
-                        selector: '#availability'
-                    },
-                    {
-                        param: 'refundable',
-                        label: 'Refundable',
-                        selector: '#refundable'
-                    },
-                    {
-                        param: 'billing_cycle',
-                        label: 'Billing',
-                        selector: '#billing_cycle'
-                    },
-                    {
-                        param: 'sort_by',
-                        label: 'Sort',
-                        selector: '#sort_by',
-                        skip: 'newest'
-                    }
-                ];
+                // Search filter
+                if (urlParams.get('search')) {
+                    count++;
+                    addFilterTag('Search: "' + urlParams.get('search') + '"', 'search');
+                }
 
-                filters.forEach(f => {
-                    const val = urlParams.get(f.param);
-                    if (val && val !== f.skip) {
-                        count++;
-                        const text = f.format ?
-                            f.format(val) :
-                            (f.selector ? $(`${f.selector} option:selected`).text() : val);
-                        addFilterTag(`${f.label}: ${text}`, f.param);
-                    }
-                });
+                // Facility filter
+                if (urlParams.get('facility')) {
+                    count++;
+                    const facilityText = $('#facility option:selected').text();
+                    addFilterTag('Facility: ' + facilityText, 'facility');
+                }
 
+                // Price Type filter
+                if (urlParams.get('price_type')) {
+                    count++;
+                    const priceTypeText = $('#price_type option:selected').text();
+                    addFilterTag('Price Type: ' + priceTypeText, 'price_type');
+                }
+
+                // Availability filter
+                if (urlParams.get('availability')) {
+                    count++;
+                    const availabilityText = $('#availability option:selected').text();
+                    addFilterTag('Status: ' + availabilityText, 'availability');
+                }
+
+                // Refundable filter
+                if (urlParams.get('refundable')) {
+                    count++;
+                    const refundableText = $('#refundable option:selected').text();
+                    addFilterTag('Refundable: ' + refundableText, 'refundable');
+                }
+
+                // Billing Cycle filter
+                if (urlParams.get('billing_cycle')) {
+                    count++;
+                    const billingCycleText = $('#billing_cycle option:selected').text();
+                    addFilterTag('Billing: ' + billingCycleText, 'billing_cycle');
+                }
+
+                // Sort By filter
+                if (urlParams.get('sort_by') && urlParams.get('sort_by') !== 'newest') {
+                    count++;
+                    const sortByText = $('#sort_by option:selected').text();
+                    addFilterTag('Sort: ' + sortByText, 'sort_by');
+                }
+
+                // Show/hide filter UI elements
                 if (count > 0) {
-                    $('#activeFiltersCount').show().text(`${count} filter${count > 1 ? 's' : ''}`);
-                    $('#clearAllFilters, #activeFiltersRow').show();
-                    $('#filterBadge').show().text(count);
+                    activeFiltersCount.show().text(count + ' filter' + (count > 1 ? 's' : ''));
+                    clearAllButton.show();
+                    activeFiltersRow.show();
+                    filterBadge.show().text(count);
                 } else {
-                    $('#activeFiltersCount, #clearAllFilters, #activeFiltersRow, #filterBadge').hide();
+                    activeFiltersCount.hide();
+                    clearAllButton.hide();
+                    activeFiltersRow.hide();
+                    filterBadge.hide();
                 }
             }
 
             function addFilterTag(text, filterName) {
-                const tag = $(`
-                    <span class="filter-tag-enhanced">
-                        ${text}
-                        <button type="button" class="btn-close icon-x text-danger" data-filter="${filterName}" title="Remove"></button>
-                    </span>
-                `);
+                const tag = $('<span class="filter-tag-enhanced">' +
+                    text +
+                    '<button type="button" class="btn-close icon-x text-danger" data-filter="' + filterName +
+                    '" title="Remove filter"></button>' +
+                    '</span>'
+                );
 
                 tag.find('.btn-close').on('click', function() {
-                    const filter = $(this).data('filter');
-                    if (filter === 'search') {
+                    const filterToRemove = $(this).data('filter');
+                    if (filterToRemove === 'search') {
                         $('#addon-search').val('');
                     } else {
-                        $(`#${filter}`).val('');
+                        $('#' + filterToRemove).val('');
                     }
                     performFilter();
                 });
 
-                filterTags.append(tag);
+                $('#filterTags').append(tag);
             }
 
-            $('#applyFilters').on('click', performFilter);
-            $('#facility, #price_type, #availability, #refundable, #billing_cycle, #sort_by').on('change',
-                performFilter);
+            // Apply filters button
+            $('#applyFilters').on('click', function() {
+                performFilter();
+            });
 
+            // Filter change events
+            $('#facility, #price_type, #availability, #refundable, #billing_cycle, #sort_by').on('change',
+            function() {
+                performFilter();
+            });
+
+            // Clear all filters
             $('#clearAllFilters, #resetFilters').on('click', function() {
-                $('#addon-search, #facility, #price_type, #availability, #refundable, #billing_cycle').val(
-                    '');
+                $('#addon-search').val('');
+                $('#facility').val('');
+                $('#price_type').val('');
+                $('#availability').val('');
+                $('#refundable').val('');
+                $('#billing_cycle').val('');
                 $('#sort_by').val('newest');
                 performFilter();
             });
 
+            // Archive button confirmation
             function initArchiveButtons() {
                 $('.delete').off('click').on('click', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     var form = $(this).closest('form');
                     var addonName = $(this).closest('tr, .mobile-card').find('.name, .mobile-card-title')
                         .text().trim();
 
                     Swal.fire({
                         title: 'Archive Add-on?',
-                        html: `<p>Are you sure you want to archive <strong>${addonName}</strong>?</p><p class="text-muted">This can be restored later.</p>`,
+                        html: '<p>Are you sure you want to archive <strong>' + addonName +
+                            '</strong>?</p><p class="text-muted">This can be restored later.</p>',
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#f59e0b',
@@ -1451,51 +1360,65 @@
                         confirmButtonText: '<i class="icon-archive"></i> Yes, Archive',
                         cancelButtonText: 'Cancel'
                     }).then((result) => {
-                        if (result.isConfirmed) form.submit();
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
                     });
                 });
             }
 
-            function showNotification(message, type = 'info', duration = 4000) {
-                const alertClass =
-                    type === 'success' ?
-                    'alert-success' :
-                    type === 'error' ?
-                    'alert-danger' :
-                    'alert-info';
+            // Show notification helper
+            function showNotification(message, type, duration) {
+                type = type || 'info';
+                duration = duration || 4000;
 
-                const notification = $(`
-                    <div class="alert ${alertClass} alert-dismissible fade show position-fixed" style="top:20px;right:20px;z-index:9999;min-width:300px;">
-                        ${message}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `);
+                const alertClass = type === 'success' ? 'alert-success' :
+                    type === 'error' ? 'alert-danger' :
+                    type === 'warning' ? 'alert-warning' : 'alert-info';
+
+                const notification = $('<div class="alert ' + alertClass +
+                    ' alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">' +
+                    message +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                    '</div>'
+                );
 
                 $('body').append(notification);
-                setTimeout(() => notification.fadeOut(function() {
-                    $(this).remove();
-                }), duration);
+
+                setTimeout(function() {
+                    notification.fadeOut(function() {
+                        $(this).remove();
+                    });
+                }, duration);
             }
 
+            // Keyboard shortcuts
             $(document).on('keydown', function(e) {
+                // Ctrl+Enter to apply filters
                 if ((e.ctrlKey || e.metaKey) && e.keyCode === 13) {
                     e.preventDefault();
                     performFilter();
                 }
+                // Escape to clear all filters
                 if (e.keyCode === 27) {
                     $('#clearAllFilters').click();
                 }
+                // Ctrl+F to open filters
                 if ((e.ctrlKey || e.metaKey) && e.keyCode === 70) {
                     e.preventDefault();
                     $('#filterToggle').click();
-                    setTimeout(() => $('#addon-search').focus(), 100);
+                    setTimeout(function() {
+                        $('#addon-search').focus();
+                    }, 100);
                 }
             });
 
+            // Initialize everything
             initPaginationEvents();
             initArchiveButtons();
             updateActiveFiltersDisplay();
 
+            // Success message from session
             @if (Session::has('success'))
                 Swal.fire({
                     icon: 'success',
@@ -1505,6 +1428,16 @@
                     showConfirmButton: false
                 });
             @endif
+
+            // Welcome tip for new users
+            if (window.location.search === '' || !window.location.search) {
+                setTimeout(function() {
+                    showNotification(
+                        '💡 Tip: Use Ctrl+F to open filters, Ctrl+Enter to apply, or Esc to clear all',
+                        'info', 6000
+                    );
+                }, 1000);
+            }
         });
     </script>
 @endpush

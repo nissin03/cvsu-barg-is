@@ -83,6 +83,7 @@ class AddonsController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'addons' => view('partials._addons-table', compact('addons'))->render(),
+                'mobile' => view('partials._addons-mobile', compact('addons'))->render(),
                 'pagination' => view('partials._addons-pagination', compact('addons'))->render(),
                 'count' => $count
             ]);

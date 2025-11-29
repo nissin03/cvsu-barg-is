@@ -36,12 +36,12 @@
                         <div class="wg-filter flex-grow">
                             <form class="form-search" onsubmit="return false;">
                                 <fieldset class="name">
-                                    <input type="text" id="user-search" class="filter-input"
-                                        placeholder="Search by name, email, college, or course..." name="search"
+                                    <input type="text" id="user-search"
+                                        placeholder="Search products by name, description..." name="search"
                                         aria-required="true" value="{{ request('search') }}">
                                 </fieldset>
                                 <div class="button-submit">
-                                    <button type="button" id="searchButton" style="display:none;">
+                                    <button type="button" style="display:none;">
                                         <i class="icon-search"></i>
                                     </button>
                                 </div>
