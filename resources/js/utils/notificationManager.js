@@ -233,25 +233,6 @@ class NotificationManager {
     /**
      * Remove all notifications
      */
-    // async removeAllNotifications() {
-    //     try {
-    //         const response = await this.axios.delete(
-    //             this.endpoints.destroyAll || "/admin/notifications/destroy-all"
-    //         );
-
-    //         if (response.data.status === "success") {
-    //             this.fetchNotifications();
-    //             this.showSuccess("All notifications removed");
-    //         }
-    //     } catch (error) {
-    //         console.error("Error removing all notifications:", error);
-    //         this.showError("Could not remove all notifications");
-    //     }
-    // }
-
-    /**
-     * Remove all notifications
-     */
     async removeAllNotifications() {
         try {
             const response = await this.axios.delete(
@@ -259,42 +240,7 @@ class NotificationManager {
             );
 
             if (response.data.status === "success") {
-                // Clear the UI immediately
-                const notificationList = document.querySelector(
-                    this.mountPointSelector
-                );
-                if (notificationList) {
-                    notificationList.innerHTML = `
-                    <div class="notification-item">
-                        <div class="notification-content">
-                            <p class="notification-text text-center">No notifications</p>
-                        </div>
-                    </div>
-                `;
-                }
-
-                // Clear the all notifications list too if it exists
-                const allList = document.getElementById(
-                    "all-notification-list"
-                );
-                if (allList) {
-                    allList.innerHTML = `
-                    <div class="notification-item">
-                        <div class="notification-content">
-                            <p class="notification-text text-center">No notifications</p>
-                        </div>
-                    </div>
-                `;
-                }
-
-                // Update count
-                const countElement = document.querySelector(
-                    ".notification-count"
-                );
-                if (countElement) {
-                    countElement.textContent = "0";
-                }
-
+                this.fetchNotifications();
                 this.showSuccess("All notifications removed");
             }
         } catch (error) {
