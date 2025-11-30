@@ -1,3 +1,4 @@
+    {{-- category-add.blade.php --}}
     @extends('layouts.admin')
     @section('content')
         <div class="main-content-inner">

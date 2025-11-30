@@ -95,20 +95,7 @@
                 $("#myFile").val('');
                 $(this).hide();
             });
-
-            // Auto-generate slug from name (optional)
-            $("input[name='name']").on("input", function() {
-                // If you have a slug field, uncomment below:
-                // $("input[name='slug']").val(StringToSlug($(this).val()));
-            });
         });
-
-        // Helper function for slug generation
-        function StringToSlug(Text) {
-            return Text.toLowerCase()
-                .replace(/[^\w ]+/g, "")
-                .replace(/ +/g, "-");
-        }
     </script>
 @endpush
 

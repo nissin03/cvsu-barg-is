@@ -402,20 +402,26 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'slug' => 'unique:categories,slug',
             'image' => 'required|mimes:png,jpg,jpeg|max:2048',
             'parent_id' => 'nullable|exists:categories,id'
         ], [
             'name.required' => 'The category name is required.',
             'image.required' => 'The category image is required.',
             'image.max' => 'Please upload an image that is 2MB or smaller.',
-            'slug.unique' => 'The slug must be unique. This slug is already taken.',
             'parent_id.exists' => 'The selected parent category does not exist.',
         ]);
 
+        $name = Str::title($request->name);
+        $slug = Str::slug($request->name);
+        if (Category::where('slug', $slug)->exists()) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['name' => 'A category with this name already exists. Please use a different name.']);
+        }
+
         $category = new Category();
-        $category->name = $request->name;
-        $category->slug = Str::slug($request->name);
+        $category->name = $name;
+        $category->slug = $slug;
         $category->parent_id = $request->parent_id;
 
         $image = $request->file('image');
@@ -446,14 +452,21 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'slug' => 'unique:categories,slug,' . $request->id,
             'image' => 'mimes:png,jpg,jpeg|max:2048',
             'parent_id' => 'nullable|exists:categories,id'
         ]);
 
+        $name = Str::title($request->name);
+        $slug = Str::slug($request->name);
+        if (Category::where('slug', $slug)->where('id', '!=', $request->id)->exists()) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['name' => 'A category with this name already exists. Please use a different name.']);
+        }
+
         $category = Category::find($request->id);
-        $category->name = $request->name;
-        $category->slug = Str::slug($request->name);
+        $category->name = $name;
+        $category->slug = $slug;
         $category->parent_id = $request->parent_id;
 
         if ($request->hasFile('image')) {
