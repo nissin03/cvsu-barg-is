@@ -72,8 +72,10 @@
     </div>
 
     <div id="roomContainer" class="mt-4">
-        <div class="row" id="roomCardsContainer">
-            <!-- Room cards will be rendered here -->
+        <div class="room-scroll-container">
+            <div class="row" id="roomCardsContainer" class="room-scroll-container">
+                <!-- Room cards will be rendered here -->
+            </div>
         </div>
     </div>
 

@@ -92,14 +92,11 @@
         /* Scrollable container for variants */
         .variant-scroll-container {
             max-height: 500px;
-            /* Adjust this value based on your needs */
             overflow-y: auto;
             overflow-x: hidden;
             padding-right: 10px;
-            /* Prevents content from hiding behind scrollbar */
         }
 
-        /* Optional: Custom scrollbar styling */
         .variant-scroll-container::-webkit-scrollbar {
             width: 8px;
         }

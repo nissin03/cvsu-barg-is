@@ -108,6 +108,34 @@ function setupRoomsManagement() {
     });
 }
 
+// Helper function to check if room name exists
+function isRoomNameUnique(roomName, excludeIndex = -1) {
+    return !rooms.some((room, index) => {
+        if (index === excludeIndex) return false; // Skip the current room being edited
+        return (
+            room.room_name &&
+            room.room_name.toLowerCase() === roomName.toLowerCase()
+        );
+    });
+}
+
+// Helper function to get duplicate room names from an array
+function getDuplicateRoomNames(newRooms, excludeIndices = []) {
+    const duplicates = [];
+    const existingRoomNames = rooms
+        .filter((room, index) => !excludeIndices.includes(index))
+        .map((room) => (room.room_name ? room.room_name.toLowerCase() : ""));
+
+    newRooms.forEach((newRoom) => {
+        const roomNameLower = newRoom.room_name.toLowerCase();
+        if (existingRoomNames.includes(roomNameLower)) {
+            duplicates.push(newRoom.room_name);
+        }
+    });
+
+    return duplicates;
+}
+
 function renderRoomList() {
     const container = $("#roomCardsContainer").empty();
 
@@ -256,6 +284,14 @@ function handleSaveRoom(e) {
         return;
     }
 
+    // Check for unique room name
+    if (!isRoomNameUnique(name, roomEditIndex)) {
+        alert(
+            `Room name "${name}" already exists. Please use a different name.`
+        );
+        return;
+    }
+
     if (roomEditMode && roomEditIndex !== -1) {
         rooms[roomEditIndex] = {
             room_name: name,
@@ -380,7 +416,52 @@ function handleEditSelectedRooms() {
 
             let hasChanges = false;
             let hasErrors = false;
+            let duplicateNames = [];
 
+            // First pass: validate all fields and check for duplicates
+            selected.forEach((index) => {
+                const newName = $(`.edit-room-name[data-index="${index}"]`)
+                    .val()
+                    .trim();
+                const newCapacity = $(
+                    `.edit-room-capacity[data-index="${index}"]`
+                )
+                    .val()
+                    .trim();
+
+                if (!newName || !newCapacity) {
+                    hasErrors = true;
+                    return;
+                }
+
+                // Check if the name is unique (excluding all selected rooms being edited)
+                if (!isRoomNameUnique(newName, index)) {
+                    // Check if it's not just keeping its own name
+                    const original = originalValues[index];
+                    if (
+                        newName.toLowerCase() !==
+                        original.room_name.toLowerCase()
+                    ) {
+                        duplicateNames.push(newName);
+                    }
+                }
+            });
+
+            if (hasErrors) {
+                alert("Name and capacity are required for all rooms.");
+                return;
+            }
+
+            if (duplicateNames.length > 0) {
+                alert(
+                    `The following room name(s) already exist: ${duplicateNames.join(
+                        ", "
+                    )}\n\nPlease use different names.`
+                );
+                return;
+            }
+
+            // Second pass: apply changes
             selected.forEach((index) => {
                 const newName = $(`.edit-room-name[data-index="${index}"]`)
                     .val()
@@ -393,11 +474,6 @@ function handleEditSelectedRooms() {
                 const newSexRestriction = $(
                     `.edit-room-sex-restriction[data-index="${index}"]`
                 ).val();
-
-                if (!newName || !newCapacity) {
-                    hasErrors = true;
-                    return;
-                }
 
                 const original = originalValues[index];
 
@@ -417,10 +493,6 @@ function handleEditSelectedRooms() {
                 }
             });
 
-            if (hasErrors) {
-                alert("Name and capacity are required for all rooms.");
-                return;
-            }
             modalBody.html(originalContent);
 
             $("#addMultipleRoomsModal").modal("hide");
@@ -459,13 +531,32 @@ function handleSaveBulkRooms() {
         return;
     }
 
+    // Generate preview and check for duplicates
     bulkRoomPreview = [];
+    const duplicates = [];
+
     for (let i = start; i <= end; i++) {
+        const roomName = `${prefix}${i}`;
+
+        // Check if this room name already exists
+        if (!isRoomNameUnique(roomName)) {
+            duplicates.push(roomName);
+        }
+
         bulkRoomPreview.push({
-            room_name: `${prefix}${i}`,
+            room_name: roomName,
             capacity: capacity,
             sex_restriction: sex,
         });
+    }
+
+    // If there are duplicates, show warning and stop
+    if (duplicates.length > 0) {
+        const duplicateList = duplicates.join(", ");
+        alert(
+            `Cannot add rooms. The following room name(s) already exist:\n\n${duplicateList}\n\nPlease use a different prefix or number range.`
+        );
+        return;
     }
 
     showBulkRoomPreview();
@@ -622,10 +713,17 @@ function confirmBulkRooms() {
         alert(errorMessage);
         return;
     }
+
+    // Store the count before clearing
+    const roomCount = bulkRoomPreview.length;
+
     rooms.push(...bulkRoomPreview);
     $("#addBulkRoomsModal").modal("hide");
     resetBulkRoomModal();
     renderRoomList();
+
+    // Show success message with stored count
+    alert(`Successfully added ${roomCount} room(s)!`);
     bulkRoomPreview = [];
 }
 
