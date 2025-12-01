@@ -45,12 +45,6 @@ class ShopController extends Controller
             })
             ->filter()
             ->flatMap(function ($category) {
-                if (is_null($category->parent_id)) {
-                    return array_merge(
-                        [$category->id],
-                        $category->children->pluck('id')->toArray()
-                    );
-                }
                 return [$category->id];
             })
             ->unique()
