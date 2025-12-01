@@ -53,7 +53,7 @@ class ReportController extends Controller
                 SUM(IF(status = 'reserved', 1, 0)) AS TotalReserved,
                 SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp,
                 SUM(IF(status = 'canceled', 1, 0)) AS TotalCanceled
-                FROM Orders
+                FROM orders
                 WHERE created_at BETWEEN ? AND ?", [$startOfMonth, $endOfMonth]);
         });
 
@@ -369,7 +369,7 @@ class ReportController extends Controller
                     SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                     SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
                     SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
-                FROM Orders
+                FROM orders
                 WHERE created_at BETWEEN ? AND ?
                 GROUP BY DAYOFWEEK(created_at), DAYNAME(created_at)
                 ORDER BY DayNo",
@@ -408,7 +408,7 @@ class ReportController extends Controller
                         SUM(IF(status='reserved', total, 0)) AS TotalReservedAmount,
                         SUM(IF(status='pickedup', total, 0)) AS TotalPickedUpAmount,
                         SUM(IF(status='canceled', total, 0)) AS TotalCanceledAmount
-                    FROM Orders
+                    FROM orders
                     WHERE YEAR(created_at) = ?
                     GROUP BY MONTH(created_at)
                 ) D ON D.MonthNo = M.id
@@ -425,7 +425,7 @@ class ReportController extends Controller
                 SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                 SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
                 SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
-                FROM Orders
+                FROM orders
                 WHERE created_at BETWEEN ? AND ?",
                 [$startDate, $endDate]
             );
