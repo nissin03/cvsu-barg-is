@@ -98,7 +98,7 @@
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td>
+                                                {{-- <td>
                                                     <form
                                                         action="{{ route('admin.category.restore', $childCategory->id) }}"
                                                         method="POST">
@@ -107,7 +107,7 @@
                                                             <i class="icon-rotate-ccw"></i> Restore
                                                         </button>
                                                     </form>
-                                                </td>
+                                                </td> --}}
                                             </tr>
                                         @endforeach
                                     @endif

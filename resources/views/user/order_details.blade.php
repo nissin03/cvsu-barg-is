@@ -233,7 +233,7 @@
                                 <p class="mb-1"><strong>Reason:</strong> {{ $order->canceled_reason }}</p>
                                 @if ($order->canceled_date)
                                     <small class="text-muted">Canceled on:
-                                        {{ \Carbon\Carbon::parse($order->canceled_date)->format('M d, Y h:i A') }}
+                                        {{ \Carbon\Carbon::parse($order->canceled_date)->format('M d, Y') }}
                                     </small>
                                 @endif
                                 @if ($order->updated_by)

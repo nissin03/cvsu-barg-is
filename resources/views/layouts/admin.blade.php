@@ -324,17 +324,6 @@
                                         </a>
                                         <ul class="sub-menu">
                                             <li class="sub-menu-item">
-                                                <a href="{{ route('admin.product.add') }}">
-                                                    <div class="text">Add Product</div>
-                                                </a>
-                                            </li>
-                                            <li class="sub-menu-item">
-                                                <a href="{{ route('admin.products') }}">
-                                                    <div class="text">View Products</div>
-                                                </a>
-                                            </li>
-                                            <li class="divider mb-10"></li>
-                                            <li class="sub-menu-item">
                                                 <a href="{{ route('admin.product-attribute-add') }}">
                                                     <div class="text">Add Product Attributes</div>
                                                 </a>
@@ -342,6 +331,17 @@
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.product-attributes') }}">
                                                     <div class="text">View Product Attributes</div>
+                                                </a>
+                                            </li>
+                                            <li class="divider mb-10"></li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.product.add') }}">
+                                                    <div class="text">Add Product</div>
+                                                </a>
+                                            </li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('admin.products') }}">
+                                                    <div class="text">View Products</div>
                                                 </a>
                                             </li>
                                         </ul>
