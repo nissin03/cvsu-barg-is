@@ -261,11 +261,7 @@
                 const isParent = $this.hasClass('parent-category');
                 const isChecked = $this.is(':checked');
 
-                if (isParent) {
-                    $this.closest('li').nextAll('li.subcategory').each(function() {
-                        $(this).find("input[name='categories']").prop('checked', isChecked);
-                    });
-                } else {
+                if (isParent) {} else {
                     const $subcategoryItem = $this.closest('li.subcategory');
                     if ($subcategoryItem.length) {
                         const $parentItem = $subcategoryItem.prevAll('li:not(.subcategory)').first();
