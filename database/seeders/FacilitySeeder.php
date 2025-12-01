@@ -63,7 +63,8 @@ class FacilitySeeder extends Seeder
 9. COMPLIANCE:
    a. All tenants must adhere to dormitory rules and regulations.
    b. Non-compliance may result in disciplinary action, including warnings, fines, or termination of residency.',
-            'requirements' => 'facilities/requirements/DORM-Requirements.docx',
+            // 🔴 Only the filename – folder is public/storage/facilities
+            'requirements' => 'DORM-Requirements.docx',
             'image' => 'facilities/Female_Dormitory_(6).png',
             'images' => implode(',', [
                 'facilities/thumbnails/Female_Dormitory_(1).png',
@@ -157,7 +158,7 @@ class FacilitySeeder extends Seeder
 9. COMPLIANCE:
    a. All tenants must adhere to dormitory rules and regulations.
    b. Non-compliance may result in disciplinary action, including warnings, fines, or termination of residency.',
-            'requirements' => 'facilities/requirements/DORM-Requirements.docx',
+            'requirements' => 'DORM-Requirements.docx',
             'image' => 'facilities/Male_Dormitory_(3).png',
             'images' => implode(',', [
                 'facilities/thumbnails/Male_Dormitory_(1).png',
@@ -198,13 +199,14 @@ class FacilitySeeder extends Seeder
             'updated_at' => now(),
         ]);
 
+        // Both Facility Type - International House II
         $internationalHouse = DB::table('facilities')->insertGetId([
             'name' => 'International House II',
             'facility_type' => 'both',
             'slug' => Str::slug('International House II'),
             'description' => 'International student housing with individual rooms and whole facility rental',
             'rules_and_regulations' => 'The attending staff shall present and explain the rules and regulations International House II – Function Hall, which the client is expected to observe and strictly comply with.',
-            'requirements' => 'facilities/requirements/IH2-Requirements.docx',
+            'requirements' => 'IH2-Requirements.docx',
             'image' => 'facilities/IH_2_(2).png',
             'images' => implode(',', [
                 'facilities/thumbnails/IH_2_(1).png',
@@ -309,7 +311,6 @@ class FacilitySeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-
         // Whole Place Facility Type - Rolle Hall
         $rolleHall = DB::table('facilities')->insertGetId([
             'name' => 'Rolle Hall',
@@ -351,7 +352,7 @@ class FacilitySeeder extends Seeder
    a. Smoking is strictly prohibited inside the facility.
    b. Illegal activities are strictly prohibited.
    c. Any activity that may damage the facility or equipment is not allowed.',
-            'requirements' => 'facilities/requirements/ROLLE_HALL-Requirements.docx',
+            'requirements' => 'ROLLE_HALL-Requirements.docx',
             'image' => 'facilities/Rolle_Hall_(3).png',
             'images' => implode(',', [
                 'facilities/thumbnails/Rolle_Hall_(1).png',
@@ -372,7 +373,7 @@ class FacilitySeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // Rolle Hall Prices - Regular price is_this_a_discount = false, others = true, CvSU Student Organizations = 0
+        // Rolle Hall Prices
         DB::table('prices')->insert([
             'facility_id' => $rolleHall,
             'name' => 'Regular Price',
@@ -497,7 +498,7 @@ class FacilitySeeder extends Seeder
 7. CANCELLATION POLICY:
    a. Cancellations must be made according to the facility cancellation policy.
    b. Refunds are subject to the terms and conditions of reservation.',
-            'requirements' => 'facilities/requirements/ICON-Requirements.docx',
+            'requirements' => 'ICON-Requirements.docx',
             'image' => 'facilities/Icon_(2).png',
             'images' => implode(',', [
                 'facilities/thumbnails/Icon_(1).png',
@@ -519,7 +520,7 @@ class FacilitySeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // Icon Prices - Regular price is_this_a_discount = false, others = true, CvSU Student Organizations = 0
+        // Icon Prices
         DB::table('prices')->insert([
             'facility_id' => $icon,
             'name' => 'Regular Price',
@@ -646,7 +647,7 @@ class FacilitySeeder extends Seeder
    a. Proper waste disposal in designated bins.
    b. Food and drinks allowed only in designated areas.
    c. Help maintain cleanliness of the facility.',
-            'requirements' => 'facilities/requirements/SWIMMING_POOL-Requirements.docx',
+            'requirements' => 'SWIMMING_POOL-Requirements.docx',
             'image' => 'facilities/Pool_(1).png',
             'images' => implode(',', [
                 'facilities/thumbnails/Pool_(2).png',
@@ -666,7 +667,7 @@ class FacilitySeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // Swimming Pool Prices - Add Regular price with is_this_a_discount = false, others = true
+        // Swimming Pool Prices
         DB::table('prices')->insert([
             'facility_id' => $swimmingPool,
             'name' => 'Regular Price',
