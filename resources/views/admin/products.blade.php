@@ -693,7 +693,6 @@
         $(document).ready(function() {
             let lastScrollPosition = 0;
             let searchTimeout = null;
-            const tooltip = $('<div class="custom-tooltip"></div>').appendTo('body');
 
             // Filter toggle functionality
             $('#filterToggle').on('click', function() {
@@ -791,7 +790,6 @@
                         window.history.pushState({}, '', url);
                         initPaginationEvents();
                         initArchiveButtons();
-                        initTooltips();
                         initRowClicks();
                         updateActiveFiltersDisplay();
                         $(window).scrollTop(lastScrollPosition);
@@ -854,7 +852,6 @@
                             window.history.pushState({}, '', url);
                             initPaginationEvents();
                             initArchiveButtons();
-                            initTooltips();
                             initRowClicks();
                             $(window).scrollTop(lastScrollPosition);
                         },
@@ -998,30 +995,6 @@
                 });
             }
 
-            function initTooltips() {
-                const tooltip = $('.custom-tooltip');
-                if (!tooltip.length) {
-                    $('<div class="custom-tooltip"></div>').appendTo('body');
-                }
-
-                $('.variant-value').hover(function() {
-                    const $this = $(this);
-                    $this.data('title', $this.attr('title')).removeAttr('title');
-
-                    const content = $this.data('title') || $this.data('bs-content');
-                    $('.custom-tooltip').text(content).fadeIn('fast');
-                }, function() {
-                    const $this = $(this);
-                    $this.attr('title', $this.data('title'));
-                    $('.custom-tooltip').hide();
-                }).mousemove(function(e) {
-                    $('.custom-tooltip').css({
-                        top: e.pageY + 10 + 'px',
-                        left: e.pageX + 10 + 'px'
-                    });
-                });
-            }
-
             // Show notification helper
             function showNotification(message, type = 'info', duration = 4000) {
                 const alertClass = type === 'success' ? 'alert-success' :
@@ -1047,6 +1020,11 @@
 
             // Keyboard shortcuts
             $(document).on('keydown', function(e) {
+                // Check if any modal is currently open
+                if ($('.modal.show').length > 0) {
+                    return; // Don't trigger shortcuts when modal is open
+                }
+
                 if ((e.ctrlKey || e.metaKey) && e.keyCode === 13) { // Ctrl+Enter
                     e.preventDefault();
                     performFilter();
@@ -1064,7 +1042,6 @@
             // Initialize everything
             initPaginationEvents();
             initArchiveButtons();
-            initTooltips();
             initRowClicks();
             updateActiveFiltersDisplay();
 

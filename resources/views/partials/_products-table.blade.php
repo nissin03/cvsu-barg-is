@@ -1,5 +1,4 @@
 @if ($products->count() > 0)
-    {{-- MOBILE CARDS (visible on < md) --}}
     <div class="mobile-cards d-block d-md-none">
         @foreach ($products as $product)
             @php
@@ -59,13 +58,31 @@
                 </div>
                 <div class="mobile-card-body">
                     <div class="mobile-card-details">
-                        <p>
+                        <p class="d-flex justify-content-between align-items-center">
                             <strong>Quantity:</strong>
-                            {{ $mobileQuantity }}
+                            <span class="d-flex align-items-center gap-2">
+                                {{ $mobileQuantity }}
+                                @if ($product->attributeValues->count() > 0)
+                                    <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();"
+                                        data-bs-toggle="modal" data-bs-target="#quantityModal{{ $product->id }}"
+                                        title="View All Quantities">
+                                        <i class="icon-eye"></i>
+                                    </button>
+                                @endif
+                            </span>
                         </p>
-                        <p>
+                        <p class="d-flex justify-content-between align-items-center">
                             <strong>Price:</strong>
-                            &#8369;{{ number_format($mobilePrice, 2) }}
+                            <span class="d-flex align-items-center gap-2">
+                                &#8369;{{ number_format($mobilePrice, 2) }}
+                                @if ($product->attributeValues->count() > 0)
+                                    <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();"
+                                        data-bs-toggle="modal" data-bs-target="#priceModal{{ $product->id }}"
+                                        title="View All Prices">
+                                        <i class="icon-eye"></i>
+                                    </button>
+                                @endif
+                            </span>
                         </p>
                         <p>
                             <strong>Category:</strong>
@@ -151,75 +168,49 @@
 
                 <tr class="product-row" data-href="{{ route('admin.product.edit', ['id' => $product->id]) }}"
                     style="cursor: pointer;">
-                    <td scope="row" class="pname">
-                        <div class="d-flex align-items-center gap-2">
+                    <td scope="row" class="align-middle">
+                        <div class="d-flex align-items-center gap-2 h-100">
                             <div class="image"
-                                style="width: 48px; height: 48px; overflow: hidden; border-radius: 8px;">
+                                style="width: 48px; height: 48px; flex-shrink: 0; overflow: hidden; border-radius: 8px;">
                                 <img src="{{ asset('uploads/products/thumbnails/' . $product->image) }}"
                                     alt="{{ $product->name }}" class="img-fluid"
                                     style="width: 100%; height: 100%; object-fit: cover;">
                             </div>
-                            <div class="name">
-                                <a href="#" class="body-title-2 d-block text-truncate"
+                            <div class="name d-flex flex-column justify-content-center flex-grow-1">
+                                <a href="#" class="body-title-2 d-block text-truncate mb-1"
                                     title="{{ $product->name }}">{{ $product->name }}</a>
-                                <div class="text-tiny mt-2">
+                                <div class="text-tiny">
                                     <span class="badge {{ $badgeClass }}">{{ $stockStatus }}</span>
                                 </div>
                             </div>
                         </div>
                     </td>
 
-                    {{-- Quantity column with detailed variant tooltip --}}
-                    <td scope="row" class="variant-cell text-center align-middle">
+                    <td scope="row" class="text-center align-middle position-relative">
                         @if ($product->attributeValues->count() > 0)
-                            <span class="variant-value"
-                                data-bs-content="Quantity: {{ $product->attributeValues->first()->quantity }}">
-                                {{ $product->attributeValues->sum('quantity') }}
-                            </span>
-                            <div class="variant-tooltip">
-                                @foreach ($groupedAttributes as $attributeId => $variants)
-                                    <div class="variant-group">
-                                        <div class="variant-attribute-name">
-                                            {{ $uniqueAttributes[$attributeId]->name }}
-                                        </div>
-                                        @foreach ($variants as $variant)
-                                            <div class="variant-row tooltip-highlight">
-                                                <span class="variant-value">{{ $variant->value }}</span>
-                                                <span class="variant-detail">{{ $variant->quantity }} units</span>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endforeach
+                            <div class="d-flex flex-column align-items-center justify-content-center h-100">
+                                <div>{{ $product->attributeValues->sum('quantity') }}</div>
                             </div>
+                            <button class="btn btn-lg btn-outline-primary position-absolute" title="View All Quantities"
+                                style="top: 4px; right: 4px;" onclick="event.stopPropagation();" data-bs-toggle="modal"
+                                data-bs-target="#quantityModal{{ $product->id }}">
+                                <i class="icon-eye"></i>
+                            </button>
                         @else
                             {{ $product->quantity }}
                         @endif
                     </td>
 
-                    {{-- Price column with detailed variant tooltip --}}
-                    <td scope="row" class="variant-cell text-center align-middle">
+                    <td scope="row" class="text-center align-middle position-relative">
                         @if ($product->attributeValues->count() > 0)
-                            <span class="variant-value"
-                                data-bs-content="Price: &#8369;{{ number_format($product->attributeValues->first()->price, 2) }}">
-                                &#8369;{{ number_format($product->attributeValues->first()->price, 2) }}
-                            </span>
-                            <div class="variant-tooltip">
-                                @foreach ($groupedAttributes as $attributeId => $variants)
-                                    <div class="variant-group">
-                                        <div class="variant-attribute-name">
-                                            {{ $uniqueAttributes[$attributeId]->name }}
-                                        </div>
-                                        @foreach ($variants as $variant)
-                                            <div class="variant-row tooltip-highlight">
-                                                <span class="variant-value">{{ $variant->value }}</span>
-                                                <span class="variant-detail">
-                                                    &#8369;{{ number_format($variant->price, 2) }}
-                                                </span>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endforeach
+                            <div class="d-flex flex-column align-items-center justify-content-center h-100">
+                                <div>&#8369;{{ number_format($product->attributeValues->first()->price, 2) }}</div>
                             </div>
+                            <button class="btn btn-lg btn-outline-primary position-absolute" title="View All Prices"
+                                style="top: 4px; right: 4px;" onclick="event.stopPropagation();" data-bs-toggle="modal"
+                                data-bs-target="#priceModal{{ $product->id }}">
+                                <i class="icon-eye"></i>
+                            </button>
                         @else
                             &#8369;{{ number_format($product->price, 2) }}
                         @endif
@@ -253,6 +244,146 @@
             @endforeach
         </tbody>
     </table>
+
+    {{-- SHARED MODALS FOR BOTH MOBILE AND DESKTOP --}}
+    @foreach ($products as $product)
+        @php
+            $groupedAttributes = [];
+            $uniqueAttributes = [];
+            foreach ($product->attributeValues as $value) {
+                if ($value->productAttribute) {
+                    $attributeId = $value->product_attribute_id;
+                    $groupedAttributes[$attributeId][] = $value;
+                    if (!isset($uniqueAttributes[$attributeId])) {
+                        $uniqueAttributes[$attributeId] = $value->productAttribute;
+                    }
+                }
+            }
+        @endphp
+
+        @if ($product->attributeValues->count() > 0)
+            {{-- Quantity Modal --}}
+            <div class="modal fade" id="quantityModal{{ $product->id }}" data-bs-backdrop="static"
+                data-bs-keyboard="false" tabindex="-1" aria-labelledby="quantityModalLabel{{ $product->id }}"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="quantityModalLabel{{ $product->id }}">
+                                <i class="icon-box me-2"></i>Quantity Breakdown
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="product-info-header mb-4 pb-3 border-bottom">
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="{{ asset('uploads/products/thumbnails/' . $product->image) }}"
+                                        alt="{{ $product->name }}"
+                                        style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                    <div>
+                                        <h6 class="fw-bold mb-1">{{ $product->name }}</h6>
+                                        <p class="text-muted mb-0">
+                                            Total Stock: <strong
+                                                class="text-primary fs-5">{{ $product->attributeValues->sum('quantity') }}
+                                                units</strong>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @foreach ($groupedAttributes as $attributeId => $variants)
+                                <div class="attribute-section mb-4">
+                                    <h3 class="text-primary fw-bold mb-3 d-flex align-items-center">
+                                        <i class="icon-layers me-2"></i>
+                                        {{ $uniqueAttributes[$attributeId]->name }}
+                                    </h3>
+                                    <div class="row g-2">
+                                        @foreach ($variants as $variant)
+                                            <div class="col-md-6">
+                                                <div
+                                                    class="variant-card p-3 border rounded d-flex justify-content-between align-items-center bg-light">
+                                                    <p class="fw-semibold">{{ $variant->value }}</p>
+                                                    <p class="badge bg-primary fs-6 px-3 py-2">
+                                                        {{ $variant->quantity }} units
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Price Modal --}}
+            <div class="modal fade" id="priceModal{{ $product->id }}" data-bs-backdrop="static"
+                data-bs-keyboard="false" tabindex="-1" aria-labelledby="priceModalLabel{{ $product->id }}"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title" id="priceModalLabel{{ $product->id }}">
+                                <i class="icon-dollar-sign me-2"></i>Price Breakdown
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="product-info-header mb-4 pb-3 border-bottom">
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="{{ asset('uploads/products/thumbnails/' . $product->image) }}"
+                                        alt="{{ $product->name }}"
+                                        style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                    <div>
+                                        <h6 class="fw-bold mb-1">{{ $product->name }}</h6>
+                                        <p class="text-muted mb-0">
+                                            Price Range:
+                                            <strong class="text-success fs-5">
+                                                &#8369;{{ number_format($product->attributeValues->min('price'), 2) }}
+                                                -
+                                                &#8369;{{ number_format($product->attributeValues->max('price'), 2) }}
+                                            </strong>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @foreach ($groupedAttributes as $attributeId => $variants)
+                                <div class="attribute-section mb-4">
+                                    <h3 class="text-success fw-bold mb-3 d-flex align-items-center">
+                                        <i class="icon-layers me-2"></i>
+                                        {{ $uniqueAttributes[$attributeId]->name }}
+                                    </h3>
+                                    <div class="row g-2">
+                                        @foreach ($variants as $variant)
+                                            <div class="col-md-6">
+                                                <div
+                                                    class="variant-card p-3 border rounded d-flex justify-content-between align-items-center bg-light">
+                                                    <p class="fw-semibold">{{ $variant->value }}</p>
+                                                    <p class="badge bg-success fs-6 px-3 py-2">
+                                                        &#8369;{{ number_format($variant->price, 2) }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endforeach
 @else
     <div class="mobile-cards d-block d-md-none">
         <div class="mobile-card">
