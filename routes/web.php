@@ -232,7 +232,11 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::post('/product-attributes/store', [AdminController::class, 'prod_attribute_store'])->name('admin.product.attribute.store');
         Route::get('/product-attribute/edit/{id}', [AdminController::class, 'product_attribute_edit'])->name('admin.product.attribute.edit');
         Route::put('/product-attribute/update', [AdminController::class, 'product_attribute_update'])->name('admin.product.attribute.update');
-        Route::delete('/product-attribute/{id}/delete', [AdminController::class, 'product_attribute_delete'])->name('admin.product.attribute.delete');
+        // Route::delete('/product-attribute/{id}/delete', [AdminController::class, 'product_attribute_delete'])->name('admin.product.attribute.delete');
+
+        Route::put('product-attribute/archive/{id}', [AdminController::class, 'attribute_archive'])->name('admin.product-attribute.archive');
+        Route::get('archived-product-attributes', [AdminController::class, 'archived_attributes'])->name('admin.archived-attributes');
+        Route::put('product-attribute/restore/{id}', [AdminController::class, 'restore_attribute'])->name('admin.product-attribute.restore');
 
         Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders');
         Route::get('/orders/filters', [AdminController::class, 'filterOrders'])->name('admin.orders.filter');

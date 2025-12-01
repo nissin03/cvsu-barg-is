@@ -1029,12 +1029,36 @@ class AdminController extends Controller
         return redirect()->route('admin.product-attributes')->with('status', 'Product attribute updated successfully!');
     }
 
-    public function product_attribute_delete($id)
+    public function attribute_archive($id)
     {
-        $attribute = ProductAttribute::find($id);
-        $attribute->delete();
-        return redirect()->route('admin.product-attributes')->with('status', 'Product Variant has been deleted successfully!');
+        $attribute = ProductAttribute::findOrFail($id);
+        $attribute->delete(); // Soft delete
+        return redirect()->route('admin.product-attributes')->with('status', 'Product Attribute has been archived successfully!');
     }
+
+    public function archived_attributes()
+    {
+        $archivedAttributes = ProductAttribute::onlyTrashed()
+            ->orderBy('id', 'DESC')
+            ->paginate(10);
+
+        $pageTitle = 'Archived Product Attributes';
+        return view('admin.archived-attributes', compact('archivedAttributes', 'pageTitle'));
+    }
+
+    public function restore_attribute($id)
+    {
+        $attribute = ProductAttribute::onlyTrashed()->findOrFail($id);
+        $attribute->restore();
+        return redirect()->route('admin.archived-attributes')->with('status', 'Product Attribute restored successfully!');
+    }
+
+    // public function product_attribute_delete($id)
+    // {
+    //     $attribute = ProductAttribute::find($id);
+    //     $attribute->delete();
+    //     return redirect()->route('admin.product-attributes')->with('status', 'Product Variant has been deleted successfully!');
+    // }
 
 
     public function orders(Request $request)
