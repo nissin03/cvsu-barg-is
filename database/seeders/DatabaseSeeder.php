@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
             SlidesSeeder::class,
 
             FacilitySeeder::class,
-            // ReservationSeeder::class,
+            ReservationSeeder::class,
             AddonSeeder::class,
             // DiscountSeeder::class,
             SignatureSeeder::class,
