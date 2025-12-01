@@ -310,7 +310,7 @@
                 $('#hideRoomBox').hide();
                 $('#dormitoryRooms').hide();
                 $('#selectionContent').show();
-                $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                // $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
                 $('#discountBox').show();
                 $('#addonBox').show();
             } else if (facilityType === 'individual') {
@@ -322,7 +322,7 @@
                 $('#priceBox').show();
                 $('#discountBox').hide();
                 $('#addonBox').show();
-                $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                // $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
             } else if (facilityType === 'whole_place') {
                 $('#selectionBothType').hide();
                 $('#roomBox').show();
@@ -330,7 +330,7 @@
                 $('#dormitoryRooms').hide();
                 $('#selectionContent').hide();
                 $('#priceBox').show();
-                $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                // $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
                 $('#addonBox').show();
                 $('#discountBox').show();
             } else {

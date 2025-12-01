@@ -500,9 +500,9 @@
                 handleWholePlaceTypeInitialization();
             }
 
-            if (facilityType === 'individual' || facilityType === 'both' || facilityType === 'whole_place') {
-                $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
-            }
+            // if (facilityType === 'individual' || facilityType === 'both' || facilityType === 'whole_place') {
+            // $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+            // }
 
             renderRoomList();
             renderPriceList();
@@ -596,7 +596,7 @@
                 $('#selectionBothType').show();
                 $('#roomBox').show();
                 $('#priceBox').show();
-                $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                // $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
                 $('#discountBox').show();
                 $('#addonBox').show();
 
