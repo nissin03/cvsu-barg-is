@@ -41,7 +41,7 @@
 
         {{-- Image Upload Field --}}
         <fieldset>
-            <div class="body-title">Upload images <span class="tf-color-1">*</span></div>
+            <div class="body-title">Upload image <span class="tf-color-1">*</span></div>
             <div class="upload-image flex-grow">
                 <div class="item" id="imgpreview"
                     style="{{ $category && $category->image ? 'display:block; position:relative;' : 'display:none; position:relative;' }}">
