@@ -404,7 +404,7 @@
 
     <div class="signatures-section">
         @php
-            $signatures = \App\Models\Signature::where('category', 'product')
+            $signatures = \App\Models\Signature::where('category', 'facility')
                 ->where(function ($query) {
                     $query->where('report_type', 'sales')->orWhere('report_type', 'all');
                 })
@@ -418,7 +418,7 @@
 
             $leftSignatures[] = (object) [
                 'label' => 'Prepared by',
-                'name' => Auth::user()->name,
+                'name' => strtoupper(Auth::user()->name),
                 'position' => Auth::user()->position,
                 'is_prepared_by' => true,
             ];

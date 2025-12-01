@@ -318,7 +318,7 @@
 
             $leftSignatures[] = (object) [
                 'label' => 'Prepared by',
-                'name' => Auth::user()->name,
+                'name' => strtoupper(Auth::user()->name),
                 'position' => Auth::user()->position,
                 'is_prepared_by' => true,
             ];

@@ -19,8 +19,8 @@ class OrderSeeder extends Seeder
         $users = User::where('utype', 'USR')->get();
         $products = Product::all();
 
-        $reservationStartDate = Carbon::now()->addDays(10);
-        $reservationEndDate = Carbon::now()->addDays(10)->addMonths(2);
+        $reservationStartDate = Carbon::now()->addDays(20);
+        $reservationEndDate = Carbon::now()->addDays(20)->addMonths(2);
         $orderCreationStartDate = Carbon::now()->subMonths(1);
         $orderCreationEndDate = Carbon::now();
 

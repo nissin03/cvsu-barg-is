@@ -20,10 +20,8 @@ class ReservationSeeder extends Seeder
 {
     public function run()
     {
-        // Get sample users (students, employees, non-employees)
         $users = User::where('utype', 'USR')->get();
 
-        // Process each facility type scenario
         $this->seedIndividualFacilityReservations($users);
         $this->seedWholePlaceFacilityReservations($users);
         $this->seedBothFacilityWithRoomsReservations($users);
@@ -32,7 +30,6 @@ class ReservationSeeder extends Seeder
 
     protected function seedIndividualFacilityReservations($users)
     {
-        // Get individual facilities with different price configurations
         $facilities = Facility::where('facility_type', 'individual')
             ->with(['prices', 'facilityAttributes'])
             ->get();
@@ -41,25 +38,15 @@ class ReservationSeeder extends Seeder
             $prices = $facility->prices->where('price_type', 'individual');
 
             foreach ($prices as $price) {
-                // Create 2-3 reservations per price configuration
                 for ($i = 0; $i < rand(10, 15); $i++) {
                     $user = $users->random();
                     $attribute = $facility->facilityAttributes->random();
 
-                    // Determine dates - from January 1st to current date + 7 days
-                    $startDate = Carbon::create(null, 1, 1);
-                    $endDateRange = Carbon::now()->addDays(7);
+                    [$dateFrom, $dateTo] = $this->getRandomDateRangeForSeed();
 
-                    $maxDays = $startDate->diffInDays($endDateRange);
-                    $randomDays = rand(0, $maxDays);
-                    $dateFrom = $startDate->copy()->addDays($randomDays);
-                    $dateTo = $dateFrom->copy()->addDays(rand(1, 3));
-
-                    // Calculate total price
                     $days = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1;
                     $totalPrice = $price->is_based_on_days ? $price->value * $days : $price->value;
 
-                    // Create availability records
                     $period = CarbonPeriod::create($dateFrom, $dateTo);
                     $firstAvailability = null;
 
@@ -88,7 +75,6 @@ class ReservationSeeder extends Seeder
                         }
                     }
 
-                    // Create payment record
                     $payment = Payment::create([
                         'availability_id' => $firstAvailability->id,
                         'user_id' => $user->id,
@@ -96,7 +82,6 @@ class ReservationSeeder extends Seeder
                         'total_price' => $totalPrice,
                     ]);
 
-                    // Create payment detail
                     PaymentDetail::create([
                         'payment_id' => $payment->id,
                         'facility_id' => $facility->id,
@@ -104,7 +89,6 @@ class ReservationSeeder extends Seeder
                         'total_price' => $totalPrice,
                     ]);
 
-                    // Create transaction reservation
                     TransactionReservation::create([
                         'availability_id' => $firstAvailability->id,
                         'facility_attribute_id' => $attribute->id,
@@ -115,7 +99,6 @@ class ReservationSeeder extends Seeder
                         'status' => $payment->status,
                     ]);
 
-                    // Create qualification approval if needed
                     if (rand(0, 1)) {
                         QualificationApproval::create([
                             'availability_id' => $firstAvailability->id,
@@ -140,29 +123,18 @@ class ReservationSeeder extends Seeder
             $prices = $facility->prices->where('price_type', 'whole');
 
             foreach ($prices as $price) {
-                // Create 2-3 reservations per price configuration
                 for ($i = 0; $i < rand(10, 15); $i++) {
                     $user = $users->random();
                     $attribute = $facility->facilityAttributes->first();
 
-                    // Determine dates - from January 1st to current date + 7 days
-                    $startDate = Carbon::create(null, 1, 1); // January 1st of current year
-                    $endDateRange = Carbon::now()->addDays(7);
+                    [$dateFrom, $dateTo] = $this->getRandomDateRangeForSeed();
 
-                    $maxDays = $startDate->diffInDays($endDateRange);
-                    $randomDays = rand(0, $maxDays);
-                    $dateFrom = $startDate->copy()->addDays($randomDays);
-                    $dateTo = $dateFrom->copy()->addDays(rand(1, 3));
-
-                    // Random times
                     $timeStart = rand(8, 12) . ':00:00';
-                    $timeEnd = (rand(13, 17)) . ':00:00';
+                    $timeEnd = rand(13, 17) . ':00:00';
 
-                    // Calculate total price
                     $days = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1;
                     $totalPrice = $price->is_based_on_days ? $price->value * $days : $price->value;
 
-                    // Create availability records
                     $period = CarbonPeriod::create($dateFrom, $dateTo);
                     $firstAvailability = null;
 
@@ -170,7 +142,7 @@ class ReservationSeeder extends Seeder
                         $availability = Availability::create([
                             'facility_id' => $facility->id,
                             'facility_attribute_id' => $attribute->id,
-                            'remaining_capacity' => 0, // Whole place reservations occupy all capacity
+                            'remaining_capacity' => 0,
                             'date_from' => $day->toDateString(),
                             'date_to' => $day->toDateString(),
                             'time_start' => $timeStart,
@@ -182,7 +154,6 @@ class ReservationSeeder extends Seeder
                         }
                     }
 
-                    // Create payment record
                     $payment = Payment::create([
                         'availability_id' => $firstAvailability->id,
                         'user_id' => $user->id,
@@ -190,26 +161,23 @@ class ReservationSeeder extends Seeder
                         'total_price' => $totalPrice,
                     ]);
 
-                    // Create payment detail
                     PaymentDetail::create([
                         'payment_id' => $payment->id,
                         'facility_id' => $facility->id,
-                        'quantity' => 0, // No quantity for whole place
+                        'quantity' => 0,
                         'total_price' => $totalPrice,
                     ]);
 
-                    // Create transaction reservation
                     TransactionReservation::create([
                         'availability_id' => $firstAvailability->id,
                         'facility_attribute_id' => $attribute->id,
                         'payment_id' => $payment->id,
                         'price_id' => $price->id,
-                        'quantity' => 0, // No quantity for whole place
+                        'quantity' => 0,
                         'user_id' => $user->id,
                         'status' => $payment->status,
                     ]);
 
-                    // Create qualification approval if needed
                     if (rand(0, 1)) {
                         QualificationApproval::create([
                             'availability_id' => $firstAvailability->id,
@@ -237,7 +205,6 @@ class ReservationSeeder extends Seeder
             });
 
         foreach ($facilities as $facility) {
-            // Create shared (individual) reservations
             $individualPrices = $facility->prices->where('price_type', 'individual');
 
             foreach ($individualPrices as $price) {
@@ -248,25 +215,15 @@ class ReservationSeeder extends Seeder
                         ->whereNotNull('capacity')
                         ->random();
 
-                    // Determine dates - from January 1st to current date + 7 days
-                    $startDate = Carbon::create(null, 1, 1); // January 1st of current year
-                    $endDateRange = Carbon::now()->addDays(7);
+                    [$dateFrom, $dateTo] = $this->getRandomDateRangeForSeed();
 
-                    $maxDays = $startDate->diffInDays($endDateRange);
-                    $randomDays = rand(0, $maxDays);
-                    $dateFrom = $startDate->copy()->addDays($randomDays);
-                    $dateTo = $dateFrom->copy()->addDays(rand(1, 3));
-
-                    // Calculate quantity if applicable
                     $quantity = $price->is_there_a_quantity ? rand(1, min(3, $attribute->capacity)) : 1;
 
-                    // Calculate total price
                     $days = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1;
                     $totalPrice = $price->is_based_on_days
                         ? $price->value * $days * $quantity
                         : $price->value * $quantity;
 
-                    // Create availability records
                     $period = CarbonPeriod::create($dateFrom, $dateTo);
                     $firstAvailability = null;
 
@@ -295,7 +252,6 @@ class ReservationSeeder extends Seeder
                         }
                     }
 
-                    // Create payment record
                     $payment = Payment::create([
                         'availability_id' => $firstAvailability->id,
                         'user_id' => $user->id,
@@ -303,7 +259,6 @@ class ReservationSeeder extends Seeder
                         'total_price' => $totalPrice,
                     ]);
 
-                    // Create payment detail
                     PaymentDetail::create([
                         'payment_id' => $payment->id,
                         'facility_id' => $facility->id,
@@ -311,7 +266,6 @@ class ReservationSeeder extends Seeder
                         'total_price' => $totalPrice,
                     ]);
 
-                    // Create transaction reservation
                     TransactionReservation::create([
                         'availability_id' => $firstAvailability->id,
                         'facility_attribute_id' => $attribute->id,
@@ -322,7 +276,6 @@ class ReservationSeeder extends Seeder
                         'status' => $payment->status,
                     ]);
 
-                    // Create qualification approval if needed
                     if (rand(0, 1)) {
                         QualificationApproval::create([
                             'availability_id' => $firstAvailability->id,
@@ -335,7 +288,6 @@ class ReservationSeeder extends Seeder
                 }
             }
 
-            // Create whole place reservations
             $wholePrices = $facility->prices->where('price_type', 'whole');
 
             foreach ($wholePrices as $price) {
@@ -346,24 +298,14 @@ class ReservationSeeder extends Seeder
                         ->whereNotNull('capacity')
                         ->random();
 
-                    // Determine dates - from January 1st to current date + 7 days
-                    $startDate = Carbon::create(null, 1, 1); // January 1st of current year
-                    $endDateRange = Carbon::now()->addDays(7);
+                    [$dateFrom, $dateTo] = $this->getRandomDateRangeForSeed();
 
-                    $maxDays = $startDate->diffInDays($endDateRange);
-                    $randomDays = rand(0, $maxDays);
-                    $dateFrom = $startDate->copy()->addDays($randomDays);
-                    $dateTo = $dateFrom->copy()->addDays(rand(1, 3));
-
-                    // Random times
                     $timeStart = rand(8, 12) . ':00:00';
-                    $timeEnd = (rand(13, 17)) . ':00:00';
+                    $timeEnd = rand(13, 17) . ':00:00';
 
-                    // Calculate total price
                     $days = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1;
                     $totalPrice = $price->is_based_on_days ? $price->value * $days : $price->value;
 
-                    // Create availability records
                     $period = CarbonPeriod::create($dateFrom, $dateTo);
                     $firstAvailability = null;
 
@@ -371,7 +313,7 @@ class ReservationSeeder extends Seeder
                         $availability = Availability::create([
                             'facility_id' => $facility->id,
                             'facility_attribute_id' => $attribute->id,
-                            'remaining_capacity' => 0, // Whole place reservations occupy all capacity
+                            'remaining_capacity' => 0,
                             'date_from' => $day->toDateString(),
                             'date_to' => $day->toDateString(),
                             'time_start' => $timeStart,
@@ -383,7 +325,6 @@ class ReservationSeeder extends Seeder
                         }
                     }
 
-                    // Create payment record
                     $payment = Payment::create([
                         'availability_id' => $firstAvailability->id,
                         'user_id' => $user->id,
@@ -391,26 +332,23 @@ class ReservationSeeder extends Seeder
                         'total_price' => $totalPrice,
                     ]);
 
-                    // Create payment detail
                     PaymentDetail::create([
                         'payment_id' => $payment->id,
                         'facility_id' => $facility->id,
-                        'quantity' => 1, // For whole place booking
+                        'quantity' => 1,
                         'total_price' => $totalPrice,
                     ]);
 
-                    // Create transaction reservation
                     TransactionReservation::create([
                         'availability_id' => $firstAvailability->id,
                         'facility_attribute_id' => $attribute->id,
                         'payment_id' => $payment->id,
                         'price_id' => $price->id,
-                        'quantity' => 1, // For whole place booking
+                        'quantity' => 1,
                         'user_id' => $user->id,
                         'status' => $payment->status,
                     ]);
 
-                    // Create qualification approval if needed
                     if (rand(0, 1)) {
                         QualificationApproval::create([
                             'availability_id' => $firstAvailability->id,
@@ -438,7 +376,6 @@ class ReservationSeeder extends Seeder
             });
 
         foreach ($facilities as $facility) {
-            // Create shared (individual) reservations
             $individualPrices = $facility->prices->where('price_type', 'individual');
 
             foreach ($individualPrices as $price) {
@@ -449,25 +386,15 @@ class ReservationSeeder extends Seeder
                         ->whereNull('capacity')
                         ->first();
 
-                    // Determine dates - from January 1st to current date + 7 days
-                    $startDate = Carbon::create(null, 1, 1); // January 1st of current year
-                    $endDateRange = Carbon::now()->addDays(7);
+                    [$dateFrom, $dateTo] = $this->getRandomDateRangeForSeed();
 
-                    $maxDays = $startDate->diffInDays($endDateRange);
-                    $randomDays = rand(0, $maxDays);
-                    $dateFrom = $startDate->copy()->addDays($randomDays);
-                    $dateTo = $dateFrom->copy()->addDays(rand(1, 3));
-
-                    // Calculate quantity if applicable
                     $quantity = $price->is_there_a_quantity ? rand(1, 3) : 1;
 
-                    // Calculate total price
                     $days = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1;
                     $totalPrice = $price->is_based_on_days
                         ? $price->value * $days * $quantity
                         : $price->value * $quantity;
 
-                    // Create availability records
                     $period = CarbonPeriod::create($dateFrom, $dateTo);
                     $firstAvailability = null;
 
@@ -496,7 +423,6 @@ class ReservationSeeder extends Seeder
                         }
                     }
 
-                    // Create payment record
                     $payment = Payment::create([
                         'availability_id' => $firstAvailability->id,
                         'user_id' => $user->id,
@@ -504,7 +430,6 @@ class ReservationSeeder extends Seeder
                         'total_price' => $totalPrice,
                     ]);
 
-                    // Create payment detail
                     PaymentDetail::create([
                         'payment_id' => $payment->id,
                         'facility_id' => $facility->id,
@@ -512,7 +437,6 @@ class ReservationSeeder extends Seeder
                         'total_price' => $totalPrice,
                     ]);
 
-                    // Create transaction reservation
                     TransactionReservation::create([
                         'availability_id' => $firstAvailability->id,
                         'facility_attribute_id' => $attribute->id,
@@ -523,7 +447,6 @@ class ReservationSeeder extends Seeder
                         'status' => $payment->status,
                     ]);
 
-                    // Create qualification approval if needed
                     if (rand(0, 1)) {
                         QualificationApproval::create([
                             'availability_id' => $firstAvailability->id,
@@ -536,7 +459,6 @@ class ReservationSeeder extends Seeder
                 }
             }
 
-            // Create whole place reservations
             $wholePrices = $facility->prices->where('price_type', 'whole');
 
             foreach ($wholePrices as $price) {
@@ -547,24 +469,14 @@ class ReservationSeeder extends Seeder
                         ->whereNull('capacity')
                         ->first();
 
-                    // Determine dates - from January 1st to current date + 7 days
-                    $startDate = Carbon::create(null, 1, 1); // January 1st of current year
-                    $endDateRange = Carbon::now()->addDays(7);
+                    [$dateFrom, $dateTo] = $this->getRandomDateRangeForSeed();
 
-                    $maxDays = $startDate->diffInDays($endDateRange);
-                    $randomDays = rand(0, $maxDays);
-                    $dateFrom = $startDate->copy()->addDays($randomDays);
-                    $dateTo = $dateFrom->copy()->addDays(rand(1, 3));
-
-                    // Random times
                     $timeStart = rand(8, 12) . ':00:00';
-                    $timeEnd = (rand(13, 17)) . ':00:00';
+                    $timeEnd = rand(13, 17) . ':00:00';
 
-                    // Calculate total price
                     $days = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1;
                     $totalPrice = $price->is_based_on_days ? $price->value * $days : $price->value;
 
-                    // Create availability records
                     $period = CarbonPeriod::create($dateFrom, $dateTo);
                     $firstAvailability = null;
 
@@ -572,7 +484,7 @@ class ReservationSeeder extends Seeder
                         $availability = Availability::create([
                             'facility_id' => $facility->id,
                             'facility_attribute_id' => $attribute->id,
-                            'remaining_capacity' => 0, // Whole place reservations occupy all capacity
+                            'remaining_capacity' => 0,
                             'date_from' => $day->toDateString(),
                             'date_to' => $day->toDateString(),
                             'time_start' => $timeStart,
@@ -584,7 +496,6 @@ class ReservationSeeder extends Seeder
                         }
                     }
 
-                    // Create payment record
                     $payment = Payment::create([
                         'availability_id' => $firstAvailability->id,
                         'user_id' => $user->id,
@@ -592,26 +503,23 @@ class ReservationSeeder extends Seeder
                         'total_price' => $totalPrice,
                     ]);
 
-                    // Create payment detail
                     PaymentDetail::create([
                         'payment_id' => $payment->id,
                         'facility_id' => $facility->id,
-                        'quantity' => 1, // For whole place booking
+                        'quantity' => 1,
                         'total_price' => $totalPrice,
                     ]);
 
-                    // Create transaction reservation
                     TransactionReservation::create([
                         'availability_id' => $firstAvailability->id,
                         'facility_attribute_id' => $attribute->id,
                         'payment_id' => $payment->id,
                         'price_id' => $price->id,
-                        'quantity' => 1, // For whole place booking
+                        'quantity' => 1,
                         'user_id' => $user->id,
                         'status' => $payment->status,
                     ]);
 
-                    // Create qualification approval if needed
                     if (rand(0, 1)) {
                         QualificationApproval::create([
                             'availability_id' => $firstAvailability->id,
@@ -626,6 +534,29 @@ class ReservationSeeder extends Seeder
         }
     }
 
+    protected function getRandomDateRangeForSeed(): array
+    {
+        $month = collect([10, 11, 12])->random();
+
+        if ($month === 12) {
+            $startDate = Carbon::create(null, 12, 1)->startOfMonth();
+            $endDateRange = Carbon::now();
+        } else {
+            $startDate = Carbon::create(null, $month, 1)->startOfMonth();
+            $endDateRange = Carbon::create(null, $month, 1)->endOfMonth();
+        }
+
+        $maxDays = max(0, $startDate->diffInDays($endDateRange));
+        $randomDays = rand(0, $maxDays);
+        $dateFrom = $startDate->copy()->addDays($randomDays);
+        $dateTo = $dateFrom->copy()->addDays(rand(1, 3));
+
+        if ($dateTo->gt($endDateRange)) {
+            $dateTo = $endDateRange->copy();
+        }
+
+        return [$dateFrom, $dateTo];
+    }
 
     protected function mapApprovalStatus($paymentStatus)
     {
@@ -636,10 +567,8 @@ class ReservationSeeder extends Seeder
         };
     }
 
-
     protected function weightedRandomStatus()
     {
-
         $rand = mt_rand(1, 100);
 
         if ($rand <= 45) {
