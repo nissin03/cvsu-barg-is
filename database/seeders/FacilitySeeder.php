@@ -204,7 +204,15 @@ class FacilitySeeder extends Seeder
             'name' => 'International House II',
             'facility_type' => 'both',
             'slug' => Str::slug('International House II'),
-            'description' => 'International student housing with individual rooms and whole facility rental',
+            'description' => 'Experience premium international student accommodation at International House II. Our facility offers comfortable individual rooms and whole-facility rentals for various needs. Each room comes fully equipped with modern amenities including:
+
+AIRCONDITIONED - Enjoy comfortable climate control in every room
+TOILET AND BATH - Private bathroom facilities for convenience
+WITH CABINET - Personal storage space for belongings
+WITH BEDDINGS - Complete bedding set provided
+WITH BREAKFAST - Daily breakfast included for residents.
+
+Perfect for international students, visiting scholars, and group accommodations. Whether you need an individual room or the entire facility, we provide a comfortable and convenient living experience with all essential amenities included.',
             'rules_and_regulations' => 'The attending staff shall present and explain the rules and regulations International House II – Function Hall, which the client is expected to observe and strictly comply with.',
             'requirements' => 'IH2-Requirements.docx',
             'image' => 'facilities/IH_2_(2).png',
@@ -225,7 +233,7 @@ class FacilitySeeder extends Seeder
             DB::table('facility_attributes')->insert([
                 'facility_id' => $internationalHouse,
                 'room_name' => "Room $i",
-                'capacity' => 5,
+                'capacity' => 3,
                 'sex_restriction' => 'male',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -236,7 +244,7 @@ class FacilitySeeder extends Seeder
             DB::table('facility_attributes')->insert([
                 'facility_id' => $internationalHouse,
                 'room_name' => "Room $i",
-                'capacity' => 4,
+                'capacity' => 3,
                 'sex_restriction' => 'female',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -247,7 +255,7 @@ class FacilitySeeder extends Seeder
             DB::table('facility_attributes')->insert([
                 'facility_id' => $internationalHouse,
                 'room_name' => "Room $i",
-                'capacity' => 4,
+                'capacity' => 3,
                 'sex_restriction' => 'all',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -255,10 +263,11 @@ class FacilitySeeder extends Seeder
         }
 
         // International House II Prices - Individual
+
         DB::table('prices')->insert([
             'facility_id' => $internationalHouse,
-            'name' => 'CvSU students, Staff and Employees Price',
-            'value' => 300.00,
+            'name' => 'Regular Price',
+            'value' => 1000.00,
             'price_type' => 'individual',
             'is_based_on_days' => false,
             'is_there_a_quantity' => true,
@@ -271,11 +280,11 @@ class FacilitySeeder extends Seeder
 
         DB::table('prices')->insert([
             'facility_id' => $internationalHouse,
-            'name' => 'Outsider Price',
-            'value' => 300.00,
-            'price_type' => 'individual',
+            'name' => 'Solo (1 Pax)',
+            'value' => 1500,
+            'price_type' => 'whole',
             'is_based_on_days' => false,
-            'is_there_a_quantity' => true,
+            'is_there_a_quantity' => false,
             'is_this_a_discount' => false,
             'date_from' => Carbon::now(),
             'date_to' => Carbon::now()->addMonths(6),
@@ -285,7 +294,7 @@ class FacilitySeeder extends Seeder
 
         DB::table('prices')->insert([
             'facility_id' => $internationalHouse,
-            'name' => 'Students Price',
+            'name' => 'Double (2 pax)',
             'value' => 2000,
             'price_type' => 'whole',
             'is_based_on_days' => false,
@@ -299,8 +308,8 @@ class FacilitySeeder extends Seeder
 
         DB::table('prices')->insert([
             'facility_id' => $internationalHouse,
-            'name' => 'Outsider Price',
-            'value' => 4000,
+            'name' => 'Triple (3 pax)',
+            'value' => 3000,
             'price_type' => 'whole',
             'is_based_on_days' => false,
             'is_there_a_quantity' => false,

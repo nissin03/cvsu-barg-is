@@ -1324,9 +1324,9 @@
 
             // Filter change events
             $('#facility, #price_type, #availability, #refundable, #billing_cycle, #sort_by').on('change',
-            function() {
-                performFilter();
-            });
+                function() {
+                    performFilter();
+                });
 
             // Clear all filters
             $('#clearAllFilters, #resetFilters').on('click', function() {
