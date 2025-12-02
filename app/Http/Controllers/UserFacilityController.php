@@ -3901,6 +3901,7 @@ class UserFacilityController extends Controller
                 $query->orderBy('date_from');
             },
             'transactionReservations.facilityAttribute',
+            'availability.facility.prices',
             'transactionReservations.price',
             'transactionReservations.addonTransactions.addon',
             'transactionReservations.addonTransactions.addonReservation',

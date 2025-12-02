@@ -470,114 +470,6 @@
                                 </div>
                             </div>
 
-                            <!-- Transaction Details -->
-                            <div class="wg-box">
-                                <h5>Transaction Details</h5>
-                                <table class="table-custom">
-                                    <thead>
-                                        <tr>
-                                            <th>Item</th>
-                                            <th>Price Type</th>
-                                            <th>Unit Price</th>
-                                            <th>Quantity</th>
-                                            <th>Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @php $processedItems = []; @endphp
-
-                                        {{-- Main Reservation Items --}}
-                                        @foreach ($payment->transactionReservations as $transaction)
-                                            @php
-                                                $itemKey =
-                                                    ($transaction->price->id ?? 'facility-booking') .
-                                                    '-' .
-                                                    $transaction->quantity;
-                                                if (in_array($itemKey, $processedItems)) {
-                                                    continue;
-                                                }
-                                                $processedItems[] = $itemKey;
-                                            @endphp
-                                            <tr>
-                                                <td>
-                                                    <p>{{ $transaction->price->name ?? 'Facility Booking' }}</p>
-                                                </td>
-                                                <td>{{ ucfirst($transaction->price->price_type ?? 'N/A') }}</td>
-                                                <td>&#8369;{{ number_format($transaction->price->value ?? 0, 2) }}</td>
-                                                <td>{{ $transaction->quantity }}</td>
-                                                <td>&#8369;{{ number_format(($transaction->price->value ?? 0) * $transaction->quantity, 2) }}
-                                                </td>
-                                            </tr>
-
-                                            {{-- ✅ Addon Section --}}
-                                            @if ($transaction->addonTransactions && $transaction->addonTransactions->count() > 0)
-                                                @foreach ($transaction->addonTransactions as $addonTrx)
-                                                    @php $addon = $addonTrx->addon; @endphp
-                                                    @if ($addon)
-                                                        <tr class="text-muted">
-                                                            <td>+ {{ $addon->name }}</td>
-                                                            <td>{{ ucfirst($addon->price_type) }}</td>
-                                                            <td>&#8369;{{ number_format($addon->base_price, 2) }}</td>
-                                                            <td>{{ $addonTrx->addonReservation->quantity ?? 1 }}</td>
-                                                            <td>&#8369;{{ number_format($addon->base_price * ($addonTrx->addonReservation->quantity ?? 1), 2) }}
-                                                            </td>
-                                                        </tr>
-                                                    @endif
-                                                @endforeach
-                                            @endif
-                                        @endforeach
-                                    </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            <th colspan="4" class="text-end">Total Amount:</th>
-                                            <th>&#8369;{{ number_format($payment->total_price ?? 0, 2) }}</th>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-
-                                @if ($transaction->addonTransactions && $transaction->addonTransactions->count() > 0)
-                                    <div class="wg-box mt-4">
-                                        <h5>Additional Add-ons</h5>
-                                        <table class="table-custom">
-                                            <thead>
-                                                <tr>
-                                                    <th>Add-on</th>
-                                                    <th>Price Type</th>
-                                                    <th>Unit Price</th>
-                                                    <th>Quantity</th>
-                                                    <th>Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach ($payment->addonTransactions as $addonTransaction)
-                                                    @php
-                                                        $addon = $addonTransaction->addon;
-                                                        $reservation = $addonTransaction->addonReservation;
-                                                        $quantity = $reservation->quantity ?? 1;
-                                                        $unitPrice = $addon->base_price ?? 0;
-                                                        $total = $unitPrice * $quantity;
-                                                    @endphp
-
-                                                    <tr>
-                                                        <td>
-                                                            <div class="facility-details">
-                                                                <p>{{ $addon->name ?? 'Unknown Add-on' }}</p>
-                                                                <small class="text-muted">{{ $addon->description }}</small>
-                                                            </div>
-                                                        </td>
-                                                        <td>{{ ucfirst($addon->price_type ?? 'N/A') }}</td>
-                                                        <td>&#8369;{{ number_format($unitPrice, 2) }}</td>
-                                                        <td>{{ $quantity }}</td>
-                                                        <td>&#8369;{{ number_format($total, 2) }}</td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                @endif
-                            </div>
-
-
                             <!-- Qualification Status -->
                             @if ($qualificationApproval)
                                 <div class="wg-box">
@@ -613,94 +505,179 @@
                                 </div>
                             @endif
 
-                            @if ($payment->priceDiscounts->count() > 0)
-                                <div class="wg-box">
-                                    <h5>Discount Proof</h5>
-                                    <div class="discount-section">
-                                        @foreach ($payment->priceDiscounts as $ppd)
-                                            <div class="row mb-2">
-                                                <div class="col-md-6">
-                                                    <p><strong>Price:</strong> {{ $ppd->price->name ?? 'N/A' }}</p>
-                                                    <p><strong>Submitted:</strong>
-                                                        {{ $ppd->created_at->format('M d, Y H:i') }}</p>
-                                                    @if ($ppd->updated_at != $ppd->created_at)
-                                                        <p><strong>Last Updated:</strong>
-                                                            {{ $ppd->updated_at->format('M d, Y H:i') }}</p>
-                                                    @endif
-                                                </div>
-                                                <div class="col-md-6">
-                                                    @if ($ppd->discount_proof_path)
-                                                        <p><strong>Document:</strong>
-                                                            <a href="{{ asset('storage/' . $ppd->discount_proof_path) }}"
-                                                                target="_blank" class="btn btn-custom btn-outline-primary">
-                                                                View Document
-                                                            </a>
-                                                        </p>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
+
                             <!-- Payment Summary -->
                             <div class="wg-box">
                                 <h5>Payment Summary</h5>
                                 <table class="table-custom">
                                     <tbody>
+                                        @php
+                                            // Calculate Initial Price: facility price * days
+                                            $facilityPrice = null;
+                                            $bookingDays = null;
+                                            $initialPrice = 0;
+
+                                            if ($payment->availability && $payment->availability->facility) {
+                                                $facility = $payment->availability->facility;
+                                                $facilityType = $facility->facility_type;
+                                                $priceType = null;
+
+                                                if ($facilityType === 'individual') {
+                                                    $priceType = 'individual';
+                                                } elseif ($facilityType === 'whole_place') {
+                                                    $priceType = 'whole';
+                                                } elseif ($facilityType === 'both') {
+                                                    $priceType = $payment->availability->facility_attribute_id
+                                                        ? 'individual'
+                                                        : 'whole';
+                                                }
+
+                                                if ($priceType && $facility->prices->count() > 0) {
+                                                    $relevantPrices = $facility->prices->where(
+                                                        'price_type',
+                                                        $priceType,
+                                                    );
+                                                    $facilityPrice = $relevantPrices->sum('value');
+                                                }
+
+                                                $bookingDays = $payment->transactionReservations
+                                                    ->pluck('availability.id')
+                                                    ->unique()
+                                                    ->count();
+                                                if ($facilityPrice && $bookingDays) {
+                                                    $initialPrice = $facilityPrice * $bookingDays;
+                                                }
+                                            }
+                                        @endphp
+
+
                                         <tr>
                                             <td><strong>Initial Price</strong></td>
                                             <td style="text-align: right;">
-                                                &#8369;{{ number_format($payment->gross_total ?? $payment->total_price, 2) }}
+                                                &#8369;{{ number_format($initialPrice, 2) }}
+                                                @if ($bookingDays > 0)
+                                                    <br>
+                                                    <small style="color: #666;">
+                                                        (&#8369;{{ number_format($facilityPrice, 2) }} ×
+                                                        {{ $bookingDays }} {{ $bookingDays == 1 ? 'day' : 'days' }})
+                                                    </small>
+                                                @endif
                                             </td>
                                         </tr>
 
                                         {{-- Refundable Add-Ons Section --}}
                                         @php
-                                            $addonTotal = 0;
+                                            $addonGrandTotal = 0;
+                                            $addonDetails = [];
+                                            $processedAddonIds = [];
+
+                                            // Process addons from addon_reservations
                                             if (
                                                 $payment->addonTransactions &&
                                                 $payment->addonTransactions->count() > 0
                                             ) {
-                                                $addonTotal = $payment->addonTransactions->sum(function ($addonTrx) {
-                                                    return ($addonTrx->addon->base_price ?? 0) *
-                                                        ($addonTrx->addonReservation->quantity ?? 1);
-                                                });
+                                                foreach ($payment->addonTransactions as $addonTrx) {
+                                                    if ($addonTrx->addon && $addonTrx->addonReservation) {
+                                                        $addonId = $addonTrx->addon->id;
+
+                                                        // Skip if already processed (show only once per addon)
+                                                        if (in_array($addonId, $processedAddonIds)) {
+                                                            continue;
+                                                        }
+
+                                                        $addonName = $addonTrx->addon->name;
+                                                        $basePrice = $addonTrx->addon->base_price;
+                                                        $quantity = $addonTrx->addonReservation->quantity ?? 1;
+                                                        $days = $addonTrx->addonReservation->days ?? 1;
+
+                                                        // Calculate: base_price * days
+                                                        $addonTotal = $basePrice * $days;
+
+                                                        $addonDetails[] = [
+                                                            'name' => $addonName,
+                                                            'quantity' => $quantity,
+                                                            'days' => $days,
+                                                            'total' => $addonTotal,
+                                                            'base_price' => $basePrice,
+                                                        ];
+
+                                                        $addonGrandTotal += $addonTotal;
+                                                        $processedAddonIds[] = $addonId;
+                                                    }
+                                                }
                                             }
+
+                                            // Process flat-rate addons from addon_payments
+                                            if (
+                                                isset($payment->addonPayments) &&
+                                                $payment->addonPayments->count() > 0
+                                            ) {
+                                                foreach ($payment->addonPayments as $addonPayment) {
+                                                    if ($addonPayment->addon) {
+                                                        $addonName = $addonPayment->addon->name;
+                                                        $addonTotal = $addonPayment->total;
+
+                                                        $addonDetails[] = [
+                                                            'name' => $addonName,
+                                                            'quantity' => 1,
+                                                            'days' => 1,
+                                                            'total' => $addonTotal,
+                                                            'is_flat' => true,
+                                                        ];
+
+                                                        $addonGrandTotal += $addonTotal;
+                                                    }
+                                                }
+                                            }
+
+                                            // Calculate Total Price
+                                            $totalPrice = $initialPrice + $addonGrandTotal;
                                         @endphp
 
-                                        @if ($addonTotal > 0)
+                                        @if ($addonGrandTotal > 0)
                                             <tr>
                                                 <td colspan="2" style="padding-top: 20px;"><strong>Refundable
                                                         Add-Ons</strong></td>
                                             </tr>
 
-                                            @foreach ($payment->addonTransactions as $addonTrx)
-                                                @if ($addonTrx->addon)
-                                                    <tr>
-                                                        <td style="padding-left: 30px; text-transform: uppercase;">
-                                                            {{ $addonTrx->addon->name }}</td>
-                                                        <td style="text-align: right;">
-                                                            &#8369;{{ number_format(($addonTrx->addon->base_price ?? 0) * ($addonTrx->addonReservation->quantity ?? 1), 2) }}
-                                                        </td>
-                                                    </tr>
-                                                @endif
+                                            @foreach ($addonDetails as $addon)
+                                                <tr>
+                                                    <td style="padding-left: 30px; text-transform: uppercase;">
+                                                        {{ $addon['name'] }}
+                                                        (X{{ $addon['quantity'] }})
+                                                        @if (!isset($addon['is_flat']) && $addon['days'] > 0)
+                                                            ({{ $addon['days'] }}
+                                                            {{ $addon['days'] == 1 ? 'DAY' : 'DAYS' }})
+                                                        @endif
+                                                    </td>
+                                                    <td style="text-align: right;">
+                                                        &#8369;{{ number_format($addon['total'], 2) }}
+                                                        @if (!isset($addon['is_flat']) && $addon['days'] > 0)
+                                                            <br>
+                                                            <small style="color: #666;">
+                                                                (&#8369;{{ number_format($addon['base_price'], 2) }} ×
+                                                                {{ $addon['days'] }}
+                                                                {{ $addon['days'] == 1 ? 'day' : 'days' }})
+                                                            </small>
+                                                        @endif
+                                                    </td>
+                                                </tr>
                                             @endforeach
 
                                             <tr style="background-color: #f5f5f5;">
                                                 <td><strong>Refundable Add-ons Total</strong></td>
                                                 <td style="text-align: right;">
-                                                    <strong>&#8369;{{ number_format($addonTotal, 2) }}</strong>
+                                                    <strong>&#8369;{{ number_format($addonGrandTotal, 2) }}</strong>
                                                 </td>
                                             </tr>
                                         @endif
 
-                                        {{-- Total Price Highlight --}}
+                                        {{-- Total Price = Initial Price + Refundable Add-ons --}}
                                         <tr style="background-color: #e3f2fd; border-left: 4px solid #2196F3;">
                                             <td style="font-size: 1.1rem;"><strong>Total Price</strong></td>
                                             <td
                                                 style="text-align: right; font-weight: 700; font-size: 1.1rem; color: #2196F3;">
-                                                <strong>&#8369;{{ number_format($payment->total_price, 2) }}</strong>
+                                                <strong>&#8369;{{ number_format($totalPrice, 2) }}</strong>
                                             </td>
                                         </tr>
 
