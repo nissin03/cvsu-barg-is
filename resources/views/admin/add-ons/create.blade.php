@@ -164,12 +164,10 @@
             animation: fadeIn 0.3s ease;
         }
 
-        /* Remove the green valid state */
         .field-input:valid,
         .field-select:valid,
         .field-textarea:valid {
             border-color: #cbd5e1;
-            /* Changed from #16a34a (green) to default border color */
         }
     </style>
 
@@ -288,7 +286,7 @@
                                 </label>
                             </div>
 
-                            <div class="field-group">
+                            <div class="field-group" id="capacityField">
                                 <label class="field-label">
                                     Capacity
                                     <span class="required-asterisk">*</span>
@@ -403,6 +401,8 @@
             const flatRateFields = document.getElementById('flatRateFields');
             const perNightFields = document.getElementById('perNightFields');
             const perItemFields = document.getElementById('perItemFields');
+            const capacityField = document.getElementById('capacity');
+            const capacityFieldGroup = document.getElementById('capacityField');
             const quantityNightFieldInput = document.getElementById('quantity_night');
             const quantityItemFieldInput = document.getElementById('quantity_item');
             const createAddonBtn = document.getElementById('createAddonBtn');
@@ -449,7 +449,19 @@
                 }
 
                 updateHiddenQuantityFields();
+                handleCapacityVisibility();
                 updateCreateButtonState();
+            }
+
+            function handleCapacityVisibility() {
+                if (priceTypeSelect.value === 'per_unit' && billingCycleField.value === 'per_day') {
+                    capacityFieldGroup.style.display = 'none';
+                    capacityField.value = '1';
+                    capacityField.required = false;
+                } else if (priceTypeSelect.value === 'per_unit') {
+                    capacityFieldGroup.style.display = 'block';
+                    capacityField.required = true;
+                }
             }
 
             function updateHiddenQuantityFields() {
@@ -498,7 +510,7 @@
 
                 requiredFields.forEach(fieldId => {
                     const field = document.getElementById(fieldId);
-                    if (field && !field.disabled) {
+                    if (field && !field.disabled && field.offsetParent !== null) {
                         if (!field.value || String(field.value).trim() === '') {
                             allFieldsValid = false;
                         }
@@ -528,6 +540,11 @@
                 if (quantityItemFieldInput) {
                     quantityItemFieldInput.addEventListener('input', updateHiddenQuantityFields);
                 }
+
+                billingCycleField.addEventListener('change', function() {
+                    handleCapacityVisibility();
+                    updateCreateButtonState();
+                });
             }
 
             toggleConditionalFields();
@@ -543,7 +560,7 @@
 
                 requiredFields.forEach(fieldId => {
                     const field = document.getElementById(fieldId);
-                    if (field && !field.disabled) {
+                    if (field && !field.disabled && field.offsetParent !== null) {
                         const hasValue = field.value && String(field.value).trim() !== '';
                         if (!hasValue) {
                             isValid = false;
@@ -556,8 +573,7 @@
                                 field.parentNode.appendChild(errorMsg);
                             }
                         } else {
-                            field.style.borderColor =
-                                '#cbd5e1'; // Changed from green to default border color
+                            field.style.borderColor = '#cbd5e1';
                             if (field.nextElementSibling && field.nextElementSibling.classList
                                 .contains('error-message')) {
                                 field.nextElementSibling.remove();

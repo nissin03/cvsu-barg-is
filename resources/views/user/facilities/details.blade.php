@@ -216,8 +216,39 @@
                 <div class="tab-pane fade show active" id="tab-description" role="tabpanel"
                     aria-labelledby="tab-description-tab">
                     <div class="rental-single__description text-gray-700 lh-lg">
-                        {{ $facility->description }}
+                        @php
+                            $description = $facility->description;
+                            $lines = preg_split('/\r\n|\r|\n/', $description);
+                            $formatted = '';
+                            $bulletMode = false;
+
+                            foreach ($lines as $line) {
+                                $trim = trim($line);
+                                if ($trim === '') {
+                                    continue;
+                                }
+
+                                if (str_contains($trim, ':')) {
+                                    $formatted .= "<div>{$trim}</div>";
+                                    $bulletMode = true;
+                                    continue;
+                                }
+
+                                if ($bulletMode) {
+                                    $formatted .= "<div class='ms-3'>• {$trim}</div>";
+                                    if (str_ends_with($trim, '.')) {
+                                        $bulletMode = false;
+                                    }
+                                    continue;
+                                }
+
+                                $formatted .= "<div>{$trim}</div>";
+                            }
+                        @endphp
+
+                        {!! $formatted !!}
                     </div>
+
                 </div>
 
                 <div class="tab-pane fade" id="tab-rules" role="tabpanel" aria-labelledby="tab-rules-tab">
