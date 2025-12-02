@@ -156,7 +156,6 @@ class AddonsController extends Controller
             case 'per_unit':
                 $validated['is_based_on_quantity'] = false;
                 $validated['is_refundable'] = false;
-
                 break;
 
             case 'flat_rate':
@@ -266,18 +265,25 @@ class AddonsController extends Controller
 
     public function archive(Request $request)
     {
-        $query = Addon::onlyTrashed()->with(['user', 'facility']);
+        $query = Addon::onlyTrashed()
+            ->with(['user', 'facility']);
 
-        if ($request->has('search') && !empty($request->search)) {
-            $search = $request->search;
-            $query->where('name', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%");
+        if ($request->filled('search')) {
+            $search = trim($request->string('search'));
+            $like   = '%' . str_replace(['%', '_'], ['\%', '\_'], $search) . '%';
+
+            $query->where(function ($q) use ($like) {
+                $q->where('name', 'like', $like)
+                    ->orWhere('description', 'like', $like);
+            });
         }
 
-        $addons = $query->latest('deleted_at')->paginate(10);
+        $addons = $query->latest('deleted_at')->paginate(10)
+            ->appends($request->query());
 
         return view('admin.add-ons.archive', compact('addons'));
     }
+
 
     public function restore($id)
     {
