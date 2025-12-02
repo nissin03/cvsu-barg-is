@@ -238,6 +238,14 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('archived-product-attributes', [AdminController::class, 'archived_attributes'])->name('admin.archived-attributes');
         Route::put('product-attribute/restore/{id}', [AdminController::class, 'restore_attribute'])->name('admin.product-attribute.restore');
 
+        // Route::get('/archived-variants/{productId}', [AdminController::class, 'archived_variants'])
+        //     ->name('admin.archived-variants');
+        Route::get('/admin/archived-variants', [AdminController::class, 'archivedVariants'])
+            ->name('admin.archived-variants');
+
+        Route::put('/variant/restore/{id}', [AdminController::class, 'restore_variant'])
+            ->name('admin.variant.restore');
+
         Route::get('/orders', [AdminController::class, 'orders'])->name('admin.orders');
         Route::get('/orders/filters', [AdminController::class, 'filterOrders'])->name('admin.orders.filter');
         Route::get('/order/{order_id}/details', [AdminController::class, 'order_details'])->name('admin.order.details');

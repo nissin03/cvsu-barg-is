@@ -24,8 +24,7 @@
             margin-bottom: 2px;
         }
 
-        .badge-warning {
-            background-color: #ffc107;
+        .badge {
             display: inline-flex;
             align-items: center;
             padding: 6px 12px;
@@ -34,22 +33,24 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            transition: all 0.2s;
             margin-bottom: 2px;
+            transition: all 0.2s;
+        }
+
+        .badge-success {
+            background-color: #28a745;
         }
 
         .badge-danger {
             background-color: #dc3545;
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 12px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.2s;
-            margin-bottom: 2px;
+        }
+
+        .badge-warning {
+            background-color: #ffc107;
+        }
+
+        .badge-primary {
+            background-color: #283fa7;
         }
 
         /* Enhanced tooltip styles */
@@ -642,8 +643,9 @@
                         <a class="tf-button w-auto" href="{{ route('admin.product.add') }}">
                             <i class="icon-plus"></i>Add Product
                         </a>
-                        <a class="tf-button w-auto" href="{{ route('admin.product-attribute-add') }}">
-                            <i class="icon-plus"></i>Add Variations
+                        <a class="tf-button w-auto"
+                            href="{{ route('admin.archived-variants', ['id' => $productAttrValues]) }}">
+                            <i class="icon-plus"></i>Archived Variations
                         </a>
                         <a class="tf-button w-auto" href="{{ route('admin.archived-products') }}">
                             <i class="icon-archive"></i> Archived Products

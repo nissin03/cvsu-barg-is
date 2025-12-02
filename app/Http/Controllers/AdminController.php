@@ -545,6 +545,8 @@ class AdminController extends Controller
             ->orderBy('name')
             ->get();
 
+        $productAttrValues = ProductAttributeValue::onlyTrashed()->orderBy('id', 'DESC')->get();
+
         $query = Product::with([
             'category' => function ($query) {
                 $query->with('parent');
@@ -553,7 +555,6 @@ class AdminController extends Controller
             'attributeValues.productAttribute'
         ])
             ->where('archived', $archived);
-
 
         if ($search) {
             $isNumeric = is_numeric($search);
@@ -568,7 +569,6 @@ class AdminController extends Controller
             });
         }
 
-        // Category filter
         if ($category) {
             $query->where(function ($q) use ($category) {
                 $selectedCategory = Category::find($category);
@@ -588,46 +588,105 @@ class AdminController extends Controller
             });
         }
 
-        if ($stockStatus) {
-            $query->where('stock_status', $stockStatus);
+        if (!in_array($sortBy, ['stock_low', 'stock_high'])) {
+            switch ($sortBy) {
+                case 'oldest':
+                    $query->orderBy('created_at', 'ASC');
+                    break;
+                case 'name_asc':
+                    $query->orderBy('name', 'ASC');
+                    break;
+                case 'name_desc':
+                    $query->orderBy('name', 'DESC');
+                    break;
+                case 'newest':
+                default:
+                    $query->orderBy('created_at', 'DESC');
+                    break;
+            }
         }
+        $products = $query->get();
 
+        if ($stockStatus) {
+            $products = $products->filter(function ($product) use ($stockStatus) {
+
+                if ($product->attributeValues->count() > 0) {
+                    $hasOutOfStock = false;
+                    $hasReorderLevel = false;
+                    $allInStock = true;
+
+                    foreach ($product->attributeValues as $variant) {
+                        if ($variant->quantity == 0) {
+                            $hasOutOfStock = true;
+                            $allInStock = false;
+                        } elseif ($variant->quantity <= $product->reorder_quantity) {
+                            $hasReorderLevel = true;
+                            $allInStock = false;
+                        }
+                    }
+
+                    if ($hasOutOfStock) {
+                        $productStatus = 'outofstock';
+                    } elseif ($hasReorderLevel) {
+                        $productStatus = 'reorder';
+                    } else {
+                        $productStatus = 'instock';
+                    }
+
+                    return $productStatus === $stockStatus;
+                } else {
+                    $currentStock = $product->quantity;
+
+                    if ($currentStock == 0) {
+                        return $stockStatus === 'outofstock';
+                    } elseif ($currentStock <= $product->reorder_quantity) {
+                        return $stockStatus === 'reorder';
+                    } else {
+                        return $stockStatus === 'instock';
+                    }
+                }
+            });
+        }
 
         switch ($sortBy) {
-            case 'oldest':
-                $query->orderBy('created_at', 'ASC');
-                break;
-            case 'name_asc':
-                $query->orderBy('name', 'ASC');
-                break;
-            case 'name_desc':
-                $query->orderBy('name', 'DESC');
-                break;
             case 'stock_low':
-                $query->orderBy('quantity', 'ASC');
+                $products = $products->sortBy(function ($product) {
+                    return $product->attributeValues->count() > 0
+                        ? $product->attributeValues->sum('quantity')
+                        : $product->quantity;
+                });
                 break;
+
             case 'stock_high':
-                $query->orderBy('quantity', 'DESC');
-                break;
-            case 'newest':
-            default:
-                $query->orderBy('created_at', 'DESC');
+                $products = $products->sortByDesc(function ($product) {
+                    return $product->attributeValues->count() > 0
+                        ? $product->attributeValues->sum('quantity')
+                        : $product->quantity;
+                });
                 break;
         }
 
-        $products = $query->paginate(10)->withQueryString();
-        $count = $products->total();
+        $currentPage = \Illuminate\Pagination\Paginator::resolveCurrentPage();
+        $perPage = 10;
+        $products = new \Illuminate\Pagination\LengthAwarePaginator(
+            $products->forPage($currentPage, $perPage)->values(),
+            $products->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
+        $count = $products->total();
 
         if ($request->ajax()) {
             return response()->json([
                 'products' => view('partials._products-table', compact('products'))->render(),
                 'pagination' => view('partials._products-pagination', compact('products'))->render(),
-                'count' => $count
+                'count' => $count,
             ]);
         }
 
-        return view('admin.products', compact('products', 'archived', 'categories'));
+        return view('admin.products', compact('products', 'archived', 'categories', 'productAttrValues'));
     }
 
     public function product_add()
@@ -832,7 +891,8 @@ class AdminController extends Controller
             'variant_description',
             'existing_variant_ids',
             'removed_variant_ids',
-            'removed_images'
+            'removed_images',
+            'archived_variant_ids'
         ]));
         // $product->fill($request->except(['image', 'images', 'variant_name', 'product_attribute_id', 'variant_price', 'variant_quantity', 'existing_variant_ids', 'removed_variant_ids']));
 
@@ -942,6 +1002,18 @@ class AdminController extends Controller
 
         $product->save();
 
+        if ($request->has('archived_variant_ids')) {
+            $archivedVariantIds = $request->input('archived_variant_ids', []);
+            if (!empty($archivedVariantIds)) {
+                ProductAttributeValue::whereIn('id', $archivedVariantIds)->delete();
+            }
+        }
+
+        $removedVariantIds = $request->input('removed_variant_ids', []);
+        if (!empty($removedVariantIds)) {
+            ProductAttributeValue::whereIn('id', $removedVariantIds)->delete();
+        }
+
         if ($product->stock_status === 'instock' && $previousStockStatus !== 'instock') {
             $users = User::where('utype', 'USR')->get();
 
@@ -955,6 +1027,32 @@ class AdminController extends Controller
         return redirect()->route('admin.products')->with('status', 'Product has been updated successfully!');
     }
 
+    public function archivedVariants(Request $request)
+    {
+        $archivedVariants = ProductAttributeValue::onlyTrashed()
+            ->with(['product', 'productAttribute'])
+            ->orderBy('deleted_at', 'DESC')
+            ->paginate(10);
+
+        return view('admin.archived-attribute-values', compact('archivedVariants'));
+    }
+
+
+    public function restore_variant($id)
+    {
+        try {
+            $variant = ProductAttributeValue::onlyTrashed()->findOrFail($id);
+            $variant->restore();
+
+            return redirect()
+                ->route('admin.archived.variants')
+                ->with('success', 'Variant restored successfully.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to restore variant: ' . $e->getMessage());
+        }
+    }
 
     public function archivedProducts($id)
     {

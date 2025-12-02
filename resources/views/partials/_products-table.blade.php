@@ -133,7 +133,7 @@
         </thead>
         <tbody>
             @foreach ($products as $product)
-                @php
+                {{-- @php
                     $groupedAttributes = [];
                     $uniqueAttributes = [];
                     foreach ($product->attributeValues as $value) {
@@ -164,6 +164,66 @@
                         $stockStatus = 'In Stock';
                         $badgeClass = 'badge-success';
                     }
+                @endphp --}}
+                @php
+                    $groupedAttributes = [];
+                    $uniqueAttributes = [];
+                    foreach ($product->attributeValues as $value) {
+                        if ($value->productAttribute) {
+                            $attributeId = $value->product_attribute_id;
+                            $groupedAttributes[$attributeId][] = $value;
+                            if (!isset($uniqueAttributes[$attributeId])) {
+                                $uniqueAttributes[$attributeId] = $value->productAttribute;
+                            }
+                        }
+                    }
+
+                    // Check if product has variants
+                    if ($product->attributeValues->count() > 0) {
+                        // Check individual variant quantities
+                        $hasOutOfStock = false;
+                        $hasReorderLevel = false;
+                        $allInStock = true;
+
+                        foreach ($product->attributeValues as $variant) {
+                            if ($variant->quantity == 0) {
+                                $hasOutOfStock = true;
+                                $allInStock = false;
+                            } elseif ($variant->quantity <= $product->reorder_quantity) {
+                                $hasReorderLevel = true;
+                                $allInStock = false;
+                            }
+                        }
+
+                        // Determine stock status based on variant conditions
+                        if ($hasOutOfStock) {
+                            $stockStatus = 'Out of Stock';
+                            $badgeClass = 'badge-danger';
+                        } elseif ($hasReorderLevel) {
+                            $stockStatus = 'Reorder Level';
+                            $badgeClass = 'badge-warning';
+                        } elseif ($allInStock) {
+                            $stockStatus = 'In Stock';
+                            $badgeClass = 'badge-success';
+                        } else {
+                            $stockStatus = 'In Stock';
+                            $badgeClass = 'badge-success';
+                        }
+                    } else {
+                        // Product without variants - use product's own quantity
+    $currentStock = $product->quantity;
+
+    if ($currentStock == 0) {
+        $stockStatus = 'Out of Stock';
+        $badgeClass = 'badge-danger';
+    } elseif ($currentStock <= $product->reorder_quantity) {
+        $stockStatus = 'Reorder Level';
+        $badgeClass = 'badge-warning';
+    } else {
+        $stockStatus = 'In Stock';
+        $badgeClass = 'badge-success';
+                        }
+                    }
                 @endphp
 
                 <tr class="product-row" data-href="{{ route('admin.product.edit', ['id' => $product->id]) }}"
@@ -185,7 +245,6 @@
                             </div>
                         </div>
                     </td>
-
                     <td scope="row" class="text-center align-middle position-relative">
                         @if ($product->attributeValues->count() > 0)
                             <div class="d-flex flex-column align-items-center justify-content-center h-100">
@@ -300,13 +359,37 @@
                                     </h3>
                                     <div class="row g-2">
                                         @foreach ($variants as $variant)
+                                            @php
+                                                $vQty = $variant->quantity;
+
+                                                if ($vQty == 0) {
+                                                    $variantStockStatus = 'Out of Stock';
+                                                    $variantBadgeClass = 'badge-danger';
+                                                } elseif ($vQty <= $product->outofstock_quantity) {
+                                                    $variantStockStatus = 'Low Stock';
+                                                    $variantBadgeClass = 'badge-danger';
+                                                } elseif ($vQty <= $product->reorder_quantity) {
+                                                    $variantStockStatus = 'Reorder Level';
+                                                    $variantBadgeClass = 'badge-warning';
+                                                } else {
+                                                    $variantStockStatus = 'In Stock';
+                                                    $variantBadgeClass = 'badge-success';
+                                                }
+                                            @endphp
                                             <div class="col-md-6">
                                                 <div
                                                     class="variant-card p-3 border rounded d-flex justify-content-between align-items-center bg-light">
                                                     <p class="fw-semibold">{{ $variant->value }}</p>
-                                                    <p class="badge bg-primary fs-6 px-3 py-2">
-                                                        {{ $variant->quantity }} units
-                                                    </p>
+                                                    <div class="d-flex align-items-end gap-3">
+                                                        <p class="text-tiny">
+                                                            <span class="badge badge-primary">
+                                                                {{ $variant->quantity }} units</span>
+                                                        </p>
+                                                        <div class="text-tiny">
+                                                            <span
+                                                                class="badge {{ $variantBadgeClass }}">{{ $variantStockStatus }}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         @endforeach
