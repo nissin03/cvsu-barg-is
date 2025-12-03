@@ -1,3 +1,31 @@
+<style>
+    /* Force gallery upload to appear below images on new row */
+    #gallery-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    #gallery-container .item {
+        flex: 0 0 auto;
+    }
+
+    #galUpload {
+        flex-basis: 100% !important;
+        width: 100% !important;
+        order: 999;
+    }
+
+    #gallery-container .gitems~#galUpload {
+        flex-basis: 100% !important;
+    }
+
+    #galUpload.has-images {
+        margin-top: 10px;
+        border-top: 1px dashed #ddd;
+        padding-top: 10px;
+    }
+</style>
 <div class="wg-box">
     <fieldset>
         <div class="body-title mb-10">Requirements <span class="tf-color-1">*</span></div>

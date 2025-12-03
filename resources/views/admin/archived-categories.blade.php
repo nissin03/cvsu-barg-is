@@ -30,12 +30,12 @@
             <div class="wg-box">
                 <div class="flex items-center justify-between gap10 flex-wrap">
                     <div class="wg-filter flex-grow">
-                        <form class="form-search">
+                        {{-- <form class="form-search">
                             <fieldset class="name">
                                 <input type="text" placeholder="Search here..." class="" name="name"
                                     tabindex="2" value="" aria-required="true" required="">
                             </fieldset>
-                        </form>
+                        </form> --}}
                     </div>
                 </div>
                 <div class="table-all-user table-responsive">
@@ -86,7 +86,7 @@
                                     @if ($category->archivedChildren && $category->archivedChildren->count() > 0)
                                         @foreach ($category->archivedChildren as $childCategory)
                                             <tr class="collapse children-of-{{ $category->id }} bg-light text-muted">
-                                                <td>{{ $childCategory->id }}</td>
+
                                                 <td>
                                                     <div class="d-flex align-items-center pl-4">
                                                         <img src="{{ asset('uploads/categories/' . $childCategory->image) }}"
@@ -98,7 +98,7 @@
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td>
+                                                {{-- <td>
                                                     <form
                                                         action="{{ route('admin.category.restore', $childCategory->id) }}"
                                                         method="POST">
@@ -107,7 +107,7 @@
                                                             <i class="icon-rotate-ccw"></i> Restore
                                                         </button>
                                                     </form>
-                                                </td>
+                                                </td> --}}
                                             </tr>
                                         @endforeach
                                     @endif

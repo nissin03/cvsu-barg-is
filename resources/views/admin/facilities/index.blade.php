@@ -223,6 +223,10 @@
             const performSearch = function() {
                 const searchTerm = $('#facility-search').val();
                 lastScrollPosition = $(window).scrollTop();
+                const searchInput = $('#facility-search');
+                const searchValue = searchInput.val();
+                const cursorPosition = searchInput[0].selectionStart;
+                const wasSearchFocused = searchInput.is(':focus')
                 $('#loading-indicator').show();
 
                 $.ajax({
@@ -239,15 +243,40 @@
                         initTooltips();
                         initRowClicks();
                         $(window).scrollTop(lastScrollPosition);
+                        if (wasSearchFocused) {
+                            const newSearchInput = $('#facility-search');
+                            newSearchInput.focus();
+                            if (newSearchInput[0].setSelectionRange) {
+                                newSearchInput[0].setSelectionRange(cursorPosition, cursorPosition);
+                            }
+                        }
                     },
                     error: function(xhr, status, error) {
                         console.error('Error:', error);
                         $('#loading-indicator').hide();
+                        if (wasSearchFocused) {
+                            $('#product-search').focus();
+                        }
                     }
                 });
             };
 
             $('#facility-search').on('keyup', debounce(performSearch, 500));
+
+            function showLoadingState(isLoading) {
+                if (isLoading) {
+                    $('#loading-indicator').show();
+                    $('.filter-select').prop('disabled', true);
+                    $('#applyFilters').prop('disabled', true).html(
+                        '<span class="spinner-border spinner-border-sm me-1"></span>Loading...'
+                    );
+                } else {
+                    $('#loading-indicator').hide();
+                    $('.filter-select, .filter-input, #product-search').prop('disabled', false);
+                    $('#applyFilters').prop('disabled', false).html(
+                        '<i class="icon-filter me-1"></i> Apply Filters');
+                }
+            }
 
             function initArchiveButton() {
                 $('.archive').on('click', function(e) {

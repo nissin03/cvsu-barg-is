@@ -117,14 +117,19 @@
                     </div>
                 </div>
 
-                <!-- Analytics Section -->
+                @php
+                    $hasGenderData = !empty($gender['series']) && array_sum($gender['series']) > 0;
+                    $hasDepartmentData = !empty($department['series']) && array_sum($department['series']) > 0;
+                    $hasCollegeData = !empty($college['series']) && array_sum($college['series']) > 0;
+                    $hasRoleData = !empty($role['series']) && array_sum($role['series']) > 0;
+                @endphp
+
                 <div class="tf-section analytics-dashboard mb-5">
                     <div class="section-title mb-2">
                         <h2 class="fw-bold fs-3 text-gray-800">Reservation Analytics</h2>
                     </div>
 
                     <div class="row g-4">
-                        <!-- Gender Distribution Chart -->
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm rounded-3 h-100">
                                 <div
@@ -132,36 +137,51 @@
                                     <h5 class="mb-0 fw-semibold text-gray-700">
                                         <i class="fas fa-venus-mars me-2 text-primary"></i>Reservations by Sex
                                     </h5>
-                                    <button class="btn btn-sm btn-outline-primary fullscreen-btn" data-target="genderChart">
-                                        <i class="fas fa-expand"></i>
-                                    </button>
+                                    @if ($hasGenderData)
+                                        <button class="btn btn-sm btn-outline-primary fullscreen-btn"
+                                            data-target="genderChart">
+                                            <i class="fas fa-expand"></i>
+                                        </button>
+                                    @endif
                                 </div>
                                 <div class="card-body p-3">
-                                    <div id="genderChart" class="apex-chart"></div>
+                                    @if ($hasGenderData)
+                                        <div id="genderChart" class="apex-chart"></div>
+                                    @else
+                                        <div class="d-flex align-items-center justify-content-center py-5">
+                                            <span class="text-muted">No reservation data available for sex.</span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Department Distribution Chart -->
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm rounded-3 h-100">
                                 <div
                                     class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0 fw-semibold text-gray-700">
-                                        <i class="fas fa-building me-2 text-success"></i>Reservations by Colege
+                                        <i class="fas fa-building me-2 text-success"></i>Reservations by College
                                     </h5>
-                                    <button class="btn btn-sm btn-outline-primary fullscreen-btn"
-                                        data-target="departmentChart">
-                                        <i class="fas fa-expand"></i>
-                                    </button>
+                                    @if ($hasDepartmentData)
+                                        <button class="btn btn-sm btn-outline-primary fullscreen-btn"
+                                            data-target="departmentChart">
+                                            <i class="fas fa-expand"></i>
+                                        </button>
+                                    @endif
                                 </div>
                                 <div class="card-body p-3">
-                                    <div id="departmentChart" class="apex-chart"></div>
+                                    @if ($hasDepartmentData)
+                                        <div id="departmentChart" class="apex-chart"></div>
+                                    @else
+                                        <div class="d-flex align-items-center justify-content-center py-5">
+                                            <span class="text-muted">No reservation data available for colleges.</span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
 
-                        <!-- College Distribution Chart -->
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm rounded-3 h-100">
                                 <div
@@ -169,44 +189,58 @@
                                     <h5 class="mb-0 fw-semibold text-gray-700">
                                         <i class="fas fa-graduation-cap me-2 text-purple"></i>Reservations by Courses
                                     </h5>
-                                    <button class="btn btn-sm btn-outline-primary fullscreen-btn"
-                                        data-target="collegeChart">
-                                        <i class="fas fa-expand"></i>
-                                    </button>
+                                    @if ($hasCollegeData)
+                                        <button class="btn btn-sm btn-outline-primary fullscreen-btn"
+                                            data-target="collegeChart">
+                                            <i class="fas fa-expand"></i>
+                                        </button>
+                                    @endif
                                 </div>
                                 <div class="card-body p-3">
-                                    <div id="collegeChart" class="apex-chart"></div>
+                                    @if ($hasCollegeData)
+                                        <div id="collegeChart" class="apex-chart"></div>
+                                    @else
+                                        <div class="d-flex align-items-center justify-content-center py-5">
+                                            <span class="text-muted">No reservation data available for courses.</span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Role Distribution Chart -->
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm rounded-3 h-100">
                                 <div
                                     class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0 fw-semibold text-gray-700">
-                                        <i class="fas fa-users me-2 text-warning"></i>Reservations by User Role
+                                        <i class="fas fa-users me-2 text-warning"></i>User Reservation
                                     </h5>
-                                    <button class="btn btn-sm btn-outline-primary fullscreen-btn" data-target="roleChart">
-                                        <i class="fas fa-expand"></i>
-                                    </button>
+                                    @if ($hasRoleData)
+                                        <button class="btn btn-sm btn-outline-primary fullscreen-btn"
+                                            data-target="roleChart">
+                                            <i class="fas fa-expand"></i>
+                                        </button>
+                                    @endif
                                 </div>
                                 <div class="card-body p-3">
-                                    <div id="roleChart" class="apex-chart"></div>
+                                    @if ($hasRoleData)
+                                        <div id="roleChart" class="apex-chart"></div>
+                                    @else
+                                        <div class="d-flex align-items-center justify-content-center py-5">
+                                            <span class="text-muted">No reservation data available for user roles.</span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Fullscreen Modal -->
                 <div class="modal fade" id="chartModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-right">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title" id="chartModalTitle"></h5>
-                                {{-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> --}}
                                 <button type="button" class="btn btn-secondary ms-2" id="closeModalBtn">
                                     <i class="fas fa-times me-1"></i>
                                 </button>
@@ -218,7 +252,6 @@
                     </div>
                 </div>
 
-                <!-- Recent Reservations Section -->
                 <div class="tf-section mb-30 mt-5">
                     <div class="wg-box">
                         <div class="flex items-center justify-content-between mb-4">
@@ -245,7 +278,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($reservations as $payment)
+                                        @forelse ($reservations as $payment)
                                             @php
                                                 $availability = $payment->availability;
                                                 $facility = $availability->facility ?? null;
@@ -291,9 +324,6 @@
                                                         'end' => $availability->date_to,
                                                     ];
                                                 }
-
-                                                $limitedGroupedDates = array_slice($groupedDates, 0, 3);
-                                                $hasMoreDates = count($groupedDates) > 3;
                                             @endphp
                                             <tr class="table-row-modern">
                                                 <td class="name-cell">
@@ -402,7 +432,13 @@
                                                     </div>
                                                 </td>
                                             </tr>
-                                        @endforeach
+                                        @empty
+                                            <tr class="table-row-modern">
+                                                <td colspan="7" class="text-center py-4">
+                                                    No recent reservations found.
+                                                </td>
+                                            </tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
@@ -411,19 +447,15 @@
                 </div>
             </div>
         </div>
-
-
     </main>
 @endsection
 
 @push('styles')
     <style>
-        /* Layout and Container Styles */
         .container {
             max-width: 100%;
         }
 
-        /* Table Styles */
         .table {
             width: 100%;
             border-collapse: collapse;
@@ -504,7 +536,6 @@
             font-size: 1.2rem;
         }
 
-        /* Table Cell Specific Styles */
         .name-column {
             min-width: 200px;
             width: 20%;
@@ -540,7 +571,6 @@
             width: 5%;
         }
 
-        /* Content Styles */
         .customer-info {
             display: flex;
             flex-direction: column;
@@ -587,7 +617,6 @@
             font-size: 1.2rem;
         }
 
-        /* Stats Card Styles */
         .stats-card {
             border-radius: 12px;
             transition: all 0.3s ease;
@@ -646,7 +675,6 @@
             color: #6b7280;
         }
 
-        /* Badge Styles */
         .badge {
             font-size: 0.9rem;
             padding: 0.5em 0.8em;
@@ -701,7 +729,6 @@
             letter-spacing: 0.2px;
         }
 
-        /* Color Utilities */
         .text-blue-500 {
             color: #3b82f6 !important;
         }
@@ -730,7 +757,6 @@
             color: #8b5cf6;
         }
 
-        /* Analytics Dashboard Styles */
         .analytics-dashboard .section-title h2 {
             color: #1a202c;
             font-weight: 700;
@@ -779,7 +805,6 @@
             position: relative;
         }
 
-        /* ApexCharts Styles */
         .apexcharts-toolbar {
             background: rgba(255, 255, 255, 0.95) !important;
             border-radius: 8px !important;
@@ -821,7 +846,6 @@
             margin-right: 8px !important;
         }
 
-        /* Action Elements */
         .action-cell .btn {
             width: 32px;
             height: 32px;
@@ -859,7 +883,6 @@
             gap: 4px;
         }
 
-        /* Modal Styles */
         #chartModal .modal-content {
             height: 90vh;
         }
@@ -883,7 +906,6 @@
             transform: scale(1.1);
         }
 
-        /* modal center */
         .modal-dialog-right {
             margin: 0;
             margin-left: 500px;
@@ -917,7 +939,6 @@
             color: #333;
         }
 
-        /* Responsive Styles */
         @media (max-width: 768px) {
             .table-header-modern th {
                 padding: 12px 8px;
@@ -992,16 +1013,48 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const genderChart = new ApexCharts(document.querySelector("#genderChart"), getGenderChartOptions());
-            const departmentChart = new ApexCharts(document.querySelector("#departmentChart"),
-                getDepartmentChartOptions());
-            const collegeChart = new ApexCharts(document.querySelector("#collegeChart"), getCollegeChartOptions());
-            const roleChart = new ApexCharts(document.querySelector("#roleChart"), getRoleChartOptions());
+            const hasGenderData = @json($hasGenderData);
+            const hasDepartmentData = @json($hasDepartmentData);
+            const hasCollegeData = @json($hasCollegeData);
+            const hasRoleData = @json($hasRoleData);
 
-            genderChart.render();
-            departmentChart.render();
-            collegeChart.render();
-            roleChart.render();
+            const genderSeries = @json($gender['series']);
+            const genderLabels = @json($gender['labels']);
+
+            const departmentSeries = @json($department['series']);
+            const departmentLabels = @json($department['labels']);
+
+            const collegeSeries = @json($college['series']);
+            const collegeLabels = @json($college['labels']);
+
+            const roleSeries = @json($role['series']);
+            const roleLabels = @json($role['labels']);
+
+            let genderChart = null;
+            let departmentChart = null;
+            let collegeChart = null;
+            let roleChart = null;
+
+            if (hasGenderData) {
+                genderChart = new ApexCharts(document.querySelector("#genderChart"), getGenderChartOptions());
+                genderChart.render();
+            }
+
+            if (hasDepartmentData) {
+                departmentChart = new ApexCharts(document.querySelector("#departmentChart"),
+                    getDepartmentChartOptions());
+                departmentChart.render();
+            }
+
+            if (hasCollegeData) {
+                collegeChart = new ApexCharts(document.querySelector("#collegeChart"), getCollegeChartOptions());
+                collegeChart.render();
+            }
+
+            if (hasRoleData) {
+                roleChart = new ApexCharts(document.querySelector("#roleChart"), getRoleChartOptions());
+                roleChart.render();
+            }
 
             const chartModal = new bootstrap.Modal(document.getElementById('chartModal'));
             const fullscreenChartEl = document.getElementById('fullscreenChart');
@@ -1070,7 +1123,7 @@
 
             function getGenderChartOptions() {
                 return {
-                    series: @json($gender['series']),
+                    series: genderSeries,
                     chart: {
                         type: 'pie',
                         height: 350,
@@ -1100,19 +1153,16 @@
                             },
                             export: {
                                 csv: {
-                                    filename: 'gender_reservation',
+                                    filename: 'gender_reservation'
                                 },
                                 svg: {
-                                    filename: 'gender_reservation',
+                                    filename: 'gender_reservation'
                                 },
                                 png: {
-                                    filename: 'gender_reservation',
+                                    filename: 'gender_reservation'
                                 }
                             }
-
-
                         }
-
                     },
                     title: {
                         text: 'Sex Reservation',
@@ -1124,7 +1174,7 @@
                         },
                         margin: 20
                     },
-                    labels: @json($gender['labels']),
+                    labels: genderLabels,
                     colors: ['#3B82F6', '#EC4899'],
                     legend: {
                         position: 'bottom',
@@ -1162,7 +1212,7 @@
                 return {
                     series: [{
                         name: 'Reservations',
-                        data: @json($department['series'])
+                        data: departmentSeries
                     }],
                     chart: {
                         type: 'bar',
@@ -1193,13 +1243,13 @@
                             },
                             export: {
                                 csv: {
-                                    filename: 'College_reservation',
+                                    filename: 'College_reservation'
                                 },
                                 svg: {
-                                    filename: 'College_reservation',
+                                    filename: 'College_reservation'
                                 },
                                 png: {
-                                    filename: 'College_reservation',
+                                    filename: 'College_reservation'
                                 }
                             }
                         }
@@ -1220,7 +1270,7 @@
                             horizontal: true,
                             distributed: true,
                             dataLabels: {
-                                position: 'center',
+                                position: 'center'
                             }
                         }
                     },
@@ -1230,7 +1280,7 @@
                     dataLabels: {
                         enabled: true,
                         formatter: function(val) {
-                            return val
+                            return val;
                         },
                         style: {
                             colors: ['#fff'],
@@ -1239,7 +1289,7 @@
                         }
                     },
                     xaxis: {
-                        categories: @json($department['labels']),
+                        categories: departmentLabels,
                         title: {
                             text: 'Number of Reservations',
                             style: {
@@ -1251,7 +1301,6 @@
                     },
                     yaxis: {
                         title: {
-                            // text: 'Departments',
                             style: {
                                 fontSize: '14px',
                                 fontWeight: 600,
@@ -1282,7 +1331,7 @@
                         theme: 'dark',
                         y: {
                             formatter: function(val) {
-                                return val + " reservations"
+                                return val + " reservations";
                             }
                         }
                     },
@@ -1306,7 +1355,7 @@
                 return {
                     series: [{
                         name: 'Reservations',
-                        data: @json($college['series'])
+                        data: collegeSeries
                     }],
                     chart: {
                         type: 'bar',
@@ -1337,13 +1386,13 @@
                             },
                             export: {
                                 csv: {
-                                    filename: 'Courses_reservation',
+                                    filename: 'Courses_reservation'
                                 },
                                 svg: {
-                                    filename: 'Courses_reservation',
+                                    filename: 'Courses_reservation'
                                 },
                                 png: {
-                                    filename: 'Courses_reservation',
+                                    filename: 'Courses_reservation'
                                 }
                             }
                         }
@@ -1364,7 +1413,7 @@
                             horizontal: true,
                             distributed: true,
                             dataLabels: {
-                                position: 'center',
+                                position: 'center'
                             }
                         }
                     },
@@ -1374,7 +1423,7 @@
                     dataLabels: {
                         enabled: true,
                         formatter: function(val) {
-                            return val
+                            return val;
                         },
                         style: {
                             colors: ['#fff'],
@@ -1383,7 +1432,7 @@
                         }
                     },
                     xaxis: {
-                        categories: @json($college['labels']),
+                        categories: collegeLabels,
                         title: {
                             text: 'Number of Reservations',
                             style: {
@@ -1395,7 +1444,6 @@
                     },
                     yaxis: {
                         title: {
-                            // text:'check',
                             style: {
                                 fontSize: '14px',
                                 fontWeight: 600,
@@ -1426,7 +1474,7 @@
                         theme: 'dark',
                         y: {
                             formatter: function(val) {
-                                return val + " reservations"
+                                return val + " reservations";
                             }
                         }
                     },
@@ -1448,7 +1496,7 @@
 
             function getRoleChartOptions() {
                 return {
-                    series: @json($role['series']),
+                    series: roleSeries,
                     chart: {
                         type: 'pie',
                         height: 350,
@@ -1478,13 +1526,13 @@
                             },
                             export: {
                                 csv: {
-                                    filename: 'role_reservation',
+                                    filename: 'role_reservation'
                                 },
                                 svg: {
-                                    filename: 'role_reservation',
+                                    filename: 'role_reservation'
                                 },
                                 png: {
-                                    filename: 'role_reservation',
+                                    filename: 'role_reservation'
                                 }
                             }
                         }
@@ -1499,7 +1547,7 @@
                         },
                         margin: 20
                     },
-                    labels: @json($role['labels']),
+                    labels: roleLabels,
                     colors: ['#10B981', '#F59E0B', '#3B82F6'],
                     legend: {
                         position: 'bottom',

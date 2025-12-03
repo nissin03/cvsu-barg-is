@@ -9,13 +9,17 @@
         </div>
         <div class="mobile-card-body">
             <div class="mobile-card-details">
-                <p><strong>Facility:</strong> {{ $addon->facility?->name ?? '—' }}</p>
                 <p><strong>Price:</strong> ₱{{ number_format($addon->base_price, 2) }}
                     ({{ ucfirst(str_replace('_', ' ', $addon->price_type)) }})
                 </p>
-                <p><strong>Type:</strong> {{ $addon->is_based_on_quantity ? 'Quantity-based' : 'Flat rate' }}</p>
+                <p><strong>Type:</strong>
+                    {{ $addon->is_based_on_quantity ? 'Quantity-based' : 'Flat rate' }}</p>
                 <p><strong>Refundable:</strong> {{ $addon->is_refundable ? 'Yes' : 'No' }}</p>
-                <p><strong>Billing:</strong> {{ ucfirst(str_replace('_', ' ', $addon->billing_cycle)) }}</p>
+                <p><strong>Show:</strong>
+                    <span class="badge {{ $addon->show == 'staff' ? 'badge-purple' : 'badge-info' }}">
+                        {{ ucfirst($addon->show) }}
+                    </span>
+                </p>
             </div>
             <div class="mobile-card-actions">
                 <a href="{{ route('admin.addons.edit', $addon->id) }}" class="btn btn-sm btn-primary mobile-btn">
@@ -37,7 +41,7 @@
             <i class="icon-package"></i>
         </div>
         <h4>No Addons Found</h4>
-        <p>No add-ons match your current filters.</p>
+        <p>Start by creating your first addon.</p>
         <a href="{{ route('admin.addons.create') }}" class="btn btn-primary">
             <i class="icon-plus"></i> Add New Addon
         </a>

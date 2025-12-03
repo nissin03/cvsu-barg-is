@@ -20,6 +20,7 @@ return new class extends Migration
             $table->decimal('price', 8, 2)->nullable();
             $table->unsignedInteger('quantity')->default(0);
             $table->enum('stock_status', ['instock', 'outofstock', 'reorder'])->default('instock');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

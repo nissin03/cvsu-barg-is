@@ -24,8 +24,7 @@
             margin-bottom: 2px;
         }
 
-        .badge-warning {
-            background-color: #ffc107;
+        .badge {
             display: inline-flex;
             align-items: center;
             padding: 6px 12px;
@@ -34,22 +33,24 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            transition: all 0.2s;
             margin-bottom: 2px;
+            transition: all 0.2s;
+        }
+
+        .badge-success {
+            background-color: #28a745;
         }
 
         .badge-danger {
             background-color: #dc3545;
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 12px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.2s;
-            margin-bottom: 2px;
+        }
+
+        .badge-warning {
+            background-color: #ffc107;
+        }
+
+        .badge-primary {
+            background-color: #283fa7;
         }
 
         /* Enhanced tooltip styles */
@@ -642,8 +643,9 @@
                         <a class="tf-button w-auto" href="{{ route('admin.product.add') }}">
                             <i class="icon-plus"></i>Add Product
                         </a>
-                        <a class="tf-button w-auto" href="{{ route('admin.product-attribute-add') }}">
-                            <i class="icon-plus"></i>Add Variations
+                        <a class="tf-button w-auto"
+                            href="{{ route('admin.archived-variants', ['id' => $productAttrValues]) }}">
+                            <i class="icon-plus"></i>Archived Variations
                         </a>
                         <a class="tf-button w-auto" href="{{ route('admin.archived-products') }}">
                             <i class="icon-archive"></i> Archived Products
@@ -693,7 +695,6 @@
         $(document).ready(function() {
             let lastScrollPosition = 0;
             let searchTimeout = null;
-            const tooltip = $('<div class="custom-tooltip"></div>').appendTo('body');
 
             // Filter toggle functionality
             $('#filterToggle').on('click', function() {
@@ -743,6 +744,11 @@
             function performFilter() {
                 lastScrollPosition = $(window).scrollTop();
 
+                const searchInput = $('#product-search');
+                const searchValue = searchInput.val();
+                const cursorPosition = searchInput[0].selectionStart;
+                const wasSearchFocused = searchInput.is(':focus')
+
                 // Get all filter values
                 const search = $('#product-search').val();
                 const category = $('#category').val();
@@ -786,10 +792,16 @@
                         window.history.pushState({}, '', url);
                         initPaginationEvents();
                         initArchiveButtons();
-                        initTooltips();
                         initRowClicks();
                         updateActiveFiltersDisplay();
                         $(window).scrollTop(lastScrollPosition);
+                        if (wasSearchFocused) {
+                            const newSearchInput = $('#product-search');
+                            newSearchInput.focus();
+                            if (newSearchInput[0].setSelectionRange) {
+                                newSearchInput[0].setSelectionRange(cursorPosition, cursorPosition);
+                            }
+                        }
                         showNotification(`Found ${response.count} product(s)`, 'info', 2000);
                     },
                     error: function(xhr, status, error) {
@@ -798,6 +810,9 @@
                         showNotification(
                             'An error occurred while filtering products. Please try again.', 'error'
                         );
+                        if (wasSearchFocused) {
+                            $('#product-search').focus();
+                        }
                     }
                 });
             }
@@ -805,9 +820,10 @@
             function showLoadingState(isLoading) {
                 if (isLoading) {
                     $('#loading-indicator').show();
-                    $('.filter-select, .filter-input, #product-search').prop('disabled', true);
+                    $('.filter-select').prop('disabled', true);
                     $('#applyFilters').prop('disabled', true).html(
-                        '<span class="spinner-border spinner-border-sm me-1"></span>Loading...');
+                        '<span class="spinner-border spinner-border-sm me-1"></span>Loading...'
+                    );
                 } else {
                     $('#loading-indicator').hide();
                     $('.filter-select, .filter-input, #product-search').prop('disabled', false);
@@ -838,7 +854,6 @@
                             window.history.pushState({}, '', url);
                             initPaginationEvents();
                             initArchiveButtons();
-                            initTooltips();
                             initRowClicks();
                             $(window).scrollTop(lastScrollPosition);
                         },
@@ -982,30 +997,6 @@
                 });
             }
 
-            function initTooltips() {
-                const tooltip = $('.custom-tooltip');
-                if (!tooltip.length) {
-                    $('<div class="custom-tooltip"></div>').appendTo('body');
-                }
-
-                $('.variant-value').hover(function() {
-                    const $this = $(this);
-                    $this.data('title', $this.attr('title')).removeAttr('title');
-
-                    const content = $this.data('title') || $this.data('bs-content');
-                    $('.custom-tooltip').text(content).fadeIn('fast');
-                }, function() {
-                    const $this = $(this);
-                    $this.attr('title', $this.data('title'));
-                    $('.custom-tooltip').hide();
-                }).mousemove(function(e) {
-                    $('.custom-tooltip').css({
-                        top: e.pageY + 10 + 'px',
-                        left: e.pageX + 10 + 'px'
-                    });
-                });
-            }
-
             // Show notification helper
             function showNotification(message, type = 'info', duration = 4000) {
                 const alertClass = type === 'success' ? 'alert-success' :
@@ -1031,6 +1022,11 @@
 
             // Keyboard shortcuts
             $(document).on('keydown', function(e) {
+                // Check if any modal is currently open
+                if ($('.modal.show').length > 0) {
+                    return; // Don't trigger shortcuts when modal is open
+                }
+
                 if ((e.ctrlKey || e.metaKey) && e.keyCode === 13) { // Ctrl+Enter
                     e.preventDefault();
                     performFilter();
@@ -1048,7 +1044,6 @@
             // Initialize everything
             initPaginationEvents();
             initArchiveButtons();
-            initTooltips();
             initRowClicks();
             updateActiveFiltersDisplay();
 

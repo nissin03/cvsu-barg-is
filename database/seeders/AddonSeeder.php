@@ -49,9 +49,15 @@ class AddonSeeder extends Seeder
             ]
         ];
 
-        // Add common addons to all facilities
+        // Add common addons to all facilities EXCEPT Male & Female Dormitory
         $facilities = Facility::all();
         foreach ($facilities as $facility) {
+
+            // ✅ Skip adding WASTE MANAGEMENT FEE to Male Dormitory and Female Dormitory
+            if (in_array($facility->name, ['Male Dormitory', 'Female Dormitory'])) {
+                continue;
+            }
+
             foreach ($commonAddons as $addon) {
                 $addons[] = array_merge($addon, [
                     'facility_id' => $facility->id,
@@ -217,19 +223,6 @@ class AddonSeeder extends Seeder
                 'billing_cycle' => 'per_day',
                 'show' => 'both',
             ],
-            // [
-            //     'name' => 'Staff Overtime',
-            //     'price_type' => 'flat_rate',
-            //     'description' => 'Staff overtime charges (non-paying)',
-            //     'base_price' => 130.00,
-            //     'capacity' => null,
-            //     'quantity' => null,
-            //     'is_based_on_quantity' => false,
-            //     'is_available' => true,
-            //     'is_refundable' => false,
-            //     'billing_cycle' => 'per_day',
-            //     'show' => 'staff',
-            // ],
         ];
 
         if ($rolleHall) {
@@ -377,92 +370,6 @@ class AddonSeeder extends Seeder
             ];
             $addons = array_merge($addons, $swimmingPoolAddons);
         }
-
-        // Global addons (no facility_id)
-        // // $globalAddons = [
-        // //     [
-        // //         'facility_id' => null,
-        // //         'facility_attribute_id' => null,
-        // //         'user_id' => $adminUser->id,
-        // //         'name' => 'Cottage (10-15 pax)',
-        // //         'price_type' => 'per_unit',
-        // //         'description' => 'Cottage good for 10-15 people',
-        // //         'base_price' => 500.00,
-        // //         'capacity' => 15,
-        // //         'quantity' => null,
-        // //         'is_based_on_quantity' => true,
-        // //         'is_available' => true,
-        // //         'is_refundable' => false,
-        // //         'billing_cycle' => 'per_day',
-        // //         'show' => 'both',
-        // //     ],
-        // //     [
-        // //         'facility_id' => null,
-        // //         'facility_attribute_id' => null,
-        // //         'user_id' => $adminUser->id,
-        // //         'name' => 'Table (6-8 pax)',
-        // //         'price_type' => 'per_unit',
-        // //         'description' => 'Table good for 6-8 people',
-        // //         'base_price' => 300.00,
-        // //         'capacity' => 8,
-        // //         'quantity' => null,
-        // //         'is_based_on_quantity' => true,
-        // //         'is_available' => true,
-        // //         'is_refundable' => false,
-        // //         'billing_cycle' => 'per_day',
-        // //         'show' => 'both',
-        // //     ],
-        // //     [
-        // //         'facility_id' => null,
-        // //         'facility_attribute_id' => null,
-        // //         'user_id' => $adminUser->id,
-        // //         'name' => 'Extra Pillow',
-        // //         'price_type' => 'per_unit',
-        // //         'description' => 'Additional pillow',
-        // //         'base_price' => 50.00,
-        // //         'capacity' => null,
-        // //         'quantity' => null,
-        // //         'is_based_on_quantity' => true,
-        // //         'is_available' => true,
-        // //         'is_refundable' => false,
-        // //         'billing_cycle' => 'per_day',
-        // //         'show' => 'both',
-        // //     ],
-        // //     [
-        // //         'facility_id' => null,
-        // //         'facility_attribute_id' => null,
-        // //         'user_id' => $adminUser->id,
-        // //         'name' => 'Miscellaneous Fee',
-        // //         'price_type' => 'flat_rate',
-        // //         'description' => 'Additional miscellaneous charges',
-        // //         'base_price' => 1000.00,
-        // //         'capacity' => null,
-        // //         'quantity' => null,
-        // //         'is_based_on_quantity' => false,
-        // //         'is_available' => true,
-        // //         'is_refundable' => false,
-        // //         'billing_cycle' => 'per_day',
-        // //         'show' => 'both',
-        // //     ],
-        // //     [
-        // //         'facility_id' => null,
-        // //         'facility_attribute_id' => null,
-        // //         'user_id' => $adminUser->id,
-        // //         'name' => 'EXCESS Hour',
-        // //         'price_type' => 'per_unit',
-        // //         'description' => 'Additional hours beyond reserved time (₱800 per hour)',
-        // //         'base_price' => 800.00,
-        // //         'capacity' => null,
-        // //         'quantity' => null,
-        // //         'is_based_on_quantity' => true,
-        // //         'is_available' => true,
-        // //         'is_refundable' => false,
-        // //         'billing_cycle' => 'per',
-        // //         'show' => 'staff',
-        // //     ],
-        // // ];
-
-        // $addons = array_merge($addons, $globalAddons);
 
         // Create all addons
         foreach ($addons as $addon) {

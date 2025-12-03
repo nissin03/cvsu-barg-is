@@ -113,7 +113,7 @@ class AdminController extends Controller
                     SUM(IF(status='reserved', total, 0)) AS TotalReservedAmount,
                     SUM(IF(status='pickedup', total, 0)) AS TotalPickedUpAmount,
                     SUM(IF(status='canceled', total, 0)) AS TotalCanceledAmount
-                FROM Orders
+                FROM orders
                 WHERE YEAR(created_at) = ?
                 GROUP BY MONTH(created_at)
             ) D ON D.MonthNo = M.id
@@ -172,7 +172,7 @@ class AdminController extends Controller
                     SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                     SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
                     SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
-                FROM Orders
+                FROM orders
                 WHERE created_at BETWEEN ? AND ?
             ", [$startOfWeek, $endOfWeek]);
 
@@ -241,7 +241,7 @@ class AdminController extends Controller
                 SUM(IF(status = 'reserved', total, 0)) AS TotalReservedAmount,
                 SUM(IF(status = 'pickedup', total, 0)) AS TotalPickedUpAmount,
                 SUM(IF(status = 'canceled', total, 0)) AS TotalCanceledAmount
-            FROM Orders
+            FROM orders
             WHERE created_at BETWEEN ? AND ?
             GROUP BY DAYOFWEEK(created_at), DAYNAME(created_at)
             ORDER BY DayNo
@@ -294,7 +294,7 @@ class AdminController extends Controller
                 SUM(IF(status = 'reserved', 1, 0)) AS TotalReserved,
                 SUM(IF(status = 'pickedup', 1, 0)) AS TotalPickedUp,
                 SUM(IF(status = 'canceled', 1, 0)) AS TotalCanceled
-            FROM Orders
+            FROM orders
             WHERE YEAR(created_at) = ?
         ";
 
@@ -402,19 +402,26 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'slug' => 'unique:categories,slug',
             'image' => 'required|mimes:png,jpg,jpeg|max:2048',
             'parent_id' => 'nullable|exists:categories,id'
         ], [
             'name.required' => 'The category name is required.',
             'image.required' => 'The category image is required.',
-            'slug.unique' => 'The slug must be unique. This slug is already taken.',
+            'image.max' => 'Please upload an image that is 2MB or smaller.',
             'parent_id.exists' => 'The selected parent category does not exist.',
         ]);
 
+        $name = Str::title($request->name);
+        $slug = Str::slug($request->name);
+        if (Category::where('slug', $slug)->exists()) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['name' => 'A category with this name already exists. Please use a different name.']);
+        }
+
         $category = new Category();
-        $category->name = $request->name;
-        $category->slug = Str::slug($request->name);
+        $category->name = $name;
+        $category->slug = $slug;
         $category->parent_id = $request->parent_id;
 
         $image = $request->file('image');
@@ -445,14 +452,21 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'slug' => 'unique:categories,slug,' . $request->id,
             'image' => 'mimes:png,jpg,jpeg|max:2048',
             'parent_id' => 'nullable|exists:categories,id'
         ]);
 
+        $name = Str::title($request->name);
+        $slug = Str::slug($request->name);
+        if (Category::where('slug', $slug)->where('id', '!=', $request->id)->exists()) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['name' => 'A category with this name already exists. Please use a different name.']);
+        }
+
         $category = Category::find($request->id);
-        $category->name = $request->name;
-        $category->slug = Str::slug($request->name);
+        $category->name = $name;
+        $category->slug = $slug;
         $category->parent_id = $request->parent_id;
 
         if ($request->hasFile('image')) {
@@ -531,6 +545,8 @@ class AdminController extends Controller
             ->orderBy('name')
             ->get();
 
+        $productAttrValues = ProductAttributeValue::onlyTrashed()->orderBy('id', 'DESC')->get();
+
         $query = Product::with([
             'category' => function ($query) {
                 $query->with('parent');
@@ -539,7 +555,6 @@ class AdminController extends Controller
             'attributeValues.productAttribute'
         ])
             ->where('archived', $archived);
-
 
         if ($search) {
             $isNumeric = is_numeric($search);
@@ -554,7 +569,6 @@ class AdminController extends Controller
             });
         }
 
-        // Category filter
         if ($category) {
             $query->where(function ($q) use ($category) {
                 $selectedCategory = Category::find($category);
@@ -574,46 +588,105 @@ class AdminController extends Controller
             });
         }
 
-        if ($stockStatus) {
-            $query->where('stock_status', $stockStatus);
+        if (!in_array($sortBy, ['stock_low', 'stock_high'])) {
+            switch ($sortBy) {
+                case 'oldest':
+                    $query->orderBy('created_at', 'ASC');
+                    break;
+                case 'name_asc':
+                    $query->orderBy('name', 'ASC');
+                    break;
+                case 'name_desc':
+                    $query->orderBy('name', 'DESC');
+                    break;
+                case 'newest':
+                default:
+                    $query->orderBy('created_at', 'DESC');
+                    break;
+            }
         }
+        $products = $query->get();
 
+        if ($stockStatus) {
+            $products = $products->filter(function ($product) use ($stockStatus) {
+
+                if ($product->attributeValues->count() > 0) {
+                    $hasOutOfStock = false;
+                    $hasReorderLevel = false;
+                    $allInStock = true;
+
+                    foreach ($product->attributeValues as $variant) {
+                        if ($variant->quantity == 0) {
+                            $hasOutOfStock = true;
+                            $allInStock = false;
+                        } elseif ($variant->quantity <= $product->reorder_quantity) {
+                            $hasReorderLevel = true;
+                            $allInStock = false;
+                        }
+                    }
+
+                    if ($hasOutOfStock) {
+                        $productStatus = 'outofstock';
+                    } elseif ($hasReorderLevel) {
+                        $productStatus = 'reorder';
+                    } else {
+                        $productStatus = 'instock';
+                    }
+
+                    return $productStatus === $stockStatus;
+                } else {
+                    $currentStock = $product->quantity;
+
+                    if ($currentStock == 0) {
+                        return $stockStatus === 'outofstock';
+                    } elseif ($currentStock <= $product->reorder_quantity) {
+                        return $stockStatus === 'reorder';
+                    } else {
+                        return $stockStatus === 'instock';
+                    }
+                }
+            });
+        }
 
         switch ($sortBy) {
-            case 'oldest':
-                $query->orderBy('created_at', 'ASC');
-                break;
-            case 'name_asc':
-                $query->orderBy('name', 'ASC');
-                break;
-            case 'name_desc':
-                $query->orderBy('name', 'DESC');
-                break;
             case 'stock_low':
-                $query->orderBy('quantity', 'ASC');
+                $products = $products->sortBy(function ($product) {
+                    return $product->attributeValues->count() > 0
+                        ? $product->attributeValues->sum('quantity')
+                        : $product->quantity;
+                });
                 break;
+
             case 'stock_high':
-                $query->orderBy('quantity', 'DESC');
-                break;
-            case 'newest':
-            default:
-                $query->orderBy('created_at', 'DESC');
+                $products = $products->sortByDesc(function ($product) {
+                    return $product->attributeValues->count() > 0
+                        ? $product->attributeValues->sum('quantity')
+                        : $product->quantity;
+                });
                 break;
         }
 
-        $products = $query->paginate(10)->withQueryString();
-        $count = $products->total();
+        $currentPage = \Illuminate\Pagination\Paginator::resolveCurrentPage();
+        $perPage = 10;
+        $products = new \Illuminate\Pagination\LengthAwarePaginator(
+            $products->forPage($currentPage, $perPage)->values(),
+            $products->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
+        $count = $products->total();
 
         if ($request->ajax()) {
             return response()->json([
                 'products' => view('partials._products-table', compact('products'))->render(),
                 'pagination' => view('partials._products-pagination', compact('products'))->render(),
-                'count' => $count
+                'count' => $count,
             ]);
         }
 
-        return view('admin.products', compact('products', 'archived', 'categories'));
+        return view('admin.products', compact('products', 'archived', 'categories', 'productAttrValues'));
     }
 
     public function product_add()
@@ -818,7 +891,8 @@ class AdminController extends Controller
             'variant_description',
             'existing_variant_ids',
             'removed_variant_ids',
-            'removed_images'
+            'removed_images',
+            'archived_variant_ids'
         ]));
         // $product->fill($request->except(['image', 'images', 'variant_name', 'product_attribute_id', 'variant_price', 'variant_quantity', 'existing_variant_ids', 'removed_variant_ids']));
 
@@ -928,6 +1002,18 @@ class AdminController extends Controller
 
         $product->save();
 
+        if ($request->has('archived_variant_ids')) {
+            $archivedVariantIds = $request->input('archived_variant_ids', []);
+            if (!empty($archivedVariantIds)) {
+                ProductAttributeValue::whereIn('id', $archivedVariantIds)->delete();
+            }
+        }
+
+        $removedVariantIds = $request->input('removed_variant_ids', []);
+        if (!empty($removedVariantIds)) {
+            ProductAttributeValue::whereIn('id', $removedVariantIds)->delete();
+        }
+
         if ($product->stock_status === 'instock' && $previousStockStatus !== 'instock') {
             $users = User::where('utype', 'USR')->get();
 
@@ -941,6 +1027,32 @@ class AdminController extends Controller
         return redirect()->route('admin.products')->with('status', 'Product has been updated successfully!');
     }
 
+    public function archivedVariants(Request $request)
+    {
+        $archivedVariants = ProductAttributeValue::onlyTrashed()
+            ->with(['product', 'productAttribute'])
+            ->orderBy('deleted_at', 'DESC')
+            ->paginate(10);
+
+        return view('admin.archived-attribute-values', compact('archivedVariants'));
+    }
+
+
+    public function restore_variant($id)
+    {
+        try {
+            $variant = ProductAttributeValue::onlyTrashed()->findOrFail($id);
+            $variant->restore();
+
+            return redirect()
+                ->route('admin.archived.variants')
+                ->with('success', 'Variant restored successfully.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to restore variant: ' . $e->getMessage());
+        }
+    }
 
     public function archivedProducts($id)
     {
@@ -1015,12 +1127,36 @@ class AdminController extends Controller
         return redirect()->route('admin.product-attributes')->with('status', 'Product attribute updated successfully!');
     }
 
-    public function product_attribute_delete($id)
+    public function attribute_archive($id)
     {
-        $attribute = ProductAttribute::find($id);
-        $attribute->delete();
-        return redirect()->route('admin.product-attributes')->with('status', 'Product Variant has been deleted successfully!');
+        $attribute = ProductAttribute::findOrFail($id);
+        $attribute->delete(); // Soft delete
+        return redirect()->route('admin.product-attributes')->with('status', 'Product Attribute has been archived successfully!');
     }
+
+    public function archived_attributes()
+    {
+        $archivedAttributes = ProductAttribute::onlyTrashed()
+            ->orderBy('id', 'DESC')
+            ->paginate(10);
+
+        $pageTitle = 'Archived Product Attributes';
+        return view('admin.archived-attributes', compact('archivedAttributes', 'pageTitle'));
+    }
+
+    public function restore_attribute($id)
+    {
+        $attribute = ProductAttribute::onlyTrashed()->findOrFail($id);
+        $attribute->restore();
+        return redirect()->route('admin.archived-attributes')->with('status', 'Product Attribute restored successfully!');
+    }
+
+    // public function product_attribute_delete($id)
+    // {
+    //     $attribute = ProductAttribute::find($id);
+    //     $attribute->delete();
+    //     return redirect()->route('admin.product-attributes')->with('status', 'Product Variant has been deleted successfully!');
+    // }
 
 
     public function orders(Request $request)

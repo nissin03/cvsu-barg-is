@@ -50,8 +50,8 @@
                 <form action="{{ route('admin.addons.destroy', $addon->id) }}" method="POST" class="d-inline">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="item text-warning delete" style="border: none; background: none;"
-                        title="Archive Addon">
+                    <button type="submit" class="item text-danger delete" style="border:none;background:none;"
+                        title="Delete Addon">
                         <i class="icon-archive"></i>
                     </button>
                 </form>
@@ -65,7 +65,7 @@
                 <i class="icon-package"></i>
             </div>
             <h5>No Addons Found</h5>
-            <p>No add-ons match your current filters.</p>
+            <p>Start by creating your first addon.</p>
             <a href="{{ route('admin.addons.create') }}" class="btn btn-primary">
                 <i class="icon-plus"></i> Add New Addon
             </a>

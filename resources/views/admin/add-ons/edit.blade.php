@@ -273,7 +273,7 @@
                                     value="1" {{ old('is_available', $addon->is_available) ? 'checked' : '' }}>
                                 <label class="checkbox-label" for="is_available_unit">Currently available</label>
                             </div>
-                            <div class="field-group">
+                            <div class="field-group" id="capacityFieldGroup">
                                 <label class="field-label">Capacity <span class="required-asterisk">*</span></label>
                                 <input class="field-input" type="number" min="1" placeholder="Enter capacity"
                                     name="capacity" id="capacity" value="{{ old('capacity', $addon->capacity ?? 1) }}"
@@ -361,7 +361,10 @@
             const flatRateFields = document.getElementById('flatRateFields');
             const perNightFields = document.getElementById('perNightFields');
             const perItemFields = document.getElementById('perItemFields');
+            const capacityField = document.getElementById('capacity');
+            const capacityFieldGroup = document.getElementById('capacityFieldGroup');
             const quantityNightFieldInput = document.getElementById('quantity_night');
+            const quantityItemFieldInput = document.getElementById('quantity_item');
 
             const commonRequiredFields = ['name', 'base_price', 'price_type', 'billing_cycle'];
             const priceTypeRequirements = {
@@ -397,6 +400,19 @@
                         perItemFields.classList.add('visible');
                         break;
                 }
+
+                handleCapacityVisibility();
+            }
+
+            function handleCapacityVisibility() {
+                if (priceTypeSelect.value === 'per_unit' && billingCycleField.value === 'per_day') {
+                    capacityFieldGroup.style.display = 'none';
+                    capacityField.value = '1';
+                    capacityField.required = false;
+                } else if (priceTypeSelect.value === 'per_unit') {
+                    capacityFieldGroup.style.display = 'block';
+                    capacityField.required = true;
+                }
             }
 
             function validateOnSubmit(e) {
@@ -406,7 +422,7 @@
 
                 requiredFields.forEach(id => {
                     const field = document.getElementById(id);
-                    if (field && !field.disabled) {
+                    if (field && !field.disabled && field.offsetParent !== null) {
                         const hasValue = field.value && String(field.value).trim() !== '';
                         if (!hasValue) {
                             isValid = false;
@@ -440,6 +456,7 @@
 
             toggleConditionalFields();
             priceTypeSelect.addEventListener('change', toggleConditionalFields);
+            billingCycleField.addEventListener('change', handleCapacityVisibility);
             document.getElementById('addonForm').addEventListener('submit', validateOnSubmit);
         });
     </script>

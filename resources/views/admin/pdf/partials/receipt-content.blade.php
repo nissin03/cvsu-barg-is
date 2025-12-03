@@ -577,17 +577,9 @@
 
         <!-- Order Information -->
         <div class="info-section">
-            {{-- <div class="info-row">
-                <span class="info-label">Order ID:</span>
-                <span>{{ $order->id }}</span>
-            </div> --}}
             <div class="info-row">
                 <span class="info-label">Date:</span>
                 <span>{{ $order->created_at->format('M d, Y h:i A') }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Customer:</span>
-                <span>{{ $order->user->name }}</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Status:</span>
@@ -595,15 +587,70 @@
             </div>
         </div>
 
+        <!-- Customer Information Section -->
+        <div class="info-section">
+            <div class="section-title">CUSTOMER'S INFORMATION</div>
+            <div class="info-row">
+                <span class="info-label">Name:</span>
+                <span>{{ $order->user->name }}</span>
+            </div>
+
+            @if ($order->user->role === 'student')
+                @if ($order->user->year_level)
+                    <div class="info-row">
+                        <span class="info-label">Year:</span>
+                        <span>{{ $order->user->year_level }}</span>
+                    </div>
+                @endif
+                @if ($order->user->department)
+                    <div class="info-row">
+                        <span class="info-label">College:</span>
+                        <span>{{ $order->user->department }}</span>
+                    </div>
+                @endif
+                @if ($order->user->course)
+                    <div class="info-row">
+                        <span class="info-label">Course:</span>
+                        <span>{{ $order->user->course->name }}</span>
+                    </div>
+                @endif
+                @if ($order->user->college)
+                    <div class="info-row">
+                        <span class="info-label">College:</span>
+                        <span>{{ $order->user->college->name }}</span>
+                    </div>
+                @endif
+            @elseif($order->user->role === 'employee')
+                @if ($order->user->position)
+                    <div class="info-row">
+                        <span class="info-label">Position:</span>
+                        <span>{{ $order->user->position }}</span>
+                    </div>
+                @endif
+                @if ($order->user->department)
+                    <div class="info-row">
+                        <span class="info-label">Department:</span>
+                        <span>{{ $order->user->department }}</span>
+                    </div>
+                @endif
+            @endif
+        </div>
+
         <!-- Items Section -->
         <div class="items-section">
             <div class="section-title">ORDER ITEMS</div>
             @foreach ($orderItems as $item)
                 <div class="item">
-                    <div class="item-name">{{ $item->product->name }}</div>
+                    <div class="item-name">
+                        {{ $item->product->name }}
+                        @if ($item->variant)
+                            <span style="font-size: 0.9em; color: #666;">({{ $item->variant->value }})</span>
+                        @endif
+                    </div>
                     <div class="item-details">
-                        <span>{{ $item->quantity }} × &#8369;{{ number_format($item->product->price, 2) }}</span>
-                        <span>&#8369;{{ number_format($item->total_price, 2) }}</span>
+                        <span>{{ $item->quantity }} × &#8369;{{ number_format($item->price, 2) }}</span>
+                        <span
+                            style="float: right;">&#8369;{{ number_format($item->price * $item->quantity, 2) }}</span>
                     </div>
                 </div>
             @endforeach
@@ -613,7 +660,7 @@
         <div class="totals-section">
             <div class="total-row grand-total">
                 <span>TOTAL</span>
-                <span>&#8369;{{ number_format($order->total, 2) }}</span>
+                <span>&#8369;{{ number_format($orderItems->sum(fn($item) => $item->price * $item->quantity), 2) }}</span>
             </div>
         </div>
 
@@ -648,7 +695,6 @@
         <!-- Prepared By Section -->
         <div class="prepared-by">
             <div>Processed by:</div>
-            <div class="signature-line"></div>
             <div>{{ Auth::user()->name }}</div>
             <div>{{ Auth::user()->position ? ucfirst(Auth::user()->position) : 'Administrator' }}</div>
         </div>

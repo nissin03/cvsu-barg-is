@@ -98,6 +98,57 @@
             display: inline-block;
             border-radius: 4px;
         }
+
+        /* Scrollable container for rooms */
+        .room-scroll-container {
+            max-height: 500px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 10px;
+        }
+
+        .room-scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .room-scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .room-scroll-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .room-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .room-card {
+            margin-bottom: 15px;
+        }
+
+        .room-card:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Responsive max-height adjustments */
+        .room-scroll-container {
+            max-height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .room-scroll-container {
+                max-height: 500px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .room-scroll-container {
+                max-height: 600px;
+            }
+        }
     </style>
     <!-- main-content-wrap -->
     <div class="main-content-inner">
@@ -259,7 +310,7 @@
                 $('#hideRoomBox').hide();
                 $('#dormitoryRooms').hide();
                 $('#selectionContent').show();
-                $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                // $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
                 $('#discountBox').show();
                 $('#addonBox').show();
             } else if (facilityType === 'individual') {
@@ -271,7 +322,7 @@
                 $('#priceBox').show();
                 $('#discountBox').hide();
                 $('#addonBox').show();
-                $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                // $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
             } else if (facilityType === 'whole_place') {
                 $('#selectionBothType').hide();
                 $('#roomBox').show();
@@ -279,7 +330,7 @@
                 $('#dormitoryRooms').hide();
                 $('#selectionContent').hide();
                 $('#priceBox').show();
-                $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
+                // $('#isBasedOnDaysContainer, #isThereAQuantityContainer').show();
                 $('#addonBox').show();
                 $('#discountBox').show();
             } else {

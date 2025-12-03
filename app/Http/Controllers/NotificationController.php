@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\NotificationService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationService;
 
 class NotificationController extends Controller
 {
@@ -117,15 +118,41 @@ class NotificationController extends Controller
         ]);
     }
 
+    // public function destroyAll(): JsonResponse
+    // {
+    //     $this->notificationService->deleteAllNotifications(Auth::user());
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => 'All notifications removed successfully',
+    //         'unreadCount' => 0
+    //     ]);
+    // }
+
     public function destroyAll(): JsonResponse
     {
-        $this->notificationService->deleteAllNotifications(Auth::user());
+        $user = Auth::user();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'All notifications removed successfully',
-            'unreadCount' => 0
-        ]);
+        try {
+            $countBefore = $user->notifications()->count();
+            $deleted = $this->notificationService->deleteAllNotifications($user);
+            $countAfter = $user->notifications()->count();
+            Log::info("DestroyAll - User: {$user->id}, Before: {$countBefore}, Deleted: {$deleted}, After: {$countAfter}");
+            $unreadCount = $this->notificationService->getUnreadCount($user);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'All notifications removed successfully',
+                'unreadCount' => $unreadCount,
+                'totalDeleted' => $deleted,
+                'remainingCount' => $countAfter
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error in destroyAll: " . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to delete notifications: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function unreadCount(): JsonResponse

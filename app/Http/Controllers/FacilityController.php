@@ -811,7 +811,6 @@ class FacilityController extends Controller
             }
         });
 
-        // Gender Data (unchanged)
         $genderData = Payment::selectRaw('users.sex as gender, COUNT(DISTINCT payments.id) as count')
             ->join('users', 'payments.user_id', '=', 'users.id')
             ->whereNotNull('users.sex')
@@ -823,7 +822,6 @@ class FacilityController extends Controller
             return ucfirst($item);
         })->toArray();
 
-        // Department Data - Using college code
         $departmentData = Payment::selectRaw('colleges.code as college_code, COUNT(DISTINCT payments.id) as count')
             ->join('users', 'payments.user_id', '=', 'users.id')
             ->join('colleges', 'users.college_id', '=', 'colleges.id')
@@ -834,7 +832,6 @@ class FacilityController extends Controller
         $departmentSeries = $departmentData->pluck('count')->toArray();
         $departmentLabels = $departmentData->pluck('college_code')->toArray();
 
-        // College Data - Using course name instead of code
         $collegeData = Payment::selectRaw('courses.name as course_name, COUNT(DISTINCT payments.id) as count')
             ->join('users', 'payments.user_id', '=', 'users.id')
             ->join('courses', 'users.course_id', '=', 'courses.id')
@@ -845,7 +842,6 @@ class FacilityController extends Controller
         $collegeSeries = $collegeData->pluck('count')->toArray();
         $collegeLabels = $collegeData->pluck('course_name')->toArray();
 
-        // Role Data (unchanged)
         $roleData = Payment::selectRaw('users.role as role, COUNT(DISTINCT payments.id) as count')
             ->join('users', 'payments.user_id', '=', 'users.id')
             ->whereNotNull('users.role')
@@ -854,6 +850,9 @@ class FacilityController extends Controller
 
         $roleSeries = $roleData->pluck('count')->toArray();
         $roleLabels = $roleData->pluck('role')->map(function ($item) {
+            if ($item === 'non-employee') {
+                return 'Guest';
+            }
             return ucfirst(str_replace('-', ' ', $item));
         })->toArray();
 
@@ -878,6 +877,7 @@ class FacilityController extends Controller
             ]
         ]);
     }
+
 
 
 

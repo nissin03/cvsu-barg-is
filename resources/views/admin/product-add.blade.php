@@ -88,6 +88,60 @@
             cursor: not-allowed;
             opacity: 0.6;
         }
+
+        /* Scrollable container for variants */
+        .variant-scroll-container {
+            max-height: 500px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 10px;
+        }
+
+        .variant-scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .variant-scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .variant-scroll-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .variant-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .variant-fields {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+
+        .variant-fields:last-child {
+            margin-bottom: 0;
+        }
+
+        .variant-scroll-container {
+            max-height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .variant-scroll-container {
+                max-height: 500px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .variant-scroll-container {
+                max-height: 600px;
+            }
+        }
     </style>
 
     <div class="main-content-inner">
@@ -332,6 +386,32 @@
                     @error('product_attribute_id')
                         <span class="alert alert-danger text-center">{{ $message }} </span>
                     @enderror
+                    <div class="cols gap22">
+                        <button type="button" id="add-variant-btn" class="btn btn-primary">Add Variant</button>
+                    </div>
+                </div>
+
+                <div class="wg-box" id="container-box" style="display: none">
+                    <div id="variant-fields-container" class="variant-scroll-container"></div>
+                </div>
+
+                {{-- <div class="wg-box">
+                    <div class="gap22 cols">
+                        <fieldset class="product-attribute">
+                            <div class="body-title mb-10">Product Variant <span class="tf-color-1">*</span></div>
+                            <div class="select">
+                                <select class="" id="product-select">
+                                    <option value="">Select Attribute</option>
+                                    @foreach ($productAttributes as $attribute)
+                                        <option value="{{ $attribute->id }}">{{ $attribute->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </fieldset>
+                    </div>
+                    @error('product_attribute_id')
+                        <span class="alert alert-danger text-center">{{ $message }} </span>
+                    @enderror
 
                     <div class="cols gap22">
                         <button type="button" id="add-variant-btn" class="btn btn-primary">Add Variant</button>
@@ -340,7 +420,7 @@
 
                 <div class="wg-box" id="container-box" style="display: none">
                     <div id="variant-fields-container"></div>
-                </div>
+                </div> --}}
             </form>
         </div>
     </div>

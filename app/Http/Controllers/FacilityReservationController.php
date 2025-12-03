@@ -107,23 +107,33 @@ class FacilityReservationController extends Controller
             $facilities = $this->getFacilities();
 
             $reservations->getCollection()->transform(function ($reservation) {
+                // Initialize grouped dates array
                 $groupedDates = [];
-                if ($reservation->availability) {
-                    $groupedAvailabilities = $reservation->groupedAvailabilities()->get();
 
-                    if ($groupedAvailabilities && $groupedAvailabilities->isNotEmpty()) {
-                        $sortedAvailabilities = $groupedAvailabilities->sortBy('date_from');
+                if ($reservation->availability) {
+                    // Get related availabilities
+                    $relatedAvailabilities = Availability::whereIn(
+                        'id',
+                        TransactionReservation::where('payment_id', $reservation->id)
+                            ->pluck('availability_id')
+                    )->orderBy('date_from')->get();
+
+                    if ($relatedAvailabilities && $relatedAvailabilities->isNotEmpty()) {
+                        $sortedAvailabilities = $relatedAvailabilities->sortBy('date_from');
                         $currentGroup = [];
 
                         foreach ($sortedAvailabilities as $avail) {
                             if (empty($currentGroup)) {
+                                // Start first group
                                 $currentGroup = [
                                     'start' => $avail->date_from,
                                     'end'   => $avail->date_to,
                                 ];
                             } elseif (Carbon::parse($currentGroup['end'])->addDay()->format('Y-m-d') === $avail->date_from) {
+                                // Extend current group if consecutive
                                 $currentGroup['end'] = $avail->date_to;
                             } else {
+                                // Save current group and start new one
                                 $groupedDates[] = $currentGroup;
                                 $currentGroup = [
                                     'start' => $avail->date_from,
@@ -132,12 +142,14 @@ class FacilityReservationController extends Controller
                             }
                         }
 
+                        // Add the last group
                         if (!empty($currentGroup)) {
                             $groupedDates[] = $currentGroup;
                         }
                     }
                 }
 
+                // Fallback to single availability if no grouped dates
                 if (empty($groupedDates) && $reservation->availability) {
                     $groupedDates[] = [
                         'start' => $reservation->availability->date_from,

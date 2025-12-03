@@ -170,8 +170,8 @@
                         <div class="d-flex align-items-center justify-content-between gap10 flex-wrap">
                             <div id="pdf-download-container" @if ($order->status !== 'pickedup') style="display:none;" @endif>
                                 <a id="download-receipt-btn" href="{{ route('admin.order-receipt.pdf', $order->id) }}"
-                                    target="_blank" class="btn btn-outline-danger mt-3">
-                                    <i class="fas fa-file-pdf me-1"></i> Download PDF
+                                    target="_blank" class="btn btn-lg btn-outline-danger mt-3">
+                                    <i class="fas fa-file-pdf me-1"></i> Print Receipt
                                 </a>
                             </div>
                         </div>
