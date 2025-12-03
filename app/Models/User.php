@@ -3,11 +3,13 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\College;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
+
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
@@ -22,11 +24,13 @@ class User extends Authenticatable
         'utype',
         'role',
         'sex',
+        'position',
         'phone_number',
         'year_level',
-        'department',
-        'course',
+        'course_id',
+        'college_id',
         'isDefault',
+        'colleges',
     ];
 
     public function getProfileImageUrlAttribute()
@@ -51,6 +55,16 @@ class User extends Authenticatable
         ];
     }
 
+    public function getEmailForVerification()
+    {
+        return strtolower($this->email);
+    }
+
+    public function setEmailAttribute($value)
+    {
+        $this->attributes['email'] = strtolower($value);
+    }
+
     public function orders()
     {
         return $this->hasMany(Order::class);
@@ -64,10 +78,28 @@ class User extends Authenticatable
     {
         return $this->hasMany(Contact::class);
     }
-       public function payments()
+
+    public function sentReplies()
+    {
+        return $this->hasMany(ContactReply::class, 'admin_id');
+    }
+    public function payments()
     {
         return $this->hasMany(Payment::class);
-
     }
-  
+
+    public function college()
+    {
+        return $this->belongsTo(College::class);
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(Course::class);
+    }
+
+    public function addons()
+    {
+        return $this->hasMany(Addon::class);
+    }
 }

@@ -1,263 +1,345 @@
-    /* Base Styles */
-    .facilities-single__rules {
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+.addon-item {
+    transition: all 0.3s ease;
+}
+
+.addon-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+.addon-name {
+    font-weight: 600;
+}
+
+.addon-actions .btn {
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .addon-item .d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
     }
 
-    .rules-header {
-        cursor: pointer;
-        transition: all 0.3s ease;
+    .addon-actions {
+        margin-top: 10px;
+        align-self: flex-end;
+    }
+}
+
+.facilities-single__rules {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.rules-header {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.rules-header:hover {
+    transform: translateY(-1px);
+}
+
+.rules-container {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+}
+
+.rules-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.rules-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.rules-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.rules-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.rule-item {
+    transition: all 0.2s ease;
+}
+
+.rule-item:hover {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 8px;
+    margin: -8px;
+    margin-bottom: 12px;
+}
+
+.rule-number .badge {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.rule-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #4a4a4a;
+}
+
+.rules-footer {
+    font-size: 0.9rem;
+}
+
+.chevron-icon {
+    transition: transform 0.3s ease;
+}
+
+.collapsed .chevron-icon {
+    transform: rotate(-90deg);
+}
+
+.facility-gallery .gallery-wrapper {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.facility-gallery .thumbnails {
+    flex: 0 0 80px;
+}
+
+.facility-gallery .main-image {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.main-img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+}
+
+.thumbnail-img {
+    cursor: pointer;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    object-fit: cover;
+    opacity: 0.6;
+    transition: all 0.3s ease-in-out;
+}
+
+.thumbnail-img.active,
+.thumbnail-img:hover {
+    opacity: 1;
+    outline: 2px solid #3b82f6;
+}
+
+.thumbnail-card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    margin: 5px;
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+}
+
+.thumbnail-card:hover {
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+    transform: translateY(-5px);
+}
+
+#calendar {
+    width: 100%;
+    max-width: 370px;
+    min-height: 350px;
+}
+
+.fc .fc-toolbar {
+    font-size: 12px;
+}
+
+.fc .fc-button {
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+.fc .fc-daygrid-day-number {
+    font-size: 14px;
+}
+
+.fc .fc-daygrid-day {
+    padding: 5px;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1em;
+}
+
+.fc-day-today {
+    background-color: rgba(78, 115, 223, 0.1) !important;
+}
+
+.fc-highlight {
+    background-color: rgba(78, 115, 223, 0.2) !important;
+}
+
+.fc-day-reserved {
+    background-color: red !important;
+    color: white !important;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: -1px;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #4e73df;
+    background-color: rgba(78, 115, 223, 0.05);
+}
+
+.nav-tabs .nav-link.active {
+    color: #4e73df;
+    background-color: white;
+    border-bottom: 3px solid #4e73df;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #2e59d9;
+    border-color: #2653d4;
+}
+
+@media (max-width: 992px) {
+    .facility-gallery {
+        margin-bottom: 30px;
     }
 
-    .rules-header:hover {
-        transform: translateY(-1px);
+    .facilities-single__name {
+        font-size: 1.8rem;
+        margin-top: 20px;
+    }
+
+    .btn-addtocart {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .rental-single__details-tab {
+        margin-top: 30px;
+    }
+
+    .nav-tabs .nav-link {
+        padding: 12px 10px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .facility-main-row {
+        flex-direction: column;
+    }
+
+    .col-lg-7,
+    .col-lg-5 {
+        max-width: 100%;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .facility-gallery .gallery-wrapper {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .facility-gallery .thumbnails {
+        order: 2;
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 100%;
+        margin-top: 1rem;
+    }
+
+    .facility-gallery .thumbnail-swiper {
+        width: 100%;
+    }
+
+    .facility-gallery .thumbnail-swiper .swiper-wrapper {
+        display: flex;
+    }
+
+    .facility-gallery .thumbnail-swiper .swiper-slide {
+        width: auto;
     }
 
     .rules-container {
-        max-height: 400px;
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: #888 #f1f1f1;
+        max-height: 300px;
     }
 
-    .rules-container::-webkit-scrollbar {
-        width: 6px;
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
     }
 
-    .rules-container::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
+    .nav-tabs .nav-item {
+        display: inline-block;
+        float: none;
     }
 
-    .rules-container::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 4px;
+    #calendar {
+        margin: 0 auto;
     }
 
-    .rules-container::-webkit-scrollbar-thumb:hover {
-        background: #555;
+    .addons-section {
+        margin-top: 2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .facilities-single__name {
+        font-size: 1.4rem;
+    }
+
+    .rules-header h5 {
+        font-size: 1rem;
+    }
+
+    .rules-toggle-text {
+        display: none;
     }
 
     .rule-item {
-        transition: all 0.2s ease;
+        flex-direction: column;
+        align-items: flex-start;
     }
 
-    .rule-item:hover {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        padding: 8px;
-        margin: -8px;
-        margin-bottom: 12px;
+    .rule-number {
+        margin-bottom: 10px;
     }
 
-    .rule-number .badge {
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.8rem;
-        font-weight: 500;
+    .swiper-button-next,
+    .swiper-button-prev {
+        display: none;
     }
-
-    .rule-text {
-        font-size: 0.95rem;
-        line-height: 1.6;
-        color: #4a4a4a;
-    }
-
-    .rules-footer {
-        font-size: 0.9rem;
-    }
-
-    .chevron-icon {
-        transition: transform 0.3s ease;
-    }
-
-    .collapsed .chevron-icon {
-        transform: rotate(-90deg);
-    }
-
-    /* Gallery Styles */
-    .thumbnail-img {
-        cursor: pointer;
-        width: 100%;
-        height: auto;
-        transition: transform 0.3s ease-in-out;
-        border-radius: 8px;
-    }
-
-    .thumbnail-card {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 10px;
-        margin: 5px;
-        background-color: #fff;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        transition: all 0.3s ease-in-out;
-    }
-
-    .thumbnail-card:hover {
-        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
-        transform: translateY(-5px);
-    }
-
-    /* Calendar Styles */
-    #calendar {
-        width: 100%;
-        max-width: 370px;
-        min-height: 350px;
-    }
-
-    .fc .fc-toolbar {
-        font-size: 12px;
-    }
-
-    .fc .fc-button {
-        font-size: 12px;
-        padding: 4px 8px;
-    }
-
-    .fc .fc-daygrid-day-number {
-        font-size: 14px;
-    }
-
-    .fc .fc-daygrid-day {
-        padding: 5px;
-    }
-
-    .fc .fc-toolbar-title {
-        font-size: 1em;
-    }
-
-    .fc-day-today {
-        background-color: rgba(78, 115, 223, 0.1) !important;
-    }
-
-    .fc-highlight {
-        background-color: rgba(78, 115, 223, 0.2) !important;
-    }
-
-    .fc-day-reserved {
-        background-color: red !important;
-        color: white !important;
-    }
-
-    /* Tab Styles */
-    .nav-tabs .nav-link {
-        border: none;
-        color: #6c757d;
-        transition: all 0.3s ease;
-        position: relative;
-        margin-bottom: -1px;
-    }
-
-    .nav-tabs .nav-link:hover {
-        color: #4e73df;
-        background-color: rgba(78, 115, 223, 0.05);
-    }
-
-    .nav-tabs .nav-link.active {
-        color: #4e73df;
-        background-color: white;
-        border-bottom: 3px solid #4e73df;
-        font-weight: 600;
-    }
-
-    /* Button Styles */
-    .btn-primary {
-        background-color: #4e73df;
-        border-color: #4e73df;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-        background-color: #2e59d9;
-        border-color: #2653d4;
-    }
-
-    /* Responsive Styles */
-    @media (max-width: 992px) {
-        .facility-gallery {
-            margin-bottom: 30px;
-        }
-        
-        .facilities-single__name {
-            font-size: 1.8rem;
-            margin-top: 20px;
-        }
-        
-        .btn-addtocart {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        
-        .rental-single__details-tab {
-            margin-top: 30px;
-        }
-        
-        .nav-tabs .nav-link {
-            padding: 12px 10px;
-            font-size: 0.9rem;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .row {
-            flex-direction: column;
-        }
-        
-        .col-lg-7, .col-lg-5 {
-            max-width: 100%;
-            padding-left: 15px;
-            padding-right: 15px;
-        }
-        
-        .rules-container {
-            max-height: 300px;
-        }
-        
-        .nav-tabs {
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        .nav-tabs .nav-item {
-            display: inline-block;
-            float: none;
-        }
-        
-        #calendar {
-            margin: 0 auto;
-        }
-    }
-    
-    @media (max-width: 576px) {
-        .facilities-single__name {
-            font-size: 1.4rem;
-        }
-        
-        .rules-header h5 {
-            font-size: 1rem;
-        }
-        
-        .rules-toggle-text {
-            display: none;
-        }
-        
-        .rule-item {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .rule-number {
-            margin-bottom: 10px;
-        }
-        
-        .swiper-button-next, 
-        .swiper-button-prev {
-            display: none;
-        }
-    }
+}

@@ -41,4 +41,9 @@ class Availability extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    // public function addonreservation()
+    // {
+    //     return $this->hasMany(AddonReservation::class);
+    // }
 }

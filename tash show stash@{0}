@@ -1,0 +1,25 @@
+ app/Http/Controllers/AddonController.php           | 115 [32m+++++++[m
+ app/Http/Controllers/AdminController.php           |  10 [32m+[m[31m-[m
+ app/Http/Controllers/DiscountController.php        |  76 [32m+++++[m
+ app/Http/Controllers/UserController.php            |  14 [32m+[m
+ app/Models/Discount.php                            |  19 [32m++[m
+ app/Models/Facility.php                            |   5 [32m+[m
+ app/Models/FacilityAttribute.php                   |   7 [32m+[m[31m-[m
+ .../2025_02_14_081518_create_addons_table.php      |  41 [32m+++[m
+ ...2_14_165814_create_addons_reservation_table.php |  35 [32m+++[m
+ ...25_02_14_235814_create_addons_payment_table.php |  31 [32m++[m
+ .../2025_10_10_000001_create_discounts_table.php   |  26 [32m++[m
+ ...0002_add_discount_columns_to_payments_table.php |  34 [32m+++[m
+ ...10_10_000003_create_discount_facility_table.php |  24 [32m++[m
+ database/seeders/AddonsTableSeeder.php             |  73 [32m+++++[m
+ public/assets/js/addons-management.js              |  46 [32m+++[m
+ resources/views/admin/discounts/archived.blade.php |  51 [32m++++[m
+ resources/views/admin/discounts/create.blade.php   |  41 [32m+++[m
+ resources/views/admin/discounts/edit.blade.php     |  42 [32m+++[m
+ resources/views/admin/discounts/index.blade.php    |  65 [32m++++[m
+ resources/views/admin/facilities/index.blade.php   |   2 [32m+[m[31m-[m
+ resources/views/admin/order-details.blade.php      | 196 [32m+++++++++[m[31m---[m
+ resources/views/user/order_details.blade.php       | 330 [32m++++++++++++[m[31m---------[m
+ resources/views/user/order_history.blade.php       | 116 [32m++++++++[m
+ routes/web.php                                     |   4 [32m+[m
+ 24 files changed, 1202 insertions(+), 201 deletions(-)

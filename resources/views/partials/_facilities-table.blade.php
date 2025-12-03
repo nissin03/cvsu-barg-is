@@ -1,5 +1,6 @@
 @forelse ($facilities as $facility)
-    <tr>
+    <tr class="facility-row" data-href="{{ route('admin.facilities.edit', ['id' => $facility->id]) }}"
+        style="cursor: pointer;">
         <td class="facility-cell">
             @if ($facility->image && File::exists(storage_path('app/public/' . $facility->image)))
                 <img src="{{ asset('storage/' . $facility->image) }}" alt="{{ $facility->name }}" class="facility-img">

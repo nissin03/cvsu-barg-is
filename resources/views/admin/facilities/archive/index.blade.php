@@ -1,36 +1,43 @@
 @extends('layouts.admin')
 
 @section('content')
-<style>
-    table {
-        table-layout: auto;
-        width: 100%;
-        border-collapse: collapse; /* Collapses borders for a cleaner look */
-    }
+    <style>
+        table {
+            table-layout: auto;
+            width: 100%;
+            border-collapse: collapse;
+            /* Collapses borders for a cleaner look */
+        }
 
-    th, td {
-        padding: 12px 15px; /* Adjusted padding for better spacing */
-        border: 1px solid #ddd;
-        word-wrap: break-word;
-        white-space: normal;
-        text-align: left; /* Align text to the left for better readability */
-    }
+        th,
+        td {
+            padding: 12px 15px;
+            /* Adjusted padding for better spacing */
+            border: 1px solid #ddd;
+            word-wrap: break-word;
+            white-space: normal;
+            text-align: left;
+            /* Align text to the left for better readability */
+        }
 
-    th {
-        background-color: #f8f9fa; /* Light background for headers */
-        font-weight: bold; /* Make header text bold */
-    }
+        th {
+            background-color: #f8f9fa;
+            /* Light background for headers */
+            font-weight: bold;
+            /* Make header text bold */
+        }
 
-    tr:hover {
-        background-color: #f1f1f1;
-    }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
 
-    /* Additional Styling for Select All Checkbox */
-    .select-all-checkbox {
-        cursor: pointer;
-        margin-right: 10px;
-    }
-    :root {
+        /* Additional Styling for Select All Checkbox */
+        .select-all-checkbox {
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        :root {
             --primary-color: #28a745;
             --danger-color: #dc3545;
             --hover-opacity: 0.9;
@@ -100,8 +107,8 @@
             color: var(--primary-color);
         }
 
-         /* Bulk Actions */
-         .bulk-actions {
+        /* Bulk Actions */
+        .bulk-actions {
             display: flex;
             align-items: center;
             gap: var(--spacing-md);
@@ -147,73 +154,74 @@
             justify-content: center;
             padding-top: var(--spacing-lg);
         }
+    </style>
 
-
-        
-</style>
-
-<div class="main-content-inner">
-    <div class="main-content-wrap">
-    <div class="header-section">
-                <h3 class="text-2xl font-bold">Archived Facility</h3>
-                <ul class="breadcrumbs">
-                    <li><a href="{{ route('admin.index') }}">Dashoard</a></li>
-                    <li><i class="icon-chevron-right"></i></li>
-                    <li>Archived Facility</li>
+    <div class="main-content-inner">
+        <div class="main-content-wrap">
+            <div class="flex items-center flex-wrap justify-between gap20 mb-27">
+                <h3>Archived Facility</h3>
+                <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
+                    <li>
+                        <a href="{{ route('admin.index') }}">
+                            <div class="text-tiny">Dashboard</div>
+                        </a>
+                    </li>
+                    <li>
+                        <i class="icon-chevron-right"></i>
+                    </li>
+                    <li>
+                        <div class="text-tiny">All Archived Facilities</div>
+                    </li>
                 </ul>
             </div>
 
-            
-          
-
             <div class="table-responsive">
-            <table class="table table-striped table-bordered">
-            <div class="bulk-actions">
-                <button class="btn btn-success" id="restore-btn" disabled>
-                    <i class="icon-restore"></i>
-                    <span>Restore</span>
-                </button>
-            </div>
+                <table class="table table-striped table-bordered">
+                    <div class="bulk-actions">
+                        <button class="btn btn-success" id="restore-btn" disabled>
+                            <i class="icon-restore"></i>
+                            <span>Restore</span>
+                        </button>
+                    </div>
 
-            @if (Session::has('status'))
-                <div class="alert alert-success mb-4" role="alert">
-                    {{ Session::get('status') }}
-                </div>
-            @endif
-                <thead>
-                    <tr>
-                        <th></th> <!-- Select All -->
-                        <th>#</th>
-                        <th>Facility</th>
-                        <th>Archived On</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($archivedFacilities as $facility)
+                    @if (Session::has('status'))
+                        <div class="alert alert-success mb-4" role="alert">
+                            {{ Session::get('status') }}
+                        </div>
+                    @endif
+                    <thead>
                         <tr>
-                            <td><input type="checkbox" class="select-item" data-id="{{ $facility->id }}"></td>
-                            <td>{{ $facility->id }}</td>
-                            <td>{{ $facility->name }}</td>
-                            <td>{{ $facility->archived_at }}</td>
+                            <th></th> <!-- Select All -->
+                            <th>#</th>
+                            <th>Facility</th>
+                            <th>Archived On</th>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" class="text-center">No archived facilities available.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @forelse ($archivedFacilities as $facility)
+                            <tr>
+                                <td><input type="checkbox" class="select-item" data-id="{{ $facility->id }}"></td>
+                                <td>{{ $facility->id }}</td>
+                                <td>{{ $facility->name }}</td>
+                                <td>{{ $facility->archived_at }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center">No archived facilities available.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
-
 @endsection
 
 @push('scripts')
-<!-- SweetAlert2 script for delete confirmation -->
-<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-   $(function() {
+    <!-- SweetAlert2 script for delete confirmation -->
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(function() {
             const updateButtons = () => {
                 const selected = $('.select-item:checked').length;
                 $('#selected-count').text(`${selected} selected`);
@@ -233,68 +241,69 @@
                 updateButtons();
             });
 
-                // Restore Button Click
-                $('#restore-btn').on('click', function() {
-                    const ids = $('.select-item:checked').map(function() {
-                        return $(this).data('id');
-                    }).get();
+            // Restore Button Click
+            $('#restore-btn').on('click', function() {
+                const ids = $('.select-item:checked').map(function() {
+                    return $(this).data('id');
+                }).get();
 
-                    if (ids.length > 0) {
-                        Swal.fire({
-                            title: 'Restore Facility',
-                            text: `Do you want to restore ${ids.length} facility/ies?`,
-                            icon: 'question',
-                            showCancelButton: true,
-                            confirmButtonColor: '#28a745',
-                            cancelButtonColor: '#6c757d',
-                            confirmButtonText: 'Yes, restore them!',
-                            cancelButtonText: 'Cancel'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                $.ajax({
-                                    url: '/admin/facility/restore',
-                                    method: 'POST',
-                                    data: {
-                                        ids: ids,
-                                        _token: '{{ csrf_token() }}'
-                                    },
-                                    success: function(response) {
-                                        Swal.fire({
-                                            title: 'Success!',
-                                            text: response.status,
-                                            icon: 'success'
-                                        }).then(() => {
-                                            // Remove restored rows dynamically
-                                            response.restoredIds.forEach(function(id) {
-                                                $(`tr input.select-item[data-id="${id}"]`).closest('tr').remove();
-                                            });
-
-                                            // Update the select-all checkbox and restore button state
-                                            $('#select-all').prop('checked', false);
-                                            updateButtons();
-
-                                            // If table is empty, display "no data" message
-                                            if ($('.table-responsive tbody tr').length === 0) {
-                                                $('.table-responsive tbody').append('<tr><td colspan="4" class="text-center">No archived facilities available.</td></tr>');
-                                            }
+                if (ids.length > 0) {
+                    Swal.fire({
+                        title: 'Restore Facility',
+                        text: `Do you want to restore ${ids.length} facility/ies?`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#28a745',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, restore them!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.ajax({
+                                url: '/admin/facility/restore',
+                                method: 'POST',
+                                data: {
+                                    ids: ids,
+                                    _token: '{{ csrf_token() }}'
+                                },
+                                success: function(response) {
+                                    Swal.fire({
+                                        title: 'Success!',
+                                        text: response.status,
+                                        icon: 'success'
+                                    }).then(() => {
+                                        // Remove restored rows dynamically
+                                        response.restoredIds.forEach(function(
+                                            id) {
+                                            $(`tr input.select-item[data-id="${id}"]`)
+                                                .closest('tr').remove();
                                         });
-                                    },
-                                    error: function() {
-                                        Swal.fire({
-                                            title: 'Error!',
-                                            text: 'An error occurred while restoring the products.',
-                                            icon: 'error'
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
+
+                                        // Update the select-all checkbox and restore button state
+                                        $('#select-all').prop('checked', false);
+                                        updateButtons();
+
+                                        // If table is empty, display "no data" message
+                                        if ($('.table-responsive tbody tr')
+                                            .length === 0) {
+                                            $('.table-responsive tbody').append(
+                                                '<tr><td colspan="4" class="text-center">No archived facilities available.</td></tr>'
+                                            );
+                                        }
+                                    });
+                                },
+                                error: function() {
+                                    Swal.fire({
+                                        title: 'Error!',
+                                        text: 'An error occurred while restoring the products.',
+                                        icon: 'error'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
             });
-
-
-
-
-</script>
+        });
+    </script>
 @endpush

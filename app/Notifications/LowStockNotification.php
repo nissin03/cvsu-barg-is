@@ -57,10 +57,14 @@ class LowStockNotification extends Notification
     {
         return [
             'product_id' => $this->product->id,
-            'name' => $this->product->name,
+            'title' => 'Low Stock Alert',
+            'body' => "{$this->product->name} stock is low. Only {$this->quantity} left in stock.",
+            'url' => route('admin.product.edit', $this->product->id),
+            'icon' => 'fas fa-exclamation-triangle',
+            'name' => $this->product->name, // Keep for backward compatibility
             'variant' => $this->getVariant(),
             'quantity' => $this->quantity,
-            'message' => "{$this->product->name} stock is low. Only {$this->quantity} left in stock.",
+            'message' => "{$this->product->name} stock is low. Only {$this->quantity} left in stock.", // Keep for backward compatibility
         ];
     }
 

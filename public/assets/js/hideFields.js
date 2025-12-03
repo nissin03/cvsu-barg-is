@@ -4,17 +4,20 @@ $(function () {
     const $hideRoomBox = $("#hideRoomBox");
     const $dormitoryRooms = $("#dormitoryRooms");
     const $priceBox = $("#priceBox");
+    const $addonsBox = $("#addonsBox");
     const $isBasedOnDays = $("#isBasedOnDaysContainer");
     const $isThereAQuantity = $("#isThereAQuantityContainer");
     const $priceTypeIndividual = $(".price-type option[value='individual']");
     const $priceTypeWhole = $(".price-type option[value='whole']");
     const $selectionBothType = $("#selectionBothType");
+
     function initializeForm() {
         const selectedType = $rentalType.val();
 
         if (!selectedType) {
             $roomBox.hide();
             $priceBox.hide();
+            $addonsBox.hide();
             $selectionBothType.hide();
             return;
         }
@@ -37,6 +40,7 @@ $(function () {
             }
         }
     }
+
     console.log("Rental type on load:", $rentalType.val());
     console.log(
         "Checked facility_selection_both:",
@@ -54,6 +58,7 @@ $(function () {
         if (!facilityType) {
             $roomBox.hide();
             $priceBox.hide();
+            $addonsBox.hide();
             $selectionBothType.hide();
             $("#selectionContent").hide();
             return;
@@ -62,6 +67,7 @@ $(function () {
         // Show boxes
         $roomBox.show();
         $priceBox.show();
+        $addonsBox.show();
 
         switch (facilityType) {
             case "individual":
@@ -80,6 +86,7 @@ $(function () {
         $hideRoomBox.hide();
         $dormitoryRooms.show();
 
+        // individual: show is_based_on_days, hide is_there_a_quantity
         $isBasedOnDays.show();
         $isThereAQuantity.hide();
 
@@ -100,7 +107,8 @@ $(function () {
         $hideRoomBox.show();
         $dormitoryRooms.hide();
 
-        $isBasedOnDays.show();
+        // whole_place: hide both is_based_on_days and is_there_a_quantity
+        $isBasedOnDays.hide();
         $isThereAQuantity.hide();
 
         $priceTypeIndividual.hide();
@@ -120,6 +128,10 @@ $(function () {
         $selectionBothType.show();
         $hideRoomBox.hide();
         $dormitoryRooms.hide();
+
+        // both: hide is_based_on_days, show is_there_a_quantity
+        $isBasedOnDays.hide();
+        $isThereAQuantity.show();
 
         const oldMode = $(
             'input[name="facility_selection_both"]:checked'
@@ -150,7 +162,8 @@ $(function () {
         $hideRoomBox.hide();
         $dormitoryRooms.show();
 
-        $isBasedOnDays.show();
+        // both mode: is_based_on_days stays hidden, is_there_a_quantity stays shown
+        $isBasedOnDays.hide();
         $isThereAQuantity.show();
 
         $priceTypeIndividual.show();
@@ -161,7 +174,8 @@ $(function () {
         $hideRoomBox.show();
         $dormitoryRooms.hide();
 
-        $isBasedOnDays.show();
+        // both mode: is_based_on_days stays hidden, is_there_a_quantity stays shown
+        $isBasedOnDays.hide();
         $isThereAQuantity.show();
 
         $priceTypeIndividual.show();

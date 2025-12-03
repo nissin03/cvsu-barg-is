@@ -29,8 +29,7 @@
                                                 <div class="modern-checkbox">
                                                     <input class="parent-category" type="checkbox" name="categories"
                                                         value="{{ $category->id }}" id="cat-{{ $category->id }}"
-                                                        @if (in_array($category->id, explode(',', $f_categories))) checked @endif
-                                                        aria-label="Select {{ $category->name }}">
+                                                        @if (in_array($category->id, explode(',', $f_categories))) checked @endif>
                                                     <label for="cat-{{ $category->id }}">
                                                         {{ $category->name }}
                                                     </label>
@@ -44,8 +43,7 @@
                                                             <input class="child-category" type="checkbox" name="categories"
                                                                 value="{{ $subcategory->id }}"
                                                                 id="subcat-{{ $subcategory->id }}"
-                                                                @if (in_array($subcategory->id, explode(',', $f_categories))) checked @endif
-                                                                aria-label="Select {{ $subcategory->name }}">
+                                                                @if (in_array($subcategory->id, explode(',', $f_categories))) checked @endif>
                                                             <label for="subcat-{{ $subcategory->id }}">
                                                                 {{ $subcategory->name }}
                                                             </label>
@@ -61,49 +59,6 @@
                             </div>
                         </div>
                     </div>
-
-                    {{-- <div class="accordion" id="gender-filter">
-                        <div class="accordion-item">
-                            <h5 class="accordion-header" id="accordion-gender-heading">
-                                <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#accordion-gender-filter" aria-expanded="true"
-                                        aria-controls="accordion-gender-filter">
-                                    Product Type
-                                </button>
-                            </h5>
-                            <div id="accordion-gender-filter" class="accordion-collapse collapse show"
-                                 aria-labelledby="accordion-gender-heading" data-bs-parent="#gender-filter">
-                                <div class="accordion-body">
-                                    <ul class="filter-list">
-                                        <li class="filter-item">
-                                            <div class="modern-checkbox">
-                                                <input type="radio" name="sex" id="sex-all" value=""
-                                                       {{ request('sex') == '' ? 'checked' : '' }}
-                                                       aria-label="Select all genders">
-                                                <label for="sex-all">All</label>
-                                            </div>
-                                        </li>
-                                        <li class="filter-item">
-                                            <div class="modern-checkbox">
-                                                <input type="radio" name="sex" id="sex-male" value="male"
-                                                       {{ request('sex') == 'male' ? 'checked' : '' }}
-                                                       aria-label="Select male">
-                                                <label for="sex-male">Men</label>
-                                            </div>
-                                        </li>
-                                        <li class="filter-item">
-                                            <div class="modern-checkbox">
-                                                <input type="radio" name="sex" id="sex-female" value="female"
-                                                       {{ request('sex') == 'female' ? 'checked' : '' }}
-                                                       aria-label="Select female">
-                                                <label for="sex-female">Women</label>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div> --}}
                 </div>
             </div>
 
@@ -118,7 +73,6 @@
                         Filter by:
                     </h5>
                     <div class="d-flex align-items-center gap-3">
-
                         <div class="price-range-filter">
                             <label for="priceRange" class="me-2 text-muted" style="font-size: 0.9rem;">Price:</label>
                             <select class="modern-select" name="priceRange" id="priceRange">
@@ -155,8 +109,8 @@
             </div>
         </div>
 
-        <div class="pagination-container">
-            {{ $products->withQueryString()->links('pagination::bootstrap-5') }}
+        <div class="pagination-container" id="pagination-container">
+            @include('partials._products-pagination', ['products' => $products])
         </div>
     </main>
 
@@ -184,8 +138,7 @@
                                     <div class="modern-checkbox">
                                         <input class="parent-category" type="checkbox" name="categories"
                                             value="{{ $category->id }}" id="mobile-cat-{{ $category->id }}"
-                                            @if (in_array($category->id, explode(',', $f_categories))) checked @endif
-                                            aria-label="Select {{ $category->name }}">
+                                            @if (in_array($category->id, explode(',', $f_categories))) checked @endif>
                                         <label for="mobile-cat-{{ $category->id }}">
                                             {{ $category->name }}
                                         </label>
@@ -199,8 +152,7 @@
                                                 <input class="child-category" type="checkbox" name="categories"
                                                     value="{{ $subcategory->id }}"
                                                     id="mobile-subcat-{{ $subcategory->id }}"
-                                                    @if (in_array($subcategory->id, explode(',', $f_categories))) checked @endif
-                                                    aria-label="Select {{ $subcategory->name }}">
+                                                    @if (in_array($subcategory->id, explode(',', $f_categories))) checked @endif>
                                                 <label for="mobile-subcat-{{ $subcategory->id }}">
                                                     {{ $subcategory->name }}
                                                 </label>
@@ -215,49 +167,6 @@
                 </div>
             </div>
         </div>
-
-        {{-- <div class="accordion" id="mobile-gender-filter">
-            <div class="accordion-item">
-                <h5 class="accordion-header" id="mobile-accordion-gender-heading">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                            data-bs-target="#mobile-accordion-gender-filter" aria-expanded="true"
-                            aria-controls="mobile-accordion-gender-filter">
-                        Product Type
-                    </button>
-                </h5>
-                <div id="mobile-accordion-gender-filter" class="accordion-collapse collapse show"
-                     aria-labelledby="mobile-accordion-gender-heading" data-bs-parent="#mobile-gender-filter">
-                    <div class="accordion-body">
-                        <ul class="filter-list">
-                            <li class="filter-item">
-                                <div class="modern-checkbox">
-                                    <input type="radio" name="sex" id="mobile-sex-all" value=""
-                                           {{ request('sex') == '' ? 'checked' : '' }}
-                                           aria-label="Select all genders">
-                                    <label for="mobile-sex-all">All</label>
-                                </div>
-                            </li>
-                            <li class="filter-item">
-                                <div class="modern-checkbox">
-                                    <input type="radio" name="sex" id="mobile-sex-male" value="male"
-                                           {{ request('sex') == 'male' ? 'checked' : '' }}
-                                           aria-label="Select male">
-                                    <label for="mobile-sex-male">Men</label>
-                                </div>
-                            </li>
-                            <li class="filter-item">
-                                <div class="modern-checkbox">
-                                    <input type="radio" name="sex" id="mobile-sex-female" value="female"
-                                           {{ request('sex') == 'female' ? 'checked' : '' }}
-                                           aria-label="Select female">
-                                    <label for="mobile-sex-female">Women</label>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div> --}}
     </div>
 
     <form action="{{ route('shop.index') }}" method="get" id="frmfilter">
@@ -266,89 +175,106 @@
         <input type="hidden" name="categories" id="hdnCategories" />
         <input type="hidden" name="sex" id="hdnSex" value="{{ request('sex') }}" />
         <input type="hidden" name="priceRange" id="hdnPriceRange" value="{{ $priceRange ?? '' }}" />
-
     </form>
 @endsection
 
 @push('scripts')
     <script>
         $(document).ready(function() {
-            // Unified filter function that handles all filters
+            let isSubmitting = false;
+            let currentPage = {{ $products->currentPage() }};
+            let filterTimeout;
+
             function submitFilterForm() {
-                const categories = [];
-                $("input[name='categories']:checked").each(function() {
-                    categories.push($(this).val());
-                });
-                $("#hdnCategories").val(categories.join(","));
+                if (isSubmitting) return;
+                isSubmitting = true;
 
-                // Update price range in hidden input
-                const priceRange = $('#priceRange').val() || '';
-                $('#hdnPriceRange').val(priceRange);
+                clearTimeout(filterTimeout);
+                filterTimeout = setTimeout(() => {
+                    const categories = [];
+                    $("input[name='categories']:checked").each(function() {
+                        categories.push($(this).val());
+                    });
+                    $("#hdnCategories").val(categories.join(","));
 
+                    const priceRange = $('#priceRange').val() || '';
+                    $('#hdnPriceRange').val(priceRange);
+
+                    $('input[name="page"]').val(1);
+                    currentPage = 1;
+
+                    loadFilteredProducts();
+                }, 300);
+            }
+
+            function loadFilteredProducts() {
                 $.ajax({
                     url: $('#frmfilter').attr('action'),
                     type: 'GET',
+                    dataType: 'json',
                     data: $('#frmfilter').serialize(),
                     success: function(data) {
-                        $('#product-list').html(data);
+                        $('#product-list').html(data.products);
+                        $('#pagination-container').html(data.pagination);
+                        updatePagination();
+                        isSubmitting = false;
                     },
                     error: function(xhr) {
                         console.error("Error: " + xhr.status + " " + xhr.statusText);
                         toastr.error('Error loading products.');
+                        isSubmitting = false;
                     }
                 });
             }
 
-            // Handle price range filter change
+            function updatePagination() {
+                $('.pagination .page-link').off('click').on('click', function(e) {
+                    e.preventDefault();
+                    const $this = $(this);
+                    const href = $this.attr('href');
+
+                    let page = 1;
+                    if (href) {
+                        const urlParams = new URLSearchParams(href.split('?')[1]);
+                        page = urlParams.get('page') || 1;
+                    } else {
+                        const linkText = $this.text().trim();
+                        if (linkText === '‹' || linkText === '«') page = currentPage - 1;
+                        else if (linkText === '›' || linkText === '»') page = currentPage + 1;
+                        else page = parseInt(linkText) || currentPage;
+                    }
+
+                    if (page != currentPage) {
+                        $('input[name="page"]').val(page);
+                        currentPage = parseInt(page);
+                        loadFilteredProducts();
+                    }
+                });
+            }
+
             $('#priceRange').on('change', function() {
                 submitFilterForm();
             });
 
-            // Handle category filters
             $("input[name='categories']").on("change", function() {
-                const categoryId = $(this).val();
-                const isParent = $(this).hasClass('parent-category');
+                const $this = $(this);
+                const isParent = $this.hasClass('parent-category');
+                const isChecked = $this.is(':checked');
 
-                if (isParent) {
-                    // Parent category: check/uncheck all child categories
-                    const isChecked = $(this).is(':checked');
-                    // Find all subcategories after this parent
-                    let nextElement = $(this).closest('li').next();
-                    while (nextElement.length && nextElement.hasClass('subcategory')) {
-                        nextElement.find("input[name='categories']").prop('checked', isChecked);
-                        nextElement = nextElement.next();
-                    }
-                } else {
-                    // Child category: update parent if all children are selected
-                    const subcategoryItem = $(this).closest('li.subcategory');
-                    if (subcategoryItem.length) {
-                        // Find the parent category (previous non-subcategory item)
-                        let parentElement = subcategoryItem.prev();
-                        while (parentElement.length && parentElement.hasClass('subcategory')) {
-                            parentElement = parentElement.prev();
-                        }
+                if (isParent) {} else {
+                    const $subcategoryItem = $this.closest('li.subcategory');
+                    if ($subcategoryItem.length) {
+                        const $parentItem = $subcategoryItem.prevAll('li:not(.subcategory)').first();
+                        if ($parentItem.length) {
+                            const totalSubcategories = $parentItem.nextUntil('li:not(.subcategory)').length;
+                            const checkedSubcategories = $parentItem.nextUntil('li:not(.subcategory)')
+                                .find("input[name='categories']:checked").length;
 
-                        if (parentElement.length && !parentElement.hasClass('subcategory')) {
-                            // Count all subcategories for this parent
-                            let totalSubcategories = 0;
-                            let checkedSubcategories = 0;
-                            let nextElement = parentElement.next();
-
-                            while (nextElement.length && nextElement.hasClass('subcategory')) {
-                                totalSubcategories++;
-                                if (nextElement.find("input[name='categories']").is(':checked')) {
-                                    checkedSubcategories++;
-                                }
-                                nextElement = nextElement.next();
-                            }
-
-                            // Update parent checkbox
-                            const parentCheckbox = parentElement.find("input[name='categories']");
-                            parentCheckbox.prop('checked', totalSubcategories === checkedSubcategories);
+                            $parentItem.find("input[name='categories']")
+                                .prop('checked', totalSubcategories === checkedSubcategories);
                         }
                     }
                 }
-
                 submitFilterForm();
             });
 
@@ -357,60 +283,28 @@
                 submitFilterForm();
             });
 
-            $("input[name='sex']").on("change", function() {
-                $("#hdnSex").val($(this).val());
-                submitFilterForm();
-            });
+            updatePagination();
 
-            // Mobile filter functionality
             const mobileFilterToggle = document.getElementById('mobileFilterToggle');
             const mobileFilterSidebar = document.getElementById('mobileFilterSidebar');
             const filterOverlay = document.getElementById('filterOverlay');
             const filterClose = document.getElementById('filterClose');
 
             function openMobileFilter() {
-                if (mobileFilterSidebar && filterOverlay) {
-                    mobileFilterSidebar.classList.add('active');
-                    filterOverlay.classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                }
+                mobileFilterSidebar?.classList.add('active');
+                filterOverlay?.classList.add('active');
+                document.body.style.overflow = 'hidden';
             }
 
             function closeMobileFilter() {
-                if (mobileFilterSidebar && filterOverlay) {
-                    mobileFilterSidebar.classList.remove('active');
-                    filterOverlay.classList.remove('active');
-                    document.body.style.overflow = 'auto';
-                }
+                mobileFilterSidebar?.classList.remove('active');
+                filterOverlay?.classList.remove('active');
+                document.body.style.overflow = 'auto';
             }
 
-            if (mobileFilterToggle) {
-                mobileFilterToggle.addEventListener('click', openMobileFilter);
-            }
-            if (filterClose) {
-                filterClose.addEventListener('click', closeMobileFilter);
-            }
-            if (filterOverlay) {
-                filterOverlay.addEventListener('click', closeMobileFilter);
-            }
-
-            // Swiper initialization
-            if (typeof Swiper !== 'undefined' && document.querySelector('.js-swiper-slider')) {
-                const swiper = new Swiper('.js-swiper-slider', {
-                    slidesPerView: 1,
-                    effect: 'fade',
-                    loop: true,
-                    pagination: {
-                        el: '.slideshow-pagination',
-                        type: 'bullets',
-                        clickable: true,
-                    },
-                    navigation: {
-                        nextEl: '.swiper-button-next',
-                        prevEl: '.swiper-button-prev',
-                    },
-                });
-            }
+            mobileFilterToggle?.addEventListener('click', openMobileFilter);
+            filterClose?.addEventListener('click', closeMobileFilter);
+            filterOverlay?.addEventListener('click', closeMobileFilter);
 
             @if (session('success'))
                 toastr.success('{{ session('success') }}');

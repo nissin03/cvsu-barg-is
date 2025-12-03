@@ -1,19 +1,12 @@
-<ul class="account-nav">
+@if (Auth::user()->utype === 'USR')
     <ul class="account-nav">
         <li><a href="{{ route('user.index') }}" class="menu-link menu-link_us-s">Dashboard</a></li>
         <li><a href="{{ route('user.profile') }}" class="menu-link menu-link_us-s">Account</a></li>
-
-        <!-- Orders Dropdown -->
-        <li>
-            <a href="{{ route('user.orders') }}" class="menu-link menu-link_us-s">
-                Orders
-            </a>
-        </li>
+        <li><a href="{{ route('user.orders') }}" class="menu-link menu-link_us-s">Orders</a></li>
         <li><a href="{{ route('user.order.history') }}" class="menu-link menu-link_us-s">Order History</a></li>
         <li><a href="{{ route('user.reservations') }}" class="menu-link menu-link_us-s">Facility Reservation</a></li>
         <li><a href="{{ route('user.reservations_history') }}" class="menu-link menu-link_us-s">Facility Reservation
-                History</a>
-        </li>
+                History</a></li>
         <li>
             <form action="{{ route('logout') }}" method="post" id="logout-form">
                 @csrf
@@ -22,3 +15,12 @@
             </form>
         </li>
     </ul>
+@elseif (Auth::user()->utype === 'ADM')
+    <ul class="account-nav">
+        <li><a href="{{ route('user.orders') }}" class="menu-link menu-link_us-s">Orders</a></li>
+        <li><a href="{{ route('user.order.history') }}" class="menu-link menu-link_us-s">Order History</a></li>
+        <li><a href="{{ route('user.reservations') }}" class="menu-link menu-link_us-s">Facility Reservation</a></li>
+        <li><a href="{{ route('user.reservations_history') }}" class="menu-link menu-link_us-s">Facility Reservation
+                History</a></li>
+    </ul>
+@endif

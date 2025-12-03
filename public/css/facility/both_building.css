@@ -1,5 +1,59 @@
+.facility-booking-container [id^="selected-addons-display-"] {
+    display: none !important;
+  } 
+.selected-addons-display {
+    min-height: 50px;
+    border: 1px dashed #ddd;
+    border-radius: 5px;
+    padding: 10px;
+}
 
+.no-addons-message {
+    text-align: center;
+    font-style: italic;
+}
+
+.selected-addon-item {
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.selected-addon-item .remove-addon {
+    color: #dc3545;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.addon-card {
+    transition: all 0.3s ease;
+}
+
+.addon-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.addon-price {
+    font-size: 0.9rem;
+}
+
+.quantity-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
     /* Container and General Styles */
+    
+    .accordion-button:not(.collapsed) {
+        background-color: #f8f9fa;
+        color: #000;
+        box-shadow: inset 0 -1px 0 rgba(0,0,0,.125);
+    }
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: rgba(0,0,0,.125);
+    }
+
     .facility-booking-container {
         max-width: 100%;
         margin: 0 auto;

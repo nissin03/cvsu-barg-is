@@ -14,7 +14,9 @@ class Payment extends Model
         'user_id',
         'status',
         'total_price',
-        'updated_by'
+        'canceled_at',
+        'cancellation_reason',
+        'updated_by',
     ];
 
 
@@ -28,9 +30,14 @@ class Payment extends Model
         return $this->belongsTo(User::class);
     }
 
+    // public function updatedBy()
+    // {
+    //     return $this->belongsTo(User::class, 'updated_by');
+    // }
+
     public function updatedBy()
     {
-        return $this->belongsTo(User::class, 'updated_by');
+        return $this->belongsTo(User::class, 'updated_by')->where('utype', 'ADM');
     }
 
     public function paymentDetails()
@@ -41,6 +48,17 @@ class Payment extends Model
     public function transactionReservations()
     {
         return $this->hasMany(TransactionReservation::class);
+    }
+    public function addonTransactions()
+    {
+        return $this->hasManyThrough(
+            AddonTransaction::class,           // Final model
+            TransactionReservation::class,     // Intermediate model
+            'payment_id',                      // Foreign key on transaction_reservations table
+            'transaction_reservation_id',      // Foreign key on addon_transactions table
+            'id',                              // Local key on payments table
+            'id'                               // Local key on transaction_reservations table
+        );
     }
 
     public function groupedAvailabilities()
@@ -55,4 +73,13 @@ class Payment extends Model
             ->where('date_to', '<=', $this->availability->date_to)
             ->orderBy('date_from');
     }
+
+    public function priceDiscounts()
+    {
+        return $this->hasMany(PaymentPriceDiscount::class);
+    }
+    // public function discount()
+    // {
+    //     return $this->belongsTo(Discount::class);
+    // }
 }

@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="author" content="barg unit">
+    @auth
+        <meta name="user-id" content="{{ Auth::user()->id }}">
+        <meta name="user-role" content="{{ Auth::user()->utype }}">
+    @endauth
 
     <title>{{ config('app.name', 'Information System') }}</title>
 
@@ -17,8 +21,9 @@
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+    <!-- Popper.js must be loaded before Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
 
     <!-- jQuery -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -56,7 +61,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <script defer src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <link rel="stylesheet" href="{{ asset('./font-awesome-6-pro-main/css/all.min.css') }}">
-    {{-- <link rel="stylesheet" href="{{ asset('css/facilities.css') }}"> --}}
+    {{--
+    <link rel="stylesheet" href="{{ asset('css/facilities.css') }}"> --}}
 
     <link rel="stylesheet" href="{{ asset('owl_carousel/owl.theme.default.css') }}">
     <link rel="stylesheet" href="{{ asset('owl_carousel/owl.carousel.css') }}">
@@ -92,259 +98,603 @@
             height: 1px;
         }
 
+        /* Notification Bell CSS from admin.blade.php */
+        .dropdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            flex-shrink: 0;
+            background-color: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+
+        .notification-heading {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .notification-item.read {
+            background-color: #f8f9fa;
+            opacity: 0.8;
+        }
+
+        .notification-item.read .notification-text {
+            font-weight: normal !important;
+        }
+
+
+        .mark-read {
+            background: none;
+            border: none;
+            color: #30d683;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .category-header {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .remove-notification {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.2s ease;
+            z-index: 10;
+            border-radius: 50%;
+        }
+
+        .remove-notification:hover {
+            opacity: 1;
+            color: #dc3545;
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .mark-read,
+        .remove-all {
+            background: none;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .mark-read {
+            color: #30d683;
+        }
+
+        .remove-all {
+            color: #dc3545;
+        }
+
+        .mark-read:hover,
+        .remove-all:hover {
+            opacity: 0.8;
+        }
+
+        .notification-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: flex-start;
+            position: relative;
+            min-height: 60px;
+            transition: background-color 0.2s ease;
+        }
+
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .notification-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+            overflow: hidden;
+        }
+
+        .notification-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .badge-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            margin-right: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e9ecef;
+            flex-shrink: 0;
+        }
+
+        .notification-content {
+            flex: 1;
+            min-width: 0;
+            padding-right: 25px;
+        }
+
+        .notification-text {
+            margin: 0 0 4px 0;
+            font-size: 14px;
+            line-height: 1.3;
+            word-wrap: break-word;
+        }
+
+        .notification-subtext {
+            margin: 0;
+            font-size: 12px;
+            color: #6c757d;
+            line-height: 1.3;
+            display: flex;
+            align-items: center;
+            word-wrap: break-word;
+        }
+
+
+        /* Add these new styles to your existing CSS */
+        /* .notification-list-container {
+            max-height: 300px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease;
+            scrollbar-width: thin;
+        } */
+
+        #notification-list,
+        #all-notification-list {
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            scrollbar-width: thin;
+            scrollbar-color: #888 #f1f1f1;
+        }
+
+
+        .notification-list-container::-webkit-scrollbar-track,
+        #notification-list::-webkit-scrollbar-track,
+        #all-notification-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .notification-list-container::-webkit-scrollbar-thumb,
+        #notification-list::-webkit-scrollbar-thumb,
+        #all-notification-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        .notification-list-container::-webkit-scrollbar-thumb:hover,
+        #notification-list::-webkit-scrollbar-thumb:hover,
+        #all-notification-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .all-notifications {
+            max-height: 400px;
+        }
+
+        .unread-indicator {
+            width: 8px;
+            height: 8px;
+            background-color: #30d683;
+            /* background-color: #007bff; */
+            border-radius: 50%;
+            margin-left: auto;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .dropdown-footer {
+            padding: 0;
+            flex-shrink: 0;
+            background-color: #fff;
+            position: sticky;
+            bottom: 0;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .dropdown-footer button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background-color: #f8f9fa;
+            color: #212529;
+            font-weight: 600;
+            border-radius: 0 0 10px 10px;
+            transition: background-color 0.2s ease;
+        }
+
+        .dropdown-footer button:hover {
+            background-color: #e9ecef;
+        }
+
+        /* Notification bell specific styles */
+        .popup-wrap.message.type-header {
+            position: relative;
+        }
+
+        .header-item {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .text-tiny.notification-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 15px;
+            height: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            min-width: 15px;
+        }
+
+        .fa-regular.fa-bell {
+            font-size: 18px;
+            color: black !important;
+        }
+
+        .btn.btn-primary.dropdown-toggle {
+            background: none;
+            border: none;
+            color: #6c757d;
+            padding: 8px 12px;
+        }
+
+        .btn.btn-primary.dropdown-toggle:hover {
+            background-color: #f8f9fa;
+            color: #495057;
+        }
+
+        .btn.btn-primary.dropdown-toggle:focus {
+            box-shadow: none;
+            background-color: #f8f9fa;
+            color: #495057;
+        }
+
+        /* Remove dropdown arrow but keep functionality */
+        .btn.btn-primary.dropdown-toggle::after {
+            display: none !important;
+        }
+
+        /* Alternative way to hide arrow */
+        .dropdown-toggle::after {
+            display: none !important;
+        }
+
+        .dropdown-menu {
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-width: 350px;
+            max-width: 400px;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: auto;
+            z-index: 1000;
+            display: none;
+            max-height: 80vh;
+            overflow: hidden;
+            flex-direction: column;
+            background-color: #fff;
+        }
+
+        .dropdown-menu.show {
+            display: flex !important;
+        }
+
+        .dropdown-menu-end {
+            right: 0;
+            left: auto;
+        }
     </style>
 
+    <nav class="navbar navbar-expand-lg navbar-light bg-white py-4 fixed-top">
+        <div class="container position-relative">
+            <a href="{{ route('home.index') }}"
+                class="navbar-brand d-flex justify-content-between align-items-center order-lg-0">
+                <img src="{{ asset('images/logo.png') }}" alt="Site Logo" class="navbar-logo">
+            </a>
 
+            <div class="order-lg-2 nav-btns header-tools__item header-tools__cart">
+                <div class="header-tools d-flex align-items-center">
+                    <div class="header-tools__item hover-container">
+                        <a class="js-search-popup search-field__actor" href="#" id="searchToggle">
+                            <i class="fa-regular fa-magnifying-glass" id="searchIcon"></i>
+                            <i class="fa-solid fa-times d-none" id="closeIcon"></i>
+                        </a>
+                    </div>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-white py-4 fixed-top">
-    <div class="container position-relative">
-        <a href="{{ route('home.index') }}" class="navbar-brand d-flex justify-content-between align-items-center order-lg-0">
-            <img src="{{ asset('images/logo.png') }}" alt="Site Logo" class="navbar-logo">
-        </a>
-
-        <div class="order-lg-2 nav-btns header-tools__item header-tools__cart">
-            <div class="header-tools d-flex align-items-center">
-                <div class="header-tools__item hover-container">
-                    <a class="js-search-popup search-field__actor" href="#" id="searchToggle">
-                        <i class="fa-regular fa-magnifying-glass" id="searchIcon"></i>
-                        <i class="fa-solid fa-times d-none" id="closeIcon"></i>
-                    </a>
-                </div>
-                
-                <button type="button" class="btn position-relative" onclick="window.location.href='{{ route('cart.index') }}'">
-                    <i class="fa-sharp fa-regular fa-bag-shopping"></i>
-                    @if (Cart::instance('cart')->content()->count() > 0)
-                        <span class="cart-amount d-block position-absolute js-cart-items-count">{{ Cart::instance('cart')->content()->count() }}</span>
-                    @endif
-                </button>
-
-                @guest
-                    <button type="button" class="btn position-relative" onclick="location.href='{{ route('login') }}'">
-                        <i class="fa-regular fa-user"></i>
+                    <button type="button" class="btn position-relative"
+                        onclick="window.location.href='{{ route('cart.index') }}'">
+                        <i class="fa-sharp fa-regular fa-bag-shopping"></i>
+                        @if (Cart::instance('cart')->content()->count() > 0)
+                            <span
+                                class="cart-amount d-block position-absolute js-cart-items-count">{{ Cart::instance('cart')->content()->count() }}</span>
+                        @endif
                     </button>
-                @else
-                    <button type="button" class="btn d-flex align-items-center position-relative"
-                        onclick="location.href='{{ Auth::user()->utype == 'ADM' ? route('admin.index') : (Auth::user()->utype == 'DIR' ? route('admin.index') : route('user.index')) }}'">
-                        <div class="profile-image d-flex justify-content-center me-2">
-                            @if (Auth::user()->profile_image)
-                                <img src="{{ asset('storage/' . Auth::user()->profile_image) }}" alt="Profile Image"
-                                    class="img-fluid rounded-circle"
-                                    style="width: 40px; height: 40px; object-fit: cover;">
-                            @else
-                                <img src="{{ asset('images/profile.jpg') }}" loading="lazy" alt="Default Profile Image"
-                                    class="img-fluid rounded-circle"
-                                    style="width: 40px; height: 40px; object-fit: cover;">
-                            @endif
-                        </div>
-                        <span class="d-none d-md-inline">{{ strtok(Auth::user()->name, ' ') }}</span>
-                    </button>
-                @endguest
-            </div>
-        </div>
 
-        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse order-lg-1" id="navMenu">
-            <ul class="navbar-nav mx-auto text-center">
-                <li class="nav-item px-2 py-2">
-                    <a href="{{ route('home.index') }}" class="nav-link text-uppercase text-dark">Home</a>
-                </li>
-                <li class="nav-item px-2 py-2">
-                    <a href="{{ route('shop.index') }}" class="nav-link text-uppercase text-dark">Shop</a>
-                </li>
-                <li class="nav-item px-2 py-2">
-                    <a href="{{ route('user.facilities.index') }}" class="nav-link text-uppercase text-dark">Facilities</a>
-                </li>
-                <li class="nav-item px-2 py-2">
-                    <a href="{{ route('about.index') }}" class="nav-link text-uppercase text-dark">About Us</a>
-                </li>
-                <li class="nav-item px-2 py-2 border-0">
-                    <a href="{{ route('home.contact') }}" class="nav-link text-uppercase text-dark">Contact</a>
-                </li>
-            </ul>
-        </div>
-
-        <div class="search-popup js-hidden-content">
-            <div class="container">
-                <form action="#" method="GET" class="search-field" id="searchForm">
-                    <div class="position-relative">
-                        <input class="search-field__input search-popup__input w-100 fw-medium" id="search-input"
-                            type="text" name="search-keyword" placeholder="Search products or facilities..." autocomplete="off"/>
-                        <button class="search-popup__submit" type="submit">
-                            <i class="fa-solid fa-magnifying-glass"></i>
+                    @guest
+                        <button type="button" class="btn position-relative"
+                            onclick="location.href='{{ route('login') }}'">
+                            <i class="fa-regular fa-user"></i>
                         </button>
-                    </div>
-                    <div class="search-popup__results">
-                        <ul id="box-content-search"></ul>
-                    </div>
-                </form>
+                    @else
+                        @if (Auth::user()->utype == 'USR')
+                            @include('components.notification-dropdown')
+                        @endif
+                        <button type="button" class="btn d-flex align-items-center position-relative"
+                            onclick="location.href='{{ Auth::user()->utype == 'ADM' ? route('admin.index') : (Auth::user()->utype == 'DIR' ? route('admin.index') : route('user.index')) }}'">
+                            <div class="profile-image d-flex justify-content-center me-2">
+                                @if (Auth::user()->profile_image)
+                                    <img src="{{ asset('storage/' . Auth::user()->profile_image) }}" alt="Profile Image"
+                                        class="img-fluid rounded-circle"
+                                        style="width: 40px; height: 40px; object-fit: cover;">
+                                @else
+                                    <img src="{{ asset('images/profile.jpg') }}" loading="lazy" alt="Default Profile Image"
+                                        class="img-fluid rounded-circle"
+                                        style="width: 40px; height: 40px; object-fit: cover;">
+                                @endif
+                            </div>
+                            <span class="d-none d-md-inline">{{ strtok(Auth::user()->name, ' ') }}</span>
+                        </button>
+                    @endguest
+                </div>
+            </div>
+
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse order-lg-1" id="navMenu">
+                <ul class="navbar-nav mx-auto text-center">
+                    <li class="nav-item px-2 py-2">
+                        <a href="{{ route('home.index') }}" class="nav-link text-uppercase text-dark">Home</a>
+                    </li>
+                    <li class="nav-item px-2 py-2">
+                        <a href="{{ route('shop.index') }}" class="nav-link text-uppercase text-dark">Shop</a>
+                    </li>
+                    <li class="nav-item px-2 py-2">
+                        <a href="{{ route('user.facilities.index') }}"
+                            class="nav-link text-uppercase text-dark">Facilities</a>
+                    </li>
+                    <li class="nav-item px-2 py-2">
+                        <a href="{{ route('about.index') }}" class="nav-link text-uppercase text-dark">About Us</a>
+                    </li>
+                    <li class="nav-item px-2 py-2 border-0">
+                        <a href="{{ route('home.contact') }}" class="nav-link text-uppercase text-dark">Contact</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="search-popup js-hidden-content">
+                <div class="container">
+                    <form action="#" method="GET" class="search-field" id="searchForm">
+                        <div class="position-relative">
+                            <input class="search-field__input search-popup__input w-100 fw-medium" id="search-input"
+                                type="text" name="search-keyword" placeholder="Search products or facilities..."
+                                autocomplete="off" />
+                            <button class="search-popup__submit" type="submit">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                        <div class="search-popup__results">
+                            <ul id="box-content-search"></ul>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
-<style>
-    .search-popup {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: 100%;
-        background: #fff;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
-        display: none;
-        opacity: 0;
-        transform: translateY(-10px);
-        transition: all 0.3s ease;
-        padding: 15px 0;
-        border-top: 1px solid #f0f0f0;
-    }
-    
-    .search-popup.active {
-        display: block;
-        opacity: 1;
-        transform: translateY(0);
-    }
-    
-    .search-popup .container {
-        padding: 0 15px;
-    }
-    
-    .search-popup__input {
-        padding: 12px 50px 12px 20px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 16px;
-        width: 100%;
-    }
-    
-    .search-popup__submit {
-        position: absolute;
-        right: 20px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: none;
-        border: none;
-        color: #666;
-        font-size: 18px;
-    }
-    
-    .search-popup__results {
-        max-height: 400px;
-        overflow-y: auto;
-        margin-top: 15px;
-        border-top: 1px solid #f0f0f0;
-        padding-top: 10px;
-    }
-    
-    .search-result-item {
-        padding: 12px 0;
-        border-bottom: 1px solid #f5f5f5;
-    }
-    
-    .search-result-item:last-child {
-        border-bottom: none;
-    }
-    
-    .search-result-item a {
-        display: flex;
-        align-items: center;
-        text-decoration: none;
-        color: #333;
-        transition: all 0.2s ease;
-    }
-    
-    .search-result-item a:hover {
-        color: #0066cc;
-    }
-    
-    .search-result-item .image {
-        width: 40px;
-        height: 40px;
-        margin-right: 15px;
-        border-radius: 4px;
-        overflow: hidden;
-        flex-shrink: 0;
-    }
-    
-    .search-result-item .image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .search-result-item .info {
-        flex-grow: 1;
-    }
-    
-    .search-result-item .name {
-        font-size: 15px;
-        font-weight: 500;
-        margin-bottom: 3px;
-    }
-    
-    .search-result-item .type {
-        font-size: 13px;
-        color: #888;
-    }
-    
-    .no-results {
-        padding: 20px;
-        text-align: center;
-        color: #888;
-        font-size: 15px;
-    }
-</style>
+    <style>
+        .search-popup {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            padding: 15px 0;
+            border-top: 1px solid #f0f0f0;
+        }
 
-<script>
-    $(document).ready(function() {
-        $('#searchToggle').on('click', function(e) {
-            e.preventDefault();
-            $('.search-popup').toggleClass('active');
-            $('#searchIcon').toggleClass('d-none');
-            $('#closeIcon').toggleClass('d-none');
-            
-            if ($('.search-popup').hasClass('active')) {
-                $('#search-input').focus();
-            }
-        });
+        .search-popup.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
 
-        $("#search-input").on("keyup", function() {
-            var searchQuery = $(this).val().trim();
-            if (searchQuery.length > 2) {
-                performSearch(searchQuery);
-            } else {
-                $("#box-content-search").empty();
-            }
-        });
+        .search-popup .container {
+            padding: 0 15px;
+        }
 
-        $("#searchForm").on("submit", function(e) {
-            e.preventDefault();
-            var searchQuery = $("#search-input").val().trim();
-            if (searchQuery.length > 0) {
-                performSearch(searchQuery);
-            }
-        });
+        .search-popup__input {
+            padding: 12px 50px 12px 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            width: 100%;
+        }
 
-        function performSearch(query) {
-            $.ajax({
-                type: "GET",
-                url: "{{ route('home.search') }}",
-                data: { query: query },
-                dataType: 'json',
-                success: function(data) {
+        .search-popup__submit {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .search-popup__results {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 10px;
+        }
+
+        .search-result-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s ease;
+        }
+
+        .search-result-item a:hover {
+            color: #0066cc;
+        }
+
+        .search-result-item .image {
+            width: 40px;
+            height: 40px;
+            margin-right: 15px;
+            border-radius: 4px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .search-result-item .image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .search-result-item .info {
+            flex-grow: 1;
+        }
+
+        .search-result-item .name {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .search-result-item .type {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .no-results {
+            padding: 20px;
+            text-align: center;
+            color: #888;
+            font-size: 15px;
+        }
+    </style>
+
+    <script>
+        $(document).ready(function() {
+            $('#searchToggle').on('click', function(e) {
+                e.preventDefault();
+                $('.search-popup').toggleClass('active');
+                $('#searchIcon').toggleClass('d-none');
+                $('#closeIcon').toggleClass('d-none');
+
+                if ($('.search-popup').hasClass('active')) {
+                    $('#search-input').focus();
+                }
+            });
+
+            $("#search-input").on("keyup", function() {
+                var searchQuery = $(this).val().trim();
+                if (searchQuery.length > 2) {
+                    performSearch(searchQuery);
+                } else {
                     $("#box-content-search").empty();
+                }
+            });
 
-                    if (data.products.length > 0 || data.facilities.length > 0) {
-                        $.each(data.products, function(index, item) {
-                            var productUrl = "{{ route('shop.product.details', ['product_slug' => ':slug']) }}".replace(':slug', item.slug);
-                            var imageUrl = item.image ? "{{ asset('uploads/products/thumbnails') }}/" + item.image : "{{ asset('images/default-product.png') }}";
-                            var priceDisplay = item.price ? '₱' + parseFloat(item.price).toFixed(2) : '₱0.00';
+            $("#searchForm").on("submit", function(e) {
+                e.preventDefault();
+                var searchQuery = $("#search-input").val().trim();
+                if (searchQuery.length > 0) {
+                    performSearch(searchQuery);
+                }
+            });
 
-                            $("#box-content-search").append(
-                                `<li class="search-result-item">
+            function performSearch(query) {
+                $.ajax({
+                    type: "GET",
+                    url: "{{ route('home.search') }}",
+                    data: {
+                        query: query
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        $("#box-content-search").empty();
+
+                        if (data.products.length > 0 || data.facilities.length > 0) {
+                            $.each(data.products, function(index, item) {
+                                var productUrl =
+                                    "{{ route('shop.product.details', ['product_slug' => ':slug']) }}"
+                                    .replace(':slug', item.slug);
+                                var imageUrl = item.image ?
+                                    "{{ asset('uploads/products/thumbnails') }}/" + item
+                                    .image : "{{ asset('images/default-product.png') }}";
+                                var priceDisplay = item.price ? '₱' + parseFloat(item.price)
+                                    .toFixed(2) : '₱0.00';
+
+                                $("#box-content-search").append(
+                                    `<li class="search-result-item">
                                     <a href="${productUrl}">
                                         <div class="image">
                                             <img src="${imageUrl}" alt="${item.name}" loading="lazy">
@@ -355,29 +705,33 @@
                                         </div>
                                     </a>
                                 </li>`
-                            );
-                        });
+                                );
+                            });
 
-                        $.each(data.facilities, function(index, item) {
-                            var facilityUrl = "{{ route('user.facilities.details', ['slug' => ':slug']) }}".replace(':slug', item.slug || item.id);
-                            var imageUrl;
-                            
-                            if (item.image) {
-                                var cleanImageName = item.image;
-                                if (cleanImageName.startsWith('facilities/')) {
-                                    cleanImageName = cleanImageName.replace('facilities/', '');
+                            $.each(data.facilities, function(index, item) {
+                                var facilityUrl =
+                                    "{{ route('user.facilities.details', ['slug' => ':slug']) }}"
+                                    .replace(':slug', item.slug || item.id);
+                                var imageUrl;
+
+                                if (item.image) {
+                                    var cleanImageName = item.image;
+                                    if (cleanImageName.startsWith('facilities/')) {
+                                        cleanImageName = cleanImageName.replace('facilities/',
+                                            '');
+                                    }
+                                    imageUrl = "/storage/facilities/thumbnails/" +
+                                        cleanImageName;
+                                } else {
+                                    imageUrl = "{{ asset('images/default-facility.png') }}";
                                 }
-                                imageUrl = "/storage/facilities/thumbnails/" + cleanImageName;
-                            } else {
-                                imageUrl = "{{ asset('images/default-facility.png') }}";
-                            }
 
-                            $("#box-content-search").append(
-                                `<li class="search-result-item">
+                                $("#box-content-search").append(
+                                    `<li class="search-result-item">
                                     <a href="${facilityUrl}">
                                         <div class="image">
-                                            <img src="${imageUrl}" 
-                                                alt="${item.name}" 
+                                            <img src="${imageUrl}"
+                                                alt="${item.name}"
                                                 loading="lazy"
                                                 onerror="
                                                     if (this.src.includes('/thumbnails/')) {
@@ -395,40 +749,42 @@
                                         </div>
                                     </a>
                                 </li>`
-                            );
-                        });
-                    } else {
-                        $("#box-content-search").html('<li class="no-results">No results found for "' + query + '"</li>');
+                                );
+                            });
+                        } else {
+                            $("#box-content-search").html(
+                                '<li class="no-results">No results found for "' + query + '"</li>');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Search error:', xhr.responseText);
+                        $("#box-content-search").html(
+                            '<li class="no-results">Error loading results. Please try again.</li>');
                     }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Search error:', xhr.responseText);
-                    $("#box-content-search").html('<li class="no-results">Error loading results. Please try again.</li>');
+                });
+            }
+
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.search-popup, #searchToggle').length) {
+                    closeSearch();
                 }
             });
-        }
 
-        $(document).on('click', function(e) {
-            if (!$(e.target).closest('.search-popup, #searchToggle').length) {
-                closeSearch();
+            $(document).on('keyup', function(e) {
+                if (e.key === "Escape") {
+                    closeSearch();
+                }
+            });
+
+            function closeSearch() {
+                $('.search-popup').removeClass('active');
+                $('#searchIcon').removeClass('d-none');
+                $('#closeIcon').addClass('d-none');
+                $("#search-input").val('');
+                $("#box-content-search").empty();
             }
         });
-
-        $(document).on('keyup', function(e) {
-            if (e.key === "Escape") {
-                closeSearch();
-            }
-        });
-
-        function closeSearch() {
-            $('.search-popup').removeClass('active');
-            $('#searchIcon').removeClass('d-none');
-            $('#closeIcon').addClass('d-none');
-            $("#search-input").val('');
-            $("#box-content-search").empty();
-        }
-    });
-</script>
+    </script>
 
     <div id="goTop">
         <a href="#topbar" id="goTopbtn"><i class="fa-solid fa-chevron-up"></i></a>
@@ -529,8 +885,7 @@
     <script src="{{ asset('js/main.js') }}"></script>
 
 
-    <!-- bootstrap bundle js  -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap bundle already loaded above -->
     <!-- fullcalendar js  -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales-all.min.js"></script>
@@ -551,6 +906,48 @@
         });
     </script>
 
+
+    @vite('resources/js/app.js')
+
+    <!-- Ensure Bootstrap dropdowns work properly -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap dropdowns
+            const dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
+            const dropdownList = dropdownElementList.map(function(dropdownToggleEl) {
+                return new bootstrap.Dropdown(dropdownToggleEl);
+            });
+
+            // Additional fallback if Bootstrap doesn't work
+            const dropdownToggle = document.getElementById('dropdownMenuButton2');
+            const dropdownMenu = document.querySelector('.dropdown-menu');
+
+            if (dropdownToggle && dropdownMenu && !window.bootstrap) {
+                console.log('Bootstrap not available, using fallback dropdown');
+                dropdownToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const isOpen = dropdownMenu.classList.contains('show');
+                    if (isOpen) {
+                        dropdownMenu.classList.remove('show');
+                        dropdownToggle.setAttribute('aria-expanded', 'false');
+                    } else {
+                        dropdownMenu.classList.add('show');
+                        dropdownToggle.setAttribute('aria-expanded', 'true');
+                    }
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                        dropdownMenu.classList.remove('show');
+                        dropdownToggle.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+        });
+    </script>
 
     @stack('scripts')
 </body>

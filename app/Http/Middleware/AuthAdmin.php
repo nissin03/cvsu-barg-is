@@ -17,19 +17,13 @@ class AuthAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if(Auth::check()) 
-        {
-            if(Auth::user()->utype === 'ADM' || Auth::user()->utype === 'DIR')
-            {
+        if (Auth::check()) {
+            if (Auth::user()->utype === 'ADM' || Auth::user()->utype === 'DIR') {
                 return $next($request);
-            }
-            else {
-                Session::flush();
-                return redirect()->route('login');
+            } else {
+                abort(403, 'Unauthorized access.');
             }
         }
-        else {
-            return redirect()->route('login');
-        }
+        return redirect()->route('login');
     }
 }

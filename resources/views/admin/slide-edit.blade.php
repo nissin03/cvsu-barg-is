@@ -15,7 +15,7 @@
                         <i class="icon-chevron-right"></i>
                     </li>
                     <li>
-                        <a href="{{ route('admin.slide.add') }}">
+                        <a href="{{ route('admin.slides') }}">
                             <div class="text-tiny">Slides</div>
                         </a>
                     </li>
@@ -33,7 +33,7 @@
                     enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
-                    <input type="hidden" name="id" value="{{$slide->id}}" />
+                    <input type="hidden" name="id" value="{{ $slide->id }}" />
                     <fieldset class="name">
                         <div class="body-title">Tagline <span class="tf-color-1">*</span></div>
                         <input class="flex-grow" type="text" placeholder="tagline" name="tagline"tabindex="0"
@@ -125,12 +125,12 @@
                 const photoInp = $("#myFile");
                 const [file] = this.files;
                 if (file) {
-        
+
                     $("#imgpreview img").attr('src', URL.createObjectURL(file));
                     $("#imgpreview").show();
                 }
             });
-        
+
         });
     </script>
 @endpush
