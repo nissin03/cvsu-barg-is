@@ -26,6 +26,7 @@ class NotificationManager {
     }
 
     init() {
+        console.log("[NotificationManager] Initializing...");
         this.setupEventListeners();
         this.setupEchoListeners();
         this.fetchNotifications();
@@ -35,6 +36,10 @@ class NotificationManager {
      * Fetch notifications from server
      */
     async fetchNotifications() {
+        console.log(
+            "[NotificationManager] Fetching notifications from:",
+            this.endpoints.all
+        );
         try {
             const response = await this.axios.get(
                 this.endpoints.all || "/admin/notifications"
@@ -57,7 +62,10 @@ class NotificationManager {
                     notifications = response.data.items;
                 }
             }
-
+            console.log(
+                "[NotificationManager] Notifications fetched:",
+                notifications
+            );
             this.updateNotificationUI(notifications);
             this.updateUnreadCount();
         } catch (error) {
@@ -315,6 +323,11 @@ class NotificationManager {
             return;
         }
 
+        console.log(
+            "[NotificationManager] Setting up Echo listeners for user:",
+            this.userId
+        );
+
         this.echo
             .private(`App.Models.User.${this.userId}`)
             .notification((notification) => {
@@ -360,6 +373,10 @@ class NotificationManager {
      * Handle new notification from Echo
      */
     handleNewNotification(notification) {
+        console.log(
+            "[NotificationManager] Handling new notification:",
+            notification
+        );
         this.showToast(notification.data || notification);
         this.fetchNotifications();
     }
