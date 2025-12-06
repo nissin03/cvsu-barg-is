@@ -2,7 +2,7 @@
 /node_modules
 /public/build
 /public/hot
-/public/storage
+# /public/storage
 /storage/*.key
 /vendor
 .env
@@ -20,4 +20,4 @@ yarn-error.log
 /.vscode
 /gitignore
 /_ide_helper.php
-/public/images
+# /public/images
