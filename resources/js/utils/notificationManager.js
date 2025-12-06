@@ -486,6 +486,7 @@ class NotificationManager {
      * Show toast notification
      */
     showToast(notificationData) {
+        console.log("Toastr");
         if (window.toastr) {
             const title =
                 notificationData.title ||
