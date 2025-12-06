@@ -336,10 +336,9 @@
             @endphp
 
 
-            @if ($allAddons->isNotEmpty())
-                {{-- User Add-ons Section --}}
+            @if ($reservation->non_refundable_addon_transactions && $reservation->non_refundable_addon_transactions->isNotEmpty())
                 <div class="wg-box mt-5 table-responsive">
-                    <h5>User Add-ons</h5>
+                    <h5>User Add-ons (Non-Refundable)</h5>
                     <table class="table table-striped table-bordered">
                         <thead>
                             <tr>
@@ -353,12 +352,38 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @php $groupedAddons = $reservation->grouped_addons ?? collect(); @endphp
+                            @php
+                                // Filter grouped addons to show only non-refundable ones
+                                $nonRefundableGroupedAddons = collect();
 
-                            @forelse ($groupedAddons as $row)
+                                if (isset($reservation->grouped_addons)) {
+                                    // Get IDs of non-refundable addons
+                                    $nonRefundableAddonIds = $reservation->non_refundable_addon_transactions
+                                        ->pluck('addon.id')
+                                        ->unique();
+
+                                    // Filter grouped addons
+                                    $nonRefundableGroupedAddons = $reservation->grouped_addons->filter(function (
+                                        $row,
+                                    ) use ($nonRefundableAddonIds, $reservation) {
+                                        // Find the addon in non_refundable_addon_transactions that matches this row
+                                        $matchingAddon = $reservation->non_refundable_addon_transactions->first(
+                                            function ($tx) use ($row) {
+                                                return $tx->addon &&
+                                                    $tx->addon->name === $row->addon_name &&
+                                                    $tx->addon->billing_cycle === $row->billing_cycle;
+                                            },
+                                        );
+
+                                        return $matchingAddon !== null;
+                                    });
+                                }
+                            @endphp
+
+                            @forelse ($nonRefundableGroupedAddons as $row)
                                 <tr>
                                     <td>{{ $row->addon_name }}</td>
-                                    <td>{{ $row->base_price }}</td>
+                                    <td>₱{{ number_format($row->base_price, 2) }}</td>
                                     <td>{{ $row->billing_cycle_label }}</td>
 
                                     @if (!$row->is_contract)
@@ -373,14 +398,104 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted">No add-ons assigned to this user.</td>
+                                    <td colspan="7" class="text-center text-muted">No non-refundable add-ons assigned to
+                                        this user.</td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
             @endif
+            @if ($reservation->qualification_approvals && $reservation->qualification_approvals->count() > 0)
+                <div class="wg-box mt-5">
+                    <h4 class="fw-bold mb-4">Qualification Details</h4>
 
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 20%;">Status</th>
+                                    <th style="width: 30%;">File</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($reservation->qualification_approvals as $qualification)
+                                    <tr>
+                                        <td>
+                                            {{-- <span class="badge status-badge qualification-status-badge"
+                                                data-qualification-id="{{ $qualification->id }}"
+                                                data-current-qualification-status="{{ $qualification->status }}">
+                                                {{ ucfirst($qualification->status) }}
+                                            </span> --}}
+                                            <span
+                                                class="badge status-badge qualification-status-badge
+                @if ($qualification->status === 'approved') bg-success
+                @elseif ($qualification->status === 'pending') bg-primary
+                @elseif ($qualification->status === 'canceled') bg-danger
+                @else bg-secondary @endif"
+                                                data-qualification-id="{{ $qualification->id }}"
+                                                data-current-qualification-status="{{ $qualification->status }}">
+                                                {{ ucfirst($qualification->status) }}
+                                            </span>
+                                        </td>
+
+                                        <!-- File -->
+                                        <td>
+                                            @if ($qualification->hasQualificationFile())
+                                                <a href="{{ $qualification->qualification_url }}" target="_blank"
+                                                    class="btn btn-info btn-lg text-white">
+                                                    <i class="icon-download"></i> View File
+                                                </a>
+                                            @else
+                                                <span class="text-muted">No file uploaded</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">
+                                            <!-- Update Status Section -->
+                                            <div class="mt-6">
+                                                <h6 class="fw-semibold mb-3 mt-2">Update Status</h6>
+
+                                                @if (in_array($qualification->status, ['approved', 'canceled']))
+                                                    <div class="alert alert-info">
+                                                        <i class="fas fa-lock"></i>
+                                                        Status cannot be changed.
+                                                    </div>
+                                                @else
+                                                    <form
+                                                        class="qualification-status-form d-flex gap-3 align-items-center flex-wrap"
+                                                        data-qualification-id="{{ $qualification->id }}"
+                                                        data-current-status="{{ $qualification->status }}">
+                                                        @csrf
+                                                        @method('PATCH')
+
+                                                        <select name="status" class="qualification-status-select"
+                                                            style="max-width: 200px;">
+                                                            <option value="{{ $qualification->status }}" selected>
+                                                                {{ ucfirst($qualification->status) }} (Current)
+                                                            </option>
+                                                            @if ($qualification->status === 'pending')
+                                                                <option value="approved">Approved</option>
+                                                                <option value="canceled">Canceled</option>
+                                                            @endif
+                                                        </select>
+
+                                                        <button type="submit"
+                                                            class="tf-button w208 qualification-update-btn">
+                                                            Update Status
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
             @if (isset($reservation->refundable_addon_payments) && $reservation->refundable_addon_payments->count() > 0)
                 <div class="wg-box mt-5">
                     <h4 class="fw-bold mb-4">Refundable Addon Payments</h4>
@@ -1046,8 +1161,23 @@
                 </table>
             </div> --}}
 
+            {{-- Transaction Details Section with Total Calculation --}}
             <div class="wg-box mt-5 table-responsive">
                 <h5 class="mb-3">Transaction Details</h5>
+
+                @php
+                    // Calculate total addon payments
+                    $totalAddonPayments = 0;
+                    if (
+                        isset($reservation->refundable_addon_payments) &&
+                        $reservation->refundable_addon_payments->count() > 0
+                    ) {
+                        $totalAddonPayments = $reservation->refundable_addon_payments->sum('total');
+                    }
+
+                    // Grand total = reservation total + addon payments total
+                    $grandTotal = ($reservation->total_price ?? 0) + $totalAddonPayments;
+                @endphp
 
                 <table class="table table-bordered table-striped table-transaction mb-0">
                     <tbody>
@@ -1083,117 +1213,50 @@
                             @endif
                         @endif
 
-                        <tr class="table-primary">
-                            <th class="fw-bold">Total</th>
-                            <td class="fw-bold fs-5">
-                                ₱{{ number_format($reservation->total_price, 2) }}
+                        {{-- Reservation Base Total --}}
+                        <tr>
+                            <th>Reservation Price</th>
+                            <td class="fw-semibold">
+                                ₱{{ number_format($reservation->total_price ?? 0, 2) }}
                             </td>
                         </tr>
 
+                        {{-- Addon Payments Total (if any) --}}
+                        @if ($totalAddonPayments > 0)
+                            <tr>
+                                <th>Refundable Total</th>
+                                <td class="fw-semibold">
+                                    ₱{{ number_format($totalAddonPayments, 2) }}
+                                </td>
+                            </tr>
+                        @endif
+
+                        {{-- Grand Total --}}
+                        <tr class="table-primary">
+                            <th class="fw-bold fs-5">Total Amount</th>
+                            <td class="fw-bold fs-5">
+                                ₱{{ number_format($grandTotal, 2) }}
+                            </td>
+                        </tr>
 
                         {{-- Updated By --}}
                         @if ($reservation->updatedBy)
                             <tr>
                                 <th>Last Updated By</th>
-                                <td>{{ $reservation->updatedBy->name ?? 'System' }}</td>
+                                <td>
+                                    {{ $reservation->updatedBy->name ?? 'System' }}
+                                    <br>
+                                    <small>
+                                        {{ $reservation->updated_at->timezone('Asia/Manila')->format('Y-m-d h:i A') }}
+                                    </small>
+                                </td>
                             </tr>
                         @endif
-
                     </tbody>
                 </table>
             </div>
 
 
-            @if ($reservation->qualification_approvals && $reservation->qualification_approvals->count() > 0)
-                <div class="wg-box mt-5">
-                    <h4 class="fw-bold mb-4">Qualification Details</h4>
-
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered align-middle">
-                            <thead>
-                                <tr>
-                                    <th style="width: 20%;">Status</th>
-                                    <th style="width: 30%;">File</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($reservation->qualification_approvals as $qualification)
-                                    <tr>
-                                        <td>
-                                            {{-- <span class="badge status-badge qualification-status-badge"
-                                                data-qualification-id="{{ $qualification->id }}"
-                                                data-current-qualification-status="{{ $qualification->status }}">
-                                                {{ ucfirst($qualification->status) }}
-                                            </span> --}}
-                                            <span
-                                                class="badge status-badge qualification-status-badge
-                @if ($qualification->status === 'approved') bg-success
-                @elseif ($qualification->status === 'pending') bg-primary
-                @elseif ($qualification->status === 'canceled') bg-danger
-                @else bg-secondary @endif"
-                                                data-qualification-id="{{ $qualification->id }}"
-                                                data-current-qualification-status="{{ $qualification->status }}">
-                                                {{ ucfirst($qualification->status) }}
-                                            </span>
-                                        </td>
-
-                                        <!-- File -->
-                                        <td>
-                                            @if ($qualification->hasQualificationFile())
-                                                <a href="{{ $qualification->qualification_url }}" target="_blank"
-                                                    class="btn btn-info btn-lg text-white">
-                                                    <i class="icon-download"></i> View File
-                                                </a>
-                                            @else
-                                                <span class="text-muted">No file uploaded</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="2">
-                                            <!-- Update Status Section -->
-                                            <div class="mt-6">
-                                                <h6 class="fw-semibold mb-3 mt-2">Update Status</h6>
-
-                                                @if (in_array($qualification->status, ['approved', 'canceled']))
-                                                    <div class="alert alert-info">
-                                                        <i class="fas fa-lock"></i>
-                                                        Status cannot be changed.
-                                                    </div>
-                                                @else
-                                                    <form
-                                                        class="qualification-status-form d-flex gap-3 align-items-center flex-wrap"
-                                                        data-qualification-id="{{ $qualification->id }}"
-                                                        data-current-status="{{ $qualification->status }}">
-                                                        @csrf
-                                                        @method('PATCH')
-
-                                                        <select name="status" class="qualification-status-select"
-                                                            style="max-width: 200px;">
-                                                            <option value="{{ $qualification->status }}" selected>
-                                                                {{ ucfirst($qualification->status) }} (Current)
-                                                            </option>
-                                                            @if ($qualification->status === 'pending')
-                                                                <option value="approved">Approved</option>
-                                                                <option value="canceled">Canceled</option>
-                                                            @endif
-                                                        </select>
-
-                                                        <button type="submit"
-                                                            class="tf-button w208 qualification-update-btn">
-                                                            Update Status
-                                                        </button>
-                                                    </form>
-                                                @endif
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            @endif
 
             @if ($reservation->price_discounts && $reservation->price_discounts->count() > 0)
                 <div class="wg-box mt-5">
