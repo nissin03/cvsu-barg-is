@@ -1,652 +1,526 @@
-  /* Container Styles */
+.facility-booking-container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+.fc-capacity-badge, .fc-status-booked {
+    position: absolute !important;
+    bottom: -10px !important;
+    left: 50% !important;
+    transform: translateX(-85%) !important;
+    font-size: 9px !important;
+    color: white !important;
+    padding: 2px 6px !important;
+    border-radius: 10px !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+    text-transform: lowercase !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.2px !important;
+    line-height: 1 !important;
+    z-index: 10 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+}
+.fc-capacity-success {
+    background: #198754 !important;
+    background: linear-gradient(135deg, #198754, #157347) !important;
+}
+.fc-capacity-warning {
+    background: #ffc107 !important;
+    background: linear-gradient(135deg, #ffc107, #e0a800) !important;
+    color: #000 !important;
+    animation: pulse-warning 2s infinite;
+}
+.fc-status-booked {
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+    left: 2px !important;
+    animation: pulse-booked 1.5s infinite ease-in-out;
+}
+@keyframes pulse-warning {
+    0% { opacity: 0.9; }
+    50% { opacity: 1; }
+    100% { opacity: 0.9; }
+}
+@keyframes pulse-booked {
+    0% { opacity: 0.9; }
+    50% { opacity: 1; }
+    100% { opacity: 0.9; }
+}
+.alert {
+    border-radius: 6px;
+    border: none;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+.alert-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+.capacity-info {
+    margin-bottom: 16px;
+}
+.capacity-card {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    gap: 8px;
+}
+.capacity-card i {
+    color: #3b82f6;
+    font-size: 16px;
+}
+.capacity-text {
+    font-weight: 600;
+    color: #1e293b;
+}
+.capacity-value {
+    background: #3b82f6;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+}
+.booking-section {
+    margin-bottom: 16px;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+.section-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+    gap: 8px;
+}
+.section-header i {
+    color: #3b82f6;
+    font-size: 14px;
+}
+.section-header span {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+.section-content {
+    padding: 16px;
+}
+.date-range-display, .selected-dates-display {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.date-item, .date-selection-item {
+    flex: 1;
+    min-width: 150px;
+    color: #1e293b;
+    font-size: 14px;
+}
+.time-input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 12px;
+}
+.time-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+.time-input, .client-type-select {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+    background: #ffffff;
+}
+.time-input:focus, .client-type-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+.time-input:read-only {
+    background-color: #f9fafb;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+.total-price-section {
+    background: #5a5b5d;
+    border-radius: 6px;
+    padding: 16px;
+    margin-top: 16px;
+}
+.total-price-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.total-price-label {
+    display: flex;
+    align-items: center;
+    color: #e2e8f0;
+    font-size: 14px;
+    font-weight: 600;
+    gap: 8px;
+}
+.total-price-label i {
+    color: #60a5fa;
+    font-size: 16px;
+}
+.total-price-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+}
+.badge, .availability-indicator .badge {
+    display: inline-block;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 4px;
+}
+.availability-indicator .badge {
+    font-size: 9px;
+    padding: 2px 4px;
+    font-weight: normal;
+}
+.bg-info {
+    background-color: #3b82f6;
+    color: white;
+}
+.bg-success {
+    background-color: #10b981;
+    color: white;
+}
+#calendar {
+    max-width: 100%;
+    font-size: 14px;
+    height: 600px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+.fc .fc-daygrid-day-frame {
+    min-height: 70px;
+    padding: 2px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.fc .fc-daygrid-day-number {
+    font-size: 12px !important;
+    padding: 2px;
+    font-weight: bold;
+    text-align: right;
+}
+.availability-indicator {
+    position: relative;
+    z-index: 5;
+    text-align: center;
+    margin: 2px 0;
+    font-size: 10px;
+}
+.availability-badge {
+    display: inline-block;
+    width: 100%;
+}
+.fc .fc-daygrid-day-events {
+    min-height: 40px;
+    margin: 1px 0 0 0;
+    overflow: visible !important;
+}
+.fc .fc-daygrid-event {
+    margin: 1px;
+    padding: 2px 3px;
+    border-radius: 3px;
+    font-size: 10px;
+    line-height: 1.1;
+}
+.fc-event.fully-booked-event {
+    font-size: 9px !important;
+    padding: 2px 4px !important;
+    white-space: nowrap !important;
+    height: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a5a) !important;
+    border: none !important;
+    color: white !important;
+    border-radius: 4px !important;
+    box-shadow: 0 1px 3px rgba(238, 90, 90, 0.3) !important;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.2) !important;
+}
+.fc-event-title {
+    font-size: 9px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block;
+    text-align: center;
+}
+.fc-event-time {
+    display: none !important;
+}
+.fc .fc-daygrid-more-link {
+    font-size: 8px;
+    padding: 0;
+    margin-top: 1px;
+}
+.selected-start-date, .selected-end-date, .selected-range-date {
+    background-color: rgba(25, 135, 84, 0.3) !important;
+}
+.fc .fc-day.selected-start-date:not(.fully-booked-date),
+.fc .fc-daygrid-day.selected-start-date:not(.fully-booked-date) {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb) !important;
+    border: 1px solid #1976d2 !important;
+    box-shadow: 0 1px 6px rgba(25, 118, 210, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+.fc .fc-day.selected-end-date:not(.fully-booked-date),
+.fc .fc-daygrid-day.selected-end-date:not(.fully-booked-date) {
+    background: linear-gradient(135deg, #e8f5e8, #c8e6c9) !important;
+    border: 1px solid #388e3c !important;
+    box-shadow: 0 1px 6px rgba(56, 142, 60, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+.fc .fc-day.selected-range-date:not(.fully-booked-date),
+.fc .fc-daygrid-day.selected-range-date:not(.fully-booked-date) {
+    background: linear-gradient(135deg, #f3e5f5, #e1bee7) !important;
+    border: 1px solid #7b1fa2 !important;
+    box-shadow: 0 1px 3px rgba(123, 31, 162, 0.2) !important;
+    transition: all 0.3s ease !important;
+}
+.fc .fc-toolbar {
+    padding: 8px 0;
+}
+.fc .fc-toolbar-title {
+    font-size: 1.2em;
+}
+.fc .fc-daygrid-day {
+    transition: all 0.2s ease !important;
+}
+.fc-daygrid-day:hover .availability-indicator .badge {
+    transform: scale(1.05);
+}
+.quantity-input {
+    width: 100%;
+}
+.selected-dates-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    height: 100%;
+}
+.fc .fc-daygrid-day.fc-day-today {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+@media (min-width: 1400px) {
+    .facility-booking-container {
+        max-width: 1320px;
+    }
+}
+@media (max-width: 1399.98px) {
+    .facility-booking-container {
+        max-width: 1140px;
+    }
+}
+@media (max-width: 1199.98px) {
+    .facility-booking-container {
+        max-width: 960px;
+    }
+}
+@media (max-width: 991.98px) {
+    .facility-booking-container {
+        max-width: 720px;
+    }
+}
+@media (max-width: 767.98px) {
+    .facility-booking-container {
+        max-width: 540px;
+        padding: 12px;
+}
+}
+@media (max-width: 575.98px) {
     .facility-booking-container {
         max-width: 100%;
-        margin: 0 auto;
-        padding: 16px;
-        background: #ffffff;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        padding: 10px;
     }
-
-    /* Badge Styles */
-    .fc-capacity-badge, .fc-status-booked {
-        position: absolute !important;
-        bottom: -10px !important;
-        left: 50% !important;
-        transform: translateX(-85%) !important;
-        font-size: 9px !important;
-        color: white !important;
-        padding: 2px 6px !important;
-        border-radius: 10px !important;
-        pointer-events: none !important;
-        white-space: nowrap !important;
-        text-transform: lowercase !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.2px !important;
-        line-height: 1 !important;
-        z-index: 10 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-    }
-
-    .fc-capacity-success {
-        background: #198754 !important;
-        background: linear-gradient(135deg, #198754, #157347) !important;
-    }
-
-    .fc-capacity-warning {
-        background: #ffc107 !important;
-        background: linear-gradient(135deg, #ffc107, #e0a800) !important;
-        color: #000 !important;
-        animation: pulse-warning 2s infinite;
-    }
-
-    .fc-status-booked {
-        background: linear-gradient(135deg, #dc3545, #c82333) !important;
-        left: 2px !important;
-        animation: pulse-booked 1.5s infinite ease-in-out;
-    }
-
-    /* Animation Keyframes */
-    @keyframes pulse-warning {
-        0% { opacity: 0.9; }
-        50% { opacity: 1; }
-        100% { opacity: 0.9; }
-    }
-
-    @keyframes pulse-booked {
-        0% { opacity: 0.9; }
-        50% { opacity: 1; }
-        100% { opacity: 0.9; }
-    }
-
-    /* Alert Styles */
-    .alert {
-        border-radius: 6px;
-        border: none;
-        padding: 12px;
-        margin-bottom: 16px;
-        font-weight: 500;
-    }
-
-    .alert-warning {
-        background-color: #fef3c7;
-        color: #92400e;
-    }
-
-    /* Capacity Styles */
-    .capacity-info {
-        margin-bottom: 16px;
-    }
-
-    .capacity-card {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        background: #f8fafc;
-        border-radius: 6px;
-        border: 1px solid #e2e8f0;
-        gap: 8px;
-    }
-
-    .capacity-card i {
-        color: #3b82f6;
-        font-size: 16px;
-    }
-
-    .capacity-text {
-        font-weight: 600;
-        color: #1e293b;
-    }
-
-    .capacity-value {
-        background: #3b82f6;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 14px;
-        font-weight: 500;
-    }
-
-    /* Section Styles */
-    .booking-section {
-        margin-bottom: 16px;
-        background: #ffffff;
-        border-radius: 6px;
-        border: 1px solid #e5e7eb;
-        overflow: hidden;
-    }
-
+}
+.section-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+    gap: 8px;
+}
+@media (max-width: 767.98px) {
     .section-header {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        background: #f8fafc;
-        border-bottom: 1px solid #e5e7eb;
-        gap: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px 12px;
     }
-
-    .section-header i {
-        color: #3b82f6;
-        font-size: 14px;
+}
+.capacity-card {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+@media (max-width: 575.98px) {
+    .capacity-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 10px;
     }
-
-    .section-header span {
-        margin: 0;
-        font-size: 14px;
-        font-weight: 600;
-        color: #1e293b;
-    }
-
-    .section-content {
-        padding: 16px;
-    }
-
-    /* Date Display Styles */
-    .date-range-display, .selected-dates-display {
-        display: flex;
-        gap: 16px;
-        flex-wrap: wrap;
-    }
-
-    .date-item, .date-selection-item {
-        flex: 1;
-        min-width: 150px;
-        color: #1e293b;
-        font-size: 14px;
-    }
-
-    /* Input Styles */
+}
+.time-input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 12px;
+}
+.client-type-select, .time-input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+@media (max-width: 767.98px) {
     .time-input-group {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
-
-    .time-label {
-        font-size: 14px;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 6px;
+    .client-type-select, .time-input {
+        padding: 8px 10px;
     }
-
-    .time-input, .client-type-select {
-        padding: 8px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 4px;
-        font-size: 14px;
-        transition: border-color 0.2s ease;
-        background: #ffffff;
-    }
-
-    .time-input:focus, .client-type-select:focus {
-        outline: none;
-        border-color: #3b82f6;
-    }
-
-    .time-input:read-only {
-        background-color: #f9fafb;
-        color: #6b7280;
-        cursor: not-allowed;
-    }
-
-    /* Price Section Styles */
-    .total-price-section {
-        background: #5a5b5d;
-        border-radius: 6px;
-        padding: 16px;
-        margin-top: 16px;
-    }
-
-    .total-price-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .total-price-label {
-        display: flex;
-        align-items: center;
-        color: #e2e8f0;
-        font-size: 14px;
-        font-weight: 600;
-        gap: 8px;
-    }
-
-    .total-price-label i {
-        color: #60a5fa;
-        font-size: 16px;
-    }
-
-    .total-price-value {
-        font-size: 18px;
-        font-weight: 700;
-        color: #ffffff;
-    }
-
-    /* Badge Styles */
-    .badge, .availability-indicator .badge {
-        display: inline-block;
-        padding: 4px 8px;
-        font-size: 12px;
-        font-weight: 600;
-        line-height: 1;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: baseline;
-        border-radius: 4px;
-    }
-
-    .availability-indicator .badge {
-        font-size: 9px;
-        padding: 2px 4px;
-        font-weight: normal;
-    }
-
-    .bg-info {
-        background-color: #3b82f6;
-        color: white;
-    }
-
-    .bg-success {
-        background-color: #10b981;
-        color: white;
-    }
-
-    /* Calendar Styles */
+}
+@media (max-width: 991.98px) {
     #calendar {
-        max-width: 100%;
-        font-size: 14px;
-        height: 600px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        height: 500px;
     }
-
-    .fc .fc-daygrid-day-frame {
-        min-height: 70px;
-        padding: 2px;
-        position: relative;
-        display: flex;
+    .modal .modal-dialog {
+        max-width: 95%;
+    }
+}
+@media (max-width: 767.98px) {
+    #calendar {
+        height: 400px;
+        font-size: 12px;
+    }
+    .modal .row {
         flex-direction: column;
-        justify-content: space-between;
     }
-
-    .fc .fc-daygrid-day-number {
-        font-size: 12px !important;
-        padding: 2px;
-        font-weight: bold;
-        text-align: right;
+    .selected-dates-card {
+        margin-top: 15px;
     }
-
-    .availability-indicator {
-        position: relative;
-        z-index: 5;
-        text-align: center;
-        margin: 2px 0;
-        font-size: 10px;
+}
+@media (max-width: 575.98px) {
+    #calendar {
+        height: 350px;
     }
-
-    .availability-badge {
-        display: inline-block;
-        width: 100%;
+    .fc .fc-toolbar {
+        flex-direction: column;
+        gap: 5px;
     }
-
-    .fc .fc-daygrid-day-events {
-        min-height: 40px;
-        margin: 1px 0 0 0;
-        overflow: visible !important;
+    .fc .fc-toolbar-title {
+        font-size: 1rem;
     }
-
-    .fc .fc-daygrid-event {
-        margin: 1px;
-        padding: 2px 3px;
-        border-radius: 3px;
-        font-size: 10px;
-        line-height: 1.1;
+}
+.total-price-section {
+    background: #5a5b5d;
+    border-radius: 6px;
+    padding: 16px;
+    margin-top: 16px;
+}
+@media (max-width: 767.98px) {
+    .total-price-section {
+        padding: 12px;
     }
-
-    .fc-event.fully-booked-event {
-        font-size: 9px !important;
-        padding: 2px 4px !important;
-        white-space: nowrap !important;
-        height: auto !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        background: linear-gradient(135deg, #ff6b6b, #ee5a5a) !important;
-        border: none !important;
-        color: white !important;
-        border-radius: 4px !important;
-        box-shadow: 0 1px 3px rgba(238, 90, 90, 0.3) !important;
-        text-shadow: 1px 1px 1px rgba(0,0,0,0.2) !important;
+    .total-price-content {
+        flex-direction: column;
+        align-items: flex-start;
     }
-
-    .fc-event-title {
-        font-size: 9px !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        display: block;
-        text-align: center;
+}
+.badge {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+@media (max-width: 575.98px) {
+    .badge {
+        font-size: 11px;
+        padding: 3px 6px;
     }
-
-    .fc-event-time {
+}
+@media (prefers-reduced-motion: reduce) {
+    .fc .fc-daygrid-day {
+        transition: none !important;
+    }
+    .fc-capacity-warning, .fc-status-booked {
+        animation: none !important;
+    }
+}
+@media print {
+    .facility-booking-container {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+    .btn, .modal {
         display: none !important;
     }
-
-    .fc .fc-daygrid-more-link {
-        font-size: 8px;
-        padding: 0;
-        margin-top: 1px;
+    .booking-section {
+        page-break-inside: avoid;
     }
-
-    /* Calendar Date Selection Styles */
-    .selected-start-date, .selected-end-date, .selected-range-date {
-        background-color: rgba(25, 135, 84, 0.3) !important;
+}
+@media (prefers-contrast: more) {
+    .booking-section, .capacity-card {
+        border: 2px solid #000;
     }
-
-    .fc .fc-day.selected-start-date:not(.fully-booked-date),
-    .fc .fc-daygrid-day.selected-start-date:not(.fully-booked-date) {
-        background: linear-gradient(135deg, #e3f2fd, #bbdefb) !important;
-        border: 1px solid #1976d2 !important;
-        box-shadow: 0 1px 6px rgba(25, 118, 210, 0.3) !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .fc .fc-day.selected-end-date:not(.fully-booked-date),
-    .fc .fc-daygrid-day.selected-end-date:not(.fully-booked-date) {
-        background: linear-gradient(135deg, #e8f5e8, #c8e6c9) !important;
-        border: 1px solid #388e3c !important;
-        box-shadow: 0 1px 6px rgba(56, 142, 60, 0.3) !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .fc .fc-day.selected-range-date:not(.fully-booked-date),
-    .fc .fc-daygrid-day.selected-range-date:not(.fully-booked-date) {
-        background: linear-gradient(135deg, #f3e5f5, #e1bee7) !important;
-        border: 1px solid #7b1fa2 !important;
-        box-shadow: 0 1px 3px rgba(123, 31, 162, 0.2) !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .fc .fc-toolbar {
-        padding: 8px 0;
-    }
-
-    .fc .fc-toolbar-title {
-        font-size: 1.2em;
-    }
-
-    .fc .fc-daygrid-day {
-        transition: all 0.2s ease !important;
-    }
-
-    .fc-daygrid-day:hover .availability-indicator .badge {
-        transform: scale(1.05);
-    }
-
-    /* Misc Styles */
-    .quantity-input {
-        width: 100%;
-    }
-
-    .selected-dates-card {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        height: 100%;
-    }
-
-    .fc .fc-daygrid-day.fc-day-today {
-        background-color: rgba(13, 110, 253, 0.1);
-    }
-
-    /* Responsive Breakpoints */
-    @media (min-width: 1400px) {
-        /* XXL Screens */
-        .facility-booking-container {
-            max-width: 1320px;
-        }
-    }
-
-    @media (max-width: 1399.98px) {
-        /* XL Screens */
-        .facility-booking-container {
-            max-width: 1140px;
-        }
-    }
-
-    @media (max-width: 1199.98px) {
-        /* LG Screens */
-        .facility-booking-container {
-            max-width: 960px;
-        }
-    }
-
-    @media (max-width: 991.98px) {
-        /* MD Screens */
-        .facility-booking-container {
-            max-width: 720px;
-        }
-    }
-
-    @media (max-width: 767.98px) {
-        /* SM Screens */
-        .facility-booking-container {
-            max-width: 540px;
-            padding: 12px;
-        }
-    }
-
-    @media (max-width: 575.98px) {
-        /* XS Screens */
-        .facility-booking-container {
-            max-width: 100%;
-            padding: 10px;
-        }
-    }
-
-    /* Section Header Improvements */
     .section-header {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        background: #f8fafc;
-        border-bottom: 1px solid #e5e7eb;
-        gap: 8px;
+        border-bottom: 2px solid #000;
     }
-
-    @media (max-width: 767.98px) {
-        .section-header {
-            flex-direction: column;
-            align-items: flex-start;
-            padding: 10px 12px;
-        }
-    }
-
-    /* Capacity Card Enhancements */
-    .capacity-card {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        background: #f8fafc;
-        border-radius: 6px;
-        border: 1px solid #e2e8f0;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
-    @media (max-width: 575.98px) {
-        .capacity-card {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 6px;
-            padding: 10px;
-        }
-    }
-
-    /* Form Input Responsiveness */
-    .time-input-group {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 12px;
-    }
-
-    .client-type-select, .time-input {
-        width: 100%;
-        padding: 8px 12px;
-        font-size: 14px;
-    }
-
-    @media (max-width: 767.98px) {
-        .time-input-group {
-            margin-bottom: 10px;
-        }
-        
-        .client-type-select, .time-input {
-            padding: 8px 10px;
-        }
-    }
-
-    /* Calendar Modal Responsiveness */
-    @media (max-width: 991.98px) {
-        #calendar {
-            height: 500px;
-        }
-        
-        .modal .modal-dialog {
-            max-width: 95%;
-        }
-    }
-
-    @media (max-width: 767.98px) {
-        #calendar {
-            height: 400px;
-            font-size: 12px;
-        }
-        
-        .modal .row {
-            flex-direction: column;
-        }
-        
-        .selected-dates-card {
-            margin-top: 15px;
-        }
-    }
-
-    @media (max-width: 575.98px) {
-        #calendar {
-            height: 350px;
-        }
-        
-        .fc .fc-toolbar {
-            flex-direction: column;
-            gap: 5px;
-        }
-        
-        .fc .fc-toolbar-title {
-            font-size: 1rem;
-        }
-    }
-
-    /* Price Section Adaptations */
     .total-price-section {
-        background: #5a5b5d;
-        border-radius: 6px;
-        padding: 16px;
-        margin-top: 16px;
+        border: 3px solid #000;
     }
-
-    @media (max-width: 767.98px) {
-        .total-price-section {
-            padding: 12px;
-        }
-        
-        .total-price-content {
-            flex-direction: column;
-            align-items: flex-start;
-        }
+}
+@media (pointer: coarse) {
+    .btn, .form-check-input, .quantity-input, 
+    .time-input, .client-type-select {
+        min-height: 44px;
     }
-
-    /* Badge and Indicator Improvements */
-    .badge {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
+    .fc .fc-daygrid-day {
+        min-height: 60px;
     }
-
-    @media (max-width: 575.98px) {
-        .badge {
-            font-size: 11px;
-            padding: 3px 6px;
-        }
+}
+@media screen and (orientation: landscape) and (max-width: 991.98px) {
+    #calendar {
+        height: 70vh;
     }
-
-    /* Animation Optimizations */
-    @media (prefers-reduced-motion: reduce) {
-        .fc .fc-daygrid-day {
-            transition: none !important;
-        }
-        
-        .fc-capacity-warning, .fc-status-booked {
-            animation: none !important;
-        }
+}
+@media screen and (orientation: portrait) and (max-width: 767.98px) {
+    #calendar {
+        height: 60vh;
     }
-
-    /* Print Optimizations */
-    @media print {
-        .facility-booking-container {
-            box-shadow: none;
-            border: 1px solid #ddd;
-        }
-        
-        .btn, .modal {
-            display: none !important;
-        }
-        
-        .booking-section {
-            page-break-inside: avoid;
-        }
-    }
-
-    /* High Contrast Mode */
-    @media (prefers-contrast: more) {
-        .booking-section, .capacity-card {
-            border: 2px solid #000;
-        }
-        
-        .section-header {
-            border-bottom: 2px solid #000;
-        }
-        
-        .total-price-section {
-            border: 3px solid #000;
-        }
-    }
-
-    /* Touch Target Improvements */
-    @media (pointer: coarse) {
-        .btn, .form-check-input, .quantity-input, 
-        .time-input, .client-type-select {
-            min-height: 44px;
-        }
-        
-        .fc .fc-daygrid-day {
-            min-height: 60px;
-        }
-    }
-
-    /* Orientation Specific Adjustments */
-    @media screen and (orientation: landscape) and (max-width: 991.98px) {
-        #calendar {
-            height: 70vh;
-        }
-    }
-
-    @media screen and (orientation: portrait) and (max-width: 767.98px) {
-        #calendar {
-            height: 60vh;
-        }
-    }
+}

@@ -5,17 +5,13 @@
 
     We've received your facility reservation request and it's currently under review.
 
-    @component('mail::table')
-        | | |
-        |:--|--:|
-        | **Reservation ID** | #{{ $payment->id }} |
-        | **Facility** | {{ $facilityName }} |
-        | **Date(s)** | {{ $dateRange }} |
-        | **Amount** | ₱{{ number_format($totalPrice, 2) }} |
-        | **Status** | <span
-            style="background-color: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">PENDING</span>
-        |
-    @endcomponent
+    **Reservation Details:**
+
+    - **Reservation ID:** #{{ $payment->id }}
+    - **Facility:** {{ $facilityName }}
+    - **Date(s):** {{ $dateRange }}
+    - **Amount:** ₱{{ number_format($totalPrice, 2) }}
+    - **Status:** Pending Approval
 
     @component('mail::button', ['url' => $actionUrl, 'color' => 'primary'])
         View Details

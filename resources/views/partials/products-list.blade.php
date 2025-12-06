@@ -1,4 +1,4 @@
-<div class="row g-4">
+<div class="row g-3 g-md-4">
     @foreach ($products as $product)
         @php
             $totalQuantity = $product->attributeValues->isNotEmpty()
@@ -16,15 +16,13 @@
                                 @if ($isOutOfStock)
                                     <div class="text-decoration-none text-dark d-block">
                                         <img loading="lazy" src="{{ asset('uploads/products') }}/{{ $product->image }}"
-                                            alt="{{ $product->name }}" class="img-fluid d-block mx-auto"
-                                            style="object-fit: cover; aspect-ratio: 1/1; width: 100%; height: 100%;">
+                                            alt="{{ $product->name }}" class="img-fluid d-block mx-auto product-image">
                                     </div>
                                 @else
                                     <a href="{{ route('shop.product.details', ['product_slug' => $product->slug]) }}"
                                         class="text-decoration-none text-dark d-block" style="cursor: pointer;">
                                         <img loading="lazy" src="{{ asset('uploads/products') }}/{{ $product->image }}"
-                                            alt="{{ $product->name }}" class="img-fluid d-block mx-auto"
-                                            style="object-fit: cover; aspect-ratio: 1/1; width: 100%; height: 100%;">
+                                            alt="{{ $product->name }}" class="img-fluid d-block mx-auto product-image">
                                     </a>
                                 @endif
                             </div>
@@ -36,8 +34,8 @@
                                                 <div class="text-decoration-none text-dark d-block">
                                                     <img loading="lazy"
                                                         src="{{ asset('uploads/products') }}/{{ trim($gimg) }}"
-                                                        alt="{{ $product->name }}" class="img-fluid d-block mx-auto"
-                                                        style="object-fit: cover; aspect-ratio: 1/1; width: 100%; height: 100%;">
+                                                        alt="{{ $product->name }}"
+                                                        class="img-fluid d-block mx-auto product-image">
                                                 </div>
                                             @else
                                                 <a href="{{ route('shop.product.details', ['product_slug' => $product->slug]) }}"
@@ -45,8 +43,8 @@
                                                     style="cursor: pointer;">
                                                     <img loading="lazy"
                                                         src="{{ asset('uploads/products') }}/{{ trim($gimg) }}"
-                                                        alt="{{ $product->name }}" class="img-fluid d-block mx-auto"
-                                                        style="object-fit: cover; aspect-ratio: 1/1; width: 100%; height: 100%;">
+                                                        alt="{{ $product->name }}"
+                                                        class="img-fluid d-block mx-auto product-image">
                                                 </a>
                                             @endif
                                         </div>
@@ -159,13 +157,36 @@
 @endif
 
 <style>
+    .product-item {
+        width: 100%;
+        max-width: 360px;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        position: relative;
+    }
+
+    .product-img {
+        width: 100%;
+    }
+
+    .product-image {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+        aspect-ratio: 1 / 1;
+        display: block;
+    }
+
     .currency-symbol {
-        font-size: 1.2rem;
+        font-size: clamp(1rem, 0.9rem + 0.3vw, 1.2rem);
         font-weight: 600;
+        vertical-align: top;
     }
 
     .price-value {
-        font-size: 1.5rem;
+        font-size: clamp(1.25rem, 1.1rem + 0.4vw, 1.6rem);
         font-weight: 700;
         letter-spacing: -0.025em;
         white-space: nowrap;
@@ -190,7 +211,7 @@
     }
 
     .stock-icon {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
 
     .product-info {
@@ -198,6 +219,24 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        position: relative;
+        z-index: 2;
+        background: #fff;
+    }
+
+    .title-cards {
+        font-size: clamp(1rem, 0.9rem + 0.25vw, 1.2rem);
+        line-height: 1.3;
+    }
+
+    .span-description {
+        font-size: clamp(0.85rem, 0.8rem + 0.15vw, 0.95rem);
+        color: var(--text-secondary);
+    }
+
+    .availability,
+    .avail-tags {
+        font-size: clamp(0.85rem, 0.8rem + 0.15vw, 0.95rem);
     }
 
     .price-section {
@@ -211,10 +250,7 @@
     .out-of-stock::after {
         content: "";
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        inset: 0;
         background-color: rgba(255, 255, 255, 0.7);
         z-index: 1;
     }
@@ -241,34 +277,28 @@
     @media (max-width: 768px) {
         .product-info {
             min-height: 180px;
-        }
-
-        .currency-symbol {
-            font-size: 1rem;
-        }
-
-        .price-value {
-            font-size: 1.1rem;
+            padding: 1rem !important;
         }
     }
 
     @media (max-width: 576px) {
+        .product-item {
+            max-width: 100%;
+        }
+
         .product-info {
             min-height: 160px;
-            padding: 1rem !important;
-        }
-
-        .availability {
-            font-size: 0.8rem;
-        }
-
-        .avail-tags {
-            font-size: 0.8rem;
         }
 
         .badge {
             font-size: 0.65rem;
             padding: 0.25em 0.5em;
+        }
+    }
+
+    @media (min-width: 1200px) {
+        .price-value {
+            font-size: 1.7rem;
         }
     }
 </style>
