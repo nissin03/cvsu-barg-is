@@ -429,7 +429,7 @@
                         @endif
                         <button type="button" class="btn d-flex align-items-center position-relative"
                             onclick="location.href='{{ Auth::user()->utype == 'ADM' ? route('admin.index') : (Auth::user()->utype == 'DIR' ? route('admin.index') : route('user.index')) }}'">
-                            <div class="profile-image d-flex justify-content-center me-2">
+                            <div class="profile-image d-flex justify-content-center me-2 flex-shrink-0">
                                 @if (Auth::user()->profile_image)
                                     <img src="{{ asset('storage/' . Auth::user()->profile_image) }}" alt="Profile Image"
                                         class="img-fluid rounded-circle"
@@ -440,6 +440,7 @@
                                         style="width: 40px; height: 40px; object-fit: cover;">
                                 @endif
                             </div>
+
                             <span class="d-none d-md-inline">{{ strtok(Auth::user()->name, ' ') }}</span>
                         </button>
                     @endguest
@@ -677,6 +678,7 @@
                 box-sizing: border-box;
             }
         }
+
 
         .fc {
             width: 100%;

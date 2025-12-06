@@ -4,16 +4,6 @@ import { initNotificationManager } from "./utils/notificationManager";
 
 window.Pusher = Pusher;
 
-window.Echo = new Echo({
-    broadcaster: "reverb",
-    key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
-    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
-    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? "https") === "https",
-    enabledTransports: ["ws", "wss"],
-});
-
 // Configure toastr
 toastr.options = {
     closeButton: true,
@@ -28,7 +18,6 @@ toastr.options = {
 
 // Initialize notification manager when DOM is ready
 document.addEventListener("DOMContentLoaded", function () {
-    // Get user data from meta tags or global variables
     const userId =
         window.userId ||
         document.querySelector('meta[name="user-id"]')?.content;
@@ -37,7 +26,17 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelector('meta[name="user-role"]')?.content === "ADM";
 
     if (userId) {
-        // Determine endpoints based on user type
+        window.Echo = new Echo({
+            broadcaster: "reverb",
+            key: import.meta.env.VITE_REVERB_APP_KEY,
+            wsHost: import.meta.env.VITE_REVERB_HOST,
+            wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
+            wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
+            forceTLS:
+                (import.meta.env.VITE_REVERB_SCHEME ?? "https") === "https",
+            enabledTransports: ["ws", "wss"],
+        });
+
         const endpoints = isAdmin
             ? {
                   all: "/admin/notifications",
@@ -58,14 +57,11 @@ document.addEventListener("DOMContentLoaded", function () {
                   unreadCount: "/notifications/count",
               };
 
-        // Initialize notification manager with configuration
         initNotificationManager({
             userId: userId,
             isAdmin: isAdmin,
             endpoints: endpoints,
             mountPointSelector: "#notification-list",
         });
-    } else {
-        console.warn("User ID not found, notification manager not initialized");
     }
 });
