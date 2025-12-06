@@ -259,8 +259,9 @@
                     <div class="wg-box">
                         <div class="reservation-summary">
                             <!-- Left Section -->
-                            <div class="left-section">
+                            {{-- <div class="left-section">
                                 <div class="reservation-status">
+                                    Status:
                                     @if ($payment->status == 'completed')
                                         <span class="badge badge-success">Completed</span>
                                     @elseif($payment->status == 'canceled')
@@ -271,71 +272,34 @@
                                         <span class="badge badge-warning">Pending</span>
                                     @endif
                                 </div>
-                                <div class="reservation-info">
-                                    <p><strong>Reservation No:</strong> {{ $payment->id }}</p>
-                                    <p><strong>Reservation Date:</strong> {{ $payment->created_at->format('M d, Y H:i') }}
-                                    </p>
-                                    <p><strong>Last Updated:</strong> {{ $payment->updated_at->format('M d, Y H:i') }}</p>
-                                    @if ($payment->updated_by)
-                                        <p><strong>Updated By:</strong> {{ $payment->updatedBy->name }}</p>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <!-- Right Section -->
-                            <div class="right-section">
-                                <div class="reservation-info">
-                                    <p><strong>Facility:</strong> {{ $payment->availability->facility->name }}</p>
-                                    <p><strong>Total Price:</strong> &#8369;{{ number_format($payment->total_price, 2) }}
-                                    </p>
-                                    <p><strong>Status:</strong> {{ ucfirst($payment->status) }}</p>
-                                    @if ($payment->availability->facilityAttribute)
-                                        <p><strong>Room/Area:</strong>
-                                            {{ $payment->availability->facilityAttribute->room_name ?? 'N/A' }}</p>
-                                    @endif
-                                </div>
-                            </div>
+                            </div> --}}
                         </div>
 
                         <!-- Date Range Information -->
                         <div class="date-range">
                             @php
-                                $groupedDates = [];
+                                // Get earliest date_from and latest date_to using pluck
+                                $dateFrom = null;
+                                $dateTo = null;
+
                                 if (
                                     $payment->grouped_availabilities &&
                                     $payment->grouped_availabilities->isNotEmpty()
                                 ) {
-                                    $sortedAvailabilities = $payment->grouped_availabilities->sortBy('date_from');
-                                    $currentGroup = [];
+                                    $dateFrom = $payment->grouped_availabilities
+                                        ->pluck('date_from')
+                                        ->filter()
+                                        ->sort()
+                                        ->first();
 
-                                    foreach ($sortedAvailabilities as $avail) {
-                                        if (empty($currentGroup)) {
-                                            $currentGroup = [
-                                                'start' => $avail->date_from,
-                                                'end' => $avail->date_to,
-                                            ];
-                                        } elseif (
-                                            Carbon\Carbon::parse($currentGroup['end'])->addDay()->format('Y-m-d') ===
-                                            $avail->date_from
-                                        ) {
-                                            $currentGroup['end'] = $avail->date_to;
-                                        } else {
-                                            $groupedDates[] = $currentGroup;
-                                            $currentGroup = [
-                                                'start' => $avail->date_from,
-                                                'end' => $avail->date_to,
-                                            ];
-                                        }
-                                    }
-
-                                    if (!empty($currentGroup)) {
-                                        $groupedDates[] = $currentGroup;
-                                    }
+                                    $dateTo = $payment->grouped_availabilities
+                                        ->pluck('date_to')
+                                        ->filter()
+                                        ->sort()
+                                        ->last();
                                 } elseif ($payment->availability) {
-                                    $groupedDates[] = [
-                                        'start' => $payment->availability->date_from,
-                                        'end' => $payment->availability->date_to,
-                                    ];
+                                    $dateFrom = $payment->availability->date_from;
+                                    $dateTo = $payment->availability->date_to;
                                 }
                             @endphp
 
@@ -343,381 +307,382 @@
                                 <div class="col-md-6">
                                     <p><span class="date-label">Reservation Period:</span></p>
                                     <div class="date-ranges">
-                                        @if (!empty($payment->grouped_dates))
-                                            @foreach ($payment->grouped_dates as $range)
-                                                <div class="date-range-item" style="margin-bottom: 5px;">
-                                                    @if ($range['start'] === $range['end'])
-                                                        {{ \Carbon\Carbon::parse($range['start'])->format('M j, Y') }}
+                                        @if ($dateFrom && $dateTo)
+                                            <div class="date-range-item" style="margin-bottom: 5px;">
+                                                @if ($dateFrom === $dateTo)
+                                                    {{ \Carbon\Carbon::parse($dateFrom)->format('M j, Y') }}
+                                                @else
+                                                    @php
+                                                        $startDate = \Carbon\Carbon::parse($dateFrom);
+                                                        $endDate = \Carbon\Carbon::parse($dateTo);
+                                                    @endphp
+                                                    @if ($startDate->format('M Y') === $endDate->format('M Y'))
+                                                        {{ $startDate->format('M j') }} -
+                                                        {{ $endDate->format('j, Y') }}
+                                                    @elseif($startDate->format('Y') === $endDate->format('Y'))
+                                                        {{ $startDate->format('M j') }} -
+                                                        {{ $endDate->format('M j, Y') }}
                                                     @else
-                                                        @php
-                                                            $startDate = \Carbon\Carbon::parse($range['start']);
-                                                            $endDate = \Carbon\Carbon::parse($range['end']);
-                                                        @endphp
-                                                        @if ($startDate->format('M Y') === $endDate->format('M Y'))
-                                                            {{ $startDate->format('M j') }} -
-                                                            {{ $endDate->format('j, Y') }}
-                                                        @elseif($startDate->format('Y') === $endDate->format('Y'))
-                                                            {{ $startDate->format('M j') }} -
-                                                            {{ $endDate->format('M j, Y') }}
-                                                        @else
-                                                            {{ $startDate->format('M j, Y') }} -
-                                                            {{ $endDate->format('M j, Y') }}
-                                                        @endif
+                                                        {{ $startDate->format('M j, Y') }} -
+                                                        {{ $endDate->format('M j, Y') }}
                                                     @endif
-                                                </div>
-                                            @endforeach
+                                                @endif
+                                            </div>
                                         @else
                                             <span class="text-muted">No dates available</span>
                                         @endif
                                     </div>
                                 </div>
 
-                                {{-- Display time information from grouped availabilities --}}
-                                @if (!empty($payment->grouped_dates))
-                                    @php
-                                        // Get time from first availability group
-                                        $firstRange = $payment->grouped_dates[0];
-                                        $hasTime = !empty($firstRange['time_start']) && !empty($firstRange['time_end']);
-                                    @endphp
+                                <div class="col-md-6">
+                                    <div class="text-end">
+                                        <a class="btn btn-custom btn-outline-primary"
+                                            href="{{ route('user.reservations') }}">Back
+                                            to Reservations</a>
+                                    </div>
+                                </div>
+                            </div>
 
-                                    @if ($hasTime)
-                                        <div class="col-md-6">
-                                            <p><span class="date-label">Time:</span>
-                                                <span class="date-value">
-                                                    {{ \Carbon\Carbon::parse($firstRange['time_start'])->format('h:i A') }}
-                                                    -
-                                                    {{ \Carbon\Carbon::parse($firstRange['time_end'])->format('h:i A') }}
-                                                </span>
-                                            </p>
+                            {{-- Display time information from grouped availabilities --}}
+                            @if (!empty($payment->grouped_dates))
+                                @php
+                                    // Get time from first availability group
+                                    $firstRange = $payment->grouped_dates[0];
+                                    $hasTime = !empty($firstRange['time_start']) && !empty($firstRange['time_end']);
+                                @endphp
 
-                                            {{-- Show if multiple time periods exist --}}
-                                            @if (count($payment->grouped_dates) > 1)
-                                                @foreach (array_slice($payment->grouped_dates, 1) as $index => $range)
-                                                    @if (!empty($range['time_start']) && !empty($range['time_end']))
-                                                        <p><span class="date-label">Time {{ $index + 2 }}:</span>
-                                                            <span class="date-value">
-                                                                {{ \Carbon\Carbon::parse($range['time_start'])->format('h:i A') }}
-                                                                -
-                                                                {{ \Carbon\Carbon::parse($range['time_end'])->format('h:i A') }}
-                                                            </span>
-                                                        </p>
-                                                    @endif
-                                                @endforeach
-                                            @endif
-                                        </div>
-                                    @endif
-                                @elseif ($payment->availability && $payment->availability->time_start && $payment->availability->time_end)
-                                    {{-- Fallback to single availability time --}}
+                                @if ($hasTime)
                                     <div class="col-md-6">
                                         <p><span class="date-label">Time:</span>
                                             <span class="date-value">
-                                                {{ \Carbon\Carbon::parse($payment->availability->time_start)->format('h:i A') }}
+                                                {{ \Carbon\Carbon::parse($firstRange['time_start'])->format('h:i A') }}
                                                 -
-                                                {{ \Carbon\Carbon::parse($payment->availability->time_end)->format('h:i A') }}
+                                                {{ \Carbon\Carbon::parse($firstRange['time_end'])->format('h:i A') }}
                                             </span>
                                         </p>
-                                    </div>
-                                @endif
-                            </div>
-
-                            @if ($days > 0)
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <p><span class="date-label">Total Duration:</span>
-                                            <span class="date-value">{{ $days }} day(s)</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            @endif
-
-                            <div class="text-end">
-                                <a class="btn btn-custom btn-outline-primary" href="{{ route('user.reservations') }}">Back
-                                    to Reservations</a>
-                            </div>
-
-                            <!-- Facility Information -->
-                            <div class="wg-box">
-                                <h5>Facility Information</h5>
-                                <div class="facility-info">
-                                    {{-- @if ($payment->availability->facility->image)
-                                <img src="{{ asset('uploads/facilities/' . $payment->availability->facility->image) }}"
-                                    alt="{{ $payment->availability->facility->name }}">
-                            @else
-                                <img src="{{ asset('images/default-facility.jpg') }}"
-                                    alt="Default Facility Image">
-                            @endif --}}
-                                    <div class="facility-details">
-                                        <h6>{{ $payment->availability->facility->name }}</h6>
-                                        <p><strong>Type:</strong>
-                                            {{ ucfirst(str_replace('_', ' ', $payment->availability->facility->facility_type)) }}
-                                        </p>
-                                        <p><strong>Description:</strong>
-                                            {{ Str::limit($payment->availability->facility->description, 200) }}</p>
-                                        @if ($payment->availability->facilityAttribute)
-                                            <p><strong>Room/Area:</strong>
-                                                {{ $payment->availability->facilityAttribute->room_name }}</p>
-                                            @if ($payment->availability->facilityAttribute->capacity)
-                                                <p><strong>Capacity:</strong>
-                                                    {{ $payment->availability->facilityAttribute->capacity }} person(s)</p>
-                                            @endif
-                                            @if ($payment->availability->facilityAttribute->sex_restriction)
-                                                <p><strong>Restriction:</strong>
-                                                    {{ ucfirst($payment->availability->facilityAttribute->sex_restriction) }}
-                                                    only</p>
-                                            @endif
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Qualification Status -->
-                            @if ($qualificationApproval)
-                                <div class="wg-box">
-                                    <h5>Qualification Status</h5>
-                                    <div class="qualification-section">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <p><strong>Status:</strong>
-                                                    <span
-                                                        class="qualification-status qualification-{{ $qualificationApproval->status }}">
-                                                        {{ ucfirst($qualificationApproval->status) }}
-                                                    </span>
-                                                </p>
-                                                <p><strong>Submitted:</strong>
-                                                    {{ $qualificationApproval->created_at->format('M d, Y H:i') }}</p>
-                                                @if ($qualificationApproval->updated_at != $qualificationApproval->created_at)
-                                                    <p><strong>Last Updated:</strong>
-                                                        {{ $qualificationApproval->updated_at->format('M d, Y H:i') }}</p>
-                                                @endif
-                                            </div>
-                                            <div class="col-md-6">
-                                                @if ($qualificationApproval->qualification)
-                                                    <p><strong>Document:</strong>
-                                                        <a href="{{ asset('storage/' . $qualificationApproval->qualification) }}"
-                                                            target="_blank" class="btn btn-custom btn-outline-primary">
-                                                            View Document
-                                                        </a>
+                                        @if (count($payment->grouped_dates) > 1)
+                                            @foreach (array_slice($payment->grouped_dates, 1) as $index => $range)
+                                                @if (!empty($range['time_start']) && !empty($range['time_end']))
+                                                    <p><span class="date-label">Time {{ $index + 2 }}:</span>
+                                                        <span class="date-value">
+                                                            {{ \Carbon\Carbon::parse($range['time_start'])->format('h:i A') }}
+                                                            -
+                                                            {{ \Carbon\Carbon::parse($range['time_end'])->format('h:i A') }}
+                                                        </span>
                                                     </p>
                                                 @endif
-                                            </div>
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                @endif
+                            @elseif ($payment->availability && $payment->availability->time_start && $payment->availability->time_end)
+                                {{-- Fallback to single availability time --}}
+                                <div class="col-md-6">
+                                    <p><span class="date-label">Time:</span>
+                                        <span class="date-value">
+                                            {{ \Carbon\Carbon::parse($payment->availability->time_start)->format('h:i A') }}
+                                            -
+                                            {{ \Carbon\Carbon::parse($payment->availability->time_end)->format('h:i A') }}
+                                        </span>
+                                    </p>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Facility Information -->
+                        <div class="wg-box">
+                            <h5>Facility Information</h5>
+                            <div class="facility-info">
+                                <div class="facility-details">
+                                    <h6>{{ $payment->availability->facility->name }}</h6>
+                                    <p><strong>Type:</strong>
+                                        {{ ucfirst(str_replace('_', ' ', $payment->availability->facility->facility_type)) }}
+                                    </p>
+                                    <p><strong>Description:</strong>
+                                        {{ Str::limit($payment->availability->facility->description, 200) }}</p>
+                                    @if ($payment->availability->facilityAttribute)
+                                        <p><strong>Room/Area:</strong>
+                                            {{ $payment->availability->facilityAttribute->room_name }}</p>
+                                        @if ($payment->availability->facilityAttribute->capacity)
+                                            <p><strong>Capacity:</strong>
+                                                {{ $payment->availability->facilityAttribute->capacity }} person(s)</p>
+                                        @endif
+                                        @if ($payment->availability->facilityAttribute->sex_restriction)
+                                            <p><strong>Restriction:</strong>
+                                                {{ ucfirst($payment->availability->facilityAttribute->sex_restriction) }}
+                                                only</p>
+                                        @endif
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Qualification Status -->
+                        @if ($qualificationApproval)
+                            <div class="wg-box">
+                                <h5>Qualification Status</h5>
+                                <div class="qualification-section">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Status:</strong>
+                                                <span
+                                                    class="qualification-status qualification-{{ $qualificationApproval->status }}">
+                                                    {{ ucfirst($qualificationApproval->status) }}
+                                                </span>
+                                            </p>
+                                            <p><strong>Submitted:</strong>
+                                                {{ $qualificationApproval->created_at->format('M d, Y H:i') }}</p>
+                                            @if ($qualificationApproval->updated_at != $qualificationApproval->created_at)
+                                                <p><strong>Last Updated:</strong>
+                                                    {{ $qualificationApproval->updated_at->format('M d, Y H:i') }}</p>
+                                            @endif
+                                        </div>
+                                        <div class="col-md-6">
+                                            @if ($qualificationApproval->qualification)
+                                                <p><strong>Document:</strong>
+                                                    <a href="{{ asset('storage/' . $qualificationApproval->qualification) }}"
+                                                        target="_blank" class="btn btn-custom btn-outline-primary">
+                                                        View Document
+                                                    </a>
+                                                </p>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
-                            @endif
+                            </div>
+                        @endif
 
+                        @php
+                            $nonRefundableAddons = collect();
 
-                            <!-- Payment Summary -->
+                            // Filter non-refundable addon transactions
+                            $nonRefundableTransactions = $payment->addonTransactions->filter(function ($addonTrx) {
+                                return $addonTrx->addon &&
+                                    $addonTrx->addon->is_refundable == false &&
+                                    $addonTrx->addonReservation;
+                            });
+
+                            // Get unique addon IDs
+                            $uniqueAddonIds = $nonRefundableTransactions->pluck('addon.id')->unique();
+
+                            // Build display data for each unique addon
+                            foreach ($uniqueAddonIds as $addonId) {
+                                $addonTransactions = $nonRefundableTransactions->where('addon.id', $addonId);
+
+                                // Count occurrences
+                                $addonCount = $addonTransactions->count();
+
+                                // Get first transaction for basic info
+                                $firstTrx = $addonTransactions->first();
+
+                                // Get date range (earliest date_from and latest date_to)
+                                $dateFrom = $addonTransactions
+                                    ->pluck('addonReservation.date_from')
+                                    ->filter()
+                                    ->sort()
+                                    ->first();
+
+                                $dateTo = $addonTransactions
+                                    ->pluck('addonReservation.date_to')
+                                    ->filter()
+                                    ->sort()
+                                    ->last();
+
+                                $nonRefundableAddons->push([
+                                    'name' => $firstTrx->addon->name,
+                                    'base_price' => $firstTrx->addon->base_price,
+                                    'billing_cycle' => $firstTrx->addon->billing_cycle,
+                                    'date_from' => $dateFrom,
+                                    'date_to' => $dateTo,
+                                    'quantity' => $firstTrx->addonReservation->quantity,
+                                    'days' => $firstTrx->addonReservation->days,
+                                    'count' => $addonCount,
+                                ]);
+                            }
+                        @endphp
+
+                        @if ($nonRefundableAddons->count() > 0)
                             <div class="wg-box">
-                                <h5>Payment Summary</h5>
+                                <h5>Add-ons</h5>
                                 <table class="table-custom">
+                                    <thead>
+                                        <tr>
+                                            <th>Add-on Name</th>
+                                            <th>Price</th>
+                                            <th>Billing Cycle</th>
+                                            <th>Date From</th>
+                                            <th>Date To</th>
+                                            <th>Quantity</th>
+                                            <th>Days</th>
+                                        </tr>
+                                    </thead>
                                     <tbody>
-                                        @php
-                                            // Calculate Initial Price: facility price * days
-                                            $facilityPrice = null;
-                                            $bookingDays = null;
-                                            $initialPrice = 0;
-
-                                            if ($payment->availability && $payment->availability->facility) {
-                                                $facility = $payment->availability->facility;
-                                                $facilityType = $facility->facility_type;
-                                                $priceType = null;
-
-                                                if ($facilityType === 'individual') {
-                                                    $priceType = 'individual';
-                                                } elseif ($facilityType === 'whole_place') {
-                                                    $priceType = 'whole';
-                                                } elseif ($facilityType === 'both') {
-                                                    $priceType = $payment->availability->facility_attribute_id
-                                                        ? 'individual'
-                                                        : 'whole';
-                                                }
-
-                                                if ($priceType && $facility->prices->count() > 0) {
-                                                    $relevantPrices = $facility->prices->where(
-                                                        'price_type',
-                                                        $priceType,
-                                                    );
-                                                    $facilityPrice = $relevantPrices->sum('value');
-                                                }
-
-                                                $bookingDays = $payment->transactionReservations
-                                                    ->pluck('availability.id')
-                                                    ->unique()
-                                                    ->count();
-                                                if ($facilityPrice && $bookingDays) {
-                                                    $initialPrice = $facilityPrice * $bookingDays;
-                                                }
-                                            }
-                                        @endphp
-
-
-                                        <tr>
-                                            <td><strong>Initial Price</strong></td>
-                                            <td style="text-align: right;">
-                                                &#8369;{{ number_format($initialPrice, 2) }}
-                                                @if ($bookingDays > 0)
-                                                    <br>
-                                                    <small style="color: #666;">
-                                                        (&#8369;{{ number_format($facilityPrice, 2) }} ×
-                                                        {{ $bookingDays }} {{ $bookingDays == 1 ? 'day' : 'days' }})
-                                                    </small>
-                                                @endif
-                                            </td>
-                                        </tr>
-
-                                        {{-- Refundable Add-Ons Section --}}
-                                        @php
-                                            $addonGrandTotal = 0;
-                                            $addonDetails = [];
-                                            $processedAddonIds = [];
-
-                                            // Process addons from addon_reservations
-                                            if (
-                                                $payment->addonTransactions &&
-                                                $payment->addonTransactions->count() > 0
-                                            ) {
-                                                foreach ($payment->addonTransactions as $addonTrx) {
-                                                    if ($addonTrx->addon && $addonTrx->addonReservation) {
-                                                        $addonId = $addonTrx->addon->id;
-
-                                                        // Skip if already processed (show only once per addon)
-                                                        if (in_array($addonId, $processedAddonIds)) {
-                                                            continue;
-                                                        }
-
-                                                        $addonName = $addonTrx->addon->name;
-                                                        $basePrice = $addonTrx->addon->base_price;
-                                                        $quantity = $addonTrx->addonReservation->quantity ?? 1;
-                                                        $days = $addonTrx->addonReservation->days ?? 1;
-
-                                                        // Calculate: base_price * days
-                                                        $addonTotal = $basePrice * $days;
-
-                                                        $addonDetails[] = [
-                                                            'name' => $addonName,
-                                                            'quantity' => $quantity,
-                                                            'days' => $days,
-                                                            'total' => $addonTotal,
-                                                            'base_price' => $basePrice,
-                                                        ];
-
-                                                        $addonGrandTotal += $addonTotal;
-                                                        $processedAddonIds[] = $addonId;
-                                                    }
-                                                }
-                                            }
-
-                                            // Process flat-rate addons from addon_payments
-                                            if (
-                                                isset($payment->addonPayments) &&
-                                                $payment->addonPayments->count() > 0
-                                            ) {
-                                                foreach ($payment->addonPayments as $addonPayment) {
-                                                    if ($addonPayment->addon) {
-                                                        $addonName = $addonPayment->addon->name;
-                                                        $addonTotal = $addonPayment->total;
-
-                                                        $addonDetails[] = [
-                                                            'name' => $addonName,
-                                                            'quantity' => 1,
-                                                            'days' => 1,
-                                                            'total' => $addonTotal,
-                                                            'is_flat' => true,
-                                                        ];
-
-                                                        $addonGrandTotal += $addonTotal;
-                                                    }
-                                                }
-                                            }
-
-                                            // Calculate Total Price
-                                            $totalPrice = $initialPrice + $addonGrandTotal;
-                                        @endphp
-
-                                        @if ($addonGrandTotal > 0)
+                                        @foreach ($nonRefundableAddons as $addon)
                                             <tr>
-                                                <td colspan="2" style="padding-top: 20px;"><strong>Refundable
-                                                        Add-Ons</strong></td>
-                                            </tr>
-
-                                            @foreach ($addonDetails as $addon)
-                                                <tr>
-                                                    <td style="padding-left: 30px; text-transform: uppercase;">
-                                                        {{ $addon['name'] }}
-                                                        (X{{ $addon['quantity'] }})
-                                                        @if (!isset($addon['is_flat']) && $addon['days'] > 0)
-                                                            ({{ $addon['days'] }}
-                                                            {{ $addon['days'] == 1 ? 'DAY' : 'DAYS' }})
-                                                        @endif
-                                                    </td>
-                                                    <td style="text-align: right;">
-                                                        &#8369;{{ number_format($addon['total'], 2) }}
-                                                        @if (!isset($addon['is_flat']) && $addon['days'] > 0)
-                                                            <br>
-                                                            <small style="color: #666;">
-                                                                (&#8369;{{ number_format($addon['base_price'], 2) }} ×
-                                                                {{ $addon['days'] }}
-                                                                {{ $addon['days'] == 1 ? 'day' : 'days' }})
-                                                            </small>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-
-                                            <tr style="background-color: #f5f5f5;">
-                                                <td><strong>Refundable Add-ons Total</strong></td>
-                                                <td style="text-align: right;">
-                                                    <strong>&#8369;{{ number_format($addonGrandTotal, 2) }}</strong>
+                                                <td>
+                                                    {{ $addon['name'] }}
                                                 </td>
-                                            </tr>
-                                        @endif
-
-                                        {{-- Total Price = Initial Price + Refundable Add-ons --}}
-                                        <tr style="background-color: #e3f2fd; border-left: 4px solid #2196F3;">
-                                            <td style="font-size: 1.1rem;"><strong>Total Price</strong></td>
-                                            <td
-                                                style="text-align: right; font-weight: 700; font-size: 1.1rem; color: #2196F3;">
-                                                <strong>&#8369;{{ number_format($totalPrice, 2) }}</strong>
-                                            </td>
-                                        </tr>
-
-                                        <tr>
-                                            <td><strong>Payment Status</strong></td>
-                                            <td style="text-align: right;">
-                                                @if ($payment->status == 'completed')
-                                                    <span class="badge badge-success">Completed</span>
-                                                @elseif($payment->status == 'canceled')
-                                                    <span class="badge badge-danger">Canceled</span>
-                                                @elseif($payment->status == 'reserved')
-                                                    <span class="badge badge-info">Reserved</span>
-                                                @else
-                                                    <span class="badge badge-warning">Pending</span>
-                                                @endif
-                                            </td>
-                                        </tr>
-
-                                        <tr>
-                                            <td><strong>Payment Date</strong></td>
-                                            <td style="text-align: right;">{{ $payment->created_at->format('M d, Y H:i') }}
-                                            </td>
-                                        </tr>
-
-                                        @if ($payment->discount_proof_path)
-                                            <tr>
-                                                <td><strong>Discount Proof</strong></td>
-                                                <td style="text-align: right;">
-                                                    <a href="{{ asset('storage/' . $payment->discount_proof_path) }}"
-                                                        target="_blank" class="btn btn-custom btn-outline-primary btn-sm">
-                                                        View Document
-                                                    </a>
+                                                <td>&#8369;{{ number_format($addon['base_price'], 2) }}</td>
+                                                <td>{{ ucfirst(str_replace('_', ' ', $addon['billing_cycle'])) }}</td>
+                                                <td>{{ $addon['date_from'] ? \Carbon\Carbon::parse($addon['date_from'])->format('M d, Y') : 'N/A' }}
                                                 </td>
+                                                <td>{{ $addon['date_to'] ? \Carbon\Carbon::parse($addon['date_to'])->format('M d, Y') : 'N/A' }}
+                                                </td>
+                                                <td>{{ $addon['quantity'] ?? 'N/A' }}</td>
+                                                <td>{{ $addon['days'] ?? 'N/A' }}</td>
                                             </tr>
-                                        @endif
+                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
+                        @endif
+
+
+                        <!-- Payment Summary -->
+                        <div class="wg-box">
+                            <h5>Payment Summary</h5>
+                            <table class="table-custom">
+                                <tbody>
+                                    {{-- Reservation Price --}}
+                                    <tr>
+                                        <td><strong>Reservation Price</strong></td>
+                                        <td style="text-align: right;">
+                                            <strong>&#8369;{{ number_format($payment->total_price, 2) }}</strong>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td><strong>Payment Status</strong></td>
+                                        <td style="text-align: right;">
+                                            @if ($payment->status == 'completed')
+                                                <span class="badge badge-success">Completed</span>
+                                            @elseif($payment->status == 'canceled')
+                                                <span class="badge badge-danger">Canceled</span>
+                                            @elseif($payment->status == 'reserved')
+                                                <span class="badge badge-info">Reserved</span>
+                                            @else
+                                                <span class="badge badge-warning">Pending</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+
+                                    {{-- Refundable Add-Ons Section --}}
+                                    @php
+                                        $refundableAddons = collect();
+                                        $refundableTotal = 0;
+                                        $hasDownpayment = false;
+                                        $downpaymentAmount = 0;
+
+                                        // Collect refundable addons from addon_transactions
+                                        if ($payment->addonTransactions && $payment->addonTransactions->count() > 0) {
+                                            foreach ($payment->addonTransactions as $addonTrx) {
+                                                if ($addonTrx->addon && $addonTrx->addon->is_refundable == true) {
+                                                    $addonBasePrice = $addonTrx->addon->base_price;
+
+                                                    $refundableAddons->push([
+                                                        'name' => $addonTrx->addon->name,
+                                                        'base_price' => $addonBasePrice,
+                                                        'status' => $addonTrx->status,
+                                                    ]);
+
+                                                    $refundableTotal += $addonBasePrice;
+
+                                                    // Check for downpayment from addon_payment
+                                                    if (
+                                                        $addonTrx->addonPayment &&
+                                                        $addonTrx->addonPayment->downpayment_amount > 0
+                                                    ) {
+                                                        $hasDownpayment = true;
+                                                        $downpaymentAmount +=
+                                                            $addonTrx->addonPayment->downpayment_amount;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    @endphp
+
+                                    @if ($refundableAddons->count() > 0)
+                                        <tr>
+                                            <td colspan="2" style="padding-top: 20px;"><strong>Refundables</strong>
+                                            </td>
+                                        </tr>
+
+                                        @foreach ($refundableAddons as $addon)
+                                            <tr>
+                                                <td style="padding-left: 30px;">
+                                                    {{ $addon['name'] }}
+                                                </td>
+                                                <td style="text-align: right;">
+                                                    &#8369;{{ number_format($addon['base_price'], 2) }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+
+                                        {{-- Refundable Status --}}
+                                        <tr>
+                                            <td style="padding-left: 30px;"><strong>Refundable Status</strong></td>
+                                            <td style="text-align: right;">
+                                                @if ($refundableAddons->first()['status'] == 'paid')
+                                                    <span class="badge badge-success">Paid</span>
+                                                @elseif($refundableAddons->first()['status'] == 'refunded')
+                                                    <span class="badge badge-info">Refunded</span>
+                                                @elseif($refundableAddons->first()['status'] == 'forfeit')
+                                                    <span class="badge badge-danger">Forfeit</span>
+                                                @else
+                                                    <span class="badge badge-warning">Unpaid</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+
+                                        {{-- Downpayment if exists --}}
+                                        @if ($hasDownpayment)
+                                            <tr>
+                                                <td style="padding-left: 30px;"><strong>Downpayment</strong></td>
+                                                <td style="text-align: right;">
+                                                    &#8369;{{ number_format($downpaymentAmount, 2) }}
+                                                </td>
+                                            </tr>
+                                        @endif
+
+                                        {{-- Refundable Total --}}
+                                        <tr style="background-color: #f5f5f5;">
+                                            <td><strong>Refundable Total</strong></td>
+                                            <td style="text-align: right;">
+                                                <strong>&#8369;{{ number_format($refundableTotal, 2) }}</strong>
+                                            </td>
+                                        </tr>
+                                    @endif
+
+                                    {{-- Total Amount --}}
+                                    <tr style="background-color: #e3f2fd; border-left: 4px solid #2196F3;">
+                                        <td style="font-size: 1.1rem;"><strong>Total Amount</strong></td>
+                                        <td style="text-align: right; font-weight: 700; font-size: 1.1rem; color: #2196F3;">
+                                            <strong>&#8369;{{ number_format($payment->total_price + $refundableTotal, 2) }}</strong>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td><strong>Payment Date</strong></td>
+                                        <td style="text-align: right;">{{ $payment->created_at->format('M d, Y H:i') }}
+                                        </td>
+                                    </tr>
+
+                                    @if ($payment->discount_proof_path)
+                                        <tr>
+                                            <td><strong>Discount Proof</strong></td>
+                                            <td style="text-align: right;">
+                                                <a href="{{ asset('storage/' . $payment->discount_proof_path) }}"
+                                                    target="_blank" class="btn btn-custom btn-outline-primary btn-sm">
+                                                    View Document
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
                         </div>
                     </div>
+                </div>
         </section>
     </main>
 @endsection
