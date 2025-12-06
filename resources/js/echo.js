@@ -25,7 +25,9 @@ document.addEventListener("DOMContentLoaded", function () {
         window.isAdmin ||
         document.querySelector('meta[name="user-role"]')?.content === "ADM";
 
+    console.log("working!");
     if (userId) {
+        console.log(`userId:${userId}`);
         window.Echo = new Echo({
             broadcaster: "reverb",
             key: import.meta.env.VITE_REVERB_APP_KEY,
