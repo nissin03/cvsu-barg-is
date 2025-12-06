@@ -105,7 +105,7 @@ function updateEndTimeOptions(userType, userRole) {
     } else {
         switch(userRole) {
             case 'student':
-                maxHour = 16;
+                maxHour = 15;
                 break;
             case 'employee':
                 maxHour = 18;

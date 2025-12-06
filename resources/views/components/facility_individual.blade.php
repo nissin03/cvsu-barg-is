@@ -244,17 +244,12 @@
                         <option value="">Select Price</option>
                         @foreach ($facility->prices as $price)
                             @if (!$price->is_there_a_quantity)
-                                <option value="{{ $price->id }}" data-value="{{ $price->value }}"
-                                    data-discount="{{ $price->is_this_a_discount ? '1' : '0' }}">
+                                <option value="{{ $price->id }}" data-value="{{ $price->value }}">
                                     {{ $price->name }} - ₱{{ number_format($price->value, 2) }}
                                 </option>
                             @endif
                         @endforeach
                     </select>
-                    <p id="discount-note" class="text-danger mt-2" style="display: none">
-                        <i class="fas fa-info-circle me-1"></i>
-                        This requires a proof of id for verification
-                    </p>
                 </div>
                 <input type="hidden" id="selected_price_value" name="selected_price" value="">
             </div>
@@ -294,22 +289,22 @@
         var modalStartDate = document.getElementById('modal-start-date');
         var modalEndDate = document.getElementById('modal-end-date');
         var clearDatesBtn = document.getElementById('clear-dates');
-
+        
         var availabilities = @json($facility->availabilities ?? []);
         var facilityAttributes = @json($facility->facilityAttributes ?? []);
         var isBasedOnDays = @json($isBasedOnDays);
-
+        
         let selectedDates = [];
         let startDate = null;
         let endDate = null;
-
+        
         function formatDate(dateInput) {
             if (!dateInput) return null;
-
+            
             let dateStr;
             if (dateInput instanceof Date) {
-                dateStr = dateInput.getFullYear() + '-' +
-                        String(dateInput.getMonth() + 1).padStart(2, '0') + '-' +
+                dateStr = dateInput.getFullYear() + '-' + 
+                        String(dateInput.getMonth() + 1).padStart(2, '0') + '-' + 
                         String(dateInput.getDate()).padStart(2, '0');
             } else if (typeof dateInput === 'string') {
                 if (dateInput.includes('T')) {
@@ -318,7 +313,7 @@
                     dateStr = dateInput;
                 }
             }
-
+            
             return dateStr;
         }
 
@@ -332,35 +327,35 @@
             const check = formatDate(checkDate);
             const start = formatDate(startDate);
             const end = formatDate(endDate);
-
+            
             if (!check || !start || !end) return false;
-
+            
             return check >= start && check <= end;
         }
 
         function getRoomAvailabilityForDate(dateStr) {
             const selectedRoomId = document.getElementById('room_selection')?.value;
             if (!selectedRoomId) return { remaining: 0, isFullyBooked: true };
-
+            
             const selectedRoom = facilityAttributes.find(attr => attr.id == selectedRoomId);
             const roomCapacity = selectedRoom ? selectedRoom.capacity : 0;
-
+            
             if (!availabilities || availabilities.length === 0) {
                 return {
                     remaining: roomCapacity,
                     isFullyBooked: false
                 };
             }
-
+            
             const formattedDate = formatDate(dateStr);
-
+            
             let remainingCapacity = roomCapacity;
             let isFullyBooked = false;
-
+            
             const matchingAvailabilities = availabilities
                 .filter(avail => avail.facility_attribute_id == selectedRoomId)
                 .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
+            
             for (const avail of matchingAvailabilities) {
                 if (isDateInRange(formattedDate, avail.date_from, avail.date_to)) {
                     remainingCapacity = avail.remaining_capacity;
@@ -368,7 +363,7 @@
                     break;
                 }
             }
-
+            
             return {
                 remaining: remainingCapacity,
                 isFullyBooked: isFullyBooked
@@ -380,19 +375,19 @@
             if (!selectedRoomId || !availabilities || availabilities.length === 0) {
                 return [];
             }
-
+            
             const reservedDates = [];
-
+            
             availabilities.forEach(function(availability) {
-                if (availability.facility_attribute_id == selectedRoomId &&
+                if (availability.facility_attribute_id == selectedRoomId && 
                     availability.remaining_capacity <= 0 &&
                     availability.date_from && availability.date_to) {
-
+                    
                     const startDate = createLocalDate(availability.date_from);
                     const endDate = createLocalDate(availability.date_to);
-
+                    
                     if (!startDate || !endDate) return;
-
+                    
                     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
                         const dateStr = formatDate(d);
                         if (dateStr && !reservedDates.includes(dateStr)) {
@@ -401,7 +396,7 @@
                     }
                 }
             });
-
+            
             return reservedDates;
         }
 
@@ -409,13 +404,13 @@
             const dates = [];
             const startDate = createLocalDate(start);
             const endDate = createLocalDate(end);
-
+            
             if (!startDate || !endDate) return dates;
-
+            
             for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
                 dates.push(formatDate(d));
             }
-
+            
             return dates;
         }
 
@@ -443,16 +438,16 @@
                 dayMaxEvents: true,
                 weekends: true,
                 validRange: { start: formatDate(new Date()) },
-
+                
                 dateClick: function(info) {
                     const clickedDate = info.dateStr;
                     const selectedRoomId = document.getElementById('room_selection')?.value;
-
+                    
                     if (!selectedRoomId) {
                         showRoomSelectionAlert();
                         return;
                     }
-
+                    
                     const roomAvailability = getRoomAvailabilityForDate(clickedDate);
                     if (roomAvailability.isFullyBooked) {
                         Swal.fire({
@@ -463,18 +458,18 @@
                         });
                         return;
                     }
-
+                    
                     if (!startDate) {
                         startDate = clickedDate;
                         selectedDates = [clickedDate];
                     } else if (!endDate && clickedDate >= startDate) {
                         endDate = clickedDate;
                         selectedDates = getDatesInRange(startDate, endDate);
-
+                        
                         const hasReservedDate = selectedDates.some(date => {
                             return getRoomAvailabilityForDate(date).isFullyBooked;
                         });
-
+                        
                         if (hasReservedDate) {
                             Swal.fire({
                                 icon: 'error',
@@ -490,18 +485,18 @@
                         endDate = null;
                         selectedDates = [clickedDate];
                     }
-
+                    
                     updateInputs();
                     updateDateDisplay();
                     updateTotalPrice();
                     highlightDates();
                 },
-
+                
                 dayCellClassNames: function(info) {
                     const dateStr = info.dateStr;
                     const classes = [];
                     const roomAvailability = getRoomAvailabilityForDate(dateStr);
-
+                    
                     if (roomAvailability.isFullyBooked) {
                         classes.push('fully-booked-date');
                     } else if (selectedDates.includes(dateStr)) {
@@ -509,72 +504,72 @@
                         else if (dateStr === endDate) classes.push('selected-end-date');
                         else classes.push('selected-range-date');
                     }
-
+                    
                     return classes;
                 },
-
+                
                 dayCellContent: function(args) {
                     const dateStr = args.dateStr || formatDate(args.date);
                     const roomAvailability = getRoomAvailabilityForDate(dateStr);
                     const selectedRoomId = document.getElementById('room_selection')?.value;
                     const selectedRoom = facilityAttributes.find(attr => attr.id == selectedRoomId);
                     const roomCapacity = selectedRoom ? selectedRoom.capacity : 0;
-
+                    
                     const container = document.createElement('div');
                     container.style.height = '100%';
                     container.style.display = 'flex';
                     container.style.flexDirection = 'column';
                     container.style.justifyContent = 'space-between';
-
+                    
                     const dateNumberEl = document.createElement('div');
                     dateNumberEl.className = 'fc-daygrid-day-number';
                     dateNumberEl.textContent = args.date.getDate();
                     dateNumberEl.style.textAlign = 'right';
                     dateNumberEl.style.padding = '2px';
-
+                    
                     const availabilityEl = document.createElement('div');
                     availabilityEl.className = 'availability-indicator';
                     availabilityEl.style.textAlign = 'center';
                     availabilityEl.style.margin = '2px 0';
                     availabilityEl.style.fontSize = '10px';
-
+                    
                     if (!selectedRoomId) {
                         // availabilityEl.innerHTML = '<span class="badge bg-secondary">Select room</span>';
-                    }
+                    } 
                     else if (roomAvailability.isFullyBooked) {
                         availabilityEl.innerHTML = '<span class="fc-status-booked">Booked</span>';
-                    }
+                    } 
                     else {
                         availabilityEl.innerHTML = `
-                            <span class="fc-capacity-badge
+                            <span class="fc-capacity-badge 
                                 ${roomAvailability.remaining < 3 ? 'fc-capacity-warning' : 'fc-capacity-success'}">
                                 ${roomAvailability.remaining}/${roomCapacity} left
                             </span>
                         `;
                     }
-
+                    
                     container.appendChild(dateNumberEl);
                     container.appendChild(availabilityEl);
-
+                    
                     return { domNodes: [container] };
                 },
-
+                
                 events: function(fetchInfo, successCallback, failureCallback) {
                     const reservedDates = getReservedDates();
                     const events = reservedDates.map(date => ({}));
                     successCallback(events);
                 }
             });
-
+            
             window.calendar = calendar;
             calendar.render();
 
             $('#calendarModal').on('shown.bs.modal', function() {
                 if (window.calendar) {
-                    window.calendar.gotoDate(new Date());
+                    window.calendar.gotoDate(new Date()); 
                 }
             });
-
+            
             function updateDateDisplay() {
                 const formattedStart = startDate ? new Date(startDate).toLocaleDateString('en-US', {
                     weekday: 'long',
@@ -582,35 +577,35 @@
                     month: 'long',
                     day: 'numeric'
                 }) : '';
-
+                
                 const formattedEnd = endDate ? new Date(endDate).toLocaleDateString('en-US', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
                 }) : '';
-
+                
                 startDateDisplay.textContent = formattedStart;
                 endDateDisplay.textContent = formattedEnd;
                 modalStartDate.textContent = formattedStart;
                 modalEndDate.textContent = formattedEnd;
-
+                
                 confirmDatesBtn.disabled = !startDate;
             }
-
+            
             function updateInputs() {
                 if (dateFromInput) dateFromInput.value = startDate || '';
                 if (dateToInput) dateToInput.value = endDate || '';
             }
-
+            
             function highlightDates() {
                 calendar.refetchEvents();
                 calendar.render();
             }
-
-
-
-
+            
+        
+                
+        
         }
     });
 
@@ -618,22 +613,22 @@
         const select = document.getElementById('room_selection');
         const selectedOption = select.options[select.selectedIndex];
         const roomInfoDiv = document.getElementById('selected-room-info');
-
+        
         if (select.value) {
             const roomName = selectedOption.getAttribute('data-room-name');
             const capacity = selectedOption.getAttribute('data-capacity');
             const sexRestriction = selectedOption.getAttribute('data-sex-restriction');
-
+            
             document.getElementById('selected-room-name').textContent = roomName;
             document.getElementById('selected-capacity').textContent = capacity + ' person(s)';
-
+            
             document.getElementById('hidden_room_name').value = roomName;
             document.getElementById('hidden_room_capacity').value = capacity;
-
+            
             const sexBadge = document.getElementById('selected-sex-badge');
             const sexIcon = document.getElementById('selected-sex-icon');
             const sexText = document.getElementById('selected-sex-text');
-
+            
             if (sexRestriction) {
                 sexIcon.className = 'fa fa-' + (sexRestriction === 'male' ? 'mars' : 'venus') + ' me-1';
                 sexText.textContent = sexRestriction.charAt(0).toUpperCase() + sexRestriction.slice(1);
@@ -641,14 +636,14 @@
             } else {
                 sexBadge.style.display = 'none';
             }
-
+            
             roomInfoDiv.style.display = 'flex';
         } else {
             roomInfoDiv.style.display = 'none';
             document.getElementById('hidden_room_name').value = '';
             document.getElementById('hidden_room_capacity').value = '';
         }
-
+        
         if (window.calendar) {
             window.calendar.refetchEvents();
             window.calendar.render();
@@ -657,7 +652,7 @@
 
     function updateTotalPrice() {
         let totalPrice = 0;
-
+        
         document.querySelectorAll('.quantity-input').forEach(input => {
             const quantity = parseInt(input.value) || 0;
             const priceText = input.closest('.form-floating').querySelector('.product-type').textContent;
@@ -678,15 +673,15 @@
                 totalPrice += itemTotal;
             }
         });
-
+        
         const priceSelect = document.getElementById('price_id');
         if (priceSelect && priceSelect.value) {
             const selectedOption = priceSelect.options[priceSelect.selectedIndex];
             const selectedPrice = parseFloat(selectedOption.getAttribute('data-value')) || 0;
-
+            
             const dateFrom = document.getElementById('date_from');
             const dateTo = document.getElementById('date_to');
-
+            
             if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
                 const startDate = new Date(dateFrom.value);
                 const endDate = new Date(dateTo.value);
@@ -697,7 +692,7 @@
                 totalPrice += selectedPrice;
             }
         }
-
+        
         const formattedTotal = '₱' + totalPrice.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
         document.getElementById('computed-total').textContent = formattedTotal;
         document.getElementById('total_price_input').value = totalPrice.toFixed(2);
@@ -710,7 +705,7 @@
     const priceSelect = document.getElementById('price_id');
     if (priceSelect) {
         priceSelect.addEventListener('change', function() {
-            document.getElementById('selected_price_value').value =
+            document.getElementById('selected_price_value').value = 
                 this.options[this.selectedIndex].getAttribute('data-value');
             updateTotalPrice();
         });
@@ -727,13 +722,13 @@
         const dateFromInput = document.getElementById('date_from');
         const dateToInput = document.getElementById('date_to');
 
-
+        
         const roomSelect = document.getElementById('room_selection');
-
-        const userType = "{{ auth()->check() ? auth()->user()->utype ?? 'USR' : 'USR' }}";
-
+    
+        const userType = "{{ auth()->check() ? auth()->user()->utype ?? 'USR' : 'USR' }}"; 
+        
         reserveBtn.disabled = true;
-
+        
         if (noRoomsAlert && noRoomsAlert.textContent.includes('No rooms with available capacity at the moment')) {
             reserveBtn.disabled = true;
             return;
@@ -742,20 +737,20 @@
         const today = new Date();
         const minSelectableDate = new Date();
         minSelectableDate.setDate(today.getDate() + 7);
-
+    
         let maxSelectableDate = null;
         if (userType === 'USR') {
-            maxSelectableDate = new Date();
-            maxSelectableDate.setMonth(today.getMonth() + 3);
-        }
+            maxSelectableDate = new Date(); 
+            maxSelectableDate.setMonth(today.getMonth() + 3); 
+        }     
         const datedPriceScenario = @json($datedPriceWithQuantity || $datedPrice ? true : false);
-
+        
         function resetDateSelections() {
             if (startDateDisplay) startDateDisplay.textContent = "";
             if (endDateDisplay) endDateDisplay.textContent = "";
             if (dateFromInput) dateFromInput.value = "";
             if (dateToInput) dateToInput.value = "";
-
+            
             if (window.calendar) {
                 window.selectedDates = [];
                 window.startDate = null;
@@ -768,14 +763,14 @@
         if (roomSelect) {
             roomSelect.addEventListener('change', function() {
                 resetDateSelections();
-
+        
                 if (this.value === "") {
                     resetDateSelections();
                 }
                 validateFullScenario();
             });
         }
-
+        
         if (datedPriceScenario) {
             const priceSelect = document.getElementById('price_id');
             const validateDatedPriceScenario = () => {
@@ -785,23 +780,23 @@
             validateDatedPriceScenario();
         } else {
             const priceSelect = document.getElementById('price_id');
-
+            
             const validateFullScenario = () => {
                 const roomValid = roomSelect ? roomSelect.value : true;
                 const priceValid = priceSelect ? priceSelect.value : true;
                 const datesValid = dateFromInput && dateToInput ? (dateFromInput.value && dateToInput.value) : true;
                 reserveBtn.disabled = !(roomValid && priceValid && datesValid);
             };
-
+            
             if (priceSelect) priceSelect.addEventListener('change', validateFullScenario);
             if (dateFromInput && dateToInput) {
                 dateFromInput.addEventListener('change', validateFullScenario);
                 dateToInput.addEventListener('change', validateFullScenario);
             }
-
+            
             document.getElementById('confirm-dates')?.addEventListener('click', validateFullScenario);
             validateFullScenario();
-
+            
             if (window.calendar) {
                 const validRange = { start: minSelectableDate };
                 if (maxSelectableDate) {

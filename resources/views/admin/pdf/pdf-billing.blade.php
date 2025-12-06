@@ -239,19 +239,23 @@
             <span class="info-separator">:</span>
             <span class="info-value">
                 @if ($category && $categoryName)
-                    {{ $categoryName }}
+                    {{ ucfirst($categoryName) }}
                 @else
                     All Categories
                 @endif
             </span>
         </div>
-        @if ($status)
-            <div class="info-row">
-                <span class="info-label">Status</span>
-                <span class="info-separator">:</span>
-                <span class="info-value">{{ ucfirst($status) }}</span>
-            </div>
-        @endif
+        <div class="info-row">
+            <span class="info-label">Status</span>
+            <span class="info-separator">:</span>
+            <span class="info-value">
+                @if ($status)
+                    {{ ucfirst($status) }}
+                @else
+                    All Statuses
+                @endif
+            </span>
+        </div>
     </div>
 
     <table>
@@ -270,6 +274,7 @@
         <tbody>
             @php
                 $grandTotal = 0;
+                $showStatusColumn = !$status; // Show status column only when no specific status filter is applied
             @endphp
             @forelse($orders as $order)
                 @foreach ($order->orderItems as $item)
@@ -301,9 +306,11 @@
 
             @if ($orders->count() > 0)
                 <tr style="border-top: 2px solid #333;">
-                    <td colspan="{{ $status ? 4 : 5 }}" style="text-align: right; font-weight: bold;">Grand Total:</td>
+                    <td colspan="{{ $status ? 3 : 4 }}" style="text-align: right; font-weight: bold;">Grand Total:</td>
                     <td style="font-weight: bold; text-align: center;">₱{{ number_format($grandTotal, 2) }}</td>
-                    {{-- <td colspan="{{ $status ? 1 : 2 }}"></td> --}}
+                    @if ($status)
+                        <td></td>
+                    @endif
                 </tr>
             @endif
         </tbody>

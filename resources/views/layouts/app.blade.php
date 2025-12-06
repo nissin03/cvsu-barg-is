@@ -13,66 +13,44 @@
 
     <title>{{ config('app.name', 'Information System') }}</title>
 
-    <!-- Favicon -->
     <link rel="shortcut icon" href="{{ asset('../images/favicon-logo.png') }}" type="image/x-icon">
 
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Popper.js must be loaded before Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
 
-    <!-- jQuery -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
-    <!-- FullCalendar -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.js"></script>
 
-    <!-- Moment.js and Pikaday -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.8.0/pikaday.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.8.0/css/pikaday.min.css">
 
-    <!-- SweetAlert2 -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.13.1/dist/sweetalert2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
-    <!-- Toastr -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
-
-    <!-- Swiper -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
-    <!-- Local Assets -->
-
-    <!-- Sweet Alert JS -->
     <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11.13.1/dist/sweetalert2.all.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <script defer src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <link rel="stylesheet" href="{{ asset('./font-awesome-6-pro-main/css/all.min.css') }}">
-    {{--
-    <link rel="stylesheet" href="{{ asset('css/facilities.css') }}"> --}}
 
     <link rel="stylesheet" href="{{ asset('owl_carousel/owl.theme.default.css') }}">
     <link rel="stylesheet" href="{{ asset('owl_carousel/owl.carousel.css') }}">
     <link rel="stylesheet" href="{{ asset('css/plugins/swiper.min.css') }}">
     <link rel="stylesheet" href="{{ asset('plugins/ijaboCropTool/ijaboCropTool.min.css') }}">
-
-
-
-
-    <!-- Custom CSS -->
 
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('./font-awesome-6-pro-main/css/all.min.css') }}">
@@ -98,7 +76,6 @@
             height: 1px;
         }
 
-        /* Notification Bell CSS from admin.blade.php */
         .dropdown-header {
             display: flex;
             justify-content: space-between;
@@ -111,7 +88,6 @@
             top: 0;
             z-index: 10;
         }
-
 
         .notification-heading {
             margin: 0;
@@ -126,7 +102,6 @@
         .notification-item.read .notification-text {
             font-weight: normal !important;
         }
-
 
         .mark-read {
             background: none;
@@ -262,15 +237,6 @@
             word-wrap: break-word;
         }
 
-
-        /* Add these new styles to your existing CSS */
-        /* .notification-list-container {
-            max-height: 300px;
-            overflow-y: auto;
-            transition: max-height 0.3s ease;
-            scrollbar-width: thin;
-        } */
-
         #notification-list,
         #all-notification-list {
             max-height: 300px;
@@ -280,7 +246,6 @@
             scrollbar-width: thin;
             scrollbar-color: #888 #f1f1f1;
         }
-
 
         .notification-list-container::-webkit-scrollbar-track,
         #notification-list::-webkit-scrollbar-track,
@@ -310,7 +275,6 @@
             width: 8px;
             height: 8px;
             background-color: #30d683;
-            /* background-color: #007bff; */
             border-radius: 50%;
             margin-left: auto;
             margin-right: 8px;
@@ -341,7 +305,6 @@
             background-color: #e9ecef;
         }
 
-        /* Notification bell specific styles */
         .popup-wrap.message.type-header {
             position: relative;
         }
@@ -392,12 +355,10 @@
             color: #495057;
         }
 
-        /* Remove dropdown arrow but keep functionality */
         .btn.btn-primary.dropdown-toggle::after {
             display: none !important;
         }
 
-        /* Alternative way to hide arrow */
         .dropdown-toggle::after {
             display: none !important;
         }
@@ -431,13 +392,15 @@
     </style>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white py-4 fixed-top">
-        <div class="container position-relative">
+        <div
+            class="container position-relative d-flex align-items-center justify-content-between flex-wrap flex-lg-nowrap">
             <a href="{{ route('home.index') }}"
                 class="navbar-brand d-flex justify-content-between align-items-center order-lg-0">
                 <img src="{{ asset('images/logo.png') }}" alt="Site Logo" class="navbar-logo">
             </a>
 
-            <div class="order-lg-2 nav-btns header-tools__item header-tools__cart">
+            <div
+                class="order-lg-2 nav-btns header-tools__item header-tools__cart d-flex align-items-center ms-auto ms-lg-0 mt-2 mt-lg-0">
                 <div class="header-tools d-flex align-items-center">
                     <div class="header-tools__item hover-container">
                         <a class="js-search-popup search-field__actor" href="#" id="searchToggle">
@@ -487,8 +450,8 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <div class="collapse navbar-collapse order-lg-1" id="navMenu">
-                <ul class="navbar-nav mx-auto text-center">
+            <div class="collapse navbar-collapse order-lg-1 w-100 mt-3 mt-lg-0" id="navMenu">
+                <ul class="navbar-nav mx-auto text-center flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3">
                     <li class="nav-item px-2 py-2">
                         <a href="{{ route('home.index') }}" class="nav-link text-uppercase text-dark">Home</a>
                     </li>
@@ -639,10 +602,163 @@
             color: #888;
             font-size: 15px;
         }
+
+        .search-result-item.active {
+            background-color: #f5f5f5;
+        }
+
+        .search-result-item.active a {
+            color: #000;
+        }
+    </style>
+
+    <style>
+        @media (max-width: 768px) {
+            .navbar.fixed-top {
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+
+            .navbar .container {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+
+            .navbar .navbar-brand .navbar-logo {
+                max-width: 140px;
+                height: auto;
+            }
+
+            #navMenu {
+                background-color: #ffffff;
+                border-top: 1px solid #f0f0f0;
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+
+            .navbar-nav .nav-item {
+                padding-top: 0.35rem;
+                padding-bottom: 0.35rem;
+            }
+
+            .search-popup {
+                left: 0;
+                right: 0;
+                width: 100%;
+            }
+
+            .search-popup__input {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .modal-dialog {
+                margin: 0.75rem;
+                max-width: 100%;
+                width: 100%;
+            }
+
+            .modal-content {
+                border-radius: 0.75rem;
+            }
+
+            .modal-body {
+                max-height: calc(100vh - 7rem);
+                overflow-y: auto;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .swal2-popup {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0.5rem !important;
+                box-sizing: border-box;
+            }
+        }
+
+        .fc {
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .fc .fc-view-harness {
+                overflow-x: auto;
+            }
+
+            .fc .fc-scrollgrid,
+            .fc .fc-dayGridMonth-view .fc-scrollgrid {
+                min-width: 700px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                margin-bottom: 1rem;
+            }
+
+            .form-inline,
+            .d-flex.form-inline,
+            form.d-flex:not(.navbar-form) {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+
+            .form-inline>* {
+                width: 100% !important;
+                margin-bottom: 0.5rem;
+            }
+
+            .btn-group,
+            .btn-toolbar {
+                flex-wrap: wrap;
+                width: 100%;
+            }
+
+            .btn-group .btn,
+            .btn-toolbar .btn {
+                flex: 1 0 100%;
+                margin-bottom: 0.25rem;
+            }
+        }
     </style>
 
     <script>
         $(document).ready(function() {
+            var selectedIndex = -1;
+
+            function resetSelection() {
+                selectedIndex = -1;
+                $("#box-content-search .search-result-item").removeClass('active');
+            }
+
+            function moveSelection(direction) {
+                var $items = $("#box-content-search .search-result-item");
+                if ($items.length === 0) return;
+
+                if (direction === 'down') {
+                    selectedIndex = (selectedIndex + 1) % $items.length;
+                } else if (direction === 'up') {
+                    selectedIndex = (selectedIndex - 1 + $items.length) % $items.length;
+                }
+
+                $items.removeClass('active');
+                var $selected = $items.eq(selectedIndex).addClass('active');
+
+                var $container = $("#box-content-search");
+                var itemTop = $selected.position().top;
+                var itemBottom = itemTop + $selected.outerHeight();
+                var scrollTop = $container.scrollTop();
+                var containerHeight = $container.height();
+
+                if (itemBottom > scrollTop + containerHeight) {
+                    $container.scrollTop(itemBottom - containerHeight);
+                } else if (itemTop < scrollTop) {
+                    $container.scrollTop(itemTop);
+                }
+            }
+
             $('#searchToggle').on('click', function(e) {
                 e.preventDefault();
                 $('.search-popup').toggleClass('active');
@@ -651,15 +767,65 @@
 
                 if ($('.search-popup').hasClass('active')) {
                     $('#search-input').focus();
+                } else {
+                    resetSelection();
                 }
             });
 
-            $("#search-input").on("keyup", function() {
+            $("#search-input").on("keyup", function(e) {
+                var key = e.key;
+                if (key === 'ArrowDown' || key === 'ArrowUp' || key === 'Enter' || key === 'Escape' ||
+                    key === 'Tab') {
+                    return;
+                }
+
                 var searchQuery = $(this).val().trim();
+
                 if (searchQuery.length > 2) {
                     performSearch(searchQuery);
                 } else {
                     $("#box-content-search").empty();
+                    resetSelection();
+                }
+            });
+
+
+            $("#search-input").on("keydown", function(e) {
+                var key = e.key;
+
+                if (key === 'ArrowDown') {
+                    e.preventDefault();
+                    moveSelection('down');
+                } else if (key === 'ArrowUp') {
+                    e.preventDefault();
+                    moveSelection('up');
+                } else if (key === 'Enter') {
+                    var $items = $("#box-content-search .search-result-item");
+                    var hasNoResults = $("#box-content-search .no-results").length > 0;
+
+                    if ($items.length === 0 && hasNoResults) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    if ($items.length === 0) {
+                        return;
+                    }
+
+                    e.preventDefault();
+
+                    if (selectedIndex < 0 || selectedIndex >= $items.length) {
+                        selectedIndex = 0;
+                        $items.removeClass('active');
+                        $items.eq(0).addClass('active');
+                    }
+
+                    var $selected = $items.eq(selectedIndex);
+                    var href = $selected.find('a').attr('href');
+
+                    if (href) {
+                        window.location.href = href;
+                    }
                 }
             });
 
@@ -681,6 +847,7 @@
                     dataType: 'json',
                     success: function(data) {
                         $("#box-content-search").empty();
+                        resetSelection();
 
                         if (data.products.length > 0 || data.facilities.length > 0) {
                             $.each(data.products, function(index, item) {
@@ -760,6 +927,7 @@
                         console.error('Search error:', xhr.responseText);
                         $("#box-content-search").html(
                             '<li class="no-results">Error loading results. Please try again.</li>');
+                        resetSelection();
                     }
                 });
             }
@@ -782,6 +950,7 @@
                 $('#closeIcon').addClass('d-none');
                 $("#search-input").val('');
                 $("#box-content-search").empty();
+                resetSelection();
             }
         });
     </script>
@@ -874,7 +1043,6 @@
         </div>
     </footer>
 
-    <!-- Local Scripts -->
     <script src="{{ asset('js/jquery.min.js') }}"></script>
     <script src="{{ asset('js/plugins/swiper.min.js') }}"></script>
     <script src="{{ asset('plugins/ijaboCropTool/ijaboCropTool.min.js') }}"></script>
@@ -884,18 +1052,9 @@
 
     <script src="{{ asset('js/main.js') }}"></script>
 
-
-    <!-- Bootstrap bundle already loaded above -->
-    <!-- fullcalendar js  -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales-all.min.js"></script>
 
-
-
-
-
-
-    <!-- main js  -->
     <script src="{{ asset('js/main.js') }}"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -906,19 +1065,15 @@
         });
     </script>
 
-
     @vite('resources/js/app.js')
 
-    <!-- Ensure Bootstrap dropdowns work properly -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Bootstrap dropdowns
             const dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
             const dropdownList = dropdownElementList.map(function(dropdownToggleEl) {
                 return new bootstrap.Dropdown(dropdownToggleEl);
             });
 
-            // Additional fallback if Bootstrap doesn't work
             const dropdownToggle = document.getElementById('dropdownMenuButton2');
             const dropdownMenu = document.querySelector('.dropdown-menu');
 
@@ -938,7 +1093,6 @@
                     }
                 });
 
-                // Close dropdown when clicking outside
                 document.addEventListener('click', function(e) {
                     if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
                         dropdownMenu.classList.remove('show');
