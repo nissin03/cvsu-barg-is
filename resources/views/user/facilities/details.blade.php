@@ -468,7 +468,6 @@
     </script>
 
     <script>
-        // image modal and swipers
         document.addEventListener('DOMContentLoaded', function() {
             const addonDescModal = document.getElementById('addonDescModal');
             const discountSelect = document.getElementById('discount_id');
