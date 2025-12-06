@@ -364,10 +364,30 @@
                         wholeCapacityField.val(roomWithWholeCapacity.whole_capacity);
                         console.log('Populated whole_capacity field with:', roomWithWholeCapacity.whole_capacity);
                     }
+                }
 
-                    // Ensure we preserve whole_capacity records even if they don't have individual room data
-                    if (roomWithWholeCapacity && !wholeCapacityField.val()) {
-                        wholeCapacityField.val(roomWithWholeCapacity.whole_capacity);
+                // Helper function to format date from database to yyyy-MM-dd
+                function formatDateForInput(dateString) {
+                    if (!dateString) return '';
+
+                    // If already in correct format, return as-is
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+                        return dateString;
+                    }
+
+                    // Parse ISO 8601 format and convert to yyyy-MM-dd
+                    try {
+                        const date = new Date(dateString);
+                        if (isNaN(date.getTime())) return '';
+
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+
+                        return `${year}-${month}-${day}`;
+                    } catch (e) {
+                        console.error('Error formatting date:', dateString, e);
+                        return '';
                     }
                 }
 
@@ -387,16 +407,16 @@
                             .is_there_a_quantity == 1 ? '1' : '0'),
                         isThisADiscount: price.isThisADiscount != null ? price.isThisADiscount : (price
                             .is_this_a_discount == 1 ? '1' : '0'),
-                        dateFrom: price.dateFrom || price.date_from || '',
-                        dateTo: price.dateTo || price.date_to || ''
+                        dateFrom: formatDateForInput(price.dateFrom || price.date_from || ''),
+                        dateTo: formatDateForInput(price.dateTo || price.date_to || '')
                     }));
 
                     if (prices.length > 0) {
                         const firstPrice = prices[0];
                         globalPriceSettings.isBasedOnDays = firstPrice.isBasedOnDays === '1';
                         globalPriceSettings.isThereAQuantity = firstPrice.isThereAQuantity === '1';
-                        globalPriceSettings.dateFrom = firstPrice.dateFrom || '';
-                        globalPriceSettings.dateTo = firstPrice.dateTo || '';
+                        globalPriceSettings.dateFrom = firstPrice.dateFrom;
+                        globalPriceSettings.dateTo = firstPrice.dateTo;
 
                         $('#isBasedOnDaysGlobal').prop('checked', globalPriceSettings.isBasedOnDays);
                         $('#isThereAQuantityGlobal').prop('checked', globalPriceSettings.isThereAQuantity);

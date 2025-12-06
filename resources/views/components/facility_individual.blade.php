@@ -163,20 +163,21 @@
 
             <div class="modal fade" id="calendarModal" tabindex="-1" aria-labelledby="calendarModalLabel"
                 aria-hidden="true">
-                <div class="modal-dialog modal-lg">
+                <div
+                    class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="calendarModalLabel">Select Dates</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                 aria-label="Close"></button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body p-2 p-md-3">
                             <div class="container-fluid">
-                                <div class="row">
-                                    <div class="col-md-8">
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-8">
                                         <div id="calendar" style="max-width: 100%; margin: 0 auto;"></div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12 col-md-4">
                                         <div class="selected-dates-card p-3">
                                             <h6 class="fw-bold mb-3">Selected Dates</h6>
                                             <div class="mb-2">

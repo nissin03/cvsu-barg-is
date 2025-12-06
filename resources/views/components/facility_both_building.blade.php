@@ -268,12 +268,6 @@
                                                 @endif
                                             @endforeach
                                         </div>
-
-                                        {{-- <p id="quantity-discount-note" class="text-danger mt-2"
-                                            style="display:none;">
-                                            <i class="fas fa-info-circle me-1"></i>
-                                            One or more selected prices require valid discount proof.
-                                        </p> --}}
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary"
@@ -502,8 +496,6 @@
                 </div>
             @endif
 
-            {{-- facility_both_building.blade.php --}}
-            {{-- bookType === whole --}}
             <div class="booking-section">
                 <div class="section-header">
                     <i class="fa fa-user-tag"></i>

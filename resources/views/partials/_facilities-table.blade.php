@@ -2,9 +2,11 @@
     <tr class="facility-row" data-href="{{ route('admin.facilities.edit', ['id' => $facility->id]) }}"
         style="cursor: pointer;">
         <td class="facility-cell">
-
-            <img src="{{ asset('storage/' . $facility->image) }}" alt="{{ $facility->name }}" class="facility-img">
-
+            @if ($facility->image)
+                <img src="{{ asset('storage/' . $facility->image) }}" alt="{{ $facility->name }}" class="facility-img">
+            @else
+                <img src="{{ asset('images/upload/upload-1.png') }}" alt="No Image" class="facility-img">
+            @endif
             <div class="facility-info position-relative">
                 <a href="#" class="body-title-2 facility-name"
                     data-id="{{ $facility->id }}">{{ $facility->name }}</a>
