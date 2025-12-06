@@ -19,8 +19,18 @@ class Price extends Model
         'is_based_on_days',
         'is_there_a_quantity',
         'is_this_a_discount',
-
+        'date_from',
+        'date_to'
     ];
+
+    protected $casts = [
+        'is_based_on_days' => 'boolean',
+        'is_there_a_quantity' => 'boolean',
+        'is_this_a_discount' => 'boolean',
+        'date_from' => 'date',
+        'date_to' => 'date',
+    ];
+
     public function facility()
     {
         return $this->belongsTo(Facility::class);

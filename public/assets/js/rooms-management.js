@@ -14,6 +14,15 @@ function setupRoomsManagement() {
             .on("click", handleSaveRoom);
     });
 
+    // Update sex restriction options when modals are shown
+    $("#addMultipleRoomsModal").on("show.bs.modal", function () {
+        updateSexRestrictionOptions();
+    });
+
+    $("#addBulkRoomsModal").on("show.bs.modal", function () {
+        updateSexRestrictionOptions();
+    });
+
     // Select all rooms functionality
     $(document).on(
         "change",
@@ -90,6 +99,9 @@ function setupRoomsManagement() {
             showFacilityTypeFields(facilityType);
             renderRoomList();
             renderPriceList();
+
+            // Update sex restriction options when facility type changes
+            updateSexRestrictionOptions();
         }
     });
 
@@ -108,10 +120,43 @@ function setupRoomsManagement() {
     });
 }
 
+// Helper function to update sex restriction options based on facility type
+function updateSexRestrictionOptions() {
+    const facilityType = $("#rentalType").val();
+    const sexRestrictionSelects = $(
+        ".room-sex-restriction, .edit-room-sex-restriction, #bulkSexRestriction, .preview-room-sex"
+    );
+
+    sexRestrictionSelects.each(function () {
+        const $select = $(this);
+        const currentValue = $select.val();
+
+        // Find or create the "All" option
+        let $allOption = $select.find('option[value="all"]');
+
+        if (facilityType === "individual") {
+            // Hide "All" option for individual facility type
+            if ($allOption.length) {
+                $allOption.hide();
+            }
+
+            // If "all" was selected, reset to empty
+            if (currentValue === "all") {
+                $select.val("");
+            }
+        } else if (facilityType === "both" || facilityType === "whole_place") {
+            // Show "All" option for both/whole_place facility types
+            if ($allOption.length) {
+                $allOption.show();
+            }
+        }
+    });
+}
+
 // Helper function to check if room name exists
 function isRoomNameUnique(roomName, excludeIndex = -1) {
     return !rooms.some((room, index) => {
-        if (index === excludeIndex) return false; // Skip the current room being edited
+        if (index === excludeIndex) return false;
         return (
             room.room_name &&
             room.room_name.toLowerCase() === roomName.toLowerCase()
@@ -139,7 +184,7 @@ function getDuplicateRoomNames(newRooms, excludeIndices = []) {
 function renderRoomList() {
     const container = $("#roomCardsContainer").empty();
 
-    // Filter out rooms that only have whole_capacity (these shouldn't be displayed as individual rooms)
+    // Filter out rooms that only have whole_capacity
     const individualRooms = rooms.filter(
         (room) => room.room_name || room.capacity || room.sex_restriction
     );
@@ -148,17 +193,14 @@ function renderRoomList() {
         $("#noRoomsMessage").show();
         $("#checkAllRooms").hide();
 
-        // Update hidden field with current rooms data (including whole_capacity records)
         $("#facilityAttributesJson").val(JSON.stringify(rooms));
 
-        // Handle whole_capacity field state for 'both' type
         const facilityType = $("#rentalType").val();
         if (facilityType === "both") {
             const wholeCapacityField = $("#roomCapacityWhole");
             const hasWholeCapacityValue = wholeCapacityField.val() !== "";
 
             if (!hasWholeCapacityValue) {
-                // Check if we have whole_capacity in rooms data
                 const wholeCapacityRoom = rooms.find(
                     (room) => room.whole_capacity && room.whole_capacity > 0
                 );
@@ -176,8 +218,15 @@ function renderRoomList() {
     $("#checkAllRooms").show();
 
     individualRooms.forEach((room, originalIndex) => {
-        // Find the original index in the rooms array
         const actualIndex = rooms.findIndex((r) => r === room);
+
+        // Format sex restriction display
+        let sexRestrictionDisplay = room.sex_restriction || "No Restriction";
+        if (sexRestrictionDisplay) {
+            sexRestrictionDisplay =
+                sexRestrictionDisplay.charAt(0).toUpperCase() +
+                sexRestrictionDisplay.slice(1);
+        }
 
         const card = $(`
             <div class="card p-3 mb-3 room-card" data-index="${actualIndex}">
@@ -186,13 +235,9 @@ function renderRoomList() {
                         <div class="d-flex align-items-center gap-2">
                             <input type="checkbox" class="room-checkbox" data-index="${actualIndex}">
                             <h4 class="pe-2">${room.room_name}</h4>
-                            <span class="badge bg-primary">${
-                                room.sex_restriction || "No Restriction"
-                            }</span>
+                            <span class="badge bg-primary">${sexRestrictionDisplay}</span>
                         </div>
-                        <p class="fw-bold">Capacity: <span>${
-                            room.capacity
-                        }</span></p>
+                        <p class="fw-bold">Capacity: <span>${room.capacity}</span></p>
                     </div>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-outline-warning edit-room-btn" data-index="${actualIndex}">
@@ -208,12 +253,10 @@ function renderRoomList() {
         container.append(card);
     });
 
-    // Always update the hidden field with complete rooms data
     $("#facilityAttributesJson").val(JSON.stringify(rooms));
     updateRoomActionVisibility();
     updateSelectAllRoomCheckbox();
 
-    // Handle whole_capacity field state for 'both' type
     const facilityType = $("#rentalType").val();
     if (facilityType === "both") {
         const wholeCapacityField = $("#roomCapacityWhole");
@@ -222,9 +265,7 @@ function renderRoomList() {
         const currentWholeCapacity = wholeCapacityField.val();
 
         if (individualRooms.length > 0) {
-            // Disable whole_capacity when individual rooms exist, but preserve value in edit mode
             if (isEditMode && currentWholeCapacity) {
-                // Keep the field enabled in edit mode if it has a value
                 wholeCapacityField.prop("disabled", false);
             } else {
                 wholeCapacityField.prop("disabled", true);
@@ -236,7 +277,6 @@ function renderRoomList() {
         } else {
             wholeCapacityField.prop("disabled", false);
 
-            // Check if we have whole_capacity in rooms data but field is empty
             if (!currentWholeCapacity) {
                 const wholeCapacityRoom = rooms.find(
                     (room) => room.whole_capacity && room.whole_capacity > 0
@@ -284,7 +324,6 @@ function handleSaveRoom(e) {
         return;
     }
 
-    // Check for unique room name
     if (!isRoomNameUnique(name, roomEditIndex)) {
         alert(
             `Room name "${name}" already exists. Please use a different name.`
@@ -320,6 +359,9 @@ function handleEditRoom() {
     $(".room-name").val(room.room_name);
     $(".room-capacity").val(room.capacity);
     $(".room-sex-restriction").val(room.sex_restriction);
+
+    // Update sex restriction options before showing modal
+    updateSexRestrictionOptions();
 
     $("#addMultipleRoomsLabel").text("Edit Room");
     $("#saveMultipleRoomsBtn").text("Update Room");
@@ -364,6 +406,10 @@ function handleEditSelectedRooms() {
             sex_restriction: room.sex_restriction || "",
         };
 
+        const facilityType = $("#rentalType").val();
+        const showAllOption =
+            facilityType === "both" || facilityType === "whole_place";
+
         modalContent += `
         <div class="room-edit-section mb-4 p-3 border rounded">
             <div class="row">
@@ -391,7 +437,9 @@ function handleEditSelectedRooms() {
                         }>Female</option>
                         <option value="all" ${
                             room.sex_restriction === "all" ? "selected" : ""
-                        }>All</option>
+                        } ${
+            !showAllOption ? 'style="display:none;"' : ""
+        }>All</option>
                     </select>
                 </div>
             </div>
@@ -418,7 +466,6 @@ function handleEditSelectedRooms() {
             let hasErrors = false;
             let duplicateNames = [];
 
-            // First pass: validate all fields and check for duplicates
             selected.forEach((index) => {
                 const newName = $(`.edit-room-name[data-index="${index}"]`)
                     .val()
@@ -434,9 +481,7 @@ function handleEditSelectedRooms() {
                     return;
                 }
 
-                // Check if the name is unique (excluding all selected rooms being edited)
                 if (!isRoomNameUnique(newName, index)) {
-                    // Check if it's not just keeping its own name
                     const original = originalValues[index];
                     if (
                         newName.toLowerCase() !==
@@ -461,7 +506,6 @@ function handleEditSelectedRooms() {
                 return;
             }
 
-            // Second pass: apply changes
             selected.forEach((index) => {
                 const newName = $(`.edit-room-name[data-index="${index}"]`)
                     .val()
@@ -531,14 +575,12 @@ function handleSaveBulkRooms() {
         return;
     }
 
-    // Generate preview and check for duplicates
     bulkRoomPreview = [];
     const duplicates = [];
 
     for (let i = start; i <= end; i++) {
         const roomName = `${prefix}${i}`;
 
-        // Check if this room name already exists
         if (!isRoomNameUnique(roomName)) {
             duplicates.push(roomName);
         }
@@ -550,7 +592,6 @@ function handleSaveBulkRooms() {
         });
     }
 
-    // If there are duplicates, show warning and stop
     if (duplicates.length > 0) {
         const duplicateList = duplicates.join(", ");
         alert(
@@ -564,6 +605,10 @@ function handleSaveBulkRooms() {
 
 function showBulkRoomPreview() {
     $("#addBulkRoomsLabel").text("Preview Generated Rooms");
+    const facilityType = $("#rentalType").val();
+    const showAllOption =
+        facilityType === "both" || facilityType === "whole_place";
+
     let previewContent = `
         <div class="alert alert-info mb-3">
             <i class="bi bi-info-circle me-2"></i>
@@ -605,7 +650,9 @@ function showBulkRoomPreview() {
                                     room.sex_restriction === "all"
                                         ? "selected"
                                         : ""
-                                }>All</option>
+                                } ${
+            !showAllOption ? 'style="display:none;"' : ""
+        }>All</option>
                             </select>
                         </div>
                     </div>
@@ -652,6 +699,9 @@ function showBulkRoomPreview() {
 
 function showBulkRoomForm() {
     $("#addBulkRoomsLabel").text("Add Multiple Rooms");
+    const facilityType = $("#rentalType").val();
+    const showAllOption =
+        facilityType === "both" || facilityType === "whole_place";
 
     const originalFormContent = `
         <form id="bulkRoomForm">
@@ -678,7 +728,9 @@ function showBulkRoomForm() {
                         <option value="">No Restriction</option>
                         <option value="male">Male</option>
                         <option value="female">Female</option>
-                        <option value="all">All</option>
+                        <option value="all" ${
+                            !showAllOption ? 'style="display:none;"' : ""
+                        }>All</option>
                     </select>
                 </div>
             </div>
@@ -714,7 +766,6 @@ function confirmBulkRooms() {
         return;
     }
 
-    // Store the count before clearing
     const roomCount = bulkRoomPreview.length;
 
     rooms.push(...bulkRoomPreview);
@@ -722,7 +773,6 @@ function confirmBulkRooms() {
     resetBulkRoomModal();
     renderRoomList();
 
-    // Show success message with stored count
     alert(`Successfully added ${roomCount} room(s)!`);
     bulkRoomPreview = [];
 }
