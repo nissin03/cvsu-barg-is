@@ -5,9 +5,9 @@
     <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
         :breadcrumbs="$breadcrumbs" />
 
-    <main class="container my-5">
-        <div class="row">
-            <div class="col-lg-3">
+    <main class="container my-4 my-md-5 shop-page">
+        <div class="row g-3 g-md-4 align-items-start">
+            <div class="col-12 col-lg-3 mb-4 mb-lg-0">
                 <div class="filter-sidebar">
                     <h4 class="section-title">Filters</h4>
 
@@ -62,20 +62,22 @@
                 </div>
             </div>
 
-            <div class="col-lg-9">
+            <div class="col-12 col-lg-9">
                 <button class="mobile-filter-toggle" id="mobileFilterToggle">
                     <i class="fas fa-filter"></i>
                     Filters
                 </button>
 
-                <div class="sort-container">
+                <div
+                    class="sort-container d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3 gap-md-4">
                     <h5 class="mb-0" style="color: var(--text-primary); font-weight: 600;">
                         Filter by:
                     </h5>
-                    <div class="d-flex align-items-center gap-3">
+                    <div
+                        class="d-flex flex-wrap flex-md-nowrap align-items-center gap-2 gap-md-3 w-100 justify-content-md-end">
                         <div class="price-range-filter">
-                            <label for="priceRange" class="me-2 text-muted" style="font-size: 0.9rem;">Price:</label>
-                            <select class="modern-select" name="priceRange" id="priceRange">
+                            <label for="priceRange" class="me-2 text-muted sort-label">Price:</label>
+                            <select class="modern-select w-100 w-sm-auto" name="priceRange" id="priceRange">
                                 <option value="" {{ empty($priceRange) ? 'selected' : '' }}>All Prices</option>
                                 <option value="0-50" {{ $priceRange == '0-50' ? 'selected' : '' }}>₱0 - ₱50</option>
                                 <option value="50-100" {{ $priceRange == '50-100' ? 'selected' : '' }}>₱50 - ₱100</option>
@@ -88,8 +90,8 @@
                         </div>
 
                         <div class="sort-by-filter">
-                            <label for="orderBy" class="me-2 text-muted" style="font-size: 0.9rem;">Sort by:</label>
-                            <select class="modern-select" name="orderBy" id="orderBy">
+                            <label for="orderBy" class="me-2 text-muted sort-label">Sort by:</label>
+                            <select class="modern-select w-100 w-sm-auto" name="orderBy" id="orderBy">
                                 <option value="-1" {{ $order == -1 ? 'selected' : '' }}>Default</option>
                                 <option value="5" {{ $order == 5 ? 'selected' : '' }}>Best Sellers</option>
                                 <option value="1" {{ $order == 1 ? 'selected' : '' }}>Newest First</option>
@@ -181,28 +183,24 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            let isSubmitting = false;
-            let currentPage = {{ $products->currentPage() }};
-            let filterTimeout;
+            var isSubmitting = false;
+            var currentPage = {{ $products->currentPage() }};
+            var filterTimeout;
 
             function submitFilterForm() {
                 if (isSubmitting) return;
                 isSubmitting = true;
-
                 clearTimeout(filterTimeout);
-                filterTimeout = setTimeout(() => {
-                    const categories = [];
+                filterTimeout = setTimeout(function() {
+                    var categories = [];
                     $("input[name='categories']:checked").each(function() {
                         categories.push($(this).val());
                     });
                     $("#hdnCategories").val(categories.join(","));
-
-                    const priceRange = $('#priceRange').val() || '';
+                    var priceRange = $('#priceRange').val() || '';
                     $('#hdnPriceRange').val(priceRange);
-
                     $('input[name="page"]').val(1);
                     currentPage = 1;
-
                     loadFilteredProducts();
                 }, 300);
             }
@@ -221,7 +219,9 @@
                     },
                     error: function(xhr) {
                         console.error("Error: " + xhr.status + " " + xhr.statusText);
-                        toastr.error('Error loading products.');
+                        if (typeof toastr !== 'undefined') {
+                            toastr.error('Error loading products.');
+                        }
                         isSubmitting = false;
                     }
                 });
@@ -230,21 +230,23 @@
             function updatePagination() {
                 $('.pagination .page-link').off('click').on('click', function(e) {
                     e.preventDefault();
-                    const $this = $(this);
-                    const href = $this.attr('href');
-
-                    let page = 1;
+                    var $this = $(this);
+                    var href = $this.attr('href');
+                    var page = 1;
                     if (href) {
-                        const urlParams = new URLSearchParams(href.split('?')[1]);
+                        var urlParams = new URLSearchParams(href.split('?')[1]);
                         page = urlParams.get('page') || 1;
                     } else {
-                        const linkText = $this.text().trim();
-                        if (linkText === '‹' || linkText === '«') page = currentPage - 1;
-                        else if (linkText === '›' || linkText === '»') page = currentPage + 1;
-                        else page = parseInt(linkText) || currentPage;
+                        var linkText = $this.text().trim();
+                        if (linkText === '‹' || linkText === '«') {
+                            page = currentPage - 1;
+                        } else if (linkText === '›' || linkText === '»') {
+                            page = currentPage + 1;
+                        } else {
+                            page = parseInt(linkText) || currentPage;
+                        }
                     }
-
-                    if (page != currentPage) {
+                    if (page !== currentPage) {
                         $('input[name="page"]').val(page);
                         currentPage = parseInt(page);
                         loadFilteredProducts();
@@ -257,21 +259,18 @@
             });
 
             $("input[name='categories']").on("change", function() {
-                const $this = $(this);
-                const isParent = $this.hasClass('parent-category');
-                const isChecked = $this.is(':checked');
-
-                if (isParent) {} else {
-                    const $subcategoryItem = $this.closest('li.subcategory');
+                var $this = $(this);
+                var isParent = $this.hasClass('parent-category');
+                if (!isParent) {
+                    var $subcategoryItem = $this.closest('li.subcategory');
                     if ($subcategoryItem.length) {
-                        const $parentItem = $subcategoryItem.prevAll('li:not(.subcategory)').first();
+                        var $parentItem = $subcategoryItem.prevAll('li:not(.subcategory)').first();
                         if ($parentItem.length) {
-                            const totalSubcategories = $parentItem.nextUntil('li:not(.subcategory)').length;
-                            const checkedSubcategories = $parentItem.nextUntil('li:not(.subcategory)')
-                                .find("input[name='categories']:checked").length;
-
-                            $parentItem.find("input[name='categories']")
-                                .prop('checked', totalSubcategories === checkedSubcategories);
+                            var totalSubcategories = $parentItem.nextUntil('li:not(.subcategory)').length;
+                            var checkedSubcategories = $parentItem.nextUntil('li:not(.subcategory)').find(
+                                "input[name='categories']:checked").length;
+                            $parentItem.find("input[name='categories']").prop('checked',
+                                totalSubcategories === checkedSubcategories);
                         }
                     }
                 }
@@ -285,32 +284,45 @@
 
             updatePagination();
 
-            const mobileFilterToggle = document.getElementById('mobileFilterToggle');
-            const mobileFilterSidebar = document.getElementById('mobileFilterSidebar');
-            const filterOverlay = document.getElementById('filterOverlay');
-            const filterClose = document.getElementById('filterClose');
+            var $mobileFilterSidebar = $('#mobileFilterSidebar');
+            var $filterOverlay = $('#filterOverlay');
 
             function openMobileFilter() {
-                mobileFilterSidebar?.classList.add('active');
-                filterOverlay?.classList.add('active');
-                document.body.style.overflow = 'hidden';
+                $mobileFilterSidebar.addClass('active');
+                $filterOverlay.addClass('active');
+                $('body').css('overflow', 'hidden');
             }
 
             function closeMobileFilter() {
-                mobileFilterSidebar?.classList.remove('active');
-                filterOverlay?.classList.remove('active');
-                document.body.style.overflow = 'auto';
+                $mobileFilterSidebar.removeClass('active');
+                $filterOverlay.removeClass('active');
+                $('body').css('overflow', 'auto');
             }
 
-            mobileFilterToggle?.addEventListener('click', openMobileFilter);
-            filterClose?.addEventListener('click', closeMobileFilter);
-            filterOverlay?.addEventListener('click', closeMobileFilter);
+            $('#mobileFilterToggle').on('click', function(e) {
+                e.preventDefault();
+                openMobileFilter();
+            });
+
+            $('#filterClose, #filterOverlay').on('click', function() {
+                closeMobileFilter();
+            });
+
+            $(window).on('resize', function() {
+                if (window.innerWidth >= 576) {
+                    closeMobileFilter();
+                }
+            });
 
             @if (session('success'))
-                toastr.success('{{ session('success') }}');
+                if (typeof toastr !== 'undefined') {
+                    toastr.success('{{ session('success') }}');
+                }
             @endif
             @if (session('error'))
-                toastr.error('{{ session('error') }}');
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('{{ session('error') }}');
+                }
             @endif
         });
     </script>
