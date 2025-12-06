@@ -21,3 +21,4 @@ yarn-error.log
 /gitignore
 /_ide_helper.php
 /public/images
+/public/uploads
