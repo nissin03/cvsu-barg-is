@@ -39,7 +39,25 @@ class NotificationManager {
             const response = await this.axios.get(
                 this.endpoints.all || "/admin/notifications"
             );
-            const notifications = response.data.data || response.data;
+
+            let notifications = [];
+            // const notifications = response.data.data || response.data;
+            if (response.data) {
+                if (Array.isArray(response.data)) {
+                    notifications = response.data;
+                } else if (
+                    response.data.data &&
+                    Array.isArray(response.data.data)
+                ) {
+                    notifications = response.data.data;
+                } else if (
+                    response.data.items &&
+                    Array.isArray(response.data.items)
+                ) {
+                    notifications = response.data.items;
+                }
+            }
+
             this.updateNotificationUI(notifications);
             this.updateUnreadCount();
         } catch (error) {
@@ -52,6 +70,10 @@ class NotificationManager {
      * Update notification UI
      */
     updateNotificationUI(notifications) {
+        if (!Array.isArray(notifications)) {
+            console.warn("Notifications is not an array:", notifications);
+            notifications = [];
+        }
         const countElement = document.querySelector(".notification-count");
         if (countElement) {
             countElement.textContent = notifications.length;
@@ -609,7 +631,24 @@ class NotificationManager {
             const allList = document.getElementById("all-notification-list");
 
             if (allList) {
-                const notifications = response.data.data || response.data;
+                // const notifications = response.data.data || response.data;
+                let notifications = [];
+
+                if (response.data) {
+                    if (Array.isArray(response.data)) {
+                        notifications = response.data;
+                    } else if (
+                        response.data.data &&
+                        Array.isArray(response.data.data)
+                    ) {
+                        notifications = response.data.data;
+                    } else if (
+                        response.data.items &&
+                        Array.isArray(response.data.items)
+                    ) {
+                        notifications = response.data.items;
+                    }
+                }
                 if (notifications.length === 0) {
                     allList.innerHTML = `
                         <div class="notification-item">
