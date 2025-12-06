@@ -4,10 +4,11 @@ namespace App\Notifications;
 
 use App\Models\Order;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\BroadcastMessage;
-use Illuminate\Notifications\Notification;
 
 class OrderPlacedNotification extends Notification implements ShouldQueue
 {
@@ -18,6 +19,8 @@ class OrderPlacedNotification extends Notification implements ShouldQueue
     public function __construct(Order $order)
     {
         $this->order = $order;
+        Log::info('Order');
+        Log::info(json_encode($order));
     }
 
     /**
