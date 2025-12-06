@@ -375,6 +375,26 @@
             grid-template-columns: 1fr
         }
     }
+
+    @media (max-width: 576px) {
+        #addonsModal-{{ $section }} .modal-dialog {
+            max-width: 100%;
+            margin: .5rem;
+        }
+
+        #addonsModal-{{ $section }} .accordion-button .d-flex {
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        #addonsModal-{{ $section }} .addon-price-badge {
+            font-size: .8rem;
+            padding: .35rem .6rem;
+            display: inline-flex;
+            align-self: flex-start;
+        }
+    }
 </style>
 
 @if ($filteredAddons->count() > 0)

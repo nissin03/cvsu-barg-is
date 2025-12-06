@@ -882,4 +882,21 @@
     }
 }
 
+/* Mobile horizontal scroll for FullCalendar */
+@media (max-width: 576px) {
+    .fc-mobile-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .fc-mobile-scroll .fc {
+        min-width: 650px;
+    }
+
+    /* Ensure modal dialogs are truly full-width on small devices */
+    .modal-dialog.modal-fullscreen-sm-down {
+        margin: 0;
+        max-width: 100%;
+    }
+}
 

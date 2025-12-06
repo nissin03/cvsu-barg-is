@@ -375,6 +375,30 @@
             grid-template-columns: 1fr
         }
     }
+
+    @media (max-width: 576px) {
+        #addonsModal-{{ $section }} .accordion-button>.d-flex {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+
+        #addonsModal-{{ $section }} .addon-price-badge {
+            align-self: flex-start;
+            max-width: 100%;
+            white-space: normal;
+            font-size: 0.8rem;
+            padding: 0.35rem 0.75rem;
+        }
+
+        #addonsModal-{{ $section }} .accordion-button strong {
+            display: block;
+            white-space: normal;
+            word-break: break-word;
+        }
+    }
+</style>
+
 </style>
 
 @if ($filteredAddons->count() > 0)

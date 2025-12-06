@@ -74,14 +74,6 @@ class ProductSeeder extends Seeder
                 'image'  => 'IMG_0163.jpg',
                 'images' => ['IMG_0163.jpg', 'IMG_0164.jpg'],
             ],
-            'CvSU Ballpen' => [
-                'image'  => 'IMG_0163.jpg',
-                'images' => ['IMG_0163.jpg', 'IMG_0164.jpg'],
-            ],
-            'Books' => [
-                'image'  => 'IMG_0171.jpg',
-                'images' => ['IMG_0175.jpg', 'IMG_0176.jpg', 'IMG_0180.jpg', 'ballpen.jpg'],
-            ],
             'Blouse' => [
                 'image'  => 'blouse.jpg',
                 'images' => ['blouse.jpg'],
@@ -346,34 +338,6 @@ Refill: Standard replaceable ink cartridge
 Design: CvSU logo printed on barrel
 Usage: Perfect for exams and note-taking
 Included: Single pen with protective cap',
-            ],
-            'CvSU Ballpen' => [
-                'short' => 'Official CvSU ballpens for all your writing needs!',
-                'long' => 'The official CvSU ballpen features smooth ink flow and comfortable grip for extended writing sessions. Perfect for taking notes during lectures, completing assignments, or official university documentation.
-
-BALLPEN SPECIFICATIONS:
-Type: Retractable ballpoint pen
-Material: Durable plastic construction
-Ink: Quick-drying blue ink
-Features: Click mechanism, rubber grip
-Refill: Replaceable standard cartridge
-Design: Prominent CvSU branding
-Usage: Ideal for long writing sessions
-Reliability: Consistent ink flow guaranteed',
-            ],
-            'Books' => [
-                'short' => 'Expand your knowledge with CvSU publications and notebooks!',
-                'long' => 'A collection of CvSU academic publications, research journals, and educational materials. Essential resources for students and faculty, covering various disciplines and university research achievements.
-
-BOOK SPECIFICATIONS:
-Type: Academic publications and notebooks
-Material: Quality paper with durable covers
-Size: Various sizes available
-Page Count: Depending on publication
-Paper Quality: 70-80 GSM for readability
-Features: CvSU research and academic content
-Design: Professional academic layout
-Usage: Reference material and study resources',
             ],
             'Blouse' => [
                 'short' => 'Professional CvSU blouses for the modern student!',
@@ -726,12 +690,6 @@ Usage: Perfect for beverages on campus',
                 ],
             ],
             [
-                'name'       => 'CvSU Ballpen',
-                'category'   => 'Stationery > Ballpens',
-                'price'      => 40,
-                'attributes' => [],
-            ],
-            [
                 'name'       => 'Ballpens',
                 'category'   => 'Stationery > Ballpens',
                 'price'      => 40,
@@ -741,11 +699,6 @@ Usage: Perfect for beverages on campus',
                         'Green' => 40,
                     ],
                 ],
-            ],
-            [
-                'name'       => 'Books',
-                'category'   => 'Stationery > Books',
-                'attributes' => [],
             ],
             [
                 'name'       => 'Blouse',
