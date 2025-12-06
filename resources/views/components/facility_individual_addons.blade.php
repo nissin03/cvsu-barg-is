@@ -328,7 +328,6 @@
         border: 1px solid #b8daff;
     }
 
-    /* Flatpickr custom styles */
     #addonsModal .flatpickr-input {
         background-color: white !important;
     }
@@ -364,7 +363,66 @@
             grid-template-columns: 1fr;
         }
     }
+
+    /* --- Overlap fix & tighter header layout (appended) --- */
+    #addonsModal .accordion-button {
+        overflow: visible;
+        min-height: 3.25rem;
+    }
+
+    #addonsModal .accordion-button .d-flex {
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+
+    #addonsModal .accordion-button strong {
+        display: block;
+        line-height: 1.25;
+        word-break: break-word;
+        white-space: normal;
+        max-width: 100%;
+    }
+
+    #addonsModal .addon-price-badge {
+        position: static !important;
+        margin-left: auto;
+        white-space: nowrap;
+        font-size: .85rem !important;
+        padding: .35rem .6rem !important;
+        border-radius: 9999px !important;
+        flex: 0 0 auto;
+    }
+
+    #addonsModal .accordion-button::after {
+        margin-left: .5rem;
+        flex: 0 0 auto;
+    }
+
+    #addonsModal .accordion-button>.d-flex>div:first-child {
+        min-width: 0;
+    }
+
+    @media (max-width: 420px) {
+        #addonsModal .accordion-button {
+            padding: 0.9rem 1rem;
+        }
+
+        #addonsModal .accordion-button strong {
+            font-size: .95rem;
+        }
+
+        #addonsModal .addon-price-badge {
+            font-size: .78rem !important;
+            padding: .3rem .55rem !important;
+        }
+    }
+
+    #addonsModal .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
 </style>
+
 
 @if ($filteredAddons->count() > 0)
     <div class="mb-3">
@@ -387,7 +445,7 @@
     </div>
 
     <div class="modal fade" id="addonsModal" tabindex="-1" aria-labelledby="addonsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="addonsModalLabel">
@@ -395,7 +453,7 @@
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-2 p-md-3">
 
                     @if ($perUnitAddons->count() > 0)
                         <div class="addon-section">
@@ -1035,7 +1093,7 @@
                         </div>
                     @endif
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer p-2 p-md-3">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Save Changes</button>
                 </div>

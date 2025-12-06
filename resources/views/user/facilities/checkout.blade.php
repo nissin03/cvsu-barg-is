@@ -1292,7 +1292,7 @@
                                         </svg>
                                         <span class="file-upload-text">
                                             <span class="file-upload-title">Upload Qualification Document</span>
-                                            <span class="file-upload-subtitle">PDF or DOC files (Max 10MB)</span>
+                                            <span class="file-upload-subtitle">PDF or DOC files (Max 1MB)</span>
                                         </span>
                                         <input type="file" id="qualification" name="qualification"
                                             class="file-upload-input" accept=".pdf,.doc,.docx" required>
@@ -1386,8 +1386,7 @@
                                             </svg>
                                             <span class="file-upload-text">
                                                 <span class="file-upload-title">Upload Discount Proof</span>
-                                                <span class="file-upload-subtitle">JPG, PNG, or PDF (Max
-                                                    5MB)</span>
+                                                <span class="file-upload-subtitle">JPG, PNG, or PDF (Max 1MB)</span>
                                             </span>
                                             <input type="file" id="discount_proof" name="discount_proof"
                                                 class="file-upload-input @error('discount_proof') is-invalid @enderror"
@@ -1442,7 +1441,9 @@
             fileInput.addEventListener('change', function(e) {
                 if (e.target.files.length > 0) {
                     const file = e.target.files[0];
-                    const validTypes = ['application/pdf', 'application/msword',
+                    const validTypes = [
+                        'application/pdf',
+                        'application/msword',
                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
                     ];
                     const fileType = file.type;
@@ -1462,11 +1463,11 @@
                         return;
                     }
 
-                    if (file.size > 10 * 1024 * 1024) {
+                    if (file.size > 1 * 1024 * 1024) {
                         Swal.fire({
                             icon: 'error',
                             title: 'File too large',
-                            text: 'File size exceeds 10MB limit',
+                            text: 'File size exceeds 1MB limit',
                             confirmButtonColor: '#3b82f6',
                             confirmButtonText: 'OK'
                         }).then(() => {
@@ -1488,61 +1489,8 @@
                 filePreview.style.display = 'none';
             });
 
-
             const discountProofInput = document.getElementById('discount_proof');
 
-            // if (discountProofInput) {
-            //     const discountProofName = document.getElementById('discount-proof-name');
-            //     const clearDiscountProofButton = document.getElementById('clear-discount-proof');
-            //     const discountProofPreview = document.getElementById('discount-proof-preview');
-
-            //     discountProofInput.addEventListener('change', function(e) {
-            //         if (e.target.files.length > 0) {
-            //             const file = e.target.files[0];
-            //             const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-
-            //             if (!validTypes.includes(file.type)) {
-            //                 Swal.fire({
-            //                     icon: 'error',
-            //                     title: 'Invalid File Type',
-            //                     text: 'Please upload only JPG, PNG, or PDF files',
-            //                     confirmButtonColor: '#3b82f6',
-            //                     confirmButtonText: 'OK'
-            //                 }).then(() => {
-            //                     this.value = '';
-            //                     discountProofName.textContent = 'No file selected';
-            //                     discountProofPreview.style.display = 'none';
-            //                 });
-            //                 return;
-            //             }
-
-            //             if (file.size > 10 * 1024 * 1024) {
-            //                 Swal.fire({
-            //                     icon: 'error',
-            //                     title: 'File too large',
-            //                     text: 'File size exceeds 10MB limit',
-            //                     confirmButtonColor: '#3b82f6',
-            //                     confirmButtonText: 'OK'
-            //                 }).then(() => {
-            //                     this.value = '';
-            //                     discountProofName.textContent = 'No file selected';
-            //                     discountProofPreview.style.display = 'none';
-            //                 });
-            //                 return;
-            //             }
-
-            //             discountProofName.textContent = file.name;
-            //             discountProofPreview.classList.remove('d-none');
-            //             discountProofPreview.style.display = 'flex';
-            //         }
-            //     });
-
-            //     clearDiscountProofButton.addEventListener('click', function() {
-            //         discountProofInput.value = '';
-            //         discountProofName.textContent = 'No file selected';
-            //         discountProofPreview.style.display = 'none';
-            //     });
-            // }
             if (discountProofInput) {
                 const discountProofName = document.getElementById('discount-file-name');
                 const clearDiscountProofButton = document.getElementById('clear-discount-file');
@@ -1552,7 +1500,6 @@
 
                 discountProofInput.addEventListener('change', function(e) {
                     if (e.target.files.length > 0) {
-
                         const file = e.target.files[0];
                         const validTypes = [
                             'application/pdf',
@@ -1575,11 +1522,11 @@
                             return;
                         }
 
-                        if (file.size > 5 * 1024 * 1024) {
+                        if (file.size > 1 * 1024 * 1024) {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'File too large',
-                                text: 'File size exceeds 5MB limit',
+                                text: 'File size exceeds 1MB limit',
                                 confirmButtonColor: '#3b82f6'
                             }).then(() => {
                                 this.value = '';
@@ -1601,11 +1548,12 @@
                 });
             }
 
-
             document.querySelector('form[name="checkout-form"]').addEventListener('submit', function(e) {
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
-                    const validTypes = ['application/pdf', 'application/msword',
+                    const validTypes = [
+                        'application/pdf',
+                        'application/msword',
                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
                     ];
 
@@ -1618,17 +1566,19 @@
                             confirmButtonColor: '#3b82f6',
                             confirmButtonText: 'OK'
                         });
+                        return;
                     }
 
-                    if (file.size > 10 * 1024 * 1024) {
+                    if (file.size > 1 * 1024 * 1024) {
                         e.preventDefault();
                         Swal.fire({
                             icon: 'error',
                             title: 'File too large',
-                            text: 'File size exceeds 10MB limit',
+                            text: 'File size exceeds 1MB limit',
                             confirmButtonColor: '#3b82f6',
                             confirmButtonText: 'OK'
                         });
+                        return;
                     }
                 }
             });
