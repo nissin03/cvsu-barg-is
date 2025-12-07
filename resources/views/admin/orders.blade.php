@@ -320,7 +320,7 @@
                                             <option value="">Select Time Slot</option>
                                             @foreach ($timeSlots as $slot)
                                                 <option value="{{ $slot }}"
-                                                    {{ request('time_slot') == $slot ? 'selected' : '' }}>
+                                                    {{ request('time_slot_range') == $slot ? 'selected' : '' }}>
                                                     {{ $slot }}
                                                 </option>
                                             @endforeach
