@@ -23,6 +23,7 @@ use App\Models\PaymentPriceDiscount;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use App\Models\QualificationApproval;
+use App\Services\NotificationService;
 use App\Models\TransactionReservation;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
@@ -34,6 +35,11 @@ use App\Notifications\ReservationCreateNotification;
 class UserFacilityController extends Controller
 {
 
+    protected $notificationService;
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     public function index()
     {
         try {
@@ -1482,7 +1488,8 @@ class UserFacilityController extends Controller
                             ]);
                         }
                     }
-                    $user->notify(new ReservationCreateNotification($payment));
+                    // $user->notify(new ReservationCreateNotification($payment));
+                    $this->notificationService->sendCreateReservation($user, $payment);
 
                     PaymentDetail::create([
                         'payment_id'  => $payment->id,
@@ -1598,6 +1605,7 @@ class UserFacilityController extends Controller
                             'discount_proof_path' => $discountProofPath,
                         ]);
                     }
+                    $this->notificationService->sendCreateReservation($user, $payment);
 
                     PaymentDetail::create([
                         'payment_id'  => $payment->id,
@@ -2003,6 +2011,7 @@ class UserFacilityController extends Controller
                             }
                         }
 
+                        $this->notificationService->sendCreateReservation($user, $payment);
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
                             'facility_id' => $facility->id,
@@ -2367,6 +2376,9 @@ class UserFacilityController extends Controller
                     } elseif ($bookingType === 'whole') {
                         $selectedRoomId = $reservationData['selected_room_id'];
                         $selectedRoom = $facility->facilityAttributes()->find($selectedRoomId);
+                        $requiresDiscountProof = $reservationData['requires_discount_proof'] ?? false;
+                        $discountPriceId = $reservationData['discount_price_id'] ?? null;
+                        $internalDiscountPriceIds = $reservationData['internal_discount_price_ids'] ?? [];
 
                         $price = $facility->prices()
                             ->where('price_type', 'whole')
@@ -2412,13 +2424,18 @@ class UserFacilityController extends Controller
                             'user_id' => $user->id,
                             'status' => 'pending',
                             'total_price' => $paymentSubtotal,
-                            'gross_total' => $reservationData['gross_total'] ?? $reservationData['subtotal'],
-                            'discount_id' => $reservationData['discount_id'] ?? null,
-                            'discount_percent' => $reservationData['discount_percent'] ?? null,
-                            'discount_amount' => $reservationData['discount_amount'] ?? null,
-                            'discount_applies_to' => $reservationData['discount_applies_to'] ?? null,
-                            'discount_proof_path' => $discountProofPath,
                         ]);
+
+                        if ($requiresDiscountProof && $discountProofPath) {
+                            if ($discountPriceId) {
+                                PaymentPriceDiscount::create([
+                                    'payment_id' => $payment->id,
+                                    'price_id' => $discountPriceId,
+                                    'discount_proof_path' => $discountProofPath,
+                                ]);
+                            }
+                        }
+                        $this->notificationService->sendCreateReservation($user, $payment);
 
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
@@ -2844,7 +2861,7 @@ class UserFacilityController extends Controller
                             }
                         }
 
-                        $user->notify(new ReservationCreateNotification($payment));
+                        $this->notificationService->sendCreateReservation($user, $payment);
 
                         PaymentDetail::create([
                             'payment_id' => $payment->id,
@@ -3266,7 +3283,7 @@ class UserFacilityController extends Controller
                                 ]);
                             }
                         }
-                        $user->notify(new ReservationCreateNotification($payment));
+                        $this->notificationService->sendCreateReservation($user, $payment);
 
                         PaymentDetail::create([
                             'payment_id' => $payment->id,

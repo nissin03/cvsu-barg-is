@@ -2,12 +2,17 @@
 
 namespace App\Services;
 
+use App\Models\QualificationApproval;
 use App\Models\User;
-use App\Notifications\LowStockNotification;
-use App\Notifications\NewContactMessage;
 use App\Notifications\StockUpdate;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Log;
+use App\Notifications\NewContactMessage;
+use App\Notifications\LowStockNotification;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\OrderPlacedNotification;
+use App\Notifications\ReservationCreateNotification;
+use App\Notifications\QualificationCanceledNotification;
+use App\Notifications\ReservationCanceledNotification;
 
 class NotificationService
 {
@@ -48,16 +53,48 @@ class NotificationService
     /**
      * Send notification to all users
      */
+    // public function sendToAllUsers($notification, array $additionalData = [])
+    // {
+    //     try {
+    //         $users = User::where('utype', 'USR')->get();
+    //         if ($users->isNotEmpty()) {
+    //             Notification::send($users, $notification);
+    //             Log::info("Notification sent to " . $users->count() . " users: " . get_class($notification));
+    //             return true;
+    //         }
+    //         return false;
+    //     } catch (\Exception $e) {
+    //         Log::error("Failed to send notification to users: " . $e->getMessage());
+    //         return false;
+    //     }
+    // }
+
     public function sendToAllUsers($notification, array $additionalData = [])
     {
         try {
-            $users = User::where('utype', 'USR')->get();
-            if ($users->isNotEmpty()) {
+            $totalUsers = User::where('utype', 'USR')->count();
+
+            if ($totalUsers === 0) {
+                Log::warning("No users found to send notification");
+                return false;
+            }
+
+            if ($totalUsers < 1000) {
+                $users = User::where('utype', 'USR')->get();
                 Notification::send($users, $notification);
-                Log::info("Notification sent to " . $users->count() . " users: " . get_class($notification));
+                Log::info("Notification sent to {$totalUsers} users: " . get_class($notification));
                 return true;
             }
-            return false;
+
+            $sentCount = 0;
+
+            User::where('utype', 'USR')
+                ->chunk(500, function ($users) use ($notification, &$sentCount) {
+                    Notification::send($users, $notification);
+                    $sentCount += $users->count();
+                });
+            Log::info("Notification queued/sent to {$sentCount} users: " . get_class($notification));
+            return true;
         } catch (\Exception $e) {
             Log::error("Failed to send notification to users: " . $e->getMessage());
             return false;
@@ -79,7 +116,7 @@ class NotificationService
     public function sendNewContactMessage($contact)
     {
         $notification = new NewContactMessage($contact);
-        return $this->sendToAdmins($notification);
+        return $this->sendToAdmins(notification: $notification);
     }
 
     /**
@@ -91,6 +128,29 @@ class NotificationService
         return $this->sendToAllUsers($notification);
     }
 
+    public function sendOrderPlace(User $user, $order)
+    {
+        $notification = new OrderPlacedNotification($order);
+        return $this->sendToUser($user, $notification);
+    }
+
+    public function sendCreateReservation(User $user, $payment)
+    {
+        $notification = new ReservationCreateNotification($payment);
+        return $this->sendToUser($user, $notification);
+    }
+
+    public function sendCanceledReservation(User $user, $reservation, $isUserCancel = false)
+    {
+        $notification = new ReservationCanceledNotification($reservation, $isUserCancel);
+        return $this->sendToUser($user, $notification);
+    }
+
+    public function sendCanceledQualification(User $user,  $qualification)
+    {
+        $notification = new QualificationCanceledNotification($qualification);
+        return $this->sendToUser($user, $notification);
+    }
     /**
      * Get user's notifications with pagination
      */

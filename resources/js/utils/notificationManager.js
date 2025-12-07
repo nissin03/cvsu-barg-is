@@ -352,6 +352,16 @@ class NotificationManager {
                 this.handleReservationCanceled(event.payment);
             });
 
+        this.echo
+            .private(`App.Models.User.${this.userId}`)
+            .listen(".QualificationCanceled", (event) => {
+                console.log(
+                    "Qualification canceled notification received:",
+                    event
+                );
+                this.handleQualificationCanceled(event.qualification);
+            });
+
         if (this.isAdmin) {
             this.echo
                 .private("admin-notification")
@@ -474,6 +484,26 @@ class NotificationManager {
                     cancellation_reason: payment.cancellation_reason,
                     total_price: payment.total_price,
                 },
+            },
+            created_at: new Date().toISOString(),
+        };
+
+        this.handleNewNotification(notification);
+        this.showCancellationToast(notification.data);
+    }
+
+    handleQualificationCanceled(qualification) {
+        const title = "Qualification Canceled";
+        const reason =
+            qualification.cancellation_reason || "No reason provided.";
+
+        const notification = {
+            id: Date.now(),
+            data: {
+                title,
+                body: `Your qualification "${qualification.title}" has been canceled. Reason: ${reason}`,
+                icon: "fas fa-times-circle",
+                url: `/user/qualification/${qualification.id}/details`,
             },
             created_at: new Date().toISOString(),
         };

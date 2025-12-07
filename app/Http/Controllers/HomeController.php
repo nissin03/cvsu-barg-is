@@ -14,6 +14,7 @@ use App\Helpers\ProfileHelper;
 use Illuminate\Support\Carbon;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationService;
 use App\Events\ContactMessageReceived;
 use App\Notifications\NewContactMessage;
 use Illuminate\Support\Facades\Notification;
@@ -21,6 +22,12 @@ use App\Notifications\ContactMessageNotification;
 
 class HomeController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
 
     public function sample()
     {
@@ -77,8 +84,9 @@ class HomeController extends Controller
         $contact->message = $request->message;
         $contact->save();
 
-        $admin = User::where('utype', 'ADM')->get();
-        Notification::send($admin, new NewContactMessage($contact));
+        // $admin = User::where('utype', 'ADM')->get();
+        // Notification::send($admin, new NewContactMessage($contact));
+        $this->notificationService->sendNewContactMessage($contact);
         return redirect()->back()->with('success', 'Your message has been sent successfully.');
     }
 

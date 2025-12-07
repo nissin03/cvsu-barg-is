@@ -19,16 +19,24 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use App\Models\ProductAttributeValue;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use App\Notifications\LowStockNotification;
 use App\Notifications\PreOrderNotification;
-use App\Notifications\OrderPlacedNotification;
 use Illuminate\Support\Facades\Notification;
 use Surfsidemedia\Shoppingcart\Facades\Cart;
+use App\Notifications\OrderPlacedNotification;
 
 class CartController extends Controller
 {
+    private const MAX_SLOT_COUNT = 50;
+
+    protected $notificationService;
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     public function index()
     {
         $items = Cart::instance('cart')->content();
@@ -340,7 +348,6 @@ class CartController extends Controller
             throw new \Exception('Invalid time slot selected.');
         }
     }
-    private const MAX_SLOT_COUNT = 50;
     public function place_an_order(Request $request)
     {
         $user = Auth::user();
@@ -379,7 +386,8 @@ class CartController extends Controller
 
 
             // Send notification to user
-            $user->notify(new OrderPlacedNotification($order));
+            // $user->notify(new OrderPlacedNotification($order));
+            $this->notificationService->sendOrderPlace($user, $order);
 
             Cart::instance('cart')->destroy();
             Session::forget('checkout');
@@ -407,8 +415,9 @@ class CartController extends Controller
             if ($variant->quantity <= 20) {
                 $product = $variant->product;
                 $product->load('attributeValues.productAttribute');
-                $admins = User::where('utype', 'ADM')->get();
-                Notification::send($admins, new LowStockNotification($product, $variant->quantity));
+                // $admins = User::where('utype', 'ADM')->get();
+                // Notification::send($admins, new LowStockNotification($product, $variant->quantity));
+                $this->notificationService->sendLowStockAlert($product, $variant->quantity);
             }
 
             $orderItem->variant_id = $variant->id;
@@ -425,8 +434,9 @@ class CartController extends Controller
 
             if ($product->quantity <= 20) {
                 $product->load('attributeValues.productAttribute');
-                $admins = User::where('utype', 'ADM')->get();
-                Notification::send($admins, new LowStockNotification($product, $product->quantity));
+                // $admins = User::where('utype', 'ADM')->get();
+                // Notification::send($admins, new LowStockNotification($product, $product->quantity));
+                $this->notificationService->sendLowStockAlert($product, $product->quantity);
             }
 
             $orderItem->variant_id = null;

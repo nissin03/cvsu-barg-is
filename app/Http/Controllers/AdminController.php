@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Models\ProductAttributeValue;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Notification;
 use Intervention\Image\Laravel\Facades\Image;
@@ -44,10 +45,16 @@ class AdminController extends Controller
 {
 
     protected $imageProcessor;
-    public function __construct(ImageProcessor $imageProcessor)
-    {
+    protected $notificationService;
+    public function __construct(
+        ImageProcessor $imageProcessor,
+        NotificationService $notificationService,
+    ) {
         $this->imageProcessor = $imageProcessor;
+        $this->notificationService = $notificationService;
     }
+
+
     public function index(Request $request)
     {
         $currentYear = Carbon::now()->year;
@@ -1015,13 +1022,16 @@ class AdminController extends Controller
         }
 
         if ($product->stock_status === 'instock' && $previousStockStatus !== 'instock') {
-            $users = User::where('utype', 'USR')->get();
-
-            foreach ($users as $user) {
-                $user->notify(
-                    new StockUpdate($product, "Good news! The product {$product->name} is now back in stock.")
-                );
-            }
+            // $users = User::where('utype', 'USR')->get();
+            // foreach ($users as $user) {
+            //     $user->notify(
+            //         new StockUpdate($product, "Good news! The product {$product->name} is now back in stock.")
+            //     );
+            // }
+            $this->notificationService->sendStockUpdate(
+                $product,
+                "Good news! The product {$product->name} is now back in stock."
+            );
         }
 
         return redirect()->route('admin.products')->with('status', 'Product has been updated successfully!');
