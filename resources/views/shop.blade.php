@@ -6,7 +6,7 @@
         :breadcrumbs="$breadcrumbs" />
 
     <main class="container my-4 my-md-5 shop-page">
-        <div class="row g-3 g-md-4 align-items-start">
+        <div class="row g-3 g-md-4">
             <div class="col-12 col-lg-3 mb-4 mb-lg-0">
                 <div class="filter-sidebar">
                     <h4 class="section-title">Filters</h4>

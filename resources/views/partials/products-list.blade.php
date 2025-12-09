@@ -186,7 +186,7 @@
     }
 
     .price-value {
-        font-size: clamp(1.25rem, 1.1rem + 0.4vw, 1.6rem);
+        font-size: clamp(0.95rem, 0.85rem + 0.25vw, 1.25rem);
         font-weight: 700;
         letter-spacing: -0.025em;
         white-space: nowrap;
@@ -298,7 +298,7 @@
 
     @media (min-width: 1200px) {
         .price-value {
-            font-size: 1.7rem;
+            font-size: 1.35rem;
         }
     }
 </style>

@@ -51,7 +51,8 @@
     border: 1px solid var(--border-color);
     position: sticky;
     top: 100px;
-    max-height: calc(100vh - 120px);
+    
+    min-height: calc(100vh - 120px); 
     overflow-y: auto;
     z-index: 50;
     pointer-events: auto;
