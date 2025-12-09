@@ -123,49 +123,131 @@
 @push('scripts')
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js'></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('form[name="checkout-form"]');
-            const placeBtn = document.getElementById('placeReservationBtn');
+        // Replace the existing holiday fetch and calendar initialization code with this:
 
-            placeBtn.addEventListener('click', function() {
-                if (placeBtn.disabled) {
+        let selectedDate = null;
+        let philHolidays = [];
+
+        // Wait for holidays API before initializing calendar
+        async function initializeCalendar() {
+            try {
+                // Fetch holidays first
+                const response = await fetch(
+                    `https://date.nager.at/api/v3/PublicHolidays/${new Date().getFullYear()}/PH`);
+                const data = await response.json();
+                philHolidays = data.map(h => ({
+                    date: h.date,
+                    name: h.localName || h.name
+                }));
+            } catch (err) {
+                console.error("Holiday API error:", err);
+                // Continue with empty holidays array if API fails
+                philHolidays = [];
+            }
+
+            // Now initialize the calendar
+            const calendarEl = document.getElementById('calendar');
+            const today = new Date();
+
+            const minDate = new Date(today);
+            minDate.setDate(today.getDate() + 3);
+            const minDateStr = minDate.getFullYear() + '-' +
+                String(minDate.getMonth() + 1).padStart(2, '0') + '-' +
+                String(minDate.getDate()).padStart(2, '0');
+
+            const nextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+            const nextMonthStr = nextMonth.getFullYear() + '-' +
+                String(nextMonth.getMonth() + 1).padStart(2, '0') + '-' +
+                String(nextMonth.getDate()).padStart(2, '0');
+
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                aspectRatio: window.innerWidth < 768 ? 1.0 : window.innerWidth < 992 ? 1.3 : 1.6,
+                initialView: 'dayGridMonth',
+                selectable: true,
+                dateClick: dateClick,
+                height: 'auto',
+                contentHeight: 'auto',
+                validRange: {
+                    start: minDateStr,
+                    end: nextMonthStr,
+                },
+                selectAllow: function(selectInfo) {
+                    return !isDateDisabled(selectInfo.start);
+                },
+                dayCellClassNames: function(arg) {
+                    const dateStr = arg.date.toISOString().split("T")[0];
+                    let classes = [];
+
+                    if (philHolidays.some(h => h.date === dateStr)) {
+                        classes.push('fc-holiday');
+                    }
+                    if (isDateDisabled(arg.date)) {
+                        classes.push('fc-disabled-day');
+                    }
+                    return classes;
+                },
+                dayCellDidMount: function(info) {
+                    const dateStr = info.date.toISOString().split("T")[0];
+
+                    const holiday = philHolidays.find(h => h.date === dateStr);
+                    if (holiday) {
+                        const holidayDiv = document.createElement("div");
+                        holidayDiv.classList.add("holiday-label");
+                        holidayDiv.textContent = holiday.name;
+                        info.el.appendChild(holidayDiv);
+                    }
+                },
+                windowResize: function(view) {
+                    calendar.setOption('aspectRatio', window.innerWidth < 768 ? 1.0 :
+                        window.innerWidth < 992 ? 1.3 : 1.6);
+                }
+            });
+
+            calendar.render();
+
+            // Handle time slot selection (keep your existing handler)
+            $(document).on('click', '.time-btn', function() {
+                if ($(this).prop('disabled')) {
                     return;
                 }
-                Swal.fire({
-                    title: 'Confirm Reservation',
-                    html: `
-                        <p class="mb-0 text-danger">
-                            <strong>NOTE:</strong> This order will be <strong>automatically canceled</strong> if payment is not made
-                            within 24 hours based on your <strong>reservation date</strong>.
-                        </p>
-                    `,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, place my reservation',
-                    cancelButtonText: 'Review my order',
-                    reverseButtons: true,
-                    focusCancel: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit();
-                    }
-                });
+
+                $('.time-btn').removeClass('active');
+                $(this).addClass('active');
+
+                const time = $(this).data('time');
+                const slots = window.slotAvailability?.[time] ?? 0;
+
+                $('#selectedSlots').text(slots).toggleClass('text-danger', slots === 0);
+                $('#slotDisplay').removeClass('d-none');
+                $('#time_slot').val(time);
+
+                const selectedISODate = $('#reservation_date').val();
+                if (selectedISODate) {
+                    const formattedDate = new Date(selectedISODate + 'T00:00:00').toLocaleDateString(
+                        'en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: '2-digit'
+                        });
+                    $('#displayDate').text(formattedDate);
+                }
+                $('#displayTime').text(time);
+
+                toggleSubmitButton();
             });
-        });
-        let selectedDate = null;
+        }
 
         // Simple function to check if a date is Monday-Thursday (1-4)
         function isValidDay(date) {
-            const day = date.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
-            return day >= 1 && day <= 4; // Monday(1) to Thursday(4)
+            const day = date.getDay();
+            return day >= 1 && day <= 4;
         }
 
         // Check if date is too early (less than 3 days from today)
         function isTooEarly(date) {
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Reset time to midnight
+            today.setHours(0, 0, 0, 0);
 
-            // Calculate minimum allowed date (3 days from today)
             const minDate = new Date(today);
             minDate.setDate(today.getDate() + 3);
 
@@ -177,26 +259,25 @@
 
         // Check if date should be disabled
         function isDateDisabled(date) {
-            return isTooEarly(date) || !isValidDay(date);
+            const dateStr = date.toISOString().split("T")[0];
+            const isHoliday = philHolidays.some(h => h.date === dateStr);
+            return isHoliday || isTooEarly(date) || !isValidDay(date);
         }
 
         function dateClick(info) {
             const clickedDate = info.date;
 
-            // Prevent selection of invalid days
             if (isDateDisabled(clickedDate)) {
                 return;
             }
 
             const calendarApi = info.view.calendar;
 
-            // Handle month navigation
             if (clickedDate.getMonth() !== calendarApi.getDate().getMonth()) {
                 calendarApi.gotoDate(clickedDate);
                 return;
             }
 
-            // Format date as YYYY-MM-DD for consistent handling
             const year = clickedDate.getFullYear();
             const month = String(clickedDate.getMonth() + 1).padStart(2, '0');
             const day = String(clickedDate.getDate()).padStart(2, '0');
@@ -209,7 +290,6 @@
                 return;
             }
 
-            // Set the reservation date
             $('#reservation_date').val(dateStr);
             $('#timeSlotContainer').removeClass('d-none');
 
@@ -218,7 +298,6 @@
                 $('#selectedSlots').text('0').removeClass('text-danger');
             }
 
-            // Fetch available slots for the selected date
             fetch(`/api/slots?date=${dateStr}`)
                 .then(res => res.json())
                 .then(data => {
@@ -246,7 +325,6 @@
                     console.error('Error fetching slots:', error);
                 });
 
-            // Update visual selection
             $('.fc-day').removeClass('selected-date');
             setTimeout(() => {
                 const selector = `.fc-day[data-date="${dateStr}"]`;
@@ -256,88 +334,46 @@
             calendarApi.unselect();
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const calendarEl = document.getElementById('calendar');
-            const today = new Date();
-
-            // Set up date range (3 days from today to 2 months from now)
-            const minDate = new Date(today);
-            minDate.setDate(today.getDate() + 3);
-            const minDateStr = minDate.getFullYear() + '-' +
-                String(minDate.getMonth() + 1).padStart(2, '0') + '-' +
-                String(minDate.getDate()).padStart(2, '0');
-
-            const nextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
-            const nextMonthStr = nextMonth.getFullYear() + '-' +
-                String(nextMonth.getMonth() + 1).padStart(2, '0') + '-' +
-                String(nextMonth.getDate()).padStart(2, '0');
-
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                aspectRatio: window.innerWidth < 768 ? 1.0 : window.innerWidth < 992 ? 1.3 : 1.6,
-                initialView: 'dayGridMonth',
-                selectable: true,
-                dateClick: dateClick,
-                height: 'auto',
-                contentHeight: 'auto',
-                validRange: {
-                    start: minDateStr,
-                    end: nextMonthStr,
-                },
-                selectAllow: function(selectInfo) {
-                    return !isDateDisabled(selectInfo.start);
-                },
-                dayCellClassNames: function(arg) {
-                    if (isDateDisabled(arg.date)) {
-                        return ['fc-disabled-day'];
-                    }
-                    return [];
-                },
-                windowResize: function(view) {
-                    calendar.setOption('aspectRatio', window.innerWidth < 768 ? 1.0 :
-                        window.innerWidth < 992 ? 1.3 : 1.6);
-                }
-            });
-
-            calendar.render();
-
-            // Handle time slot selection
-            $(document).on('click', '.time-btn', function() {
-                if ($(this).prop('disabled')) {
-                    return;
-                }
-
-                $('.time-btn').removeClass('active');
-                $(this).addClass('active');
-
-                const time = $(this).data('time');
-                const slots = window.slotAvailability?.[time] ?? 0;
-
-                $('#selectedSlots').text(slots).toggleClass('text-danger', slots === 0);
-                $('#slotDisplay').removeClass('d-none');
-                $('#time_slot').val(time);
-
-                // Update display date and time
-                const selectedISODate = $('#reservation_date').val();
-                if (selectedISODate) {
-                    const formattedDate = new Date(selectedISODate + 'T00:00:00').toLocaleDateString(
-                        'en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: '2-digit'
-                        });
-                    $('#displayDate').text(formattedDate);
-                }
-                $('#displayTime').text(time);
-
-                toggleSubmitButton();
-            });
-        });
-
         function toggleSubmitButton() {
             const date = $('#reservation_date').val();
             const time = $('#time_slot').val();
             $('#placeReservationBtn').prop('disabled', !(date && time));
         }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Place reservation button handler
+            const form = document.querySelector('form[name="checkout-form"]');
+            const placeBtn = document.getElementById('placeReservationBtn');
+
+            placeBtn.addEventListener('click', function() {
+                if (placeBtn.disabled) {
+                    return;
+                }
+                Swal.fire({
+                    title: 'Confirm Reservation',
+                    html: `
+                <p class="mb-0 text-danger">
+                    <strong>NOTE:</strong> This order will be <strong>automatically canceled</strong> if payment is not made
+                    within 24 hours based on your <strong>reservation date</strong>.
+                </p>
+            `,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, place my reservation',
+                    cancelButtonText: 'Review my order',
+                    reverseButtons: true,
+                    focusCancel: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+
+            // Initialize calendar with holidays loaded
+            initializeCalendar();
+        });
     </script>
 @endpush
 
@@ -354,9 +390,58 @@
             min-height: 400px;
         }
 
-        .fc {
-            width: 100% !important;
+        .fc-daygrid-day {
+            border-radius: 8px;
+            transition: all 0.2s ease;
         }
+
+        .fc-daygrid-day:hover:not(.fc-disabled-day) {
+            background-color: rgba(13, 110, 253, 0.05) !important;
+            cursor: pointer;
+        }
+
+        .fc-daygrid-day-frame {
+            padding: 4px;
+            min-height: 60px;
+        }
+
+
+        .fc {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            width: 100%;
+        }
+
+        .fc-holiday {
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%) !important;
+            position: relative;
+            border: 1px solid #ffcccc !important;
+        }
+
+        .fc-holiday:hover {
+            background: linear-gradient(135deg, #ffe5e5 0%, #ffd5d5 100%) !important;
+        }
+
+
+        .holiday-label {
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            right: 2px;
+            font-size: 9px;
+            color: #dc3545;
+            font-weight: 600;
+            background: rgba(220, 53, 69, 0.1);
+            border-radius: 4px;
+            padding: 2px 4px;
+            text-align: center;
+            line-height: 1.2;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
 
         .fc-view-harness {
             width: 100% !important;
@@ -414,21 +499,61 @@
 
         /* Disabled day styling */
         .fc-disabled-day {
-            background-color: #f8f9fa !important;
-            color: #6c757d !important;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+            color: #adb5bd !important;
             cursor: not-allowed !important;
-            opacity: 0.5 !important;
+            opacity: 0.6 !important;
+            position: relative;
+        }
+
+        .fc-disabled-day::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(0, 0, 0, 0.02) 10px,
+                    rgba(0, 0, 0, 0.02) 20px);
+            pointer-events: none;
         }
 
         .fc-disabled-day:hover {
-            background-color: #f8f9fa !important;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+            transform: none !important;
         }
 
-        /* Selected date styling */
         .selected-date {
-            background-color: #0d6efd !important;
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%) !important;
             color: white !important;
+            transform: scale(1.02);
         }
+
+        .selected-date .fc-daygrid-day-number {
+            color: white !important;
+            font-weight: 700 !important;
+        }
+
+        .fc-daygrid-day-number {
+            padding: 6px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        /* Today's Date Highlight */
+        .fc-day-today {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffe082 100%) !important;
+            border: 2px solid #ffc107 !important;
+        }
+
+        .fc-day-today .fc-daygrid-day-number {
+            color: #f57c00;
+            font-weight: 700;
+        }
+
 
         /* Mobile Responsive Styles */
         @media (max-width: 767.98px) {
@@ -486,6 +611,54 @@
             .price-cell {
                 white-space: nowrap;
             }
+
+            .holiday-label {
+                font-size: 8px;
+                padding: 1px 3px;
+                bottom: 1px;
+                left: 1px;
+                right: 1px;
+            }
+
+            .fc-daygrid-day-frame {
+                min-height: 50px;
+                padding: 2px;
+            }
+
+            .fc-toolbar-title {
+                font-size: 1.2rem !important;
+            }
+
+            .fc-button {
+                padding: 6px 12px !important;
+                font-size: 0.875rem !important;
+            }
+
+            .fc-daygrid-day-number {
+                padding: 4px;
+                font-size: 0.875rem;
+            }
+        }
+
+        .calendar-loading {
+            position: relative;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .calendar-loading::after {
+            content: 'Loading holidays...';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-weight: 600;
+            color: #495057;
+            z-index: 1000;
         }
     </style>
 @endpush

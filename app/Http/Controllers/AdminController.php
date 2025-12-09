@@ -1221,11 +1221,12 @@ class AdminController extends Controller
                 $query->whereHas('transaction', function ($q) {
                     $q->where('status', 'paid');
                 });
-            } elseif ($request->transaction_status === 'unpaid') {
-                $query->whereDoesntHave('transaction')
-                    ->orWhereDoesntHave('transaction', function ($q) {
-                        $q->where('status', 'paid');
-                    });
+            }
+
+            if ($request->transaction_status === 'unpaid') {
+                $query->whereDoesntHave('transaction', function ($q) {
+                    $q->where('status', 'paid');
+                });
             }
         }
 
@@ -1267,7 +1268,8 @@ class AdminController extends Controller
         $sortBy = $request->input('sort_by', 'newest');
         switch ($sortBy) {
             case 'oldest':
-                $query->orderBy('created_at', 'asc');
+                $query->orderBy('reservation_date', 'desc')
+                    ->orderBy('time_slot', 'asc');
                 break;
             case 'amount_high':
                 $query->orderBy('total', 'desc');
@@ -1276,13 +1278,13 @@ class AdminController extends Controller
                 $query->orderBy('total', 'asc');
                 break;
             case 'reservation_date':
-                $query->orderBy('reservation_date', 'desc');
+                $query->orderBy('reservation_date', 'asc');
                 break;
             case 'newest':
             default:
-
                 $query->orderByRaw("FIELD(status, 'reserved', 'canceled', 'pickedup')")
-                    ->latest();
+                    ->orderBy('reservation_date', 'asc')
+                    ->orderBy('time_slot', 'asc');
                 break;
         }
 
