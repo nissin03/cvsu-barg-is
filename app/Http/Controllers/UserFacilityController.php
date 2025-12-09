@@ -1337,6 +1337,13 @@ class UserFacilityController extends Controller
         $facilityType    = $reservationData['facility_type'] ?? null;
 
         $rules = ['qualification' => 'nullable|file|max:10240|mimes:pdf,doc,docx'];
+        Log::info('Discount validation check', [
+            'has_discount_id' => !empty($reservationData['discount_id']),
+            'discount_id' => $reservationData['discount_id'] ?? null,
+            'has_file' => $request->hasFile('discount_proof'),
+            'file_size' => $request->hasFile('discount_proof') ? $request->file('discount_proof')->getSize() : null,
+        ]);
+
 
         if (!empty($reservationData['discount_id'])) {
             $discount = Discount::find($reservationData['discount_id']);
@@ -1359,6 +1366,16 @@ class UserFacilityController extends Controller
         } elseif ($facilityType === 'both') {
         }
 
+        try {
+            $validated = $request->validate($rules);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation failed', [
+                'errors' => $e->errors(),
+                'rules' => $rules,
+                'has_discount_proof_file' => $request->hasFile('discount_proof'),
+            ]);
+            throw $e;
+        }
         $validated = $request->validate($rules);
 
         if ($facilityType === 'individual') {
@@ -1384,8 +1401,30 @@ class UserFacilityController extends Controller
         $discountProofPath = null;
         if ($request->hasFile('discount_proof')) {
             $discountProofFile = $request->file('discount_proof');
-            $fileName = time() . '_discount_' . $user->id . '_' . $discountProofFile->getClientOriginalName();
-            $discountProofPath = $discountProofFile->storeAs('discount_proofs', $fileName, 'public');
+            if (!$discountProofFile->isValid()) {
+                Log::error('Invalid discount proof file', [
+                    'error' => $discountProofFile->getError(),
+                    'error_message' => $discountProofFile->getErrorMessage(),
+                ]);
+                return back()->withErrors(['discount_proof' => 'The uploaded file is invalid.']);
+            }
+            $fileName = microtime(true) . '_discount_' . $user->id . '_' . $discountProofFile->getClientOriginalName();
+            // $fileName = time() . '_discount_' . $user->id . '_' . $discountProofFile->getClientOriginalName();
+            // $discountProofPath = $discountProofFile->storeAs('discount_proofs', $fileName, 'public');
+            try {
+                $discountProofPath = $discountProofFile->storeAs('discount_proofs', $fileName, 'public');
+                \Log::info('Discount proof uploaded', [
+                    'path' => $discountProofPath,
+                    'original_name' => $discountProofFile->getClientOriginalName(),
+                    'size' => $discountProofFile->getSize(),
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to store discount proof', [
+                    'error' => $e->getMessage(),
+                    'file' => $discountProofFile->getClientOriginalName(),
+                ]);
+                return back()->withErrors(['discount_proof' => 'Failed to upload discount proof.']);
+            }
         }
 
         try {
@@ -1545,10 +1584,15 @@ class UserFacilityController extends Controller
                     $price = $facility->prices()->where('price_type', 'whole')->firstOrFail();
                     $requiresDiscountProof = $price->is_this_a_discount;
 
-                    $discountProofPath = null;
-                    if ($requiresDiscountProof && $request->hasFile('discount_proof')) {
-                        $discountProofPath = $request->file('discount_proof')->store('discount_proofs', 'public');
-                    }
+                    Log::info('Whole place discount check', [
+                        'is_this_a_discount' => $price->is_this_a_discount,
+                        'has_discount_proof_path' => !empty($discountProofPath),
+                        'discount_proof_path' => $discountProofPath,
+                    ]);
+                    // $discountProofPath = null;
+                    // if ($requiresDiscountProof && $request->hasFile('discount_proof')) {
+                    //     $discountProofPath = $request->file('discount_proof')->store('discount_proofs', 'public');
+                    // }
                     $days = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1;
                     $baseTotalPrice = $price->is_based_on_days ? $price->value * $days : $price->value;
 
@@ -1591,11 +1635,23 @@ class UserFacilityController extends Controller
                         'status'          => 'pending',
                         'total_price'     => $paymentSubtotal,
                     ]);
-                    if ($requiresDiscountProof && $discountProofPath) {
-                        PaymentPriceDiscount::create([
+                    if ($discountProofPath) {
+                        $discountRecord = PaymentPriceDiscount::create([
                             'payment_id' => $payment->id,
                             'price_id'   => $price->id,
                             'discount_proof_path' => $discountProofPath,
+                        ]);
+
+                        \Log::info('Discount proof saved to database', [
+                            'payment_id' => $payment->id,
+                            'price_id' => $price->id,
+                            'path' => $discountProofPath,
+                            'record_id' => $discountRecord->id,
+                        ]);
+                    } else {
+                        \Log::warning('No discount proof to save', [
+                            'payment_id' => $payment->id,
+                            'had_discount_in_session' => !empty($reservationData['discount_id']),
                         ]);
                     }
 
@@ -1622,7 +1678,7 @@ class UserFacilityController extends Controller
                     QualificationApproval::create([
                         'availability_id' => $firstAvailability->id,
                         'user_id'         => $user->id,
-                        'qualification'   => $reservationData['qualification'] ?? null,
+                        'qualification'   => $qualificationPath,
                         'status'          => 'pending',
                     ]);
 
