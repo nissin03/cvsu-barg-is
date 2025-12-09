@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Models\ProductAttributeValue;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Notification;
 use Intervention\Image\Laravel\Facades\Image;
@@ -44,10 +45,16 @@ class AdminController extends Controller
 {
 
     protected $imageProcessor;
-    public function __construct(ImageProcessor $imageProcessor)
-    {
+    protected $notificationService;
+    public function __construct(
+        ImageProcessor $imageProcessor,
+        NotificationService $notificationService,
+    ) {
         $this->imageProcessor = $imageProcessor;
+        $this->notificationService = $notificationService;
     }
+
+
     public function index(Request $request)
     {
         $currentYear = Carbon::now()->year;
@@ -1015,13 +1022,16 @@ class AdminController extends Controller
         }
 
         if ($product->stock_status === 'instock' && $previousStockStatus !== 'instock') {
-            $users = User::where('utype', 'USR')->get();
-
-            foreach ($users as $user) {
-                $user->notify(
-                    new StockUpdate($product, "Good news! The product {$product->name} is now back in stock.")
-                );
-            }
+            // $users = User::where('utype', 'USR')->get();
+            // foreach ($users as $user) {
+            //     $user->notify(
+            //         new StockUpdate($product, "Good news! The product {$product->name} is now back in stock.")
+            //     );
+            // }
+            $this->notificationService->sendStockUpdate(
+                $product,
+                "Good news! The product {$product->name} is now back in stock."
+            );
         }
 
         return redirect()->route('admin.products')->with('status', 'Product has been updated successfully!');
@@ -1211,11 +1221,12 @@ class AdminController extends Controller
                 $query->whereHas('transaction', function ($q) {
                     $q->where('status', 'paid');
                 });
-            } elseif ($request->transaction_status === 'unpaid') {
-                $query->whereDoesntHave('transaction')
-                    ->orWhereDoesntHave('transaction', function ($q) {
-                        $q->where('status', 'paid');
-                    });
+            }
+
+            if ($request->transaction_status === 'unpaid') {
+                $query->whereDoesntHave('transaction', function ($q) {
+                    $q->where('status', 'paid');
+                });
             }
         }
 
@@ -1257,7 +1268,8 @@ class AdminController extends Controller
         $sortBy = $request->input('sort_by', 'newest');
         switch ($sortBy) {
             case 'oldest':
-                $query->orderBy('created_at', 'asc');
+                $query->orderBy('reservation_date', 'desc')
+                    ->orderBy('time_slot', 'asc');
                 break;
             case 'amount_high':
                 $query->orderBy('total', 'desc');
@@ -1266,13 +1278,13 @@ class AdminController extends Controller
                 $query->orderBy('total', 'asc');
                 break;
             case 'reservation_date':
-                $query->orderBy('reservation_date', 'desc');
+                $query->orderBy('reservation_date', 'asc');
                 break;
             case 'newest':
             default:
-
                 $query->orderByRaw("FIELD(status, 'reserved', 'canceled', 'pickedup')")
-                    ->latest();
+                    ->orderBy('reservation_date', 'asc')
+                    ->orderBy('time_slot', 'asc');
                 break;
         }
 

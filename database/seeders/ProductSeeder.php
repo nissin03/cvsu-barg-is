@@ -90,10 +90,10 @@ class ProductSeeder extends Seeder
                 'image'  => 'pe_short.jpg',
                 'images' => ['pe_short.jpg'],
             ],
-            'polo' => [
-                'image'  => 'polo.jpg',
-                'images' => ['polo.jpg'],
-            ],
+            // 'polo' => [
+            //     'image'  => 'polo.jpg',
+            //     'images' => ['polo.jpg'],
+            // ],
             'NSTP t-shirt' => [
                 'image'  => 'NSTP_t-shirt.jpg',
                 'images' => ['NSTP_t-shirt.jpg'],
@@ -122,10 +122,10 @@ class ProductSeeder extends Seeder
                 'image'  => 'cvsu_pin.jpg',
                 'images' => ['cvsu_pin.jpg'],
             ],
-            'tumbler' => [
-                'image'  => 'tumbler.jpg',
-                'images' => ['tumbler.jpg'],
-            ],
+            // 'tumbler' => [
+            //     'image'  => 'tumbler.jpg',
+            //     'images' => ['tumbler.jpg'],
+            // ],
         ];
 
         $productDescriptions = [
@@ -395,20 +395,20 @@ Design: Screen printed CvSU logo
 Care: Machine wash, quick dry
 Usage: Perfect for sports and PE classes',
             ],
-            'polo' => [
-                'short' => 'Classic CvSU polo shirts for male students!',
-                'long' => 'Traditional polo shirts meeting CvSU uniform standards. Made from high-quality fabric with embroidered university logo, providing professional appearance with all-day comfort.
-
-POLO UNIFORM SPECIFICATIONS:
-Fit Type: Regular uniform fit
-Fabric: Premium pique cotton
-Fabric Weight: 220 GSM for durability
-Sleeve Length: Short sleeve with ribbing
-Neck Type: Collared with 3-button placket
-Design: Embroidered CvSU crest
-Care: Professional care instructions
-Features: Uniform compliance, quality stitching',
-            ],
+            // 'polo' => [
+            //     'short' => 'Classic CvSU polo shirts for male students!',
+            //     'long' => 'Traditional polo shirts meeting CvSU uniform standards. Made from high-quality fabric with embroidered university logo, providing professional appearance with all-day comfort.
+            //
+            // POLO UNIFORM SPECIFICATIONS:
+            // Fit Type: Regular uniform fit
+            // Fabric: Premium pique cotton
+            // Fabric Weight: 220 GSM for durability
+            // Sleeve Length: Short sleeve with ribbing
+            // Neck Type: Collared with 3-button placket
+            // Design: Embroidered CvSU crest
+            // Care: Professional care instructions
+            // Features: Uniform compliance, quality stitching',
+            // ],
             'NSTP t-shirt' => [
                 'short' => 'Show your NSTP pride with official program t-shirts!',
                 'long' => 'Official NSTP t-shirts featuring program-specific designs and CvSU branding. Comfortable cotton material perfect for community service activities and representing your NSTP involvement.
@@ -507,20 +507,20 @@ Finish: Glossy enamel coating
 Use Case: Bags, uniforms, clothing
 Included: Single pin with secure backing',
             ],
-            'tumbler' => [
-                'short' => 'Stay hydrated with our insulated CvSU tumbler!',
-                'long' => 'Double-walled insulated CvSU tumbler keeps drinks hot or cold for hours. Leak-proof design with university branding, perfect for carrying to classes, library sessions, or campus activities.
-
-TUMBLER SPECIFICATIONS:
-Material: Stainless steel double-wall
-Capacity: 500ml perfect for daily use
-Dimensions: 7cm diameter × 21cm height
-Weight: 300g lightweight design
-Color: Metallic with CvSU logo
-Insulation: Keeps hot 6hrs, cold 12hrs
-Features: Leak-proof lid, carry handle
-Usage: Perfect for beverages on campus',
-            ],
+            // 'tumbler' => [
+            //     'short' => 'Stay hydrated with our insulated CvSU tumbler!',
+            //     'long' => 'Double-walled insulated CvSU tumbler keeps drinks hot or cold for hours. Leak-proof design with university branding, perfect for carrying to classes, library sessions, or campus activities.
+            //
+            // TUMBLER SPECIFICATIONS:
+            // Material: Stainless steel double-wall
+            // Capacity: 500ml perfect for daily use
+            // Dimensions: 7cm diameter × 21cm height
+            // Weight: 300g lightweight design
+            // Color: Metallic with CvSU logo
+            // Insulation: Keeps hot 6hrs, cold 12hrs
+            // Features: Leak-proof lid, carry handle
+            // Usage: Perfect for beverages on campus',
+            // ],
         ];
 
         $sizeDescriptions = [
@@ -655,7 +655,7 @@ Usage: Perfect for beverages on campus',
                     'Types' => [
                         'Naturally-Sweetened'  => 280,
                         'Liberica-Based'       => 260,
-                        'Antioxidant-Enriched'  => 290,
+                        'Antioxidant-Enriched' => 290,
                         'Original Blend'       => 250,
                     ],
                 ],
@@ -777,26 +777,26 @@ Usage: Perfect for beverages on campus',
                     ],
                 ],
             ],
-            [
-                'name'       => 'polo',
-                'category'   => 'Apparel > Male Uniform',
-                'price'      => 365,
-                'attributes' => [
-                    'Sizes' => [
-                        'xs'  => 365,
-                        's'   => 365,
-                        'm'   => 365,
-                        'l'   => 365,
-                        'xl'  => 385,
-                        '2xl' => 405,
-                        '3xl' => 425,
-                        '4xl' => 445,
-                        '5xl' => 465,
-                        '6xl' => 485,
-                        '7xl' => 505,
-                    ],
-                ],
-            ],
+            // [
+            //     'name'       => 'polo',
+            //     'category'   => 'Apparel > Male Uniform',
+            //     'price'      => 365,
+            //     'attributes' => [
+            //         'Sizes' => [
+            //             'xs'  => 365,
+            //             's'   => 365,
+            //             'm'   => 365,
+            //             'l'   => 365,
+            //             'xl'  => 385,
+            //             '2xl' => 405,
+            //             '3xl' => 425,
+            //             '4xl' => 445,
+            //             '5xl' => 465,
+            //             '6xl' => 485,
+            //             '7xl' => 505,
+            //         ],
+            //     ],
+            // ],
             [
                 'name'       => 'NSTP t-shirt',
                 'category'   => 'Apparel > NSTP',
@@ -885,12 +885,12 @@ Usage: Perfect for beverages on campus',
                 'price'      => 100,
                 'attributes' => [],
             ],
-            [
-                'name'       => 'tumbler',
-                'category'   => 'Home & Kitchen > Tumbler',
-                'price'      => 220,
-                'attributes' => [],
-            ],
+            // [
+            //     'name'       => 'tumbler',
+            //     'category'   => 'Home & Kitchen > Tumbler',
+            //     'price'      => 220,
+            //     'attributes' => [],
+            // ],
         ];
 
         foreach ($products as $productData) {

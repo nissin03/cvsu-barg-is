@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('product_attribute_id')->constrained()->onDelete('cascade');
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->string('value');
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->decimal('price', 8, 2)->nullable();
             $table->unsignedInteger('quantity')->default(0);
             $table->enum('stock_status', ['instock', 'outofstock', 'reorder'])->default('instock');

@@ -86,5 +86,12 @@
             tooltip.dispose();
             new bootstrap.Tooltip(toggleButton);
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordConfirm = document.getElementById('password_confirmation');
+            passwordConfirm.addEventListener('paste', function(e) {
+                e.preventDefault();
+            });
+        });
     </script>
 @endsection
