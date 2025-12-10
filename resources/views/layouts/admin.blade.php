@@ -494,6 +494,18 @@
                                                 </a>
                                             </li>
 
+                                            <li class="divider mb-10"></li>
+
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('positions.index') }}">
+                                                    <div class="text">Manage Positions</div>
+                                                </a>
+                                            </li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('positions.create') }}">
+                                                    <div class="text">Add Positions</div>
+                                                </a>
+                                            </li>
                                         </ul>
                                     </li>
 

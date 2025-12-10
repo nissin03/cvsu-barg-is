@@ -18,6 +18,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\PasswordController;
+use App\Http\Controllers\PositionController;
 use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\AdminCourseController;
@@ -303,6 +304,19 @@ Route::middleware(['auth', AuthAdmin::class])
         Route::get('/courses/archive', [AdminCourseController::class, 'archive'])->name('admin.courses.archive');
         Route::patch('/courses/{id}/restore', [AdminCourseController::class, 'restore'])->name('admin.courses.restore');
         Route::delete('/courses/{id}/force-delete', [AdminCourseController::class, 'forceDelete'])->name('admin.courses.force-delete');
+
+        // Position Routes
+        Route::get('positions', [PositionController::class, 'index'])->name('positions.index');
+        Route::get('positions/create', [PositionController::class, 'create'])->name('positions.create');
+        Route::post('positions', [PositionController::class, 'store'])->name('positions.store');
+        Route::get('positions/{position}/edit', [PositionController::class, 'edit'])->name('positions.edit');
+        Route::put('positions/{position}', [PositionController::class, 'update'])->name('positions.update');
+        Route::patch('positions/{position}', [PositionController::class, 'update'])->name('positions.update.partial');
+        Route::delete('positions/{position}', [PositionController::class, 'destroy'])->name('positions.destroy');
+        Route::get('positions/archive', [PositionController::class, 'archive'])->name('positions.archive');
+        Route::post('positions/{id}/restore', [PositionController::class, 'restore'])->name('positions.restore');
+        Route::delete('positions/{id}/force-delete', [PositionController::class, 'forceDelete'])->name('positions.forceDelete');
+
 
         // Addons
         Route::get('addons', [AddonsController::class, 'index'])->name('admin.addons');
