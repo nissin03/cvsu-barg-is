@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Models\QualificationApproval;
+use App\Services\NotificationService;
 use App\Models\TransactionReservation;
 use App\Services\AvailabilityRestorationService;
 use App\Notifications\ReservationCanceledNotification;
@@ -22,9 +23,13 @@ class FacilityReservationController extends Controller
 {
 
     protected $availabilityService;
-    public function __construct(AvailabilityRestorationService $availabilityService)
-    {
+    protected $notificationService;
+    public function __construct(
+        AvailabilityRestorationService $availabilityService,
+        NotificationService $notificationService
+    ) {
         $this->availabilityService = $availabilityService;
+        $this->notificationService = $notificationService;
     }
     private function getFacilities()
     {
@@ -550,7 +555,9 @@ class FacilityReservationController extends Controller
 
             DB::commit();
             if ($newStatus === 'canceled' && $oldStatus !== 'canceled') {
-                $reservation->user->notify(new ReservationCanceledNotification($reservation, false));
+                // $reservation->user->notify(new ReservationCanceledNotification($reservation, false));
+                $user = $reservation->user;
+                $this->notificationService->sendCanceledReservation($user, $reservation, false);
             }
             return response()->json([
                 'message' => 'Status updated successfully',
@@ -589,7 +596,10 @@ class FacilityReservationController extends Controller
             $validated = $request->validate([
                 'status' => ['required', 'in:' . implode(',', $allowedStatuses)],
             ]);
-
+            if ($validated['status'] === 'canceled') {
+                $user = $qualificationApproval->user;
+                $this->notificationService->sendCanceledQualification($user, $qualificationApproval);
+            }
 
             $qualificationApproval->status = $validated['status'];
             $qualificationApproval->save();

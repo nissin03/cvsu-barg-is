@@ -98,6 +98,11 @@ class User extends Authenticatable
         return $this->belongsTo(Course::class);
     }
 
+    public function postiion()
+    {
+        return $this->belongsTo(Position::class);
+    }
+
     public function addons()
     {
         return $this->hasMany(Addon::class);

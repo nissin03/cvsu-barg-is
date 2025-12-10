@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             DailySeeder::class,
             CollegesSeeder::class,
             CoursesSeeder::class,
+            PositionSeeder::class,
             UserSeeder::class,
             ContactSeeder::class,
             CategorySeeder::class,
@@ -31,6 +32,7 @@ class DatabaseSeeder extends Seeder
             AddonSeeder::class,
             // DiscountSeeder::class,
             SignatureSeeder::class,
+
 
 
 
