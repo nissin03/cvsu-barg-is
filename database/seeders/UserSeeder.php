@@ -5,13 +5,13 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\College;
 use App\Models\Course;
+use App\Models\Position;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 
 class UserSeeder extends Seeder
 {
-    private $filipinoFirstNames = [
+    private array $filipinoFirstNames = [
         'male' => [
             'Juan',
             'Luis',
@@ -78,7 +78,7 @@ class UserSeeder extends Seeder
         ]
     ];
 
-    private $filipinoLastNames = [
+    private array $filipinoLastNames = [
         'dela Cruz',
         'Garcia',
         'Reyes',
@@ -121,12 +121,32 @@ class UserSeeder extends Seeder
         'Quinto'
     ];
 
-    private $filipinoMiddleInitials = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'];
+    private array $filipinoMiddleInitials = [
+        'A',
+        'B',
+        'C',
+        'D',
+        'E',
+        'F',
+        'G',
+        'H',
+        'I',
+        'J',
+        'K',
+        'L',
+        'M',
+        'N',
+        'O',
+        'P',
+        'Q',
+        'R',
+        'S',
+        'T'
+    ];
 
-    /**
-     * Generate a realistic Filipino name
-     */
-    private function generateFilipinoName($sex): string
+    private ?array $positionIds = null;
+
+    private function generateFilipinoName(string $sex): string
     {
         $firstName = $this->filipinoFirstNames[$sex][array_rand($this->filipinoFirstNames[$sex])];
         $lastName = $this->filipinoLastNames[array_rand($this->filipinoLastNames)];
@@ -135,36 +155,35 @@ class UserSeeder extends Seeder
         return $firstName . ' ' . $middleInitial . '. ' . $lastName;
     }
 
-    private array $employeePositions = [
-        'Director',
-        'Administrator',
-        'Bookkeeper',
-        'Administrative Aide',
-        'Clerk',
-        'Registrar Staff',
-        'Guidance Staff',
-        'Librarian',
-        'Instructor I',
-        'Instructor II',
-        'Assistant Professor',
-        'Associate Professor',
-        'Professor I'
-    ];
-
-    private function getRandomEmployeePosition(): string
+    private function getRandomPositionId(): ?int
     {
-        return $this->employeePositions[array_rand($this->employeePositions)];
+        if ($this->positionIds === null) {
+            $this->positionIds = Position::pluck('id')->toArray();
+        }
+
+        if (empty($this->positionIds)) {
+            return null;
+        }
+
+        return $this->positionIds[array_rand($this->positionIds)];
     }
 
-    /**
-     * Run the database seeds.
-     */
+    private function getPositionIdForRole(string $role): ?int
+    {
+        if ($role !== 'employee') {
+            return null;
+        }
+
+        return $this->getRandomPositionId();
+    }
+
     public function run(): void
     {
         $colleges = College::all();
         $courses = Course::all();
+        $this->positionIds = Position::pluck('id')->toArray();
 
-        // Create Admin User
+        $role = 'employee';
         User::create([
             'name' => 'John Doe',
             'email' => 'admin@cvsu.edu.ph',
@@ -172,8 +191,8 @@ class UserSeeder extends Seeder
             'password' => Hash::make('password123'),
             'password_set' => true,
             'utype' => 'ADM',
-            'role' => 'employee',
-            'position' => 'Bookkeeper',
+            'role' => $role,
+            'position_id' => $this->getPositionIdForRole($role),
             'sex' => 'male',
             'phone_number' => '09123456789',
             'college_id' => null,
@@ -181,7 +200,7 @@ class UserSeeder extends Seeder
             'isDefault' => false,
         ]);
 
-        // Create Regular User (Student)
+        $role = 'student';
         User::create([
             'name' => 'john C. doe',
             'email' => 'user@cvsu.edu.ph',
@@ -189,8 +208,8 @@ class UserSeeder extends Seeder
             'password' => Hash::make('password123'),
             'password_set' => true,
             'utype' => 'USR',
-            'role' => 'student',
-            'position' => null,
+            'role' => $role,
+            'position_id' => $this->getPositionIdForRole($role),
             'sex' => 'male',
             'phone_number' => '09123456780',
             'year_level' => '3rd Year',
@@ -199,7 +218,7 @@ class UserSeeder extends Seeder
             'isDefault' => false,
         ]);
 
-        // Create Director User
+        $role = 'employee';
         User::create([
             'name' => 'Director User',
             'email' => 'director@cvsu.edu.ph',
@@ -207,8 +226,8 @@ class UserSeeder extends Seeder
             'password' => Hash::make('password123'),
             'password_set' => true,
             'utype' => 'DIR',
-            'role' => 'employee',
-            'position' => 'Director',
+            'role' => $role,
+            'position_id' => $this->getPositionIdForRole($role),
             'sex' => 'male',
             'phone_number' => '09123456781',
             'college_id' => null,
@@ -216,18 +235,24 @@ class UserSeeder extends Seeder
             'isDefault' => false,
         ]);
 
-        // Create additional Admin Users (2-5)
         for ($i = 2; $i <= 5; $i++) {
             $sex = ($i % 2 == 0) ? 'male' : 'female';
+            $role = 'employee';
+            $name = $this->generateFilipinoName($sex);
+            $nameParts = explode(' ', $name);
+            $firstName = strtolower($nameParts[0]);
+            $lastName = strtolower(end($nameParts));
+            $email = $firstName . '.' . $lastName . '.admin' . $i . '@cvsu.edu.ph';
+
             User::create([
-                'name' => $this->generateFilipinoName($sex),
-                'email' => 'admin' . $i . '@cvsu.edu.ph',
+                'name' => $name,
+                'email' => $email,
                 'email_verified_at' => now(),
                 'password' => Hash::make('password123'),
                 'password_set' => true,
                 'utype' => 'ADM',
-                'role' => 'employee',
-                'position' => $this->getRandomEmployeePosition(),
+                'role' => $role,
+                'position_id' => $this->getPositionIdForRole($role),
                 'sex' => $sex,
                 'phone_number' => '09' . rand(100000000, 999999999),
                 'college_id' => null,
@@ -236,27 +261,27 @@ class UserSeeder extends Seeder
             ]);
         }
 
-        // Create Students (100 users)
         for ($i = 1; $i <= 100; $i++) {
             $sex = ($i % 2 == 0) ? 'male' : 'female';
+            $role = 'student';
             $college = $colleges->random();
             $collegeCourses = $courses->where('college_id', $college->id);
 
-            // Generate student email with realistic format
-            $nameParts = explode(' ', $this->generateFilipinoName($sex));
+            $name = $this->generateFilipinoName($sex);
+            $nameParts = explode(' ', $name);
             $firstName = strtolower($nameParts[0]);
             $lastName = strtolower(end($nameParts));
             $studentEmail = $firstName . '.' . $lastName . '.student' . $i . '@cvsu.edu.ph';
 
             User::create([
-                'name' => $this->generateFilipinoName($sex),
+                'name' => $name,
                 'email' => $studentEmail,
                 'email_verified_at' => now(),
                 'password' => Hash::make('password123'),
                 'password_set' => false,
                 'utype' => 'USR',
-                'role' => 'student',
-                'position' => null,
+                'role' => $role,
+                'position_id' => $this->getPositionIdForRole($role),
                 'sex' => $sex,
                 'phone_number' => '09' . rand(100000000, 999999999),
                 'year_level' => ['1st Year', '2nd Year', '3rd Year', '4th Year'][rand(0, 3)],
@@ -266,14 +291,15 @@ class UserSeeder extends Seeder
             ]);
         }
 
-        // Create Employees (20 users)
         for ($i = 1; $i <= 20; $i++) {
             $sex = ($i % 2 == 0) ? 'male' : 'female';
+            $role = 'employee';
             $name = $this->generateFilipinoName($sex);
             $nameParts = explode(' ', $name);
             $firstName = strtolower($nameParts[0]);
             $lastName = strtolower(end($nameParts));
             $employeeEmail = $firstName . '.' . $lastName . '.emp' . $i . '@cvsu.edu.ph';
+
             User::create([
                 'name' => $name,
                 'email' => $employeeEmail,
@@ -281,8 +307,8 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
                 'password_set' => false,
                 'utype' => 'USR',
-                'role' => 'employee',
-                'position' => $this->getRandomEmployeePosition(),
+                'role' => $role,
+                'position_id' => $this->getPositionIdForRole($role),
                 'sex' => $sex,
                 'phone_number' => '09' . rand(100000000, 999999999),
                 'year_level' => null,
@@ -292,9 +318,9 @@ class UserSeeder extends Seeder
             ]);
         }
 
-        // Create Non-employees (20 users)
         for ($i = 1; $i <= 20; $i++) {
             $sex = ($i % 2 == 0) ? 'male' : 'female';
+            $role = 'non-employee';
             $name = $this->generateFilipinoName($sex);
             $nameParts = explode(' ', $name);
             $firstName = strtolower($nameParts[0]);
@@ -308,8 +334,8 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'),
                 'password_set' => false,
                 'utype' => 'USR',
-                'role' => 'non-employee',
-                'position' => null,
+                'role' => $role,
+                'position_id' => $this->getPositionIdForRole($role),
                 'sex' => $sex,
                 'phone_number' => '09' . rand(100000000, 999999999),
                 'year_level' => null,
