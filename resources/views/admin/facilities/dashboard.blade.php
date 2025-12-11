@@ -118,7 +118,6 @@
                 </div>
 
                 @php
-                    $hasGenderData = !empty($gender['series']) && array_sum($gender['series']) > 0;
                     $hasDepartmentData = !empty($department['series']) && array_sum($department['series']) > 0;
                     $hasCollegeData = !empty($college['series']) && array_sum($college['series']) > 0;
                     $hasRoleData = !empty($role['series']) && array_sum($role['series']) > 0;
@@ -130,32 +129,6 @@
                     </div>
 
                     <div class="row g-4">
-                        <div class="col-md-6">
-                            <div class="card border-0 shadow-sm rounded-3 h-100">
-                                <div
-                                    class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0 fw-semibold text-gray-700">
-                                        <i class="fas fa-venus-mars me-2 text-primary"></i>Reservations by Sex
-                                    </h5>
-                                    @if ($hasGenderData)
-                                        <button class="btn btn-sm btn-outline-primary fullscreen-btn"
-                                            data-target="genderChart">
-                                            <i class="fas fa-expand"></i>
-                                        </button>
-                                    @endif
-                                </div>
-                                <div class="card-body p-3">
-                                    @if ($hasGenderData)
-                                        <div id="genderChart" class="apex-chart"></div>
-                                    @else
-                                        <div class="d-flex align-items-center justify-content-center py-5">
-                                            <span class="text-muted">No reservation data available for sex.</span>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm rounded-3 h-100">
                                 <div
@@ -1013,13 +986,9 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const hasGenderData = @json($hasGenderData);
             const hasDepartmentData = @json($hasDepartmentData);
             const hasCollegeData = @json($hasCollegeData);
             const hasRoleData = @json($hasRoleData);
-
-            const genderSeries = @json($gender['series']);
-            const genderLabels = @json($gender['labels']);
 
             const departmentSeries = @json($department['series']);
             const departmentLabels = @json($department['labels']);
@@ -1030,15 +999,9 @@
             const roleSeries = @json($role['series']);
             const roleLabels = @json($role['labels']);
 
-            let genderChart = null;
             let departmentChart = null;
             let collegeChart = null;
             let roleChart = null;
-
-            if (hasGenderData) {
-                genderChart = new ApexCharts(document.querySelector("#genderChart"), getGenderChartOptions());
-                genderChart.render();
-            }
 
             if (hasDepartmentData) {
                 departmentChart = new ApexCharts(document.querySelector("#departmentChart"),
@@ -1065,10 +1028,6 @@
             });
 
             const chartConfigs = {
-                genderChart: {
-                    options: getGenderChartOptions(),
-                    type: 'pie'
-                },
                 departmentChart: {
                     options: getDepartmentChartOptions(),
                     type: 'bar'
@@ -1121,93 +1080,6 @@
                 fullscreenChartEl.innerHTML = '';
             });
 
-            function getGenderChartOptions() {
-                return {
-                    series: genderSeries,
-                    chart: {
-                        type: 'pie',
-                        height: 350,
-                        animations: {
-                            enabled: true,
-                            easing: 'easeinout',
-                            speed: 800,
-                            animateGradually: {
-                                enabled: true,
-                                delay: 150
-                            },
-                            dynamicAnimation: {
-                                enabled: true,
-                                speed: 350
-                            }
-                        },
-                        toolbar: {
-                            show: true,
-                            tools: {
-                                download: true,
-                                selection: false,
-                                zoom: false,
-                                zoomin: false,
-                                zoomout: false,
-                                pan: false,
-                                reset: false
-                            },
-                            export: {
-                                csv: {
-                                    filename: 'gender_reservation'
-                                },
-                                svg: {
-                                    filename: 'gender_reservation'
-                                },
-                                png: {
-                                    filename: 'gender_reservation'
-                                }
-                            }
-                        }
-                    },
-                    title: {
-                        text: 'Sex Reservation',
-                        align: 'center',
-                        style: {
-                            fontSize: '18px',
-                            fontWeight: 700,
-                            color: '#2c5282'
-                        },
-                        margin: 20
-                    },
-                    labels: genderLabels,
-                    colors: ['#3B82F6', '#EC4899'],
-                    legend: {
-                        position: 'bottom',
-                        fontSize: '14px',
-                        fontFamily: 'Arial, sans-serif'
-                    },
-                    plotOptions: {
-                        pie: {
-                            donut: {
-                                size: '0%'
-                            }
-                        }
-                    },
-                    dataLabels: {
-                        enabled: true,
-                        formatter: function(val, opts) {
-                            return opts.w.config.series[opts.seriesIndex] + " (" + val.toFixed(1) + "%)"
-                        }
-                    },
-                    responsive: [{
-                        breakpoint: 480,
-                        options: {
-                            chart: {
-                                width: 200
-                            },
-                            legend: {
-                                position: 'bottom'
-                            }
-                        }
-                    }]
-                };
-            }
-
             function getDepartmentChartOptions() {
                 return {
                     series: [{
@@ -1255,7 +1127,7 @@
                         }
                     },
                     title: {
-                        text: 'College Reservation',
+                        // text: 'College Reservation',
                         align: 'center',
                         style: {
                             fontSize: '18px',
@@ -1398,7 +1270,7 @@
                         }
                     },
                     title: {
-                        text: 'Courses Reservation',
+                        // text: 'Courses Reservation',
                         align: 'center',
                         style: {
                             fontSize: '18px',
@@ -1538,7 +1410,7 @@
                         }
                     },
                     title: {
-                        text: 'User Reservation',
+                        // text: 'User Reservation',
                         align: 'center',
                         style: {
                             fontSize: '18px',
