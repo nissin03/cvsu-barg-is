@@ -163,17 +163,27 @@
                                 <div id="employeeFields" style="display:none;">
                                     <div class="mb-3">
                                         <div class="form-floating">
-                                            <input type="text" class="form-control" id="position" name="position"
-                                                placeholder="Enter Position"
-                                                value="{{ old('position', $user->position) }}">
-                                            <label for="position">Position</label>
+                                            <select class="form-select" id="position_id" name="position_id">
+                                                <option value="" disabled
+                                                    {{ old('position_id', $user->position_id) ? '' : 'selected' }}>
+                                                    Select Position
+                                                </option>
+                                                @foreach ($positions as $position)
+                                                    <option value="{{ $position->id }}"
+                                                        {{ old('position_id', $user->position_id) == $position->id ? 'selected' : '' }}>
+                                                        {{ $position->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <label for="position_id">Position</label>
                                         </div>
                                         <div id="positionError" class="error-message"></div>
-                                        @error('position')
+                                        @error('position_id')
                                             <span class="text-danger">{{ $message }}</span>
                                         @enderror
                                     </div>
                                 </div>
+
 
 
                                 <div id="studentFields" style="display: none;">
@@ -265,9 +275,10 @@
             const courseSelect = document.getElementById('course_id');
 
             const employeeFields = document.getElementById('employeeFields');
-            const positionInput = document.getElementById('position');
+            const positionSelect = document.getElementById('position_id');
 
             const positionError = document.getElementById('positionError');
+
 
 
             // Error message elements
@@ -467,13 +478,21 @@
                 }
 
                 if (roleValue === 'employee') {
-                    const pos = (positionInput?.value || '').trim();
-                    if (!pos) {
+                    positionError.textContent = '';
+                    positionSelect.classList.remove('input-error');
+
+                    if (!positionSelect.value) {
                         positionError.textContent = 'Position is required for employees';
-                        positionInput.classList.add('input-error');
+                        positionSelect.classList.add('input-error');
                         isValid = false;
                     }
                 }
+
+                if (positionSelect) {
+                    positionSelect.addEventListener('change', validateForm);
+                }
+
+
                 updateBtn.disabled = !isValid;
 
                 return isValid;

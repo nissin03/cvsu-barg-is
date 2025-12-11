@@ -1,7 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-    <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}" :breadcrumbs="$breadcrumbs" />
+    <x-header backgroundImage="{{ asset('images/cvsu-banner.jpg') }}" title="{{ last($breadcrumbs)['label'] }}"
+        :breadcrumbs="$breadcrumbs" />
 
     <style>
         .profile-sidebar {
@@ -134,6 +135,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <p><strong>Sex:</strong> {{ $user->sex ?? 'Not provided' }}</p>
+                                        <p><strong>Position:</strong> {{ $user->position->name ?? 'Not provided' }}</p>
                                     </div>
                                     <div class="col-md-6">
                                         <p><strong>Role:</strong> {{ $user->role ?? 'Not provided' }}</p>
@@ -160,7 +162,8 @@
                             </div>
 
                             <div class="text-end mb-3">
-                                <a href="{{ route('user.profile.edit', ['id' => $user->id]) }}" class="btn btn-black">Edit Profile</a>
+                                <a href="{{ route('user.profile.edit', ['id' => $user->id]) }}" class="btn btn-black">Edit
+                                    Profile</a>
                             </div>
                         </div>
                     </div>
