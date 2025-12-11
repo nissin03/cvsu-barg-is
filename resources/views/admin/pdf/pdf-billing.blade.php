@@ -209,10 +209,10 @@
     <!-- End Header Section -->
 
     <div class="office-name">
-        OFFICE BUSINESS AFFAIRS AND MARKETING OFFICE
+        OFFICE OF THE DIRECTOR FOR BUSINESS AFFAIRS AND MARKETING
     </div>
 
-    <h3>Sales Report</h3>
+    <h3>MARKETING CENTER</h3>
 
     <!-- Information Section -->
     <div class="info-container">
@@ -264,11 +264,12 @@
                 <th>Name</th>
                 <th>Product/Variant</th>
                 <th>Quantity</th>
-                <th>Amount</th>
+
                 @if (!$status)
                     <th>Status</th>
                 @endif
-                <th>Order Date</th>
+                <th>Total</th>
+                <th>Remarks</th>
             </tr>
         </thead>
         <tbody>
@@ -291,11 +292,12 @@
                             @endif
                         </td>
                         <td>{{ $item->quantity }}</td>
-                        <td>₱{{ number_format($itemTotal, 2) }}</td>
+
                         @if (!$status)
                             <td>{{ ucfirst($order->status) }}</td>
                         @endif
-                        <td> {{ \Carbon\Carbon::parse($order->reservation_date)->format('M d, Y') }}</td>
+                        <td>₱{{ number_format($itemTotal, 2) }}</td>
+                        <td> </td>
                     </tr>
                 @endforeach
             @empty
@@ -306,13 +308,16 @@
 
             @if ($orders->count() > 0)
                 <tr style="border-top: 2px solid #333;">
-                    <td colspan="{{ $status ? 3 : 4 }}" style="text-align: right; font-weight: bold;">Grand Total:</td>
-                    <td style="font-weight: bold; text-align: center;">₱{{ number_format($grandTotal, 2) }}</td>
-                    @if ($status)
-                        <td></td>
-                    @endif
+
+                    <td style="text-align: center; font-weight: bold;">TOTAL</td>
+                    <td colspan="{{ $status ? 2 : 3 }}"></td>
+                    <td style="font-weight: bold; text-align: center;">
+                        ₱{{ number_format($grandTotal, 2) }}
+                    </td>
+                    <td></td>
                 </tr>
             @endif
+
         </tbody>
     </table>
 

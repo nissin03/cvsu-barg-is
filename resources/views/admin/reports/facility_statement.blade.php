@@ -95,15 +95,27 @@
                 </div>
             </div>
             <div class="card-body p-0">
+                <div class="px-4 pt-3 pb-2">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <span class="small text-gray-600 me-2">Status:</span>
+
+                        <span class="badge badge-completed">Completed</span>
+                        <span class="badge badge-reserved">Reserved</span>
+                        <span class="badge badge-pending">Pending</span>
+                        <span class="badge badge-canceled">Canceled</span>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
                     <table class="table table-hover mb-0" id="dataTable" width="100%" cellspacing="0">
                         <thead class="table-light">
                             <tr>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Name</th>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Facility</th>
+                                <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Reservation Dates</th>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">Status</th>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Total Amount</th>
-                                <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Reservation Dates</th>
+
                             </tr>
                         </thead>
                         <tbody>
@@ -126,6 +138,22 @@
                                         <div class="fw-medium text-gray-800">{{ $payment->availability->facility->name }}
                                         </div>
                                     </td>
+                                    <td class="py-4 px-4">
+                                        @if ($payment->date_from && $payment->date_to)
+                                            @if ($payment->date_from == $payment->date_to)
+                                                <div class="fw-medium text-gray-800">
+                                                    {{ \Carbon\Carbon::parse($payment->date_from)->format('M d, Y') }}
+                                                </div>
+                                            @else
+                                                <div class="fw-medium text-gray-800">
+                                                    {{ \Carbon\Carbon::parse($payment->date_from)->format('M d') }} -
+                                                    {{ \Carbon\Carbon::parse($payment->date_to)->format('M d, Y') }}
+                                                </div>
+                                            @endif
+                                        @else
+                                            <div class="text-muted">No dates</div>
+                                        @endif
+                                    </td>
                                     <td class="py-4 px-4 text-center">
                                         @php
                                             $statusClass =
@@ -144,22 +172,7 @@
                                         <div class="fw-bold text-success">₱{{ number_format($payment->total_price, 2) }}
                                         </div>
                                     </td>
-                                    <td class="py-4 px-4">
-                                        @if ($payment->date_from && $payment->date_to)
-                                            @if ($payment->date_from == $payment->date_to)
-                                                <div class="fw-medium text-gray-800">
-                                                    {{ \Carbon\Carbon::parse($payment->date_from)->format('M d, Y') }}
-                                                </div>
-                                            @else
-                                                <div class="fw-medium text-gray-800">
-                                                    {{ \Carbon\Carbon::parse($payment->date_from)->format('M d') }} -
-                                                    {{ \Carbon\Carbon::parse($payment->date_to)->format('M d, Y') }}
-                                                </div>
-                                            @endif
-                                        @else
-                                            <div class="text-muted">No dates</div>
-                                        @endif
-                                    </td>
+
                                 </tr>
                             @empty
                                 <tr>
@@ -178,17 +191,23 @@
                             @endforelse
                         </tbody>
                         @if ($payments->count() > 0)
-                            <tfoot>
-                                <tr class="bg-gray-50">
-                                    <td colspan="4" class="py-3 px-4 text-end fw-semibold text-gray-800">
-                                        Grand Total:
-                                    </td>
-                                    <td class="py-3 px-4">
-                                        <div class="fw-bold text-success fs-7">₱{{ number_format($grandTotal, 2) }}</div>
-                                    </td>
-                                    {{-- <td class="py-3 px-4"></td> --}}
-                                </tr>
-                            </tfoot>
+                            @if ($payments->count() > 0)
+                                <tfoot>
+                                    <tr class="bg-gray-50">
+                                        <td class="py-3 px-4 fw-bold text-gray-800">
+                                            Grand Total:
+                                        </td>
+                                        <td class="py-3 px-4"></td>
+                                        <td class="py-3 px-4"></td>
+                                        <td class="py-3 px-4"></td>
+                                        <td class="py-3 px-4">
+                                            <div class="fw-bold text-success fs-7">
+                                                ₱{{ number_format($grandTotal, 2) }}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            @endif
                         @endif
                     </table>
                 </div>

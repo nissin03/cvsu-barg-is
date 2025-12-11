@@ -387,18 +387,21 @@
             @else
                 <tr class="total-row">
                     @php
-                        $colspan = 2;
+                        $middleColspan = 1;
                         if ($showAllFacilities) {
-                            $colspan++;
+                            $middleColspan++;
                         }
                         if (!$allSameStatus) {
-                            $colspan++;
+                            $middleColspan++;
                         }
                     @endphp
-                    <td colspan="{{ $colspan }}" class="text-right"><strong>Grand Total:</strong></td>
+
+                    <td><strong>Grand Total:</strong></td>
+                    <td colspan="{{ $middleColspan }}"></td>
                     <td class="text-right">₱{{ number_format($payments->sum('total_price'), 2) }}</td>
                 </tr>
             @endif
+
         </tbody>
     </table>
 
