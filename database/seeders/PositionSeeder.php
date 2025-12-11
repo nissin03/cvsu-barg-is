@@ -70,6 +70,12 @@ class PositionSeeder extends Seeder
             ['name' => 'Campus Doctor',                'code' => 'DOCTOR'],
             ['name' => 'Security Guard',               'code' => 'SECG'],
             ['name' => 'Utility / Maintenance Staff',  'code' => 'UTIL'],
+
+            // New Positions
+            ['name' => 'Bookkeeper, OVPBGR',                   'code' => 'BKOVPBGR'],
+            ['name' => 'Staff, Marketing Center',              'code' => 'STFMKT'],
+            ['name' => 'Head, Printing and Services Unit',     'code' => 'HEADPSU'],
+            ['name' => 'Staff, Prod. & Resource Generation',   'code' => 'STFPRG'],
         ];
 
         // Add timestamps for each row
