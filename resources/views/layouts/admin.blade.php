@@ -589,11 +589,11 @@
                                             <div class="text">Products Reports</div>
                                         </a>
                                         <ul class="sub-menu">
-                                            <li class="sub-menu-item">
+                                            {{-- <li class="sub-menu-item">
                                                 <a href="{{ route('admin.reports') }}">
                                                     <div class="text">Sales Charts</div>
                                                 </a>
-                                            </li>
+                                            </li> --}}
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.report-statements') }}">
                                                     <div class="text">Sales</div>
@@ -610,11 +610,11 @@
                                                 </a>
                                             </li>
 
-                                            <li class="sub-menu-item">
+                                            {{-- <li class="sub-menu-item">
                                                 <a href="{{ route('admin.report-user') }}">
                                                     <div class="text">Users</div>
                                                 </a>
-                                            </li>
+                                            </li> --}}
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.report-inventory') }}">
                                                     <div class="text">Inventory</div>

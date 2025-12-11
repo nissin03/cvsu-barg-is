@@ -101,6 +101,14 @@
                 </div>
             </div>
             <div class="card-body p-0">
+                <div class="px-4 pt-3">
+                    <div class="d-flex align-items-center gap-3 small">
+                        <span class="fw-semibold text-gray-700">Status:</span>
+                        <span class="badge badge-reserved">Reserved</span>
+                        <span class="badge badge-completed">Picked Up</span>
+                        <span class="badge badge-canceled">Canceled</span>
+                    </div>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-hover mb-0" id="dataTable" width="100%" cellspacing="0">
                         <thead class="table-light">
@@ -108,9 +116,8 @@
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Name</th>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4">Product/Variant</th>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">Quantity</th>
-                                <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">Amount</th>
                                 <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">Status</th>
-                                <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">Order Date</th>
+                                <th class="border-0 fw-semibold text-gray-700 py-3 px-4 text-center">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -136,14 +143,6 @@
                                                 {{ $item->quantity }}
                                             </div>
                                         </td>
-                                        <td class="py-4 px-4 text-center amount-cell" data-label="Amount">
-                                            <div class="amount-details">
-                                                <span class="total-amount">
-                                                    ₱{{ number_format($item->price * $item->quantity, 2) }}</span>
-                                                <span class="unit-price">
-                                                    ₱{{ number_format($item->price, 2) }} each</span>
-                                            </div>
-                                        </td>
                                         <td class="py-4 px-4 text-center status-cell" data-label="Status">
                                             @php
                                                 $statusColors = [
@@ -157,20 +156,19 @@
                                                 {{ ucfirst($order->status) }}
                                             </span>
                                         </td>
-                                        <td class="py-4 px-4 text-center date-cell" data-label="Order Date">
-                                            <span class="text-muted" style="font-size: 1.5rem;">
-                                                {{ \Carbon\Carbon::parse($order->reservation_date)->format('M d, Y') }}
-                                            </span>
-                                            {{-- @if ($order->reservation_date)
-                                                <br><small class="text-muted">Reservation:
-                                                    {{ \Carbon\Carbon::parse($order->reservation_date)->format('M d, Y') }}</small>
-                                            @endif --}}
+                                        <td class="py-4 px-4 text-center amount-cell" data-label="Amount">
+                                            <div class="amount-details">
+                                                <span class="total-amount">
+                                                    ₱{{ number_format($item->price * $item->quantity, 2) }}</span>
+                                                <span class="unit-price">
+                                                    ₱{{ number_format($item->price, 2) }} each</span>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-5">
+                                    <td colspan="5" class="text-center py-5">
                                         <div class="d-flex flex-column align-items-center">
                                             <div class="bg-gray-100 rounded-circle d-flex align-items-center justify-content-center mb-3"
                                                 style="width: 60px; height: 60px;">
@@ -189,11 +187,11 @@
                         @if ($orders->count() > 0)
                             <tfoot>
                                 <tr class="border-top">
-                                    <td colspan="5" class="py-4 px-4 text-end fw-semibold text-gray-700"
-                                        style="font-size: 1.5rem;">
+                                    <td class="py-4 px-4 text-start fw-bold text-gray-700" style="font-size: 1.5rem;">
                                         Grand Total:
                                     </td>
-                                    <td colspan="1" class="py-4 px-4 text-start fw-bold text-success"
+                                    <td colspan="3"></td>
+                                    <td class="py-4 px-4 text-start fw-bold text-success text-center"
                                         style="font-size: 1.5rem;">
                                         ₱{{ number_format($grandTotal, 2) }}
                                     </td>
