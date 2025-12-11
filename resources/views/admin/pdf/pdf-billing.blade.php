@@ -323,6 +323,8 @@
 
     <div class="signatures-section">
         @php
+            use Illuminate\Support\Facades\Auth;
+
             $signatures = \App\Models\Signature::where('category', 'product')
                 ->where(function ($query) {
                     $query->where('report_type', 'sales')->orWhere('report_type', 'all');
@@ -338,7 +340,7 @@
             $leftSignatures[] = (object) [
                 'label' => 'Prepared by',
                 'name' => strtoupper(Auth::user()->name),
-                'position' => Auth::user()->position,
+                'position' => optional(Auth::user()->position)->name,
                 'is_prepared_by' => true,
             ];
 
