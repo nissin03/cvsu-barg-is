@@ -275,9 +275,9 @@
                                 <option value="inventory"
                                     {{ old('report_type', $signature->report_type) == 'inventory' ? 'selected' : '' }}>
                                     Inventory</option>
-                                <option value="users"
+                                {{-- <option value="users"
                                     {{ old('report_type', $signature->report_type) == 'users' ? 'selected' : '' }}>Users
-                                </option>
+                                </option> --}}
                                 <option value="all"
                                     {{ old('report_type', $signature->report_type) == 'all' ? 'selected' : '' }}>All
                                 </option>

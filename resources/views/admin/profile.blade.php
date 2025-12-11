@@ -184,43 +184,55 @@
                             @csrf
                             @method('PUT')
                             <hr class="my-4">
-                            <div class="form-group">
-                                <label for="position" class="form-label">Position</label>
-                                <input type="text" class="form-control @error('position') is-invalid @enderror"
-                                    id="position" name="position" value="{{ old('position', auth()->user()->position) }}">
-                                @error('position')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                            </div>
 
                             <div class="form-group">
+                                <label for="position_id" class="form-label">Position</label>
+                                <select class=" @error('position_id') is-invalid @enderror" id="position_id"
+                                    name="position_id" required>
+                                    <option value="">Select Position</option>
+                                    @foreach ($positions as $position)
+                                        <option value="{{ $position->id }}"
+                                            {{ old('position_id', auth()->user()->position_id) == $position->id ? 'selected' : '' }}>
+                                            {{ $position->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('position_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <h5 class="mb-5">Change Password</h5>
+                            <p class="text-muted mb-5">Leave password fields empty if you don't want to change your
+                                password.</p>
+
+                            <div class="form-group mt-5">
                                 <label for="current_password" class="form-label">Current Password</label>
                                 <input type="password" class="form-control @error('current_password') is-invalid @enderror"
-                                    id="current_password" name="current_password" required>
+                                    id="current_password" name="current_password"
+                                    placeholder="Enter current password to change">
                                 @error('current_password')
-                                    <div class="text-danger">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <div class="form-group">
                                 <label for="password" class="form-label">New Password</label>
                                 <input type="password" class="form-control @error('password') is-invalid @enderror"
-                                    id="password" name="password" required>
+                                    id="password" name="password" placeholder="Enter new password">
                                 @error('password')
-                                    <div class="text-danger">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <div class="form-group">
                                 <label for="password_confirmation" class="form-label">Confirm New Password</label>
                                 <input type="password" class="form-control" id="password_confirmation"
-                                    name="password_confirmation" required>
+                                    name="password_confirmation" placeholder="Confirm new password">
                             </div>
-
 
                             <div class="form-group">
                                 <button type="submit" class="btn btn-primary">
-                                    Update Password
+                                    Update Profile
                                 </button>
                             </div>
                         </form>

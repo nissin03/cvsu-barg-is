@@ -1,6 +1,21 @@
 .facility-booking-container [id^="selected-addons-display-"] {
     display: none !important;
-  } 
+}
+.box {
+    width: 15px;
+    height: 15px;
+    display: inline-block;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.bg-danger {
+    background-color: #dc3545 !important;
+}
+.legend .d-flex {
+    align-items: center;
+}
+
 .selected-addons-display {
     min-height: 50px;
     border: 1px dashed #ddd;
@@ -42,636 +57,652 @@
     font-weight: 500;
     margin-bottom: 0.5rem;
 }
-    /* Container and General Styles */
-    
-    .accordion-button:not(.collapsed) {
-        background-color: #f8f9fa;
-        color: #000;
-        box-shadow: inset 0 -1px 0 rgba(0,0,0,.125);
-    }
-    .accordion-button:focus {
-        box-shadow: none;
-        border-color: rgba(0,0,0,.125);
-    }
-
-    .facility-booking-container {
-        max-width: 100%;
-        margin: 0 auto;
-        padding: 16px;
-        background: #ffffff;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
-    }
-
-    .booking-type-header {
-        color: #3b82f6;
-    }
-
-    /* Alert Styles */
-    .alert {
-        border-radius: 6px;
-        border: none;
-        padding: 12px;
-        margin-bottom: 16px;
-        font-weight: 500;
-    }
-
-    .alert-warning {
-        background-color: #fef3c7;
-        color: #92400e;
-    }
-
-    .alert-primary,
-    .alert-info {
-        background-color: #e7f5ff;
-        color: #1864ab;
-    }
-
-    /* Capacity Styles */
-    .capacity-info {
-        margin-bottom: 16px;
-    }
-
-    .capacity-card {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        background: #f8fafc;
-        border-radius: 6px;
-        border: 1px solid #e2e8f0;
-        gap: 8px;
-    }
-
-    .capacity-card i {
-        color: #3b82f6;
-        font-size: 16px;
-    }
-
-    .capacity-text {
-        font-weight: 600;
-        color: #1e293b;
-    }
-
-    .capacity-value {
-        background: #3b82f6;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 14px;
-        font-weight: 500;
-    }
-
-    /* Section Styles */
-    .booking-section {
-        margin-bottom: 16px;
-        background: #ffffff;
-        border-radius: 6px;
-        border: 1px solid #e5e7eb;
-        overflow: hidden;
-    }
-
-    .section-header {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        background: #f8fafc;
-        border-bottom: 1px solid #e5e7eb;
-        gap: 8px;
-    }
-
-    .section-header i {
-        color: #3b82f6;
-        font-size: 14px;
-    }
-
-    .section-header span {
-        margin: 0;
-        font-size: 14px;
-        font-weight: 600;
-        color: #1e293b;
-    }
-
-    .section-content {
-        padding: 16px;
-    }
-
-    /* Display Styles */
-    .selected-dates-display {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-    }
-
-    .selected-client-types-display {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-    }
-
-    .client-type-item {
-        flex: 1;
-        min-width: 150px;
-        color: #1e293b;
-        font-size: 14px;
-        background: #f8fafc;
-        padding: 10px;
-        border-radius: 6px;
-        border: 1px solid #e5e7eb;
-    }
-
-    .client-type-item strong {
-        display: block;
-        margin-bottom: 4px;
-    }
-
-    .date-selection-item {
-        flex: 1;
-        min-width: 150px;
-        color: #1e293b;
-        font-size: 14px;    
-    }
-
-    /* Input and Form Styles */
-    .time-slot-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 16px;
-    }
-
-    .time-input-group {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .time-label {
-        font-size: 14px;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 6px;
-    }
-
-    .time-input,
-    .client-type-select {
-        width: 100%;
-        padding: 8px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 4px;
-        font-size: 14px;
-        background: #ffffff;
-        transition: border-color 0.2s ease;
-    }
-
-    .time-input:focus,
-    .client-type-select:focus {
-        outline: none;
-        border-color: #3b82f6;
-    }
-
-    .time-input:read-only {
-        background-color: #f9fafb;
-        color: #6b7280;
-        cursor: not-allowed;
-    }
-
-    /* Error and Validation Styles */
-    .error-message {
-        color: #ef4444;
-        font-size: 14px;
-        margin-bottom: 16px;
-        padding: 8px;
-        background: #fef2f2;
-        border-radius: 4px;
-        border: 1px solid #fecaca;
-        display: none;
-    }
-
-    .invalid-feedback {
-        font-size: 13px;
-        margin-top: 6px;
-    }
-
-    /* Price and Quantity Styles */
-    .total-price-section {
-        background: #5a5b5d;
-        border-radius: 6px;
-        padding: 16px;
-        margin-top: 16px;
-    }
-
-    .total-price-content {
-        display: block; 
-    }
-
-    .total-price-label {
-        display: block;
-        color: #e2e8f0;
-        font-size: 14px;
-        font-weight: 600;
-        margin-bottom: 4px;
-    }
-
-    .total-price-value,
-    .computed-total {
-        font-size: 18px;
-        font-weight: 700;
-        color: #ffffff;
-    }
-
-    .price-quantity-section {
-        background: #ffffff;
-        border-radius: 8px;
-        padding: 16px;
-    }
-
-    .price-quantity-card {
-        background: #f8fafc;
-        border-radius: 8px;
-        padding: 16px;
-        border: 1px solid #e5e7eb;
-        transition: all 0.2s ease;
-    }
-
-    .price-quantity-card:hover {
-        border-color: #d1d5db;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-
-    .price-header {
-        padding-bottom: 8px;
-        border-bottom: 1px dashed #e5e7eb;
-    }
-
-    .price-title {
-        font-size: 16px;
-        font-weight: 600;
-        color: #1f2937;
-    }
-
-    .price-value {
-        padding: 6px 10px;
-        border-radius: 6px;
-        font-size: 14px;
-    }
-
-    .quantity-label {
-        font-size: 14px;
-        font-weight: 500;
-        color: #4b5563;
-        margin-bottom: 8px;
-    }
-
-    .quantity-input {
-        padding: 10px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        font-size: 14px;
-        transition: all 0.2s ease;
-    }
-
-    .quantity-input:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-    }
-
-    /* Modal Styles */
-    .modal .modal-dialog {
-        transition: transform 0.3s ease-out;
-        transform: translate(0, -50px);
-    }
-
-    .modal.show .modal-dialog {
-        transform: none;
-    }
-
-    #priceQuantityModal .modal-body {
-        max-height: 70vh;
-        overflow-y: auto;
-    }
-
-    .price-quantity-modal-header {
-        border-bottom: 1px solid #e5e7eb;
-        padding-bottom: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .modal-footer {
-        border-top: 1px solid #e5e7eb;
-        padding-top: 1rem;
-    }
-
-    /* Date Selection Card Styles */
-    .selected-dates-card {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .selected-dates-card h6 {
-        color: #1a1a1a;
-        font-size: 1rem;
-        border-bottom: 1px solid #dee2e6;
-        padding-bottom: 12px;
-        margin-bottom: 16px;
-    }
-
-    .selected-dates-card small.text-muted {
-        font-size: 0.75rem;
-        color: #6c757d;
-        display: block;
-        margin-bottom: 4px;
-    }
-
-    .selected-dates-card .fw-bold {
-        font-size: 0.9rem;
-        color: #1a1a1a;
-        margin-bottom: 12px;
-        word-break: break-word;
-    }
-
-    /* Button Styles */
-    #shared-confirm-dates,
-    #whole-confirm-dates {
-        background-color: #3b82f6;
-        border: none;
-        padding: 10px 16px;
-        font-size: 14px;
-        font-weight: 500;
-        border-radius: 6px;
-        transition: all 0.2s ease;
-        margin-top: auto;
-    }
-
-    #shared-confirm-dates:hover,
-    #whole-confirm-dates:hover {
-        background-color: #2563eb;
-    }
-
-    #shared-confirm-dates:disabled,
-    #whole-confirm-dates:disabled {
-        background-color: #9ca3af;
-        cursor: not-allowed;
-    }
-
-    /* Badge Styles */
-    .badge.bg-primary-light {
-        background-color: #eff6ff;
-        color: #3b82f6;
-    }
-
-    /* Calendar Styles */
-    .fc {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    }
-
-    .fc .fc-daygrid-day {
-        transition: all 0.2s ease !important;
-    }
-
-    .fc .fc-daygrid-day:hover:not(.fully-booked-date) {
-        background-color: #f8f9fa !important;
-        cursor: pointer !important;
-    }
-
-    .fc .fc-day.fully-booked-date,
-    .fc .fc-daygrid-day.fully-booked-date,
-    .fc-daygrid-day-frame.fully-booked-date {
-        background: linear-gradient(135deg, #ff6b6b, #ee5a5a) !important;
-        color: white !important;
-        border: 2px solid #ff5252 !important;
-        position: relative !important;
-        opacity: 0.85 !important;
-        transition: all 0.3s ease !important;
-        animation: pulseReserved 3s infinite ease-in-out !important;
-    }
-    
-    .fc .fc-day.fully-booked-date .fc-daygrid-day-number,
-    .fc .fc-daygrid-day.fully-booked-date .fc-daygrid-day-number {
-        color: white !important;
-        font-weight: bold !important;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.3) !important;
-    }
-    
-    .fc .fc-day.fully-booked-date:hover,
-    .fc .fc-daygrid-day.fully-booked-date:hover {
-        background: linear-gradient(135deg, #ff5252, #e53935) !important;
-        cursor: not-allowed !important;
-        opacity: 1 !important;
-        transform: scale(0.98) !important;
-        box-shadow: 0 4px 8px rgba(255, 82, 82, 0.3) !important;
-    }
-    
-    .fc .fc-day.fully-booked-date::before {
-        content: "🚫" !important;
-        position: absolute !important;
-        top: 2px !important;
-        right: 2px !important;
-        font-size: 12px !important;
-        z-index: 15 !important;
-        filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.3)) !important;
-    }
-    
-    .fc .fc-day.fully-booked-date::after,
-    .fc .fc-daygrid-day.fully-booked-date::after,
-    .fc-daygrid-day-frame.fully-booked-date::after {
-        content: "booked" !important;
-        position: absolute !important;
-        bottom: -10px !important;
-        left: 50% !important;
-        transform: translateX(-70%) !important;
-        font-size: 9px !important;
-        color: white !important;
-        background: linear-gradient(135deg, #dc3545, #c82333) !important;
-        padding: 2px 6px !important;
-        border-radius: 10px !important;
-        pointer-events: none !important;
-        white-space: nowrap !important;
-        text-transform: lowercase !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.2px !important;
-        line-height: 1 !important;
-        z-index: 10 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-    }
-    
-    .fc .fc-day.selected-start-date:not(.fully-booked-date),
-    .fc .fc-daygrid-day.selected-start-date:not(.fully-booked-date) {
-        background: linear-gradient(135deg, #e3f2fd, #bbdefb) !important;
-        border: 2px solid #1976d2 !important;
-        box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3) !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    .fc .fc-day.selected-end-date:not(.fully-booked-date),
-    .fc .fc-daygrid-day.selected-end-date:not(.fully-booked-date) {
-        background: linear-gradient(135deg, #e8f5e8, #c8e6c9) !important;
-        border: 2px solid #388e3c !important;
-        box-shadow: 0 2px 8px rgba(56, 142, 60, 0.3) !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    .fc .fc-day.selected-range-date:not(.fully-booked-date),
-    .fc .fc-daygrid-day.selected-range-date:not(.fully-booked-date) {
-        background: linear-gradient(135deg, #f3e5f5, #e1bee7) !important;
-        border: 1px solid #7b1fa2 !important;
-        box-shadow: 0 1px 4px rgba(123, 31, 162, 0.2) !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    /* Calendar Event Styles */
-    .fc-event.fully-booked-event,
-    .fc .fc-daygrid-event.fully-booked-event {
-        background: linear-gradient(135deg, #dc3545, #c82333) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-        color: white !important;
-        font-size: 9px !important;
-        text-transform: lowercase !important;
-        font-weight: 500 !important;
-        padding: 2px 6px !important;
-        border-radius: 10px !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-        transition: all 0.3s ease !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        letter-spacing: 0.2px !important;
-        line-height: 1 !important;
-    }
-    
-    .fc-event.fully-booked-event:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4) !important;
-    }
-    
-    .fc-event.fully-booked-event .fc-event-title,
-    .fc .fc-daygrid-event.fully-booked-event .fc-event-title,
-    .fc .fc-daygrid-event.fully-booked-event .fc-event-main,
-    .fc .fc-daygrid-event.fully-booked-event .fc-event-main-frame {
-        font-size: 9px !important;
-        text-transform: lowercase !important;
-        color: white !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.2px !important;
-        line-height: 1 !important;
-    }
-
-    /* Calendar Status Indicators */
-    .fc-day-capacity {
-        position: absolute !important;
-        bottom: -10px !important;
-        left: 60% !important;
-        transform: translateX(-85%) !important;
-        font-size: 9px !important;
-        color: white !important;
-        padding: 2px 6px !important;
-        border-radius: 10px !important;
-        pointer-events: none !important;
-        white-space: nowrap !important;
-        text-transform: lowercase !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.2px !important;
-        line-height: 1 !important;
-        z-index: 10 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-    }
-    
-    .fc-capacity-success {
-        background: #198754 !important;
-        background: linear-gradient(135deg, #198754, #157347) !important;
-    }
-        
-    .fc-capacity-warning {
-        background: #ffc107 !important;
-        background: linear-gradient(135deg, #ffc107, #e0a800) !important;
-        color: #000 !important;
-        animation: pulse-warning 2s infinite;
-    }
-    
-    .fc-status-booked,
-    .fc-status-occupied {
-        color: white !important;
-        font-size: 9px !important;
-        position: absolute !important;
-        bottom: -10px !important;
-        padding: 2px 6px !important;
-        border-radius: 10px !important;
-        pointer-events: none !important;
-        white-space: nowrap !important;
-        text-transform: lowercase !important;
-        font-weight: 500 !important;
-        letter-spacing: 0.2px !important;
-        line-height: 1 !important;
-        z-index: 10 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-    }
-
-    .fc-status-booked {
-        background: linear-gradient(135deg, #dc3545, #c82333) !important;
-        left: 50% !important;
-        transform: translateX(-75%) !important;
-    }
-
-    .fc-status-occupied {
-        background: linear-gradient(135deg, #fd7e14, #e36209) !important;
-        right: 2px !important;  
-        transform: none !important;  
-    }
-
-    /* Tooltip Styles for Calendar */
-    .fc .fc-day.fully-booked-date:hover::before {
-        content: "This date is fully booked" !important;
-        position: absolute !important;
-        top: -35px !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        background: rgba(0, 0, 0, 0.9) !important;
-        color: white !important;
-        padding: 6px 10px !important;
-        border-radius: 6px !important;
-        font-size: 11px !important;
-        white-space: nowrap !important;
-        z-index: 1000 !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-        font-weight: normal !important;
-        letter-spacing: 0.3px !important;
-    }
-    
-    .fc .fc-day.fully-booked-date:hover::after {
-        content: "" !important;
-        position: absolute !important;
-        top: -8px !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        width: 0 !important;
-        height: 0 !important;
-        border-left: 6px solid transparent !important;
-        border-right: 6px solid transparent !important;
-        border-top: 6px solid rgba(0, 0, 0, 0.9) !important;
-        z-index: 1000 !important;
-    }
-
-    /* Animations */
-    @keyframes pulseReserved {
-        0% { opacity: 0.85; }
-        50% { opacity: 1; }
-        100% { opacity: 0.85; }
-    }
-
-    @keyframes pulse-warning {
-        0% { opacity: 0.9; }
-        50% { opacity: 1; }
-        100% { opacity: 0.9; }
-    }
-
+/* Container and General Styles */
+
+.accordion-button:not(.collapsed) {
+    background-color: #f8f9fa;
+    color: #000;
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.125);
+}
+.accordion-button:focus {
+    box-shadow: none;
+    border-color: rgba(0, 0, 0, 0.125);
+}
+
+.facility-booking-container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.booking-type-header {
+    color: #3b82f6;
+}
+
+/* Alert Styles */
+.alert {
+    border-radius: 6px;
+    border: none;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+.alert-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.alert-primary,
+.alert-info {
+    background-color: #e7f5ff;
+    color: #1864ab;
+}
+
+/* Capacity Styles */
+.capacity-info {
+    margin-bottom: 16px;
+}
+
+.capacity-card {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    gap: 8px;
+}
+
+.capacity-card i {
+    color: #3b82f6;
+    font-size: 16px;
+}
+
+.capacity-text {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.capacity-value {
+    background: #3b82f6;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Section Styles */
+.booking-section {
+    margin-bottom: 16px;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+    gap: 8px;
+}
+
+.section-header i {
+    color: #3b82f6;
+    font-size: 14px;
+}
+
+.section-header span {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.section-content {
+    padding: 16px;
+}
+
+/* Display Styles */
+.selected-dates-display {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.selected-client-types-display {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.client-type-item {
+    flex: 1;
+    min-width: 150px;
+    color: #1e293b;
+    font-size: 14px;
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+.client-type-item strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.date-selection-item {
+    flex: 1;
+    min-width: 150px;
+    color: #1e293b;
+    font-size: 14px;
+}
+
+/* Input and Form Styles */
+.time-slot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.time-input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.time-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.time-input,
+.client-type-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+    background: #ffffff;
+    transition: border-color 0.2s ease;
+}
+
+.time-input:focus,
+.client-type-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.time-input:read-only {
+    background-color: #f9fafb;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+/* Error and Validation Styles */
+.error-message {
+    color: #ef4444;
+    font-size: 14px;
+    margin-bottom: 16px;
+    padding: 8px;
+    background: #fef2f2;
+    border-radius: 4px;
+    border: 1px solid #fecaca;
+    display: none;
+}
+
+.invalid-feedback {
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+/* Price and Quantity Styles */
+.total-price-section {
+    background: #5a5b5d;
+    border-radius: 6px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.total-price-content {
+    display: block;
+}
+
+.total-price-label {
+    display: block;
+    color: #e2e8f0;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.total-price-value,
+.computed-total {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.price-quantity-section {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.price-quantity-card {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.price-quantity-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.price-header {
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+.price-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.price-value {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.quantity-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+.quantity-input {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.quantity-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Modal Styles */
+.modal .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translate(0, -50px);
+}
+
+.modal.show .modal-dialog {
+    transform: none;
+}
+
+#priceQuantityModal .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.price-quantity-modal-header {
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 1rem;
+}
+
+/* Date Selection Card Styles */
+.selected-dates-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.selected-dates-card h6 {
+    color: #1a1a1a;
+    font-size: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+}
+
+.selected-dates-card small.text-muted {
+    font-size: 0.75rem;
+    color: #6c757d;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.selected-dates-card .fw-bold {
+    font-size: 0.9rem;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+    word-break: break-word;
+}
+
+/* Button Styles */
+#shared-confirm-dates,
+#whole-confirm-dates {
+    background-color: #3b82f6;
+    border: none;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    margin-top: auto;
+}
+
+#shared-confirm-dates:hover,
+#whole-confirm-dates:hover {
+    background-color: #2563eb;
+}
+
+#shared-confirm-dates:disabled,
+#whole-confirm-dates:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+}
+
+/* Badge Styles */
+.badge.bg-primary-light {
+    background-color: #eff6ff;
+    color: #3b82f6;
+}
+
+/* Calendar Styles */
+.fc {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif !important;
+}
+
+.fc .fc-daygrid-day {
+    transition: all 0.2s ease !important;
+}
+
+.fc .fc-daygrid-day:hover:not(.fully-booked-date) {
+    background-color: #f8f9fa !important;
+    cursor: pointer !important;
+}
+
+.fc .fc-day.fully-booked-date,
+.fc .fc-daygrid-day.fully-booked-date,
+.fc-daygrid-day-frame.fully-booked-date {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a5a) !important;
+    color: white !important;
+    border: 2px solid #ff5252 !important;
+    position: relative !important;
+    opacity: 0.85 !important;
+    transition: all 0.3s ease !important;
+    animation: pulseReserved 3s infinite ease-in-out !important;
+}
+
+.fc .fc-day.fully-booked-date .fc-daygrid-day-number,
+.fc .fc-daygrid-day.fully-booked-date .fc-daygrid-day-number {
+    color: white !important;
+    font-weight: bold !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.fc .fc-day.fully-booked-date:hover,
+.fc .fc-daygrid-day.fully-booked-date:hover {
+    background: linear-gradient(135deg, #ff5252, #e53935) !important;
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+    transform: scale(0.98) !important;
+    box-shadow: 0 4px 8px rgba(255, 82, 82, 0.3) !important;
+}
+
+.fc .fc-day.fully-booked-date::before {
+    content: "🚫" !important;
+    position: absolute !important;
+    top: 2px !important;
+    right: 2px !important;
+    font-size: 12px !important;
+    z-index: 15 !important;
+    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.3)) !important;
+}
+
+.fc .fc-day.fully-booked-date::after,
+.fc .fc-daygrid-day.fully-booked-date::after,
+.fc-daygrid-day-frame.fully-booked-date::after {
+    content: "booked" !important;
+    position: absolute !important;
+    bottom: -10px !important;
+    left: 50% !important;
+    transform: translateX(-70%) !important;
+    font-size: 9px !important;
+    color: white !important;
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+    padding: 2px 6px !important;
+    border-radius: 10px !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+    text-transform: lowercase !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.2px !important;
+    line-height: 1 !important;
+    z-index: 10 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.fc .fc-day.selected-start-date:not(.fully-booked-date),
+.fc .fc-daygrid-day.selected-start-date:not(.fully-booked-date) {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb) !important;
+    border: 2px solid #1976d2 !important;
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+.fc .fc-day.selected-end-date:not(.fully-booked-date),
+.fc .fc-daygrid-day.selected-end-date:not(.fully-booked-date) {
+    background: linear-gradient(135deg, #e8f5e8, #c8e6c9) !important;
+    border: 2px solid #388e3c !important;
+    box-shadow: 0 2px 8px rgba(56, 142, 60, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+.fc .fc-day.selected-range-date:not(.fully-booked-date),
+.fc .fc-daygrid-day.selected-range-date:not(.fully-booked-date) {
+    background: linear-gradient(135deg, #f3e5f5, #e1bee7) !important;
+    border: 1px solid #7b1fa2 !important;
+    box-shadow: 0 1px 4px rgba(123, 31, 162, 0.2) !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Calendar Event Styles */
+.fc-event.fully-booked-event,
+.fc .fc-daygrid-event.fully-booked-event {
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    font-size: 9px !important;
+    text-transform: lowercase !important;
+    font-weight: 500 !important;
+    padding: 2px 6px !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.3s ease !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif !important;
+    letter-spacing: 0.2px !important;
+    line-height: 1 !important;
+}
+
+.fc-event.fully-booked-event:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4) !important;
+}
+
+.fc-event.fully-booked-event .fc-event-title,
+.fc .fc-daygrid-event.fully-booked-event .fc-event-title,
+.fc .fc-daygrid-event.fully-booked-event .fc-event-main,
+.fc .fc-daygrid-event.fully-booked-event .fc-event-main-frame {
+    font-size: 9px !important;
+    text-transform: lowercase !important;
+    color: white !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.2px !important;
+    line-height: 1 !important;
+}
+
+/* Calendar Status Indicators */
+.fc-day-capacity {
+    position: absolute !important;
+    bottom: -10px !important;
+    left: 60% !important;
+    transform: translateX(-85%) !important;
+    font-size: 9px !important;
+    color: white !important;
+    padding: 2px 6px !important;
+    border-radius: 10px !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+    text-transform: lowercase !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.2px !important;
+    line-height: 1 !important;
+    z-index: 10 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.fc-capacity-success {
+    background: #198754 !important;
+    background: linear-gradient(135deg, #198754, #157347) !important;
+}
+
+.fc-capacity-warning {
+    background: #ffc107 !important;
+    background: linear-gradient(135deg, #ffc107, #e0a800) !important;
+    color: #000 !important;
+    animation: pulse-warning 2s infinite;
+}
+
+.fc-status-booked,
+.fc-status-occupied {
+    color: white !important;
+    font-size: 9px !important;
+    position: absolute !important;
+    bottom: -10px !important;
+    padding: 2px 6px !important;
+    border-radius: 10px !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+    text-transform: lowercase !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.2px !important;
+    line-height: 1 !important;
+    z-index: 10 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.fc-status-booked {
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+    left: 50% !important;
+    transform: translateX(-75%) !important;
+}
+
+.fc-status-occupied {
+    background: linear-gradient(135deg, #fd7e14, #e36209) !important;
+    right: 2px !important;
+    transform: none !important;
+}
+
+/* Tooltip Styles for Calendar */
+.fc .fc-day.fully-booked-date:hover::before {
+    content: "This date is fully booked" !important;
+    position: absolute !important;
+    top: -35px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background: rgba(0, 0, 0, 0.9) !important;
+    color: white !important;
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+    z-index: 1000 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    font-weight: normal !important;
+    letter-spacing: 0.3px !important;
+}
+
+.fc .fc-day.fully-booked-date:hover::after {
+    content: "" !important;
+    position: absolute !important;
+    top: -8px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 0 !important;
+    height: 0 !important;
+    border-left: 6px solid transparent !important;
+    border-right: 6px solid transparent !important;
+    border-top: 6px solid rgba(0, 0, 0, 0.9) !important;
+    z-index: 1000 !important;
+}
+
+/* Animations */
+@keyframes pulseReserved {
+    0% {
+        opacity: 0.85;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.85;
+    }
+}
+
+@keyframes pulse-warning {
+    0% {
+        opacity: 0.9;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.9;
+    }
+}
 
 /* Enhanced Responsive Additions */
 @media (max-width: 1024px) {
@@ -679,16 +710,16 @@
     .facility-booking-container {
         padding: 1.25rem;
     }
-    
+
     .booking-section {
         margin-bottom: 1.25rem;
     }
-    
+
     .selected-dates-display,
     .selected-client-types-display {
         gap: 0.75rem;
     }
-    
+
     .modal .modal-dialog {
         max-width: 90%;
     }
@@ -699,16 +730,16 @@
     .price-quantity-card {
         padding: 1rem;
     }
-    
+
     .price-title {
         font-size: 0.9375rem;
     }
-    
+
     .price-value {
         font-size: 0.8125rem;
         padding: 0.375rem 0.625rem;
     }
-    
+
     .quantity-input {
         padding: 0.625rem;
     }
@@ -721,18 +752,18 @@
         align-items: flex-start;
         gap: 0.5rem;
     }
-    
+
     .capacity-card {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
     }
-    
+
     .time-slot-grid {
         grid-template-columns: 1fr;
         gap: 0.75rem;
     }
-    
+
     .modal .modal-body {
         padding: 1rem;
     }
@@ -744,38 +775,38 @@
         display: block;
         margin-bottom: 0.75rem;
     }
-    
+
     .client-type-item,
     .date-selection-item {
         min-width: 100%;
         margin-bottom: 0.5rem;
     }
-    
+
     .selected-dates-display,
     .selected-client-types-display {
         flex-direction: column;
         gap: 0.5rem;
     }
-    
+
     .total-price-section {
         padding: 1rem 0.75rem;
     }
-    
+
     .total-price-value {
         font-size: 1rem;
     }
-    
+
     /* Calendar Modal Adjustments */
     .modal .modal-content {
         height: auto;
         min-height: 90vh;
     }
-    
+
     #shared-calendar,
     #whole-calendar {
         min-height: 300px;
     }
-    
+
     .selected-dates-card {
         margin-top: 1rem;
     }
@@ -786,24 +817,24 @@
     .facility-booking-container {
         padding: 0.75rem;
     }
-    
+
     .section-header {
         padding: 0.75rem;
     }
-    
+
     .section-content {
         padding: 0.75rem;
     }
-    
+
     .btn {
         padding: 0.5rem;
         font-size: 0.875rem;
     }
-    
+
     .price-quantity-card {
         padding: 0.75rem;
     }
-    
+
     .modal .modal-dialog {
         margin: 0.5rem;
     }
@@ -818,7 +849,7 @@
     .client-type-select {
         min-height: 44px;
     }
-    
+
     .form-check-label {
         padding-left: 0.5rem;
     }
@@ -831,13 +862,13 @@
         border: 1px solid #ddd;
         padding: 0;
     }
-    
+
     .modal,
     .btn,
     .form-check-input {
         display: none !important;
     }
-    
+
     .selected-dates-display,
     .selected-client-types-display,
     .total-price-section {
@@ -852,11 +883,11 @@
     .price-quantity-card {
         border: 2px solid #000;
     }
-    
+
     .total-price-section {
         border: 3px solid #000;
     }
-    
+
     .btn-primary {
         background-color: #0044cc !important;
     }
@@ -872,11 +903,11 @@
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
-    
+
     .fc .fc-day.fully-booked-date {
         animation: none !important;
     }
-    
+
     .fc-capacity-warning {
         animation: none !important;
     }
@@ -899,4 +930,3 @@
         max-width: 100%;
     }
 }
-

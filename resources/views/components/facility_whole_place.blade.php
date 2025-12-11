@@ -105,6 +105,22 @@
                                 <div class="col-md-4">
                                     <div class="selected-dates-card p-3">
                                         <h6 class="fw-bold mb-3">Selected Dates</h6>
+
+                                        <div class="mb-3">
+                                            <div class="legend small" aria-label="Legend">
+                                                <div class="d-flex align-items-center gap-2 mb-2">
+                                                    <div class="box bg-danger"
+                                                        style="width: 16px; height: 16px; border-radius: 2px;"></div>
+                                                    <span class="text-muted">Fully Booked</span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2 mb-2">
+                                                    <div class="box bg-secondary"
+                                                        style="width: 16px; height: 16px; border-radius: 2px;"></div>
+                                                    <span class="text-muted">Unavailable</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="mb-2">
                                             <small class="text-muted">Start Date:</small>
                                             <div id="modal-start-date" class="fw-bold">Not selected</div>

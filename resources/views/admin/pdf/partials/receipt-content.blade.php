@@ -696,7 +696,8 @@
         <div class="prepared-by">
             <div>Processed by:</div>
             <div>{{ Auth::user()->name }}</div>
-            <div>{{ Auth::user()->position ? ucfirst(Auth::user()->position) : 'Administrator' }}</div>
+            <div>{{ ucfirst(optional(Auth::user()->position)->name ?? 'Staff') }}</div>
+
         </div>
     </div>
 </body>

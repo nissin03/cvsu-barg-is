@@ -15,14 +15,31 @@
                 <input type="hidden" name="reservation_date" id="reservation_date">
                 <input type="hidden" name="time_slot" id="time_slot">
 
-                <!-- Mobile-first responsive layout -->
                 <div class="row g-4">
-                    <!-- Calendar Section - Full width on mobile, 8 cols on desktop -->
+
                     <div class="col-12 col-lg-8">
                         <div class="calendar-section mb-4">
                             <div class="section-header">
                                 <i class="fas fa-calendar-alt"></i>
                                 <span>Select Date & Time</span>
+                            </div>
+                            <div class="indicator">
+                                <div class="mb-2">
+                                    <span><i class="fas fa-info-circle text-primary"></i> Note: Reservations are only
+                                        available from
+                                        <strong>Monday to Thursday</strong>.</span>
+                                </div>
+                                <div class="legend d-flex flex-wrap align-items-center gap-3 small text-body-secondary"
+                                    aria-label="Legend">
+                                    <span class="d-inline-flex align-items-center gap-2">
+                                        <div class="box bg-danger"></div>
+                                        <p class="mb-0">Fully Booked</p>
+                                    </span>
+                                    <span class="d-inline-flex align-items-center gap-2">
+                                        <div class="box bg-secondary opacity-50"></div>
+                                        <p class="mb-0">Unavailable</p>
+                                    </span>
+                                </div>
                             </div>
                             <div class="calendar-wrapper">
                                 <div id='calendar' class="calendar-container"></div>
@@ -34,7 +51,6 @@
                             </div>
                         </div>
 
-                        <!-- Time Slot Section - Centered layout -->
                         <div id="timeSlotContainer" class="d-none">
                             <div class="d-flex justify-content-center mt-3 d-none" id="slotDisplay">
                                 <div class="slots-indicator">
@@ -65,7 +81,6 @@
                         </div>
                     </div>
 
-                    <!-- User Info and Order Summary - Full width on mobile, 4 cols on desktop -->
                     <div class="col-12 col-lg-4">
                         <div class="user-order-container">
                             @include('partials._user-info', ['user' => $user])
@@ -123,15 +138,64 @@
 @push('scripts')
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js'></script>
     <script>
-        // Replace the existing holiday fetch and calendar initialization code with this:
-
         let selectedDate = null;
         let philHolidays = [];
+        let fullyBookedDates = {}; // Store fully booked dates
 
-        // Wait for holidays API before initializing calendar
+        // Helper function to format date consistently (avoid timezone issues)
+        function formatDateString(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Fetch slot availability for the entire month
+        async function fetchMonthSlotAvailability(year, month) {
+            try {
+                const startDate = new Date(year, month, 1);
+                const endDate = new Date(year, month + 1, 0);
+
+                const datePromises = [];
+
+                // Create array of dates to check
+                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                    const dateStr = formatDateString(d);
+
+                    datePromises.push(
+                        fetch(`/api/slots?date=${dateStr}`)
+                        .then(res => res.json())
+                        .then(data => ({
+                            date: dateStr,
+                            slots: data
+                        }))
+                    );
+                }
+
+                const results = await Promise.all(datePromises);
+
+                fullyBookedDates = {};
+                results.forEach(result => {
+                    const [y, m, d] = result.date.split('-').map(Number);
+                    const dateObj = new Date(y, m - 1, d);
+                    if (!isDateDisabled(dateObj)) {
+                        const slotValues = Object.values(result.slots);
+                        const allSlotsFull = slotValues.length > 0 && slotValues.every(count => count === 0);
+                        if (allSlotsFull) {
+                            fullyBookedDates[result.date] = true;
+                        }
+                    }
+                });
+
+                return fullyBookedDates;
+            } catch (error) {
+                console.error('Error fetching month slot availability:', error);
+                return {};
+            }
+        }
+
         async function initializeCalendar() {
             try {
-                // Fetch holidays first
                 const response = await fetch(
                     `https://date.nager.at/api/v3/PublicHolidays/${new Date().getFullYear()}/PH`);
                 const data = await response.json();
@@ -141,24 +205,20 @@
                 }));
             } catch (err) {
                 console.error("Holiday API error:", err);
-                // Continue with empty holidays array if API fails
                 philHolidays = [];
             }
 
-            // Now initialize the calendar
-            const calendarEl = document.getElementById('calendar');
             const today = new Date();
+            await fetchMonthSlotAvailability(today.getFullYear(), today.getMonth());
+
+            const calendarEl = document.getElementById('calendar');
 
             const minDate = new Date(today);
             minDate.setDate(today.getDate() + 3);
-            const minDateStr = minDate.getFullYear() + '-' +
-                String(minDate.getMonth() + 1).padStart(2, '0') + '-' +
-                String(minDate.getDate()).padStart(2, '0');
+            const minDateStr = formatDateString(minDate);
 
-            const nextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
-            const nextMonthStr = nextMonth.getFullYear() + '-' +
-                String(nextMonth.getMonth() + 1).padStart(2, '0') + '-' +
-                String(nextMonth.getDate()).padStart(2, '0');
+            const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            const nextMonthStr = formatDateString(nextMonth);
 
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 aspectRatio: window.innerWidth < 768 ? 1.0 : window.innerWidth < 992 ? 1.3 : 1.6,
@@ -175,7 +235,7 @@
                     return !isDateDisabled(selectInfo.start);
                 },
                 dayCellClassNames: function(arg) {
-                    const dateStr = arg.date.toISOString().split("T")[0];
+                    const dateStr = formatDateString(arg.date);
                     let classes = [];
 
                     if (philHolidays.some(h => h.date === dateStr)) {
@@ -184,10 +244,13 @@
                     if (isDateDisabled(arg.date)) {
                         classes.push('fc-disabled-day');
                     }
+                    if (fullyBookedDates[dateStr]) {
+                        classes.push('fc-fully-booked');
+                    }
                     return classes;
                 },
                 dayCellDidMount: function(info) {
-                    const dateStr = info.date.toISOString().split("T")[0];
+                    const dateStr = formatDateString(info.date);
 
                     const holiday = philHolidays.find(h => h.date === dateStr);
                     if (holiday) {
@@ -196,6 +259,20 @@
                         holidayDiv.textContent = holiday.name;
                         info.el.appendChild(holidayDiv);
                     }
+
+                    // Add "FULLY BOOKED" label for fully booked dates
+                    if (fullyBookedDates[dateStr] && !isDateDisabled(info.date)) {
+                        const bookedDiv = document.createElement("div");
+                        bookedDiv.classList.add("fully-booked-label");
+                        bookedDiv.innerHTML = '<i class="fas fa-ban"></i> FULL';
+                        info.el.appendChild(bookedDiv);
+                    }
+                },
+                datesSet: async function(info) {
+                    // Fetch slot availability when month changes
+                    const currentDate = info.view.currentStart;
+                    await fetchMonthSlotAvailability(currentDate.getFullYear(), currentDate.getMonth());
+                    calendar.render();
                 },
                 windowResize: function(view) {
                     calendar.setOption('aspectRatio', window.innerWidth < 768 ? 1.0 :
@@ -205,7 +282,7 @@
 
             calendar.render();
 
-            // Handle time slot selection (keep your existing handler)
+            // Handle time slot selection
             $(document).on('click', '.time-btn', function() {
                 if ($(this).prop('disabled')) {
                     return;
@@ -237,13 +314,12 @@
             });
         }
 
-        // Simple function to check if a date is Monday-Thursday (1-4)
         function isValidDay(date) {
             const day = date.getDay();
             return day >= 1 && day <= 4;
         }
 
-        // Check if date is too early (less than 3 days from today)
+
         function isTooEarly(date) {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -257,9 +333,8 @@
             return checkDate < minDate;
         }
 
-        // Check if date should be disabled
         function isDateDisabled(date) {
-            const dateStr = date.toISOString().split("T")[0];
+            const dateStr = formatDateString(date);
             const isHoliday = philHolidays.some(h => h.date === dateStr);
             return isHoliday || isTooEarly(date) || !isValidDay(date);
         }
@@ -278,10 +353,7 @@
                 return;
             }
 
-            const year = clickedDate.getFullYear();
-            const month = String(clickedDate.getMonth() + 1).padStart(2, '0');
-            const day = String(clickedDate.getDate()).padStart(2, '0');
-            const dateStr = `${year}-${month}-${day}`;
+            const dateStr = formatDateString(clickedDate);
 
             const isSameDate = selectedDate === dateStr;
             selectedDate = dateStr;
@@ -340,9 +412,8 @@
             $('#placeReservationBtn').prop('disabled', !(date && time));
         }
 
-        // Initialize when DOM is ready
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Place reservation button handler
             const form = document.querySelector('form[name="checkout-form"]');
             const placeBtn = document.getElementById('placeReservationBtn');
 
@@ -370,8 +441,6 @@
                     }
                 });
             });
-
-            // Initialize calendar with holidays loaded
             initializeCalendar();
         });
     </script>
@@ -646,6 +715,13 @@
             pointer-events: none;
         }
 
+        .box {
+            width: 15px;
+            height: 15px;
+            display: inline-block;
+            border-radius: 4px;
+        }
+
         .calendar-loading::after {
             content: 'Loading holidays...';
             position: absolute;
@@ -659,6 +735,58 @@
             font-weight: 600;
             color: #495057;
             z-index: 1000;
+        }
+
+        /* Fully Booked Date Styling */
+        .fc-fully-booked {
+            background: linear-gradient(135deg, #ffe5e5 0%, #ffcccc 100%) !important;
+            position: relative;
+            border: 2px solid #dc3545 !important;
+            opacity: 0.7;
+        }
+
+        .fc-fully-booked:hover {
+            background: linear-gradient(135deg, #ffcccc 0%, #ffb3b3 100%) !important;
+            cursor: not-allowed !important;
+        }
+
+        .fc-fully-booked .fc-daygrid-day-number {
+            color: #dc3545 !important;
+            font-weight: 700;
+        }
+
+        .fully-booked-label {
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            right: 2px;
+            font-size: 9px;
+            color: #fff;
+            font-weight: 700;
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border-radius: 4px;
+            padding: 3px 4px;
+            text-align: center;
+            line-height: 1.2;
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+            z-index: 10;
+        }
+
+        .fully-booked-label i {
+            font-size: 8px;
+            margin-right: 2px;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 767.98px) {
+            .fully-booked-label {
+                font-size: 7px;
+                padding: 2px 3px;
+            }
+
+            .fully-booked-label i {
+                font-size: 7px;
+            }
         }
     </style>
 @endpush

@@ -59,7 +59,7 @@ class AdminController extends Controller
     {
         $currentYear = Carbon::now()->year;
         $yearRange = range($currentYear, $currentYear - 10);
-        $products = $this->getLowStockProducts();
+        $products = $this->getLowStockProducts($request);
         $dashboardData = [$this->getDashboardSummary($currentYear)];
 
         $orders = Order::with(
@@ -329,14 +329,83 @@ class AdminController extends Controller
         return $weekRanges;
     }
 
-    private function getLowStockProducts()
+    private function getLowStockProducts(Request $request)
     {
-        return Product::with(['category', 'attributeValues'])->get()->filter(function ($product) {
-            $currentStock = $product->attributeValues->isNotEmpty()
-                ? $product->attributeValues->sum('quantity')
-                : $product->current_stock;
-            return $currentStock <= $product->reorder_quantity;
-        });
+        $lowStockItems = collect();
+        $products = Product::with(['category', 'attributeValues'])->get();
+
+        foreach ($products as $product) {
+            if ($product->attributeValues->isNotEmpty()) {
+                foreach ($product->attributeValues as $variant) {
+                    if ($variant->quantity == 0 || $variant->quantity <= $product->reorder_quantity) {
+                        // Determine priority and status
+                        $priority = 2; // Default: Reorder Level
+                        $status = 'reorder';
+
+                        if ($variant->quantity == 0) {
+                            $priority = 1; // Highest priority: Out of Stock
+                            $status = 'outofstock';
+                        } elseif ($variant->quantity <= $product->outofstock_quantity) {
+                            $priority = 1; // Also high priority: Low Stock (critical)
+                            $status = 'lowstock';
+                        }
+
+                        $lowStockItems->push([
+                            'product' => $product,
+                            'variant' => $variant,
+                            'current_stock' => $variant->quantity,
+                            'is_variant' => true,
+                            'priority' => $priority,
+                            'status' => $status
+                        ]);
+                    }
+                }
+            } else {
+                $currentStock = $product->current_stock ?? $product->quantity ?? 0;
+                if ($currentStock == 0 || $currentStock <= $product->reorder_quantity) {
+                    // Determine priority and status
+                    $priority = 2; // Default: Reorder Level
+                    $status = 'reorder';
+
+                    if ($currentStock == 0) {
+                        $priority = 1; // Highest priority: Out of Stock
+                        $status = 'outofstock';
+                    } elseif ($currentStock <= $product->outofstock_quantity) {
+                        $priority = 1; // Also high priority: Low Stock (critical)
+                        $status = 'lowstock';
+                    }
+
+                    $lowStockItems->push([
+                        'product' => $product,
+                        'variant' => null,
+                        'current_stock' => $currentStock,
+                        'is_variant' => false,
+                        'priority' => $priority,
+                        'status' => $status
+                    ]);
+                }
+            }
+        }
+
+        // Sort by: 1) Priority (1=urgent, 2=reorder), 2) Current Stock (lowest first), 3) Product Name
+        $lowStockItems = $lowStockItems->sortBy([
+            ['priority', 'asc'],           // Out of Stock first (priority 1), then Reorder Level (priority 2)
+            ['current_stock', 'asc'],      // Within each priority, show lowest stock first
+            ['product.name', 'asc']        // Then alphabetically by product name
+        ]);
+
+        // Paginate the collection (10 items per page)
+        $perPage = 10;
+        $currentPage = $request->get('page', 1);
+        $pagedData = $lowStockItems->slice(($currentPage - 1) * $perPage, $perPage)->values();
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $pagedData,
+            $lowStockItems->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
     }
 
     /**
@@ -1034,6 +1103,12 @@ class AdminController extends Controller
             );
         }
 
+        $redirectTo = $request->input('redirect_to', route('admin.products'));
+        if ($redirectTo === 'dashboard') {
+            return redirect()->route('admin.index')
+                ->with('status', 'Product has been updated successfully!');
+        }
+
         return redirect()->route('admin.products')->with('status', 'Product has been updated successfully!');
     }
 
@@ -1296,6 +1371,12 @@ class AdminController extends Controller
             return $order;
         });
 
+        $totals = [
+            'reserved' => Order::where('status', 'reserved')->count(),
+            'pickedup' => Order::where('status', 'pickedup')->count(),
+            'canceled' => Order::where('status', 'canceled')->count(),
+        ];
+
         if ($request->ajax()) {
             return response()->json([
                 'orders' => view('partials._orders-table', compact('orders'))->render(),
@@ -1304,7 +1385,7 @@ class AdminController extends Controller
             ]);
         }
 
-        return view('admin.orders', compact('orders', 'timeSlots'));
+        return view('admin.orders', compact('orders', 'timeSlots', 'totals'));
     }
 
     public function order_details($order_id)

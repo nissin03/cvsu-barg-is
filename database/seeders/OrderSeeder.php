@@ -19,10 +19,15 @@ class OrderSeeder extends Seeder
         $users = User::where('utype', 'USR')->get();
         $products = Product::all();
 
-        $reservationStartDate = Carbon::now()->addDays(20);
-        $reservationEndDate = Carbon::now()->addDays(20)->addMonths(2);
-        $orderCreationStartDate = Carbon::now()->subMonths(1);
-        $orderCreationEndDate = Carbon::now();
+        $year = Carbon::now()->year;
+        $novemberStart = Carbon::create($year, 11, 1)->startOfDay();
+        $decemberEnd = Carbon::create($year, 12, 31)->endOfDay();
+
+        $reservationWeekFromNow = Carbon::now()->addWeek();
+        if (!in_array($reservationWeekFromNow->month, [11, 12])) {
+            $reservationWeekFromNow = Carbon::create($year, 12, 1);
+        }
+        $reservationWeekFromNowDate = $reservationWeekFromNow->toDateString();
 
         $orderCount = 0;
         $maxOrders = 500;
@@ -39,15 +44,41 @@ class OrderSeeder extends Seeder
                     break 2;
                 }
 
-                $createdAt = Carbon::instance($faker->dateTimeBetween(
-                    $orderCreationStartDate->format('Y-m-d'),
-                    $orderCreationEndDate->format('Y-m-d')
-                ));
+                $createdAt = Carbon::instance(
+                    $faker->dateTimeBetween($novemberStart, $decemberEnd)
+                );
 
-                $reservationDate = Carbon::instance($faker->dateTimeBetween(
-                    $reservationStartDate->format('Y-m-d'),
-                    $reservationEndDate->format('Y-m-d')
-                ))->format('Y-m-d');
+                $rand = $faker->numberBetween(1, 100);
+
+                $status = 'reserved';
+                $reservationDate = $reservationWeekFromNowDate;
+                $pickedUpDate = null;
+                $canceledDate = null;
+
+                if ($rand <= 50) {
+                    $status = 'reserved';
+                    $reservationDate = $reservationWeekFromNowDate;
+                    $pickedUpDate = null;
+                    $canceledDate = null;
+                } elseif ($rand <= 90) {
+                    $status = 'pickedup';
+
+                    $randomNovDecDate = Carbon::instance(
+                        $faker->dateTimeBetween($novemberStart, $decemberEnd)
+                    )->toDateString();
+
+                    $reservationDate = $randomNovDecDate;
+                    $pickedUpDate = $randomNovDecDate;
+                    $canceledDate = null;
+                } else {
+                    $status = 'canceled';
+                    $reservationDate = null;
+                    $pickedUpDate = null;
+
+                    $canceledDate = Carbon::instance(
+                        $faker->dateTimeBetween($novemberStart, $decemberEnd)
+                    )->toDateString();
+                }
 
                 $hour = $faker->numberBetween(7, 16);
                 $minute = $faker->randomElement([0, 15, 30, 45]);
@@ -59,17 +90,17 @@ class OrderSeeder extends Seeder
                 );
 
                 $order = Order::create([
-                    'user_id' => $user->id,
-                    'total' => 0,
+                    'user_id'          => $user->id,
+                    'total'            => 0,
                     'reservation_date' => $reservationDate,
-                    'time_slot' => $timeSlot,
-                    'picked_up_date' => null,
-                    'canceled_date' => null,
-                    'updated_by' => null,
-                    'canceled_reason' => null,
-                    'status' => 'reserved',
-                    'created_at' => $createdAt,
-                    'updated_at' => $createdAt,
+                    'time_slot'        => $timeSlot,
+                    'picked_up_date'   => $pickedUpDate,
+                    'canceled_date'    => $canceledDate,
+                    'updated_by'       => null,
+                    'canceled_reason'  => null,
+                    'status'           => $status,
+                    'created_at'       => $createdAt,
+                    'updated_at'       => $createdAt,
                 ]);
 
                 $orderTotal = 0;
@@ -91,9 +122,9 @@ class OrderSeeder extends Seeder
                     OrderItem::create([
                         'product_id' => $product->id,
                         'variant_id' => $variant?->id,
-                        'order_id' => $order->id,
-                        'price' => $itemPrice,
-                        'quantity' => $quantity,
+                        'order_id'   => $order->id,
+                        'price'      => $itemPrice,
+                        'quantity'   => $quantity,
                         'created_at' => $createdAt,
                         'updated_at' => $createdAt,
                     ]);
@@ -103,12 +134,12 @@ class OrderSeeder extends Seeder
                 $order->save();
 
                 Transaction::create([
-                    'order_id' => $order->id,
+                    'order_id'    => $order->id,
                     'amount_paid' => 0.0,
-                    'change' => 0.0,
-                    'status' => 'unpaid',
-                    'created_at' => $createdAt,
-                    'updated_at' => $createdAt,
+                    'change'      => 0.0,
+                    'status'      => 'unpaid',
+                    'created_at'  => $createdAt,
+                    'updated_at'  => $createdAt,
                 ]);
 
                 $orderCount++;

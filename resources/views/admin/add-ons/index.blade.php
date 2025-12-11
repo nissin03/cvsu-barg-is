@@ -209,6 +209,37 @@
                 @if (Session::has('status'))
                     <p class="alert alert-success">{{ Session::get('status') }}</p>
                 @endif
+                {{-- Legend for Status & Refundable --}}
+                <div class="d-flex flex-wrap justify-content-end mb-3 gap-2">
+                    <div class="card border-0 shadow-sm px-3 py-2">
+                        <div class="d-flex align-items-center flex-wrap gap-3 small">
+                            <span class="text-muted fw-semibold me-2">Legend:</span>
+
+                            {{-- Status --}}
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="badge badge-success">&nbsp;</span>
+                                <span class="text-muted">Available</span>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="badge badge-secondary">&nbsp;</span>
+                                <span class="text-muted">Unavailable</span>
+                            </div>
+
+                            {{-- Refundable --}}
+                            <div class="d-flex align-items-center gap-1 ms-3">
+                                <span class="badge badge-warning">&nbsp;</span>
+                                <span class="text-muted">Refundable</span>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="badge badge-secondary">&nbsp;</span>
+                                <span class="text-muted">Non-Refundable</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="table-all-user g-table">
                     <div class="table-responsive">
                         <div class="mobile-cards d-block d-md-none" id="js-addons-mobile-target">

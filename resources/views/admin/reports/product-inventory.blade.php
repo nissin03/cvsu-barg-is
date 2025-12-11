@@ -106,6 +106,16 @@
                         </div>
                     </div>
                 @else
+                    <div class="px-4 pt-3 pb-2">
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <span class="small text-gray-600 me-2">Stock:</span>
+
+                            <span class="badge badge-instock">In Stock</span>
+                            <span class="badge badge-reorder">Reorder Level</span>
+                            <span class="badge badge-outofstock">Out of Stock</span>
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="table table-hover mb-0" id="dataTable" width="100%" cellspacing="0">
                             <thead class="table-light">

@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\Order;
 use App\Models\Course;
 use App\Models\College;
+use App\Models\Position;
 use App\Models\OrderItem;
 use App\Models\Reservation;
 use App\Models\Transaction;
@@ -15,8 +16,8 @@ use Illuminate\Http\Request;
 use App\Helpers\ProfileHelper;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
 
+use Illuminate\Support\Facades\Auth;
 use App\Models\ProductAttributeValue;
 use Illuminate\Support\Facades\Storage;
 use Surfsidemedia\Shoppingcart\Facades\Cart;
@@ -103,10 +104,12 @@ class UserController extends Controller
         }
 
         $colleges = College::all();
-        $courses = Course::all();
+        $courses  = Course::all();
+        $positions = Position::all();
 
-        return view('user.profile-edit', compact('user', 'colleges', 'courses'));
+        return view('user.profile-edit', compact('user', 'colleges', 'courses', 'positions'));
     }
+
 
     public function profile_update(Request $request)
     {
@@ -115,7 +118,7 @@ class UserController extends Controller
 
         $validationRules = [
             'phone_number' => 'required|numeric|digits:10',
-            'sex' => 'required|in:male,female',
+            'sex'          => 'required|in:male,female',
         ];
 
         if ($user->role_change_allowed) {
@@ -125,9 +128,9 @@ class UserController extends Controller
         if ($role === 'student') {
             $validationRules['year_level'] = 'required|string|in:1st Year,2nd Year,3rd Year,4th Year,5th Year';
             $validationRules['college_id'] = 'required|exists:colleges,id';
-            $validationRules['course_id'] = 'required|exists:courses,id';
-        } else if ($role === 'employee') {
-            $validationRules['position'] = 'required|string|max:255';
+            $validationRules['course_id']  = 'required|exists:courses,id';
+        } elseif ($role === 'employee') {
+            $validationRules['position_id'] = 'required|exists:positions,id';
         }
 
         $validatedData = $request->validate($validationRules);
@@ -138,22 +141,24 @@ class UserController extends Controller
         }
 
         $user->phone_number = $validatedData['phone_number'];
-        $user->sex = $validatedData['sex'];
+        $user->sex          = $validatedData['sex'];
 
         if ($role === 'student') {
             $user->year_level = $validatedData['year_level'];
             $user->college_id = $validatedData['college_id'];
-            $user->course_id = $validatedData['course_id'];
-            $user->position = null;
+            $user->course_id  = $validatedData['course_id'];
+            $user->position_id = null; // clear if previously employee
         } elseif ($role === 'employee') {
-            $user->position = $validatedData['position'];
-            $user->year_level = null;
-            $user->college_id = null;
-            $user->course_id = null;
+            $user->position_id = $validatedData['position_id'];
+            $user->year_level  = null;
+            $user->college_id  = null;
+            $user->course_id   = null;
         } else {
-            $user->year_level = null;
-            $user->college_id = null;
-            $user->course_id = null;
+            // non-employee
+            $user->year_level  = null;
+            $user->college_id  = null;
+            $user->course_id   = null;
+            $user->position_id = null;
         }
 
         $user->save();
@@ -170,6 +175,7 @@ class UserController extends Controller
 
         return redirect()->route('shop.index')->with('success', 'Profile updated successfully.');
     }
+
 
 
 

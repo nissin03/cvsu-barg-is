@@ -30,7 +30,7 @@ use App\Notifications\OrderPlacedNotification;
 
 class CartController extends Controller
 {
-    private const MAX_SLOT_COUNT = 50;
+    private const MAX_SLOT_COUNT = 1;
 
     protected $notificationService;
     public function __construct(NotificationService $notificationService)
