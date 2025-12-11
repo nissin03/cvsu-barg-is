@@ -27,7 +27,7 @@
         <td>
             @php $prices = $facility->prices ?? collect(); @endphp
             @if ($prices->count())
-                <span class="badge badge-info">
+                <span class="">
                     {{ $prices[0]->price_type === 'individual' ? 'Individual' : 'Whole' }}:
                     ₱{{ number_format($prices[0]->value, 2) }}
                 </span>
@@ -49,7 +49,7 @@
         <td>
             @php $attrs = $facility->facilityAttributes ?? collect(); @endphp
             @if ($attrs->count())
-                <span class="badge badge-info">
+                <span class="">
                     {{ $attrs[0]->room_name }}@if ($attrs[0]->capacity)
                         <small>(Cap: {{ $attrs[0]->capacity }})</small>
                     @endif

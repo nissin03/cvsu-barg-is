@@ -10,6 +10,14 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
+
+        .box {
+            width: 15px;
+            height: 15px;
+            display: inline-block;
+            border-radius: 4px;
+        }
+
         .table {
             width: 100%;
             border-collapse: separate;
@@ -452,12 +460,19 @@
                 <div class="d-flex justify-content-end">
                     <div class="legend d-flex align-items-center gap-3 small text-body-secondary" aria-label="Legend">
                         <span class="d-inline-flex align-items-center gap-3">
-                            <div class="box bg-success"></div>
-                            <p>INSTOCK</p>
-                            <div class="box bg-warning"></div>
-                            <p>REORDER LEVEL</p>
-                            <div class="box bg-danger"></div>
-                            <p>OUT OF STOCK</p>
+                            <div title="Yellow - Reserved" class="d-flex items-center gap-2 cursor-pointer">
+                                <div class="box bg-warning"></div>
+                                <p>Reserved</p>
+                            </div>
+
+                            <div title="Green - Pickedup" class="d-flex items-center gap-2 cursor-pointer">
+                                <div class="box bg-success"></div>
+                                <p>Picked up</p>
+                            </div>
+                            <div title="Red - Canceled" class="d-flex items-center gap-2 cursor-pointer">
+                                <div class="box bg-danger"></div>
+                                <p>Canceled</p>
+                            </div>
                         </span>
                     </div>
                 </div>
