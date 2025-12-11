@@ -24,7 +24,7 @@ class User extends Authenticatable
         'utype',
         'role',
         'sex',
-        'position',
+        'position_id',
         'phone_number',
         'year_level',
         'course_id',
@@ -98,7 +98,7 @@ class User extends Authenticatable
         return $this->belongsTo(Course::class);
     }
 
-    public function postiion()
+    public function position()
     {
         return $this->belongsTo(Position::class);
     }

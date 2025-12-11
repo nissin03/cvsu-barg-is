@@ -89,10 +89,10 @@
                                                 {{ request('report_type') == 'inventory' ? 'selected' : '' }}>
                                                 Inventory
                                             </option>
-                                            <option value="users"
+                                            {{-- <option value="users"
                                                 {{ request('report_type') == 'users' ? 'selected' : '' }}>
                                                 Users
-                                            </option>
+                                            </option> --}}
                                             <option value="all" {{ request('report_type') == 'all' ? 'selected' : '' }}>
                                                 All
                                             </option>
@@ -186,6 +186,37 @@
                         <a class="tf-button w-auto" href="{{ route('admin.signatures.archive') }}">
                             <i class="icon-archive"></i> Archived Signatures
                         </a>
+                    </div>
+                </div>
+
+                {{-- Legend for Category & Status --}}
+                <div class="d-flex flex-wrap justify-content-end mb-3 gap-2">
+                    <div class="card border-0 shadow-sm px-3 py-2">
+                        <div class="d-flex align-items-center flex-wrap gap-3 small">
+                            {{-- <span class="text-muted fw-semibold me-2">Legend:</span> --}}
+
+                            {{-- Category --}}
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="badge badge-info">&nbsp;</span>
+                                <span class="text-muted">Facility</span>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="badge badge-warning">&nbsp;</span>
+                                <span class="text-muted">Product</span>
+                            </div>
+
+                            {{-- Active Status --}}
+                            <div class="d-flex align-items-center gap-1 ms-3">
+                                <span class="badge badge-success">&nbsp;</span>
+                                <span class="text-muted">Active</span>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="badge badge-secondary">&nbsp;</span>
+                                <span class="text-muted">Inactive</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
