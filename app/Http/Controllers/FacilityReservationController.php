@@ -166,6 +166,12 @@ class FacilityReservationController extends Controller
                 return $reservation;
             });
 
+            $totals = [
+                'pending' => Payment::where('status', 'pending')->count(),
+                'reserved' => Payment::where('status', 'reserved')->count(),
+                'completed' => Payment::where('status', 'completed')->count(),
+                'canceled' => Payment::where('status', 'canceled')->count(),
+            ];
             if ($request->ajax()) {
                 return response()->json([
                     'reservations' => view('partials._reservations-table', compact('reservations'))->render(),
@@ -174,7 +180,7 @@ class FacilityReservationController extends Controller
                 ]);
             }
 
-            return view('admin.facilities.reservations.index', compact('reservations', 'facilities'));
+            return view('admin.facilities.reservations.index', compact('reservations', 'facilities', 'totals'));
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json([

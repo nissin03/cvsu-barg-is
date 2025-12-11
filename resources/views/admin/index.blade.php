@@ -241,53 +241,116 @@
 
                     <div class="container p-4"
                         style="background-color: #f8f9fc; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
 
-                        </div>
+                        @if (Session::has('status'))
+                            <p class="alert alert-success">{{ Session::get('status') }}</p>
+                        @endif
+
                         <div style="overflow-x: auto;">
-                            <table class="table table-bordered table-hover" style="table-layout: auto;">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th class="text-center">Product ID</th>
-                                        <th class="text-center">Name</th>
-                                        <th class="text-center">Stock Status</th>
-                                        <th class="text-center">Current Stock</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if ($products->isEmpty())
-                                        <tr>
-                                            <td colspan="10" class="text-center py-5"
-                                                style="height: 200px; vertical-align: middle;">
-                                                <div class="d-flex flex-column align-items-center justify-content-center">
-                                                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                                                    <span class="text-muted ">No products found</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @else
-                                        @foreach ($products as $product)
-                                            @php
-                                                $currentStock = $product->attributeValues->isNotEmpty()
-                                                    ? $product->attributeValues->sum('quantity')
-                                                    : $product->current_stock;
-                                            @endphp
+                            <style>
+                                .clickable-row {
+                                    cursor: pointer;
+                                    transition: background-color 0.2s;
+                                }
 
-                                            @if ($currentStock == 0)
-                                                <tr>
-                                                    <td class="text-center">{{ $product->id }}</td>
+                                .clickable-row:hover {
+                                    background-color: #f8f9fa;
+                                }
+
+                                /* Scrollable container for table */
+                                .table-scroll-container {
+                                    max-height: 500px;
+                                    overflow-y: auto;
+                                    overflow-x: auto;
+                                    border: 1px solid #dee2e6;
+                                    border-radius: 8px;
+                                }
+
+                                .table-scroll-container::-webkit-scrollbar {
+                                    width: 8px;
+                                    height: 8px;
+                                }
+
+                                .table-scroll-container::-webkit-scrollbar-track {
+                                    background: #f1f1f1;
+                                    border-radius: 4px;
+                                }
+
+                                .table-scroll-container::-webkit-scrollbar-thumb {
+                                    background: #888;
+                                    border-radius: 4px;
+                                }
+
+                                .table-scroll-container::-webkit-scrollbar-thumb:hover {
+                                    background: #555;
+                                }
+
+                                @media (min-width: 768px) {
+                                    .table-scroll-container {
+                                        max-height: 500px;
+                                    }
+                                }
+
+                                @media (min-width: 1024px) {
+                                    .table-scroll-container {
+                                        max-height: 600px;
+                                    }
+                                }
+
+                                /* Keep table header sticky */
+                                .table-scroll-container thead th {
+                                    position: sticky;
+                                    top: 0;
+                                    background-color: #f8f9fa;
+                                    z-index: 10;
+                                }
+                            </style>
+
+                            <div class="table-scroll-container">
+                                <table class="table table-bordered table-hover mb-0" style="table-layout: auto;">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th class="text-center">Name</th>
+                                            <th class="text-center">Variant</th>
+                                            <th class="text-center">Stock Status</th>
+                                            <th class="text-center">Current Stock</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if ($products->isEmpty())
+                                            <tr>
+                                                <td colspan="5" class="text-center py-5"
+                                                    style="height: 200px; vertical-align: middle;">
+                                                    <div
+                                                        class="d-flex flex-column align-items-center justify-content-center">
+                                                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                                        <span class="text-muted">No products found</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @else
+                                            @foreach ($products as $item)
+                                                @php
+                                                    $product = $item['product'];
+                                                    $variant = $item['variant'];
+                                                    $currentStock = $item['current_stock'];
+                                                    $isVariant = $item['is_variant'];
+                                                @endphp
+
+                                                <tr class="clickable-row"
+                                                    onclick="window.location='{{ route('admin.product.edit', ['id' => $product->id, 'redirect_to' => 'dashboard']) }}'">
                                                     <td class="text-center">{{ $product->name }}</td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-danger">Out of Stock</span>
+                                                        @if ($isVariant && $variant)
+                                                            <span class="badge bg-info">{{ $variant->value }}</span>
+                                                        @else
+                                                            <span class="text-muted">N/A</span>
+                                                        @endif
                                                     </td>
-                                                    <td class="text-center">{{ $currentStock }}</td>
-                                                </tr>
-                                            @elseif($currentStock <= $product->reorder_quantity)
-                                                <tr>
-                                                    <td class="text-center">{{ $product->id }}</td>
-                                                    <td class="text-center">{{ $product->name }}</td>
                                                     <td class="text-center">
-                                                        @if ($currentStock <= $product->outofstock_quantity)
+                                                        @if ($currentStock == 0)
+                                                            <span class="badge bg-danger">Out of Stock</span>
+                                                        @elseif ($currentStock <= $product->outofstock_quantity)
                                                             <span class="badge bg-danger">Low Stock</span>
                                                         @else
                                                             <span class="badge bg-warning">Reorder Level</span>
@@ -295,12 +358,18 @@
                                                     </td>
                                                     <td class="text-center">{{ $currentStock }}</td>
                                                 </tr>
-                                            @endif
-                                        @endforeach
-                                    @endif
-                                </tbody>
+                                            @endforeach
+                                        @endif
+                                    </tbody>
+                                </table>
+                            </div>
 
-                            </table>
+                            <!-- Bootstrap 5 Pagination -->
+                            @if ($products->total() > 10)
+                                <div class="mt-3 d-flex justify-content-center">
+                                    {{ $products->links('pagination::bootstrap-5') }}
+                                </div>
+                            @endif
                         </div>
                     </div>
 

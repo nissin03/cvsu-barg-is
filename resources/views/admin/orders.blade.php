@@ -115,6 +115,48 @@
             transform: scale(1.1);
         }
 
+        /* Order Status Container Styles */
+        .status-filter-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .status-filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-filter-btn.active {
+            border-color: currentColor;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-filter-btn.text-warning.active {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        .status-filter-btn.text-success.active {
+            background: #d1e7dd;
+            border-color: #198754;
+        }
+
+        .status-filter-btn.text-danger.active {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .status-filter-btn.text-primary.active {
+            background: #cfe2ff;
+            border-color: #0d6efd;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .table td {
@@ -133,6 +175,11 @@
             .filter-tag-enhanced {
                 font-size: 0.9rem;
                 padding: 0.5rem 1rem;
+            }
+
+            .status-filter-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
             }
         }
 
@@ -275,27 +322,8 @@
                     <div class="card border-0 shadow-sm">
                         <div class="card-body p-4">
                             <div class="row g-3 mb-4">
-                                <!-- Order Status -->
-                                <div class="col-md-6 col-lg-3">
-                                    <div class="filter-group">
-                                        <label class="text-muted small mb-2 d-block">Order Status</label>
-                                        <select name="order_status" id="order_status" class="filter-select form-select">
-                                            <option value="">All Orders</option>
-                                            <option value="reserved"
-                                                {{ request('order_status') == 'reserved' ? 'selected' : '' }}>Reserved
-                                            </option>
-                                            <option value="pickedup"
-                                                {{ request('order_status') == 'pickedup' ? 'selected' : '' }}>Picked Up
-                                            </option>
-                                            <option value="canceled"
-                                                {{ request('order_status') == 'canceled' ? 'selected' : '' }}>Canceled
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-
                                 <!-- Transaction Status -->
-                                <div class="col-md-6 col-lg-3">
+                                <div class="col-md-6 col-lg-4">
                                     <div class="filter-group">
                                         <label class="text-muted small mb-2 d-block">Transaction Status</label>
                                         <select name="transaction_status" id="transaction_status"
@@ -312,7 +340,7 @@
                                 </div>
 
                                 <!-- Time Slot -->
-                                <div class="col-md-6 col-lg-3">
+                                <div class="col-md-6 col-lg-4">
                                     <div class="filter-group">
                                         <label class="text-muted small mb-2 d-block">Time Slot</label>
                                         <select name="time_slot_range" id="time_slot_range"
@@ -329,7 +357,7 @@
                                 </div>
 
                                 <!-- Sort By -->
-                                <div class="col-md-6 col-lg-3">
+                                <div class="col-md-6 col-lg-4">
                                     <div class="filter-group">
                                         <label class="text-muted small mb-2 d-block">Sort By</label>
                                         <select name="sort_by" id="sort_by" class="filter-select form-select">
@@ -376,6 +404,30 @@
                     </div>
                 </div>
 
+                <!-- Order Status Filter Container -->
+                <div class="d-flex align-items-center justify-content-start gap-3 mb-4 px-1 flex-wrap"
+                    id="order-status-container">
+                    <p class="status-filter-btn text-primary {{ !request('order_status') ? 'active' : '' }}"
+                        data-status="">
+                        All Orders Reservation: {{ $totals['reserved'] + $totals['pickedup'] + $totals['canceled'] }}
+                    </p>
+
+                    <p class="status-filter-btn text-warning {{ request('order_status') == 'reserved' ? 'active' : '' }}"
+                        data-status="reserved">
+                        Reserved: {{ $totals['reserved'] }}
+                    </p>
+
+                    <p class="status-filter-btn text-success {{ request('order_status') == 'pickedup' ? 'active' : '' }}"
+                        data-status="pickedup">
+                        Picked Up: {{ $totals['pickedup'] }}
+                    </p>
+
+                    <p class="status-filter-btn text-danger {{ request('order_status') == 'canceled' ? 'active' : '' }}"
+                        data-status="canceled">
+                        Canceled: {{ $totals['canceled'] }}
+                    </p>
+                </div>
+
                 <!-- Orders Table -->
                 <div class="table-responsive">
                     <table class="table table-striped table-bordered" style="table-layout: auto;">
@@ -383,9 +435,10 @@
                             <tr>
                                 <th class="text-center">Customer</th>
                                 <th class="text-center">Reservation Schedule</th>
-                                <th class="text-center">Items</th>
+                                <th class="text-center">Total Quantity</th>
+                                <th class="text-center">No. of Items</th>
                                 <th class="text-center">Total Amount</th>
-                                <th class="text-center">Order Date</th>
+                                {{-- <th class="text-center">Order Date</th> --}}
                             </tr>
                         </thead>
                         <tbody id="js-orders-partial-target">
@@ -395,6 +448,19 @@
                 </div>
 
                 <div class="divider"></div>
+
+                <div class="d-flex justify-content-end">
+                    <div class="legend d-flex align-items-center gap-3 small text-body-secondary" aria-label="Legend">
+                        <span class="d-inline-flex align-items-center gap-3">
+                            <div class="box bg-success"></div>
+                            <p>INSTOCK</p>
+                            <div class="box bg-warning"></div>
+                            <p>REORDER LEVEL</p>
+                            <div class="box bg-danger"></div>
+                            <p>OUT OF STOCK</p>
+                        </span>
+                    </div>
+                </div>
                 <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination"
                     id="js-orders-partial-target-pagination">
                     @include('partials._orders-pagination', ['orders' => $orders])
@@ -427,6 +493,20 @@
                 }
             });
 
+            // Order Status Filter Click Handler
+            $('.status-filter-btn').on('click', function() {
+                const status = $(this).data('status');
+
+                // Remove active class from all buttons
+                $('.status-filter-btn').removeClass('active');
+
+                // Add active class to clicked button
+                $(this).addClass('active');
+
+                // Perform filter with the selected status
+                performFilter(status);
+            });
+
             $('#order-search').on('input', function() {
                 clearTimeout(searchTimeout);
                 const searchValue = $(this).val();
@@ -436,37 +516,24 @@
                 }, 500);
             });
 
-            // function initTooltips() {
-            //     $('.reservation-date').hover(function() {
-            //         const timeSlot = $(this).data('time-slot');
-            //         if (timeSlot) {
-            //             tooltip.text(timeSlot).fadeIn('fast');
-            //         }
-            //     }, function() {
-            //         tooltip.hide();
-            //     }).mousemove(function(e) {
-            //         tooltip.css({
-            //             top: e.pageY + 10 + 'px',
-            //             left: e.pageX + 10 + 'px'
-            //         });
-            //     });
-            // }
-
             function initRowClicks() {
                 $('.order-row').off('click').on('click', function() {
                     window.location = $(this).data('href');
                 });
             }
 
-            function performFilter() {
+            function performFilter(orderStatus = null) {
                 lastScrollPosition = $(window).scrollTop();
 
                 // Get all filter values
                 const search = $('#order-search').val();
-                const orderStatus = $('#order_status').val();
                 const transactionStatus = $('#transaction_status').val();
                 const timeSlotRange = $('#time_slot_range').val();
                 const sortBy = $('#sort_by').val();
+
+                // Use orderStatus parameter if provided, otherwise get from active button
+                let statusFilter = orderStatus !== null ? orderStatus : $('.status-filter-btn.active').data(
+                    'status');
 
                 showLoadingState(true);
 
@@ -474,7 +541,7 @@
                 let params = [];
 
                 if (search) params.push('search=' + encodeURIComponent(search));
-                if (orderStatus) params.push('order_status=' + encodeURIComponent(orderStatus));
+                if (statusFilter) params.push('order_status=' + encodeURIComponent(statusFilter));
                 if (transactionStatus) params.push('transaction_status=' + encodeURIComponent(transactionStatus));
                 if (timeSlotRange) params.push('time_slot_range=' + encodeURIComponent(timeSlotRange));
                 if (sortBy && sortBy !== 'newest') params.push('sort_by=' + encodeURIComponent(sortBy));
@@ -492,7 +559,6 @@
                         $('#js-orders-partial-target-pagination').html(response.pagination);
                         showLoadingState(false);
                         window.history.pushState({}, '', url);
-                        // initTooltips();
                         initPaginationEvents();
                         initRowClicks();
                         updateActiveFiltersDisplay();
@@ -511,12 +577,12 @@
             function showLoadingState(isLoading) {
                 if (isLoading) {
                     $('#loading-indicator').show();
-                    $('.filter-select, .filter-input, #order-search').prop('disabled', true);
+                    $('.filter-select, .filter-input, #order-search, .status-filter-btn').prop('disabled', true);
                     $('#applyFilters').prop('disabled', true).html(
                         '<span class="spinner-border spinner-border-sm me-1"></span>Loading...');
                 } else {
                     $('#loading-indicator').hide();
-                    $('.filter-select, .filter-input, #order-search').prop('disabled', false);
+                    $('.filter-select, .filter-input, #order-search, .status-filter-btn').prop('disabled', false);
                     $('#applyFilters').prop('disabled', false).html(
                         '<i class="icon-filter me-1"></i> Apply Filters');
                 }
@@ -541,7 +607,6 @@
                             $('#js-orders-partial-target-pagination').html(response.pagination);
                             showLoadingState(false);
                             window.history.pushState({}, '', url);
-                            // initTooltips();
                             initPaginationEvents();
                             initRowClicks();
                             $(window).scrollTop(lastScrollPosition);
@@ -574,8 +639,9 @@
                 }
                 if (urlParams.get('order_status')) {
                     count++;
-                    const statusText = $('#order_status option:selected').text();
-                    addFilterTag(`Order: ${statusText}`, 'order_status');
+                    const statusText = urlParams.get('order_status');
+                    addFilterTag(`Status: ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}`,
+                        'order_status');
                 }
                 if (urlParams.get('transaction_status')) {
                     count++;
@@ -618,6 +684,9 @@
                     const filterToRemove = $(this).data('filter');
                     if (filterToRemove === 'search') {
                         $('#order-search').val('');
+                    } else if (filterToRemove === 'order_status') {
+                        $('.status-filter-btn').removeClass('active');
+                        $('.status-filter-btn[data-status=""]').addClass('active');
                     } else {
                         $(`#${filterToRemove}`).val('');
                     }
@@ -632,18 +701,21 @@
                 performFilter();
             });
 
-            $('#order_status, #transaction_status, #time_slot_range, #sort_by').on('change',
-                function() {
-                    performFilter();
-                });
+            $('#transaction_status, #time_slot_range, #sort_by').on('change', function() {
+                performFilter();
+            });
 
             $('#clearAllFilters, #resetFilters').on('click', function() {
                 $('#order-search').val('');
-                $('#order_status').val('');
                 $('#transaction_status').val('');
                 $('#time_slot_range').val('');
                 $('#sort_by').val('newest');
-                performFilter();
+
+                // Reset status filter to "All Orders"
+                $('.status-filter-btn').removeClass('active');
+                $('.status-filter-btn[data-status=""]').addClass('active');
+
+                performFilter('');
             });
 
             // Show notification helper
@@ -686,15 +758,15 @@
             });
 
             // Initialize everything
-            // initTooltips();
             initPaginationEvents();
             initRowClicks();
             updateActiveFiltersDisplay();
+
             // Welcome tip for new users
             if (window.location.search === '') {
                 setTimeout(function() {
                     showNotification(
-                        '💡 Tip: Use Ctrl+F to open filters, Ctrl+Enter to apply, or Esc to clear all',
+                        '💡 Tip: Click on status buttons to filter orders, use Ctrl+F to open filters, or Esc to clear all',
                         'info', 6000);
                 }, 1000);
             }

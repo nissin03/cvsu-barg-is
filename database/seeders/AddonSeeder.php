@@ -22,6 +22,7 @@ class AddonSeeder extends Seeder
             ]);
         }
 
+        // Get specific facilities
         $maleDormitory = Facility::where('name', 'Male Dormitory')->first();
         $femaleDormitory = Facility::where('name', 'Female Dormitory')->first();
         $rolleHall = Facility::where('name', 'Rolle Hall')->first();
@@ -31,6 +32,7 @@ class AddonSeeder extends Seeder
 
         $addons = [];
 
+        // Common addons for all facilities
         $commonAddons = [
             [
                 'name' => 'WASTE MANAGEMENT FEE',
@@ -47,8 +49,11 @@ class AddonSeeder extends Seeder
             ]
         ];
 
+        // Add common addons to all facilities EXCEPT Male & Female Dormitory
         $facilities = Facility::all();
         foreach ($facilities as $facility) {
+
+            // ✅ Skip adding WASTE MANAGEMENT FEE to Male Dormitory and Female Dormitory
             if (in_array($facility->name, ['Male Dormitory', 'Female Dormitory'])) {
                 continue;
             }
@@ -62,6 +67,7 @@ class AddonSeeder extends Seeder
             }
         }
 
+        // Addons for Male Dormitory and Female Dormitory
         $dormitoryAddons = [
             [
                 'name' => 'Electric Fan',
@@ -182,13 +188,14 @@ class AddonSeeder extends Seeder
         if ($femaleDormitory) {
             foreach ($dormitoryAddons as $addon) {
                 $addons[] = array_merge($addon, [
-                    'facility_id' => null,
+                    'facility_id' => $femaleDormitory->id,
                     'facility_attribute_id' => null,
                     'user_id' => $adminUser->id,
                 ]);
             }
         }
 
+        // Addons for Rolle Hall and Icon
         $eventHallAddons = [
             [
                 'name' => 'LED Wall',
@@ -221,7 +228,7 @@ class AddonSeeder extends Seeder
         if ($rolleHall) {
             foreach ($eventHallAddons as $addon) {
                 $addons[] = array_merge($addon, [
-                    'facility_id' => null,
+                    'facility_id' => $rolleHall->id,
                     'facility_attribute_id' => null,
                     'user_id' => $adminUser->id,
                 ]);
@@ -238,6 +245,7 @@ class AddonSeeder extends Seeder
             }
         }
 
+        // Addons for International House II
         if ($internationalHouseII) {
             $internationalHouseAddons = [
                 [
@@ -292,10 +300,11 @@ class AddonSeeder extends Seeder
             $addons = array_merge($addons, $internationalHouseAddons);
         }
 
+        // Addons for Swimming Pool
         if ($swimmingPool) {
             $swimmingPoolAddons = [
                 [
-                    'facility_id' => null,
+                    'facility_id' => $swimmingPool->id,
                     'facility_attribute_id' => null,
                     'user_id' => $adminUser->id,
                     'name' => 'Pavillion 1',
@@ -311,7 +320,7 @@ class AddonSeeder extends Seeder
                     'show' => 'both',
                 ],
                 [
-                    'facility_id' => null,
+                    'facility_id' => $swimmingPool->id,
                     'facility_attribute_id' => null,
                     'user_id' => $adminUser->id,
                     'name' => 'Pavillion 2',
@@ -327,7 +336,7 @@ class AddonSeeder extends Seeder
                     'show' => 'both',
                 ],
                 [
-                    'facility_id' => null,
+                    'facility_id' => $swimmingPool->id,
                     'facility_attribute_id' => null,
                     'user_id' => $adminUser->id,
                     'name' => 'Table',
@@ -343,7 +352,7 @@ class AddonSeeder extends Seeder
                     'show' => 'both',
                 ],
                 [
-                    'facility_id' => null,
+                    'facility_id' => $swimmingPool->id,
                     'facility_attribute_id' => null,
                     'user_id' => $adminUser->id,
                     'name' => 'Cottage',
@@ -362,6 +371,7 @@ class AddonSeeder extends Seeder
             $addons = array_merge($addons, $swimmingPoolAddons);
         }
 
+        // Create all addons
         foreach ($addons as $addon) {
             Addon::create($addon);
         }

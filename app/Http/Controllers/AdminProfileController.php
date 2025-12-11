@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Position;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -11,13 +12,11 @@ use Illuminate\Validation\Rules\Password;
 
 class AdminProfileController extends Controller
 {
-
-
     public function show_profile()
     {
-
         $user = Auth::user();
-        return view('admin.profile', compact('user'));
+        $positions = Position::orderBy('name', 'asc')->get();
+        return view('admin.profile', compact('user', 'positions'));
     }
 
     public function update_phone(UpdatePhoneRequest $request)
@@ -35,11 +34,15 @@ class AdminProfileController extends Controller
     public function update_profile(Request $request)
     {
         $user = Auth::user();
-        $request->validate([
-            'position' => ['required', 'string', 'max:255'],
-            'current_password' => ['nullable', 'string'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
+        $rules = [
+            'position_id' => ['required', 'exists:positions,id'],
+        ];
+
+        if ($request->filled('password') || $request->filled('current_password') || $request->filled('password_confirmation')) {
+            $rules['current_password'] = ['required', 'string'];
+            $rules['password'] = ['required', 'string', 'min:8', 'confirmed'];
+        }
+        $request->validate($rules);
 
         if ($request->filled('password')) {
             if (!Hash::check($request->current_password, $user->password)) {
@@ -49,11 +52,17 @@ class AdminProfileController extends Controller
             }
             $user->password = Hash::make($request->password);
         }
-        $user->position = $request->position;
+
+        $user->position_id = $request->position_id;
         $user->save();
+
+        $message = $request->filled('password')
+            ? 'Profile and password updated successfully!'
+            : 'Profile updated successfully!';
+
         return redirect()
             ->route('admin.profile.index')
-            ->with('success', 'Profile updated successfully!');
+            ->with('success', $message);
     }
 
     public function update_profile_image(Request $request)

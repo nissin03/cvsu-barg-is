@@ -1,6 +1,5 @@
 @extends('layouts.admin')
 
-
 @section('content')
     <style>
         /* Enhanced Table Styles */
@@ -262,6 +261,80 @@
             background-color: #e9ecef;
             cursor: not-allowed;
         }
+
+        /* Updated Status Filter Button Styles */
+        .status-filter-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-weight: 600;
+            user-select: none;
+        }
+
+        .status-filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-filter-btn.active {
+            border-color: currentColor;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-filter-btn.text-warning.active {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        .status-filter-btn.text-success.active {
+            background: #d1e7dd;
+            border-color: #198754;
+        }
+
+        .status-filter-btn.text-danger.active {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .status-filter-btn.text-primary.active {
+            background: #cfe2ff;
+            border-color: #0d6efd;
+        }
+
+        .status-filter-btn.text-primary-2.active {
+            background: #cfe2ff;
+            border-color: #0d6efd;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .table td {
+                min-width: 120px;
+            }
+
+            .table th,
+            .table td {
+                padding: 12px 8px;
+            }
+
+            .status-badge {
+                padding: 4px 8px;
+            }
+
+            .filter-tag-enhanced {
+                font-size: 0.9rem;
+                padding: 0.5rem 1rem;
+            }
+
+            .status-filter-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
     </style>
 
     <!-- Loading Indicator -->
@@ -272,7 +345,6 @@
             </div>
         </div>
     </div>
-
 
     <div class="main-content-inner">
         <div class="main-content-wrap">
@@ -309,7 +381,6 @@
                         </form>
                     </div>
 
-
                     <div class="filter-toggle-section d-flex align-items-center gap-3">
                         <span class="badge bg-primary fs-6 py-2 px-3" id="activeFiltersCount" style="display: none;">0
                             filters</span>
@@ -329,22 +400,7 @@
                     <div class="card border-0 shadow-sm">
                         <div class="card-body p-4">
                             <div class="row g-3 mb-4">
-                                <div class="col-md-6 col-lg-3">
-                                    <div class="filter-group">
-                                        <label class="text-muted small mb-2 d-block">Status</label>
-                                        <select name="status" id="status" class="filter-select form-select">
-                                            <option value="">All Status</option>
-                                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>
-                                                Pending</option>
-                                            <option value="reserved"
-                                                {{ request('status') == 'reserved' ? 'selected' : '' }}>Reserved</option>
-                                            <option value="completed"
-                                                {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
-                                            <option value="canceled"
-                                                {{ request('status') == 'canceled' ? 'selected' : '' }}>Canceled</option>
-                                        </select>
-                                    </div>
-                                </div>
+                                <!-- REMOVED STATUS FILTER FROM HERE -->
 
                                 <div class="col-md-6 col-lg-3">
                                     <div class="filter-group">
@@ -424,6 +480,32 @@
                     </div>
                 </div>
 
+                <div class="d-flex align-items-center justify-content-start gap-3 mb-4 px-1 flex-wrap"
+                    id="order-status-container">
+                    <p class="status-filter-btn text-info {{ !request('order_status') ? 'active' : '' }}" data-status="">
+                        All Reservations:
+                        {{ $totals['pending'] + $totals['reserved'] + $totals['completed'] + $totals['canceled'] }}
+                    </p>
+
+                    <p class="status-filter-btn text-warning {{ request('status') == 'pending' ? 'active' : '' }}"
+                        data-status="pending" role="button" tabindex="0">
+                        Pending: {{ $totals['pending'] }}
+
+                    <p class="status-filter-btn text-primary {{ request('status') == 'reserved' ? 'active' : '' }}"
+                        data-status="reserved">
+                        Reserved: {{ $totals['reserved'] }}
+                    </p>
+
+                    <p class="status-filter-btn text-success {{ request('status') == 'completed' ? 'active' : '' }}"
+                        data-status="completed">
+                        Completed: {{ $totals['completed'] }}
+                    </p>
+
+                    <p class="status-filter-btn text-danger {{ request('status') == 'canceled' ? 'active' : '' }}"
+                        data-status="canceled">
+                        Canceled: {{ $totals['canceled'] }}
+                    </p>
+                </div>
                 <div class="wg-table table-all-user table-responsive">
                     <div class="table-responsive">
                         <table class="table table-striped table-bordered" style="table-layout: auto;">
@@ -461,7 +543,6 @@
     </form>
 @endsection
 
-
 @push('scripts')
     <script>
         $(document).ready(function() {
@@ -469,12 +550,33 @@
             let searchTimeout = null;
             const tooltip = $('<div class="custom-tooltip"></div>').appendTo('body');
 
+            // ===== STATUS FILTER BUTTON CLICK HANDLER =====
+            $('.status-filter-btn').on('click', function() {
+                const status = $(this).data('status');
+
+                // Remove active class from all buttons
+                $('.status-filter-btn').removeClass('active');
+
+                // Add active class to clicked button
+                $(this).addClass('active');
+
+                // Perform filter with the selected status
+                performFilterWithStatus(status);
+            });
+
+            // ===== KEYBOARD ACCESSIBILITY FOR STATUS BUTTONS =====
+            $('.status-filter-btn').on('keypress', function(e) {
+                if (e.which === 13 || e.which === 32) { // Enter or Space
+                    e.preventDefault();
+                    $(this).click();
+                }
+            });
+
             $('#filterToggle').on('click', function() {
                 const container = $('#filterContainer');
                 const icon = $(this).find('i');
 
                 if (container.hasClass('show')) {
-
                     container.removeClass('show').slideUp(300, function() {
                         $(this).removeClass('show');
                     });
@@ -494,6 +596,12 @@
                 }, 500);
             });
 
+            function initRowClicks() {
+                $('.reservation-row').off('click').on('click', function() {
+                    window.location = $(this).data('href');
+                });
+            }
+
             $('#searchButton').on('click', function() {
                 performFilter();
             });
@@ -512,17 +620,17 @@
                 });
             }
 
-            // Enhanced filter performance function
-            function performFilter() {
+            // ===== NEW FUNCTION: performFilterWithStatus =====
+            function performFilterWithStatus(status) {
                 lastScrollPosition = $(window).scrollTop();
 
-                // Get filter values
+                // Get other filter values
                 const search = $('#facility-search').val();
-                const status = $('#status').val();
                 const dateFrom = $('#date_from').val();
                 const dateTo = $('#date_to').val();
                 const facility = $('#facility').val();
                 const sortBy = $('#sort_by').val();
+
                 // Show loading state
                 showLoadingState(true);
 
@@ -566,7 +674,82 @@
                         initTooltips();
                         initPaginationEvents();
                         updateActiveFiltersDisplay();
-                        initRowClicks()
+                        initRowClicks();
+                        $(window).scrollTop(lastScrollPosition);
+
+                        // Show success feedback with status
+                        const statusText = status ? status.charAt(0).toUpperCase() + status.slice(1) :
+                            'All';
+                        showNotification(`Showing ${response.count} ${statusText} reservation(s)`,
+                            'info', 2000);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error:', error);
+                        showLoadingState(false);
+                        showNotification(
+                            'An error occurred while filtering reservations. Please try again.',
+                            'error');
+                    }
+                });
+            }
+
+            // Enhanced filter performance function
+            function performFilter() {
+                lastScrollPosition = $(window).scrollTop();
+
+                // Get filter values (including current status from active button)
+                const search = $('#facility-search').val();
+                const activeStatusBtn = $('.status-filter-btn.active');
+                const status = activeStatusBtn.data('status') || '';
+                const dateFrom = $('#date_from').val();
+                const dateTo = $('#date_to').val();
+                const facility = $('#facility').val();
+                const sortBy = $('#sort_by').val();
+
+                // Show loading state
+                showLoadingState(true);
+
+                let url = '{{ route('admin.facilities.reservations') }}';
+                let params = [];
+
+                if (search) {
+                    params.push('search=' + encodeURIComponent(search));
+                }
+                if (status) {
+                    params.push('status=' + encodeURIComponent(status));
+                }
+                if (dateFrom) {
+                    params.push('date_from=' + encodeURIComponent(dateFrom));
+                }
+                if (dateTo) {
+                    params.push('date_to=' + encodeURIComponent(dateTo));
+                }
+                if (facility) {
+                    params.push('facility=' + encodeURIComponent(facility));
+                }
+                if (sortBy && sortBy !== 'newest') {
+                    params.push('sort_by=' + encodeURIComponent(sortBy));
+                }
+
+                if (params.length > 0) {
+                    url += '?' + params.join('&');
+                }
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        $('#js-reservations-partial-target').html(response.reservations);
+                        $('#js-reservations-partial-target-pagination').html(response.pagination);
+                        showLoadingState(false);
+                        window.history.pushState({}, '', url);
+                        initTooltips();
+                        initPaginationEvents();
+                        updateActiveFiltersDisplay();
+                        initRowClicks();
                         $(window).scrollTop(lastScrollPosition);
 
                         // Show success feedback
@@ -648,10 +831,17 @@
                     count++;
                     addFilterTag(`Search: "${urlParams.get('search')}"`, 'search');
                 }
+                // Status filter now shown in active filters (not in dropdown)
                 if (urlParams.get('status')) {
                     count++;
-                    const statusText = $('#status option:selected').text();
-                    addFilterTag(`Status: ${statusText}`, 'status');
+                    const statusLabels = {
+                        'pending': 'Pending',
+                        'reserved': 'Reserved',
+                        'completed': 'Completed',
+                        'canceled': 'Canceled'
+                    };
+                    addFilterTag(`Status: ${statusLabels[urlParams.get('status')] || urlParams.get('status')}`,
+                        'status');
                 }
                 if (urlParams.get('date_from')) {
                     count++;
@@ -698,6 +888,10 @@
 
                     if (filterToRemove === 'search') {
                         $('#facility-search').val('');
+                    } else if (filterToRemove === 'status') {
+                        // Reset status to "All"
+                        $('.status-filter-btn').removeClass('active');
+                        $('.status-filter-btn[data-status=""]').addClass('active');
                     } else {
                         $(`#${filterToRemove}`).val('');
                     }
@@ -711,7 +905,8 @@
             $('#applyFilters').on('click', function() {
                 performFilter();
             });
-            $('#status, #facility, #sort_by').on('change', function() {
+
+            $('#facility, #sort_by').on('change', function() {
                 performFilter();
             });
 
@@ -722,11 +917,14 @@
 
             $('#clearAllFilters, #resetFilters').on('click', function() {
                 $('#facility-search').val('');
-                $('#status').val('');
                 $('#date_from').val('');
                 $('#date_to').val('');
                 $('#facility').val('');
                 $('#sort_by').val('newest');
+
+                // Reset status to "All"
+                $('.status-filter-btn').removeClass('active');
+                $('.status-filter-btn[data-status=""]').addClass('active');
 
                 performFilter();
             });
@@ -850,7 +1048,7 @@
             if (window.location.search === '') {
                 setTimeout(function() {
                     showNotification(
-                        '💡 Tip: Use Ctrl+F to open filters, Ctrl+Enter to apply, or Esc to clear all',
+                        '💡 Tip: Click status buttons to filter, or use Ctrl+F for advanced filters',
                         'info', 6000);
                 }, 1000);
             }

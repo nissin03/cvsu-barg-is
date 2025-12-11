@@ -291,12 +291,12 @@
                     ->get();
 
                 $leftSignatures = [];
-                $rightSignatures = [];
+                $rightSignatures = [];s
 
                 $leftSignatures[] = (object) [
                     'label' => 'Prepared by',
                     'name' => strtoupper(Auth::user()->name),
-                    'position' => Auth::user()->position,
+                  'position' => optional(Auth::user()->position)->name,
                     'is_prepared_by' => true,
                 ];
 

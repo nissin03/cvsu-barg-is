@@ -41,12 +41,17 @@
 
 
             <td class="text-center">
+                {{ $order->orderItems->sum('quantity') }} qty
+            </td>
+
+            <td class="text-center">
                 {{ $order->orderItems->count() }}
                 {{ $order->orderItems->count() == 1 ? 'item' : 'items' }}
             </td>
+
             <td class="text-center">&#8369;{{ $order->total }}</td>
 
-            <td>{{ $order->created_at->format('M d, Y') }}</td>
+            {{-- <td>{{ $order->created_at->format('M d, Y') }}</td> --}}
         </tr>
     @endforeach
 @else

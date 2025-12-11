@@ -217,13 +217,38 @@ $availableRooms = $allRooms->filter(function ($room) {
                                             <div class="col-md-4">
                                                 <div class="selected-dates-card p-3">
                                                     <h6 class="fw-bold mb-3">Selected Dates</h6>
-                                                    <div class="mb-2">
-                                                        <small class="text-muted">Start Date:</small>
-                                                        <div id="modal-start-date" class="fw-bold"></div>
-                                                    </div>
                                                     <div class="mb-3">
-                                                        <small class="text-muted">End Date:</small>
-                                                        <div id="modal-end-date" class="fw-bold"></div>
+                                                        <div class="mb-2">
+                                                            <small class="text-muted">Start Date:</small>
+                                                            <div id="modal-start-date" class="fw-bold"></div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <small class="text-muted">End Date:</small>
+                                                            <div id="modal-end-date" class="fw-bold"></div>
+                                                        </div>
+                                                        <div class="legend small" aria-label="Legend">
+                                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                                <div class="box bg-danger">
+                                                                </div>
+                                                                <span class="text-muted">Fully Booked</span>
+                                                            </div>
+                                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                                <div class="box bg-success">
+                                                                </div>
+                                                                <span class="text-muted">Available</span>
+                                                            </div>
+                                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                                <div class="box bg-warning">
+                                                                </div>
+                                                                <span class="text-muted">Some Reserve the
+                                                                    facility</span>
+                                                            </div>
+                                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                                <div class="box bg-secondary">
+                                                                </div>
+                                                                <span class="text-muted">Unavailable</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                     <div class="d-grid gap-2">
                                                         <button type="button" class="btn btn-primary"
@@ -582,6 +607,29 @@ $availableRooms = $allRooms->filter(function ($room) {
                                                 <div class="mb-3">
                                                     <small class="text-muted">End Date:</small>
                                                     <div id="whole-modal-end-date" class="fw-bold"></div>
+                                                </div>
+                                                <hr class="divider">
+                                                <div class="legend small" aria-label="Legend">
+                                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                                        <div class="box bg-danger">
+                                                        </div>
+                                                        <span class="text-muted">Fully Booked</span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                                        <div class="box bg-success">
+                                                        </div>
+                                                        <span class="text-muted">Available</span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                                        <div class="box bg-orange">
+                                                        </div>
+                                                        <span class="text-muted">Occupied</span>
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                                        <div class="box bg-secondary">
+                                                        </div>
+                                                        <span class="text-muted">Unavailable</span>
+                                                    </div>
                                                 </div>
                                                 <div class="d-grid gap-2">
                                                     <button type="button" class="btn btn-primary"

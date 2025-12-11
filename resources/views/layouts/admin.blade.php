@@ -494,6 +494,18 @@
                                                 </a>
                                             </li>
 
+                                            <li class="divider mb-10"></li>
+
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('positions.index') }}">
+                                                    <div class="text">Manage Positions</div>
+                                                </a>
+                                            </li>
+                                            <li class="sub-menu-item">
+                                                <a href="{{ route('positions.create') }}">
+                                                    <div class="text">Add Positions</div>
+                                                </a>
+                                            </li>
                                         </ul>
                                     </li>
 
@@ -577,11 +589,11 @@
                                             <div class="text">Products Reports</div>
                                         </a>
                                         <ul class="sub-menu">
-                                            <li class="sub-menu-item">
+                                            {{-- <li class="sub-menu-item">
                                                 <a href="{{ route('admin.reports') }}">
                                                     <div class="text">Sales Charts</div>
                                                 </a>
-                                            </li>
+                                            </li> --}}
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.report-statements') }}">
                                                     <div class="text">Sales</div>
@@ -598,11 +610,11 @@
                                                 </a>
                                             </li>
 
-                                            <li class="sub-menu-item">
+                                            {{-- <li class="sub-menu-item">
                                                 <a href="{{ route('admin.report-user') }}">
                                                     <div class="text">Users</div>
                                                 </a>
-                                            </li>
+                                            </li> --}}
                                             <li class="sub-menu-item">
                                                 <a href="{{ route('admin.report-inventory') }}">
                                                     <div class="text">Inventory</div>

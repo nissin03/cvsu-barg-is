@@ -253,7 +253,7 @@
                                 </option> --}}
                                 <option value="inventory" {{ old('report_type') == 'inventory' ? 'selected' : '' }}>
                                     Inventory</option>
-                                <option value="users" {{ old('report_type') == 'users' ? 'selected' : '' }}>Users</option>
+                                {{-- <option value="users" {{ old('report_type') == 'users' ? 'selected' : '' }}>Users</option> --}}
                                 <option value="all" {{ old('report_type') == 'all' ? 'selected' : '' }}>All</option>
                             </select>
                             @error('report_type')
@@ -342,7 +342,7 @@
                     <option value="product">Product</option>
                    
                     <option value="inventory">Inventory</option>
-                    <option value="users">Users</option>
+                
                     <option value="all">All</option>
                 `;
             }
