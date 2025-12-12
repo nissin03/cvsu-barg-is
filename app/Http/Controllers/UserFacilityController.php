@@ -1336,7 +1336,7 @@ class UserFacilityController extends Controller
         $reservationData = Session::get('reservation_data', []);
         $facilityType    = $reservationData['facility_type'] ?? null;
 
-        $rules = ['qualification' => 'nullable|file|max:10240|mimes:pdf,doc,docx'];
+        $rules = ['qualification' => 'nullable|file|max:1024|mimes:pdf,doc,docx,jpg,jpeg,png'];
         Log::info('Discount validation check', [
             'has_discount_id' => !empty($reservationData['discount_id']),
             'discount_id' => $reservationData['discount_id'] ?? null,

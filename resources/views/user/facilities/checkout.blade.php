@@ -1292,10 +1292,12 @@
                                         </svg>
                                         <span class="file-upload-text">
                                             <span class="file-upload-title">Upload Qualification Document</span>
-                                            <span class="file-upload-subtitle">PDF or DOC files (Max 1MB)</span>
+                                            <span class="file-upload-subtitle">PDF, DOC, JPG, JPEG, PNG files (Max
+                                                1MB)</span>
                                         </span>
                                         <input type="file" id="qualification" name="qualification"
-                                            class="file-upload-input" accept=".pdf,.doc,.docx" required>
+                                            class="file-upload-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required>
+
                                     </label>
                                     <div class="file-upload-preview" id="file-preview">
                                         <span class="file-upload-name" id="file-name">No file selected</span>
@@ -1444,15 +1446,19 @@
                     const validTypes = [
                         'application/pdf',
                         'application/msword',
-                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'image/jpeg',
+                        'image/png'
                     ];
+
                     const fileType = file.type;
 
                     if (!validTypes.includes(fileType)) {
                         Swal.fire({
                             icon: 'error',
                             title: 'Invalid File Type',
-                            text: 'Please upload only PDF or DOC/DOCX files',
+                            text: 'Please upload only PDF, DOC/DOCX, or JPG/PNG files',
+
                             confirmButtonColor: '#3b82f6',
                             confirmButtonText: 'OK'
                         }).then(() => {
@@ -1554,15 +1560,19 @@
                     const validTypes = [
                         'application/pdf',
                         'application/msword',
-                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'image/jpeg',
+                        'image/png'
                     ];
+
 
                     if (!validTypes.includes(file.type)) {
                         e.preventDefault();
                         Swal.fire({
                             icon: 'error',
                             title: 'Invalid File Type',
-                            text: 'Please upload only PDF or DOC/DOCX files',
+                            text: 'Please upload only PDF, DOC/DOCX, or JPG/PNG files',
+
                             confirmButtonColor: '#3b82f6',
                             confirmButtonText: 'OK'
                         });
