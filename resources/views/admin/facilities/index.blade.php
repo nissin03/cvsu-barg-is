@@ -7,6 +7,14 @@
             border-collapse: collapse;
         }
 
+        .box {
+            width: 15px;
+            height: 15px;
+            display: inline-block;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
         th,
         td {
             padding: 15px 30px;
@@ -163,6 +171,16 @@
                     <a class="tf-button w-auto" href="{{ route('admin.facilities.archive.index') }}"><i
                             class="icon-archive"></i> Archived Facilities </a>
                 </div>
+                <div class="d-flex justify-content-end">
+                    <div class="legend d-flex align-items-center gap-3 small text-body-secondary" aria-label="Legend">
+                        <span class="d-inline-flex align-items-center gap-3">
+                            <div title="Gray - Other Price | Other Rooms" class="d-flex items-center gap-2 cursor-pointer">
+                                <div class="box bg-secondary"></div>
+                                <p> Other Prices | Other Rooms</p>
+                            </div>
+                        </span>
+                    </div>
+                </div>
                 <div class="table-responsive">
                     @if (Session::has('success'))
                         <p class="alert alert-success">{{ Session::get('success') }}</p>
@@ -183,7 +201,6 @@
                     </table>
                 </div>
 
-                <!-- Pagination Code -->
                 <div class="divider"></div>
                 <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination"
                     id="js-facilities-partial-target-pagination">

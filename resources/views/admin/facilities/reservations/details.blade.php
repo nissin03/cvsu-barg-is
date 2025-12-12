@@ -6,6 +6,15 @@
             --bs-table-accent-bg: #fff !important;
         }
 
+
+        .box {
+            width: 15px;
+            height: 15px;
+            display: inline-block;
+            border-radius: 4px;
+        }
+
+
         .table th,
         .table td {
             vertical-align: middle;
@@ -179,6 +188,29 @@
                     <p class="alert alert-success">{{ Session::get('status') }}</p>
                 @endif
 
+                <div class="d-flex justify-content-start mt-2">
+                    <div class="legend d-flex align-items-center gap-3 small text-body-secondary" aria-label="Legend">
+                        <span class="d-inline-flex align-items-center gap-3">
+                            <div title="Yellow - Pending" class="d-flex items-center gap-2">
+                                <div class="box bg-warning"></div>
+                                <p>Pending</p>
+                            </div>
+                            <div title="Yellow - Reserved" class="d-flex items-center gap-2">
+                                <div class="box bg-primary"></div>
+                                <p>Reserved</p>
+                            </div>
+                            <div title="Green - Completed" class="d-flex items-center gap-2">
+                                <div class="box bg-success"></div>
+                                <p>Completed</p>
+                            </div>
+                            <div title="Red - Canceled" class="d-flex items-center gap-2">
+                                <div class="box bg-danger"></div>
+                                <p>Canceled</p>
+                            </div>
+                        </span>
+                    </div>
+                </div>
+
                 <!-- Responsive table wrapper -->
                 <div class="table-responsive">
                     <table class="table table-striped table-bordered">
@@ -191,9 +223,9 @@
                                     <span
                                         class="badge status-badge
                                             @if ($reservation->status === 'completed') bg-success
-                                            @elseif ($reservation->status === 'pending') bg-primary
+                                            @elseif ($reservation->status === 'pending') bg-warning
                                             @elseif ($reservation->status === 'canceled') bg-danger
-                                            @elseif ($reservation->status === 'reserved') bg-warning
+                                            @elseif ($reservation->status === 'reserved') bg-primary
                                             @else bg-secondary @endif">
                                         {{ ucfirst($reservation->status) }}
                                     </span>
@@ -207,11 +239,10 @@
                                 <th class="table-header">Type</th>
                                 <td>
                                     <span
-                                        class="badge status-badge
-                            @if ($reservation->availability->facility->facility_type === 'individual') bg-individual-green
-                            @elseif ($reservation->availability->facility->facility_type === 'whole_place') bg-whole-orange
-                            @elseif ($reservation->availability->facility->facility_type === 'both') bg-warning
-                            @else bg-secondary @endif">
+                                        class="badge status-badge text-dark
+                            @if ($reservation->availability->facility->facility_type === 'individual') @elseif ($reservation->availability->facility->facility_type === 'whole_place')
+                            @elseif ($reservation->availability->facility->facility_type === 'both')
+                            @else @endif">
                                         {{ ucfirst($reservation->availability->facility->facility_type ?? 'Not Applicable') }}
                                     </span>
                                 </td>
@@ -410,6 +441,25 @@
                 <div class="wg-box mt-5">
                     <h4 class="fw-bold mb-4">Qualification Details</h4>
 
+                    <div class="d-flex justify-content-start">
+                        <div class="legend d-flex align-items-center gap-3 small text-body-secondary" aria-label="Legend">
+                            <span class="d-inline-flex align-items-center gap-3">
+                                <div title="Yellow - Pending" class="d-flex items-center gap-2">
+                                    <div class="box bg-warning"></div>
+                                    <p>Pending</p>
+                                </div>
+                                <div title="Green - Approved" class="d-flex items-center gap-2">
+                                    <div class="box bg-success"></div>
+                                    <p>Approved</p>
+                                </div>
+                                <div title="Red - Canceled" class="d-flex items-center gap-2">
+                                    <div class="box bg-danger"></div>
+                                    <p>Canceled</p>
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="table table-striped table-bordered align-middle">
                             <thead>
@@ -430,7 +480,7 @@
                                             <span
                                                 class="badge status-badge qualification-status-badge
                 @if ($qualification->status === 'approved') bg-success
-                @elseif ($qualification->status === 'pending') bg-primary
+                @elseif ($qualification->status === 'pending') bg-warning
                 @elseif ($qualification->status === 'canceled') bg-danger
                 @else bg-secondary @endif"
                                                 data-qualification-id="{{ $qualification->id }}"
@@ -499,6 +549,29 @@
             @if (isset($reservation->refundable_addon_payments) && $reservation->refundable_addon_payments->count() > 0)
                 <div class="wg-box mt-5">
                     <h4 class="fw-bold mb-4">Refundable Addon Payments</h4>
+                    <div class="d-flex justify-content-start">
+                        <div class="legend d-flex align-items-center gap-3 small text-body-secondary" aria-label="Legend">
+                            <span class="d-inline-flex align-items-center gap-3">
+                                <div title="Yellow - Unpaid" class="d-flex items-center gap-2">
+                                    <div class="box bg-warning"></div>
+                                    <p>Unpaid</p>
+                                </div>
+                                <div title="Cyan - Downpayment" class="d-flex items-center gap-2">
+                                    <div class="box bg-info"></div>
+                                    <p>Downpayment</p>
+                                </div>
+                                <div title="Red - Forfeit" class="d-flex items-center gap-2">
+                                    <div class="box bg-danger"></div>
+                                    <p>Forfeit</p>
+                                </div>
+                                <div title="Gray - Refunded" class="d-flex items-center gap-2">
+                                    <div class="box bg-secondary"></div>
+                                    <p>Refunded</p>
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="table table-striped table-bordered align-middle">
                             <thead>
@@ -525,7 +598,7 @@
                                         {{-- Status --}}
                                         <td>
                                             <span
-                                                class="badge status-badge
+                                                class="badge status-badge text-white
                                     @if ($addonPayment->status === 'paid') bg-success
                                     @elseif ($addonPayment->status === 'downpayment') bg-info
                                     @elseif ($addonPayment->status === 'unpaid') bg-warning text-dark
