@@ -12,8 +12,8 @@
         <meta name="user-role" content="{{ Auth::user()->utype }}">
     @endauth
 
-    {{-- <title>{{ config('app.name', 'Information System') }}</title> --}}
-    <title>{{ isset($pageTitle) ? $pageTitle : config('app.name', 'Information System') }}</title>
+    <title>{{ config('app.name', 'Business and Resource Generation') }}</title>
+    <link rel="shortcut icon" href="{{ asset('../images/logo/BaRG-logo.png') }}" type="image/x-icon">
 
     {{-- @vite(['resources/js/app.js']) --}}
     <meta http-equiv="content-type" content="text/html; charset-utf-8" />
@@ -255,7 +255,7 @@
 
                 <div class="section-menu-left">
                     <div class="box-logo">
-                        <a href="{{ route('admin.index') }}" class="" style="width: 80px;">
+                        <a href="{{ route('admin.index') }}" class="" style="width: 60px;">
                             <img src="{{ asset('../images/logo/BaRG-logo.png') }}" alt="site icon">
                         </a>
                         <div class="button-show-hide">

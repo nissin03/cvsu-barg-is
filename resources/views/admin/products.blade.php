@@ -653,6 +653,25 @@
                     </div>
                 </div>
 
+                <div class="d-flex justify-content-start">
+                    <div class="legend d-flex align-items-center gap-3 small text-body-secondary" aria-label="Legend">
+                        <span class="d-inline-flex align-items-center gap-3">
+                            <div title="Green - Instock" class="d-flex items-center gap-2">
+                                <div class="box bg-success"></div>
+                                <p>INSTOCK</p>
+                            </div>
+                            <div title="Yellow - Reorder Level" class="d-flex items-center gap-2">
+                                <div class="box bg-warning"></div>
+                                <p>REORDER LEVEL</p>
+                            </div>
+                            <div title="Red - Out of Stock" class="d-flex items-center gap-2">
+                                <div class="box bg-danger"></div>
+                                <p>OUT OF STOCK</p>
+                            </div>
+                        </span>
+                    </div>
+                </div>
+
                 @if (Session::has('status'))
                     <p class="alert alert-success">{{ Session::get('status') }}</p>
                 @endif
@@ -667,19 +686,6 @@
                 </div>
 
                 <div class="divider"></div>
-
-                <div class="d-flex justify-content-end">
-                    <div class="legend d-flex align-items-center gap-3 small text-body-secondary" aria-label="Legend">
-                        <span class="d-inline-flex align-items-center gap-3">
-                            <div class="box bg-success"></div>
-                            <p>INSTOCK</p>
-                            <div class="box bg-warning"></div>
-                            <p>REORDER LEVEL</p>
-                            <div class="box bg-danger"></div>
-                            <p>OUT OF STOCK</p>
-                        </span>
-                    </div>
-                </div>
 
                 <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination"
                     id="js-products-partial-target-pagination">

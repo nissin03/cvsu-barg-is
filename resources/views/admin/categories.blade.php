@@ -38,6 +38,21 @@
                     <a class="tf-button  w-auto" href="{{ route('admin.archived-categories') }}">
                         <i class="icon-archive"></i> Archived Categories</a>
                 </div>
+                <div class="d-flex justify-content-start mt-2">
+                    <div class="legend d-flex align-items-center gap-3 small text-body-secondary" aria-label="Legend">
+                        <span class="d-inline-flex align-items-center gap-3">
+                            <div title="Blue - Subcategories" class="d-flex items-center gap-2">
+                                <div class="box bg-primary"></div>
+                                <p>No. of Subcategories</p>
+                            </div>
+                            <div title="Gray - Reserved" class="d-flex items-center gap-2">
+                                <div class="box bg-secondary"></div>
+                                <p>Subcategory Label</p>
+                            </div>
+                        </span>
+                    </div>
+                </div>
+
                 <div class="table-all-user g-table">
                     <div class="table-responsive" id="js-categories-partial-target">
                         @include('partials._categories-table', ['categories' => $categories])
@@ -229,6 +244,14 @@
         .child-content .image img {
             width: 35px;
             height: 35px;
+        }
+
+        .box {
+            width: 15px;
+            height: 15px;
+            display: inline-block;
+            border-radius: 4px;
+            flex-shrink: 0;
         }
     </style>
 @endpush

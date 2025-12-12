@@ -69,12 +69,10 @@ class AdminController extends Controller
             ->take(10)
             ->get();
 
-        $pageTitle = 'Admin Dashboard';
 
         return view('admin.index', compact(
             'orders',
             'yearRange',
-            'pageTitle',
             'products',
             'dashboardData'
         ));
@@ -463,15 +461,13 @@ class AdminController extends Controller
             ]);
         }
 
-        $pageTitle = 'Category Dashboard';
-        return view('admin.categories', compact('categories', 'pageTitle'));
+        return view('admin.categories', compact('categories'));
     }
 
     public function category_add()
     {
         $parentCategories = Category::whereNull('parent_id')->get();
-        $pageTitle = 'Category Add Dashboard';
-        return view('admin.category-add', compact('pageTitle', 'parentCategories'));
+        return view('admin.category-add', compact('parentCategories'));
     }
 
     public function category_store(Request $request)
@@ -594,10 +590,10 @@ class AdminController extends Controller
             ->orderBy('id', 'DESC')
             ->get();
 
-        $pageTitle = 'Archived Categories';
+
         return view(
             'admin.archived-categories',
-            compact('archivedCategories', 'pageTitle', 'orphanedChildren')
+            compact('archivedCategories', 'orphanedChildren')
         );
     }
 
@@ -1224,9 +1220,7 @@ class AdminController extends Controller
         $archivedAttributes = ProductAttribute::onlyTrashed()
             ->orderBy('id', 'DESC')
             ->paginate(10);
-
-        $pageTitle = 'Archived Product Attributes';
-        return view('admin.archived-attributes', compact('archivedAttributes', 'pageTitle'));
+        return view('admin.archived-attributes', compact('archivedAttributes'));
     }
 
     public function restore_attribute($id)
@@ -2310,8 +2304,6 @@ class AdminController extends Controller
         // Calculate the range of years to show in the dropdown
         $yearRange = range($currentYear, $currentYear - 10);
 
-        // Return View with all data
-        $pageTitle = 'Rentals Reports';
         return view('admin.rentals_reports', compact(
             'reservations',
             'TotalPaymentAmount',
@@ -2337,7 +2329,7 @@ class AdminController extends Controller
             'AmountD',
             'selectedWeekId',
             'availableWeeks',
-            'pageTitle'
+
         ));
     }
 

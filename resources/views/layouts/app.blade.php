@@ -13,7 +13,7 @@
 
     <title>{{ config('app.name', 'Information System') }}</title>
 
-    <link rel="shortcut icon" href="{{ asset('../images/favicon-logo.png') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ asset('../images/logo/BaRG-logo.png') }}" type="image/x-icon">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -396,7 +396,7 @@
             class="container position-relative d-flex align-items-center justify-content-between flex-wrap flex-lg-nowrap">
             <a href="{{ route('home.index') }}"
                 class="navbar-brand d-flex justify-content-between align-items-center order-lg-0">
-                <img src="{{ asset('images/logo.png') }}" alt="Site Logo" class="navbar-logo">
+                <img src="{{ asset('../images/logo/BaRG-logo.png') }}" alt="Site Logo" class="navbar-logo">
             </a>
 
             <div
@@ -611,6 +611,11 @@
         .search-result-item.active a {
             color: #000;
         }
+
+        .navbar .navbar-brand .navbar-logo {
+            width: 90px;
+            height: auto;
+        }
     </style>
 
     <style>
@@ -626,7 +631,7 @@
             }
 
             .navbar .navbar-brand .navbar-logo {
-                max-width: 140px;
+                width: 60px;
                 height: auto;
             }
 

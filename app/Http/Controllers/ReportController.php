@@ -106,7 +106,6 @@ class ReportController extends Controller
         $TotalPickedUpAmountD = $sortedDailyDatas->sum('TotalPickedUpAmount');
         $TotalCanceledAmountD = $sortedDailyDatas->sum('TotalCanceledAmount');
 
-        $pageTitle = 'Reports';
 
         $selectedYear = $dateParams['selectedYear'];
         $selectedMonthId = $dateParams['selectedMonth'];
@@ -149,7 +148,6 @@ class ReportController extends Controller
             'TotalCanceledAmountD',
             'selectedWeekId',
             'availableWeeks',
-            'pageTitle'
         ));
     }
 
@@ -278,8 +276,6 @@ class ReportController extends Controller
         }
         $dailyChartData = implode(',', $dailyData);
 
-        $pageTitle = 'User Registrations Report';
-
         return view('admin.reports.product-user', compact(
             'totalUsers',
             'newUsersThisMonth',
@@ -294,7 +290,6 @@ class ReportController extends Controller
             'selectedMonth',
             'selectedYear',
             'availableWeeks',
-            'pageTitle',
             'newUsersCount',
             'newUsers',
             'startDate',
