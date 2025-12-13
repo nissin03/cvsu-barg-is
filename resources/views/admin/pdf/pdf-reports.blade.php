@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <title>Sales Report</title>
     <style>
-        /* Embed DejaVu Sans font - ensure the TTF file exists at public/fonts/DejaVuSans.ttf */
         @font-face {
             font-family: 'DejaVu Sans';
             src: url("{{ public_path('fonts/DejaVuSans.ttf') }}") format("truetype");
@@ -15,10 +14,8 @@
 
         @page {
             margin: 0.25in 0.75in 0.75in 0.75in;
-            /* top, right, bottom, left */
         }
 
-        /* General PDF Styles */
         body {
             font-family: 'DejaVu Sans', Arial, sans-serif;
             font-size: 12px;
@@ -48,7 +45,6 @@
             text-align: center;
         }
 
-        /* Header Styles */
         .header {
             width: 100%;
             margin-top: 20px;
@@ -59,7 +55,6 @@
             border-collapse: collapse;
         }
 
-        /* Remove borders from header table cells */
         .header-table td {
             vertical-align: middle;
             padding: 0 10px;
@@ -69,7 +64,6 @@
         .logo-left,
         .logo-right {
             width: 70px;
-            /* fixed width for the logo cells */
             padding: 0;
         }
 
@@ -81,12 +75,10 @@
             text-align: left;
         }
 
-        /* Negative margins applied directly to the images to shift them closer */
         .logo-left img {
             height: 80px;
             max-width: 80px;
             margin-right: -95px;
-            /* adjust this value as needed */
             margin-top: -20px;
         }
 
@@ -94,7 +86,6 @@
             height: 80px;
             max-width: 110px;
             margin-left: -110px;
-            /* adjust this value as needed */
             margin-top: -20px;
         }
 
@@ -154,6 +145,24 @@
             text-align: center;
         }
 
+        .remarks-section {
+            width: 100%;
+            margin: 20px 0 10px 0;
+            page-break-inside: avoid;
+        }
+
+        .remarks-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+            text-align: left;
+        }
+
+        .remarks-box {
+            width: 100%;
+            height: 120px;
+            border: 1px solid #000;
+        }
+
         .signatures-section {
             width: 100%;
             margin-top: 40px;
@@ -211,12 +220,11 @@
         </table>
     </div>
 
-
     <div class="office-name">
-        OFFICE BUSINESS AFFAIRS AND MARKETING OFFICE
+        OFFICE OF THE DIRECTOR FOR BUSINESS AFFAIRS AND MARKETING
     </div>
 
-    <h3 style="text-align: center;">SALES CHART REPORT </h3>
+    <h3>MARKETING CENTER</h3>
     <div class="info-container">
         <div class="info-row">
             <span class="info-label">Downloaded on</span>
@@ -227,80 +235,97 @@
         </div>
     </div>
 
-    <!-- Monthly Earned Sales -->
     <h3>Total Earned Sales for {{ $selectedYear }}</h3>
     <table>
         <tr>
             <th>Description</th>
             <th>Amount</th>
+            <th>Remarks</th>
         </tr>
         <tr>
             <td>Total Amount</td>
             <td>&#8369;{{ number_format($total_amount, 2) }}</td>
+            <td></td>
         </tr>
         <tr>
             <td>Reservation Amount</td>
             <td>&#8369;{{ number_format($total_reserved_amount, 2) }}</td>
+            <td></td>
         </tr>
         <tr>
             <td>Picked Up Amount</td>
             <td>&#8369;{{ number_format($total_picked_up_amount, 2) }}</td>
+            <td></td>
         </tr>
         <tr>
             <td>Cancelled Orders Amount</td>
             <td>&#8369;{{ number_format($total_canceled_amount, 2) }}</td>
+            <td></td>
         </tr>
     </table>
 
-    <!-- Weekly Earned Sales -->
     <h3>Total Earned Sales for {{ $selectedMonth->name }} {{ $selectedYear }}</h3>
     <table>
         <tr>
             <th>Description</th>
             <th>Amount</th>
+            <th>Remarks</th>
         </tr>
         <tr>
             <td>Total Amount</td>
             <td>&#8369;{{ number_format($total_amount_w, 2) }}</td>
+            <td></td>
         </tr>
         <tr>
             <td>Reservation Amount</td>
             <td>&#8369;{{ number_format($total_reserved_amount_w, 2) }}</td>
+            <td></td>
         </tr>
         <tr>
             <td>Picked Up Amount</td>
             <td>&#8369;{{ number_format($total_picked_up_amount_w, 2) }}</td>
+            <td></td>
         </tr>
         <tr>
             <td>Cancelled Orders Amount</td>
             <td>&#8369;{{ number_format($total_canceled_amount_w, 2) }}</td>
+            <td></td>
         </tr>
     </table>
 
-    <!-- Daily Earned Sales -->
     <h3>Total Earned Sales for {{ $selectedMonth->name }} {{ $selectedYear }} (Week {{ $selectedWeekId }})</h3>
     <table>
         <tr>
             <th>Description</th>
             <th>Amount</th>
+            <th>Remarks</th>
         </tr>
         <tr>
             <td>Total Amount</td>
             <td>&#8369;{{ number_format($total_amount_d, 2) }}</td>
+            <td></td>
         </tr>
         <tr>
             <td>Reservation Amount</td>
             <td>&#8369;{{ number_format($total_reserved_amount_d, 2) }}</td>
+            <td></td>
         </tr>
         <tr>
             <td>Picked Up Amount</td>
             <td>&#8369;{{ number_format($total_picked_up_amount_d, 2) }}</td>
+            <td></td>
         </tr>
         <tr>
             <td>Cancelled Orders Amount</td>
             <td>&#8369;{{ number_format($total_canceled_amount_d, 2) }}</td>
+            <td></td>
         </tr>
     </table>
+
+    {{-- <div class="remarks-section">
+        <div class="remarks-title">Remarks:</div>
+        <div class="remarks-box">&nbsp;</div>
+    </div> --}}
 
     <div class="signatures-section">
         @php
@@ -338,7 +363,7 @@
                     @foreach ($leftSignatures as $signature)
                         <div class="signature-block" style="margin-bottom: 30px;">
                             <div style="font-weight: bold;">{{ $signature->label }}:</div>
-                            <div style="height: 20px;">&nbsp;</div> <!-- Two spaces above the name -->
+                            <div style="height: 20px;">&nbsp;</div>
                             <div><strong>{{ $signature->name }}</strong></div>
                             <div>{{ $signature->position }}</div>
                         </div>
@@ -349,7 +374,7 @@
                     @foreach ($rightSignatures as $signature)
                         <div class="signature-block" style="margin-bottom: 30px;">
                             <div style="font-weight: bold;">{{ $signature->label }}:</div>
-                            <div style="height: 20px;">&nbsp;</div> <!-- Two spaces above the name -->
+                            <div style="height: 20px;">&nbsp;</div>
                             <div><strong>{{ $signature->name }}</strong></div>
                             <div>{{ $signature->position }}</div>
                         </div>

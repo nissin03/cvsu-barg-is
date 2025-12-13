@@ -600,7 +600,7 @@
                     ...chartOptions,
                     series: weeklyData.series,
                     xaxis: {
-                        categories: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+                        categories: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'],
                         title: {
                             text: 'Weeks of the Month'
                         }
