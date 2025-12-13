@@ -11,7 +11,7 @@ class FacilitySeeder extends Seeder
 {
     public function run(): void
     {
-        /*
+
         // Individual Facility Type - Female Dormitory
         $femaleDormitory = DB::table('facilities')->insertGetId([
             'name' => 'Female Dormitory',
@@ -106,7 +106,7 @@ class FacilitySeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        */
+
 
         // Individual Facility Type - Male Dormitory
         $maleDormitory = DB::table('facilities')->insertGetId([
@@ -322,7 +322,6 @@ Perfect for international students, visiting scholars, and group accommodations.
             'updated_at' => now(),
         ]);
 
-        /*
         // Whole Place Facility Type - Rolle Hall
         $rolleHall = DB::table('facilities')->insertGetId([
             'name' => 'Rolle Hall',
@@ -469,7 +468,7 @@ Perfect for international students, visiting scholars, and group accommodations.
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        */
+
 
         // Whole Place Facility Type - Icon
         $icon = DB::table('facilities')->insertGetId([
@@ -618,7 +617,7 @@ Perfect for international students, visiting scholars, and group accommodations.
             'updated_at' => now(),
         ]);
 
-        /*
+
         // Both Facility Type - Swimming Pool
         $swimmingPool = DB::table('facilities')->insertGetId([
             'name' => 'Swimming Pool',
@@ -741,6 +740,5 @@ Perfect for international students, visiting scholars, and group accommodations.
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        */
     }
 }

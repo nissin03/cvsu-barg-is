@@ -252,7 +252,7 @@
     <!-- End Header Section -->
 
     <div class="office-name">
-        OFFICE BUSINESS AFFAIRS AND MARKETING OFFICE
+        OFFICE OF THE DIRECTOR FOR BUSINESS AFFAIRS AND MARKETING
     </div>
 
     <h3>Product List Report</h3>

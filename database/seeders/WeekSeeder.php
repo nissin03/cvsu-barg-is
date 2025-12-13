@@ -12,7 +12,7 @@ class WeekSeeder extends Seeder
      */
     public function run(): void
     {
-        
+
         DB::table('week_names')->truncate();
 
         $weeks = [
@@ -21,8 +21,8 @@ class WeekSeeder extends Seeder
             ['week_number' => 3, 'name' => 'Week 3'],
             ['week_number' => 4, 'name' => 'Week 4'],
             ['week_number' => 5, 'name' => 'Week 5'],
-            ['week_number' => 6, 'name' => 'Week 6'],
-            
+
+
         ];
 
         DB::table('week_names')->insert($weeks);
