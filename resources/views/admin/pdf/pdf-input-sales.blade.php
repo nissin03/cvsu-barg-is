@@ -256,6 +256,7 @@
                     <th>Reserved Sales</th>
                     <th>Picked Up Sales</th>
                     <th>Canceled Sales</th>
+                    <th>Remarks</th>
                 </tr>
             </thead>
             <tbody>
@@ -266,6 +267,7 @@
                         <td>&#8369;{{ number_format($chartData['reserved_sales'][$index], 2) }}</td>
                         <td>&#8369;{{ number_format($chartData['pickedup_sales'][$index], 2) }}</td>
                         <td>&#8369;{{ number_format($chartData['canceled_sales'][$index], 2) }}</td>
+                        <td></td>
                     </tr>
                 @endforeach
 
@@ -275,6 +277,7 @@
                     <td>&#8369;{{ number_format(array_sum($chartData['reserved_sales']), 2) }}</td>
                     <td>&#8369;{{ number_format(array_sum($chartData['pickedup_sales']), 2) }}</td>
                     <td>&#8369;{{ number_format(array_sum($chartData['canceled_sales']), 2) }}</td>
+                    <td></td>
                 </tr>
             </tbody>
         </table>
@@ -291,12 +294,12 @@
                     ->get();
 
                 $leftSignatures = [];
-                $rightSignatures = [];s
+                $rightSignatures = [];
 
                 $leftSignatures[] = (object) [
                     'label' => 'Prepared by',
                     'name' => strtoupper(Auth::user()->name),
-                  'position' => optional(Auth::user()->position)->name,
+                    'position' => optional(Auth::user()->position)->name,
                     'is_prepared_by' => true,
                 ];
 
