@@ -269,9 +269,9 @@
         OFFICE OF THE DIRECTOR FOR BUSINESS AFFAIRS AND MARKETING
     </div>
 
-    <h3>MARKETING CENTER</h3>
+    <h3 style="text-align: center;">MARKETING CENTER</h3>
 
-    <h3 style="text-align: center;">INVENTORY REPORT</h3>
+    <h4 style="text-align: center;">INVENTORY REPORT</h4>
 
     <div class="info-container">
         <div class="info-row">
