@@ -231,7 +231,7 @@
 
     <h4>
         @if ($category && $categoryName)
-            SALES OF {{ strtoupper($categoryName) }} FOR THE {{ strtoupper($periodText) }}
+            SALES OF {{ strtoupper($categoryName) }} FOR {{ strtoupper($periodText) }}
         @else
             SALES REPORT
         @endif
