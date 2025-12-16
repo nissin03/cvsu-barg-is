@@ -211,6 +211,8 @@
 
     <h3>MARKETING CENTER</h3>
 
+    <h3 style="text-align: center;">MOST BOUGHT AND LEAST PURCHASE ITEM REPORT</h3>
+
     <div class="info-container">
         <div class="info-row">
             <span class="info-label">Report Generated</span>

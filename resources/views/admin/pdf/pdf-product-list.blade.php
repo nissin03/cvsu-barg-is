@@ -255,7 +255,7 @@
         OFFICE OF THE DIRECTOR FOR BUSINESS AFFAIRS AND MARKETING
     </div>
 
-    <h3>Product List Report</h3>
+    <h3>PRODUCT LIST REPORT</h3>
 
     <!-- Information Section -->
     <div class="info-container">
