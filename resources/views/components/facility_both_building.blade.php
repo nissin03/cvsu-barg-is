@@ -152,6 +152,22 @@
                                                             </div>
                                                             <span class="text-muted">Fully Booked</span>
                                                         </div>
+                                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                                            <div class="box bg-success">
+                                                            </div>
+                                                            <span class="text-muted">Available</span>
+                                                        </div>
+                                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                                            <div class="box bg-warning">
+                                                            </div>
+                                                            <span class="text-muted">Some Reserve the
+                                                                facility</span>
+                                                        </div>
+                                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                                            <div class="box bg-secondary">
+                                                            </div>
+                                                            <span class="text-muted">Unavailable</span>
+                                                        </div>
                                                     </div>
                                                     <div class="mb-2">
                                                         <small class="text-muted">Start Date:</small>
