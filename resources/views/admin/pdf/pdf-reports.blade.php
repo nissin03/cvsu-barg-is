@@ -85,7 +85,7 @@
         .logo-right img {
             height: 80px;
             max-width: 110px;
-            margin-left: -110px;
+            margin-left: -100px;
             margin-top: -20px;
         }
 
@@ -225,6 +225,9 @@
     </div>
 
     <h3>MARKETING CENTER</h3>
+
+    <h4 style="text-align: center;">SALES CHART</h4>
+
     <div class="info-container">
         <div class="info-row">
             <span class="info-label">Report Generated</span>

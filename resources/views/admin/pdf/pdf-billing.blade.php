@@ -214,40 +214,64 @@
 
     <h3>MARKETING CENTER</h3>
 
-    <h4> Sales Report </h4>
+    @php
+        $periodText = 'N/A';
+
+        if ($startDate && $endDate) {
+            $start = \Carbon\Carbon::parse($startDate);
+            $end = \Carbon\Carbon::parse($endDate);
+
+            if ($start->year === $end->year) {
+                $periodText = $start->format('F j') . '- ' . $end->format('F j, Y');
+            } else {
+                $periodText = $start->format('F j, Y') . '- ' . $end->format('F j, Y');
+            }
+        }
+    @endphp
+
+    <h4>
+        @if ($category && $categoryName)
+            SALES OF {{ strtoupper($categoryName) }} FOR THE {{ strtoupper($periodText) }}
+        @else
+            SALES REPORT
+        @endif
+    </h4>
+
+
 
     <!-- Information Section -->
     <div class="info-container">
         <div class="info-row">
             <span class="info-label">Report Generated</span>
             <span class="info-separator">:</span>
-            <span
-                class="info-value">{{ \Carbon\Carbon::now()->setTimezone('Asia/Manila')->format('F j, Y, g:i a') }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Reservation Period</span>
-            <span class="info-separator">:</span>
             <span class="info-value">
-                @if ($startDate && $endDate)
-                    {{ \Carbon\Carbon::parse($startDate)->format('F d, Y') }} to
-                    {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}
-                @else
-                    N/A
-                @endif
+                {{ \Carbon\Carbon::now()->setTimezone('Asia/Manila')->format('F j, Y, g:i a') }}
             </span>
         </div>
 
-        <div class="info-row">
-            <span class="info-label">Category</span>
-            <span class="info-separator">:</span>
-            <span class="info-value">
-                @if ($category && $categoryName)
-                    {{ ucfirst($categoryName) }}
-                @else
-                    All Categories
-                @endif
-            </span>
-        </div>
+        @if (!($category && $categoryName))
+            <div class="info-row">
+                <span class="info-label">Reservation Period</span>
+                <span class="info-separator">:</span>
+                <span class="info-value">
+                    @if ($startDate && $endDate)
+                        {{ \Carbon\Carbon::parse($startDate)->format('F d, Y') }} to
+                        {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}
+                    @else
+                        N/A
+                    @endif
+                </span>
+            </div>
+        @endif
+
+        @if (!($category && $categoryName))
+            <div class="info-row">
+                <span class="info-label">Category</span>
+                <span class="info-separator">:</span>
+                <span class="info-value">All Categories</span>
+            </div>
+        @endif
+
         <div class="info-row">
             <span class="info-label">Status</span>
             <span class="info-separator">:</span>
@@ -260,6 +284,7 @@
             </span>
         </div>
     </div>
+
 
     <table>
         <thead>
@@ -278,7 +303,7 @@
         <tbody>
             @php
                 $grandTotal = 0;
-                $showStatusColumn = !$status; // Show status column only when no specific status filter is applied
+                $showStatusColumn = !$status;
             @endphp
             @forelse($orders as $order)
                 @foreach ($order->orderItems as $item)
