@@ -275,7 +275,7 @@
 
     <div class="info-container">
         <div class="info-row">
-            <span class="info-label">Downloaded on</span>
+            <span class="info-label">Report Generated</span>
             <span class="info-separator">:</span>
             <span class="info-value">
                 {{ \Carbon\Carbon::now()->setTimezone('Asia/Manila')->format('F j, Y, g:i a') }}
